@@ -274,6 +274,7 @@ class WindowPreferencesMixin:
                 self.explore_data = self.storage.load_explore()
                 self._apply_audio_preferences()
                 self._apply_appearance_preferences()
+                self._configure_discord_presence()
                 self.toast_overlay.add_toast(Adw.Toast(title=_("Backup restaurado")))
                 self.show_settings()
             except (OSError, BackupError) as exc:
@@ -452,6 +453,124 @@ class WindowPreferencesMixin:
         backup.add_suffix(restore)
         data.add(backup)
         page.add(data)
+
+        social = Adw.PreferencesGroup(
+            title=_("Integrações sociais"),
+            description=_(
+                "Recursos opcionais; nenhum dado é enviado enquanto estiverem desligados."
+            ),
+        )
+        lastfm_credentials = self.lastfm_credentials.load()
+        lastfm_connected = lastfm_credentials.session is not None
+        lastfm = Adw.SwitchRow(
+            title=_("Scrobble no Last.fm"),
+            subtitle=(
+                _("Conectado como {username}").format(username=lastfm_credentials.session.username)
+                if lastfm_connected
+                else _("Configure uma chave de API e autorize a conta")
+            ),
+        )
+        lastfm.set_active(self.preferences.lastfm_enabled and lastfm_connected)
+        lastfm.set_sensitive(lastfm_connected)
+        lastfm.connect(
+            "notify::active",
+            lambda row, _pspec: self._preference_changed("lastfm_enabled", row.get_active()),
+        )
+        social.add(lastfm)
+
+        lastfm_key = Adw.ActionRow(
+            title=_("Chave da API do Last.fm"),
+            subtitle=_("Crie uma API Account gratuita no site do Last.fm"),
+        )
+        lastfm_key_entry = Gtk.Entry(
+            text=self.preferences.lastfm_api_key,
+            placeholder_text=_("API key"),
+            valign=Gtk.Align.CENTER,
+        )
+        lastfm_key_entry.set_size_request(260, -1)
+        lastfm_key_entry.connect(
+            "changed",
+            lambda entry: self._preference_changed("lastfm_api_key", entry.get_text().strip()),
+        )
+        lastfm_key.add_suffix(lastfm_key_entry)
+        social.add(lastfm_key)
+
+        lastfm_secret = Adw.ActionRow(
+            title=_("Segredo da API do Last.fm"),
+            subtitle=_("Armazenado no chaveiro do sistema"),
+        )
+        lastfm_secret_entry = Gtk.PasswordEntry(
+            placeholder_text=_("Configurado") if lastfm_credentials.api_secret else _("Secret"),
+            show_peek_icon=True,
+            valign=Gtk.Align.CENTER,
+        )
+        lastfm_secret_entry.set_size_request(260, -1)
+        lastfm_secret_entry.connect(
+            "activate", lambda entry: self._configure_lastfm_secret(entry.get_text())
+        )
+        secret_focus = Gtk.EventControllerFocus()
+        secret_focus.connect(
+            "leave",
+            lambda *_: self._configure_lastfm_secret(lastfm_secret_entry.get_text()),
+        )
+        lastfm_secret_entry.add_controller(secret_focus)
+        lastfm_secret.add_suffix(lastfm_secret_entry)
+        social.add(lastfm_secret)
+
+        lastfm_account = Adw.ActionRow(
+            title=_("Autorização do Last.fm"),
+            subtitle=_("A autorização é concluída no navegador padrão"),
+        )
+        if lastfm_connected:
+            disconnect_lastfm = Gtk.Button(label=_("Desconectar"), valign=Gtk.Align.CENTER)
+            disconnect_lastfm.add_css_class("pill")
+            disconnect_lastfm.add_css_class("destructive-action")
+            disconnect_lastfm.connect("clicked", lambda *_: self._disconnect_lastfm())
+            lastfm_account.add_suffix(disconnect_lastfm)
+        else:
+            authorize_lastfm = Gtk.Button(label=_("Autorizar"), valign=Gtk.Align.CENTER)
+            authorize_lastfm.add_css_class("pill")
+            authorize_lastfm.connect("clicked", lambda *_: self._begin_lastfm_authorization())
+            lastfm_account.add_suffix(authorize_lastfm)
+            finish_lastfm = Gtk.Button(label=_("Concluir"), valign=Gtk.Align.CENTER)
+            finish_lastfm.add_css_class("pill")
+            finish_lastfm.add_css_class("suggested-action")
+            finish_lastfm.set_sensitive(bool(self._lastfm_pending_token))
+            finish_lastfm.connect("clicked", lambda *_: self._finish_lastfm_authorization())
+            lastfm_account.add_suffix(finish_lastfm)
+        social.add(lastfm_account)
+
+        discord = Adw.SwitchRow(
+            title=_("Discord Rich Presence"),
+            subtitle=_("Mostra a faixa atual usando somente o IPC local do Discord"),
+        )
+        discord.set_active(self.preferences.discord_enabled)
+        discord.connect(
+            "notify::active",
+            lambda row, _pspec: self._discord_preference_changed(
+                "discord_enabled", row.get_active()
+            ),
+        )
+        social.add(discord)
+        discord_id = Adw.ActionRow(
+            title=_("Client ID do Discord"),
+            subtitle=_("ID de uma aplicação criada no Discord Developer Portal"),
+        )
+        discord_id_entry = Gtk.Entry(
+            text=self.preferences.discord_client_id,
+            placeholder_text=_("Client ID"),
+            valign=Gtk.Align.CENTER,
+        )
+        discord_id_entry.set_size_request(260, -1)
+        discord_id_entry.connect(
+            "changed",
+            lambda entry: self._discord_preference_changed(
+                "discord_client_id", entry.get_text().strip()
+            ),
+        )
+        discord_id.add_suffix(discord_id_entry)
+        social.add(discord_id)
+        page.add(social)
 
         audio = Adw.PreferencesGroup(
             title=_("Áudio"),

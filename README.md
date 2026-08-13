@@ -38,6 +38,8 @@ A native GTK 4 and libadwaita client for accessing your YouTube Music library on
 - Brazilian Portuguese and English interface translations;
 - private annual listening statistics and on-device recap;
 - portable backup and validated restore without account credentials or audio files;
+- optional Last.fm now-playing and scrobbling with browser authorization;
+- optional Discord Rich Presence through local IPC only;
 - Flatpak manifest, application icon, gettext catalogs, and AppStream metadata.
 
 ## Running from source

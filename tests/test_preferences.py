@@ -22,12 +22,20 @@ def test_preferences_roundtrip_and_bounds():
     preferences.normalization = True
     preferences.background_blur = True
     preferences.icon_style = "material"
+    preferences.lastfm_enabled = True
+    preferences.lastfm_api_key = "lastfm-key"
+    preferences.discord_enabled = True
+    preferences.discord_client_id = "discord-id"
     preferences.save(storage)
     restored = Preferences.load(storage)
     assert (restored.language, restored.region, restored.max_bitrate) == ("en-US", "US", 160_000)
     assert restored.normalization is True
     assert restored.background_blur is True
     assert restored.icon_style == "material"
+    assert restored.lastfm_enabled is True
+    assert restored.lastfm_api_key == "lastfm-key"
+    assert restored.discord_enabled is True
+    assert restored.discord_client_id == "discord-id"
 
 
 def test_removed_ios_icon_style_migrates_to_gtk():

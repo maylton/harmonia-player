@@ -17,6 +17,10 @@ class Preferences:
     skip_silence: bool = False
     background_blur: bool = False
     icon_style: str = "gtk"
+    lastfm_enabled: bool = False
+    lastfm_api_key: str = ""
+    discord_enabled: bool = False
+    discord_client_id: str = ""
 
     QUALITY_BITRATES: ClassVar[dict[str, int]] = {
         "low": 70_000,
@@ -50,6 +54,10 @@ class Preferences:
             skip_silence=boolean("skip_silence", False),
             background_blur=boolean("background_blur", False),
             icon_style=icon_style if icon_style in {"gtk", "material"} else "gtk",
+            lastfm_enabled=boolean("lastfm_enabled", False),
+            lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
+            discord_enabled=boolean("discord_enabled", False),
+            discord_client_id=storage.get_setting("discord_client_id", ""),
         )
 
     def save(self, storage) -> None:
@@ -65,6 +73,10 @@ class Preferences:
             "skip_silence": "1" if self.skip_silence else "0",
             "background_blur": "1" if self.background_blur else "0",
             "icon_style": self.icon_style,
+            "lastfm_enabled": "1" if self.lastfm_enabled else "0",
+            "lastfm_api_key": self.lastfm_api_key,
+            "discord_enabled": "1" if self.discord_enabled else "0",
+            "discord_client_id": self.discord_client_id,
         }
         for key, value in values.items():
             storage.set_setting(key, value)

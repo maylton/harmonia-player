@@ -13,6 +13,8 @@ finish-args:
   - --device=dri
   - --talk-name=org.freedesktop.secrets
   - --own-name=org.mpris.MediaPlayer2.Harmonia
+  - --filesystem=xdg-run/discord-ipc-0
+  - --filesystem=xdg-run/app/com.discordapp.Discord:ro
 modules:
   - name: harmonia
     buildsystem: meson

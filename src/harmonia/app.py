@@ -43,6 +43,7 @@ from .window_lyrics import WindowLyricsMixin
 from .window_playback import WindowPlaybackMixin
 from .window_preferences import WindowPreferencesMixin
 from .window_search import WindowSearchMixin
+from .window_social import WindowSocialMixin
 
 LOGGER = logging.getLogger(__name__)
 APP_ID = "io.github.harmonia.Harmonia"
@@ -59,6 +60,7 @@ class HarmoniaWindow(
     WindowActionsMixin,
     WindowLyricsMixin,
     WindowPlaybackMixin,
+    WindowSocialMixin,
     WindowAccountMixin,
     Adw.ApplicationWindow,
 ):
@@ -68,6 +70,7 @@ class HarmoniaWindow(
         )
         self.storage = Storage()
         self.preferences = Preferences.load(self.storage)
+        self._initialize_social()
         self.youtube = YouTubeMusicService(self.storage)
         self.lyrics_resolver = LyricsResolver(self.youtube.lyrics)
         self.translation_client = GoogleTranslationClient()

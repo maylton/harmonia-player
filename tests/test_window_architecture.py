@@ -10,6 +10,7 @@ from harmonia.window_lyrics import WindowLyricsMixin
 from harmonia.window_playback import WindowPlaybackMixin
 from harmonia.window_preferences import WindowPreferencesMixin
 from harmonia.window_search import WindowSearchMixin
+from harmonia.window_social import WindowSocialMixin
 
 DOMAIN_METHODS = {
     WindowPreferencesMixin: "show_settings",
@@ -22,6 +23,7 @@ DOMAIN_METHODS = {
     WindowActionsMixin: "_mutate",
     WindowLyricsMixin: "_render_lyrics",
     WindowPlaybackMixin: "play_item",
+    WindowSocialMixin: "_initialize_social",
     WindowAccountMixin: "sync",
 }
 

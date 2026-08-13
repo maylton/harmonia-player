@@ -1,4 +1,4 @@
-from harmonia.secrets import SessionSecret
+from harmonia.secrets import NamedSecret, SessionSecret
 
 
 class FakeSecretAPI:
@@ -28,6 +28,19 @@ def test_secret_service_wrapper_store_lookup_and_clear():
     assert secret.lookup() == "SAPISID=secret"
     assert secret.clear() is True
     assert secret.lookup() == ""
+
+
+def test_named_secret_uses_isolated_attributes_and_label():
+    secret = NamedSecret.__new__(NamedSecret)
+    secret.available = True
+    secret._schema = object()
+    secret._secret = FakeSecretAPI()
+    secret.service = "lastfm"
+    secret.label = "Last.fm"
+
+    assert secret.attributes == {"application": "harmonia", "service": "lastfm"}
+    assert secret.store("session") is True
+    assert secret.lookup() == "session"
 
 
 def test_storage_migrates_legacy_cookie_to_secret(monkeypatch, tmp_path):

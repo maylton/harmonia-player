@@ -453,6 +453,7 @@ class WindowPlaybackMixin:
         self.progress.set_sensitive(True)
         self.expanded_progress.set_sensitive(True)
         self.player.play(url)
+        self._social_track_started(self._pending_seek_ms)
         if self._pending_seek_ms:
             GLib.timeout_add(700, self._apply_pending_seek, request_id, self._pending_seek_ms)
         self._history_tracking_request = request_id
@@ -545,6 +546,7 @@ class WindowPlaybackMixin:
             self.elapsed_label.set_label(elapsed)
             self.expanded_elapsed_label.set_label(elapsed)
             self._update_synced_lyrics(position_ms)
+            self._maybe_scrobble_lastfm(position_ms)
             if time.monotonic() - self._last_queue_save >= 5:
                 self._save_playback_state(position_ms)
         return GLib.SOURCE_CONTINUE
@@ -566,6 +568,7 @@ class WindowPlaybackMixin:
         self._refresh_detail_track_states()
         self._refresh_home_song_rows()
         self.mpris.update()
+        self._social_playback_changed(playing)
         return False
 
     def _pause(self):
@@ -655,3 +658,4 @@ class WindowPlaybackMixin:
         self._refresh_detail_track_states()
         self._refresh_home_song_rows()
         self.mpris.clear()
+        self._clear_social_presence()

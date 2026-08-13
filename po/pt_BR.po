@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 20:25-0300\n"
+"POT-Creation-Date: 2026-08-13 20:48-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -17,195 +17,195 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/harmonia/app.py:67 src/harmonia/app.py:366 src/harmonia/app.py:1149
+#: src/harmonia/app.py:69 src/harmonia/app.py:369 src/harmonia/app.py:1152
 msgid "Harmonia"
 msgstr "Harmonia"
 
-#: src/harmonia/app.py:222
+#: src/harmonia/app.py:225
 msgid "Pesquisar músicas, álbuns, artistas…"
 msgstr "Pesquisar músicas, álbuns, artistas…"
 
-#: src/harmonia/app.py:231 src/harmonia/auth.py:40
+#: src/harmonia/app.py:234 src/harmonia/auth.py:40
 msgid "Voltar"
 msgstr "Voltar"
 
-#: src/harmonia/app.py:237
+#: src/harmonia/app.py:240
 msgid "Navegação"
 msgstr "Navegação"
 
-#: src/harmonia/app.py:245 src/harmonia/app.py:372
+#: src/harmonia/app.py:248 src/harmonia/app.py:375
 #: src/harmonia/window_home.py:157
 msgid "Início"
 msgstr "Início"
 
-#: src/harmonia/app.py:246 src/harmonia/app.py:375
+#: src/harmonia/app.py:249 src/harmonia/app.py:378
 #: src/harmonia/window_home.py:35
 msgid "Explorar"
 msgstr "Explorar"
 
-#: src/harmonia/app.py:247 src/harmonia/app.py:379
+#: src/harmonia/app.py:250 src/harmonia/app.py:382
 #: src/harmonia/window_library.py:55
 msgid "Biblioteca"
 msgstr "Biblioteca"
 
-#: src/harmonia/app.py:248 src/harmonia/app.py:387
+#: src/harmonia/app.py:251 src/harmonia/app.py:390
 msgid "Músicas curtidas"
 msgstr "Músicas curtidas"
 
-#: src/harmonia/app.py:249 src/harmonia/app.py:393
+#: src/harmonia/app.py:252 src/harmonia/app.py:396
 #: src/harmonia/innertube.py:110 src/harmonia/window_constants.py:4
 msgid "Playlists"
 msgstr "Playlists"
 
-#: src/harmonia/app.py:250 src/harmonia/app.py:401
+#: src/harmonia/app.py:253 src/harmonia/app.py:404
 #: src/harmonia/innertube.py:109 src/harmonia/window_constants.py:7
 msgid "Artistas"
 msgstr "Artistas"
 
-#: src/harmonia/app.py:251 src/harmonia/app.py:408
+#: src/harmonia/app.py:254 src/harmonia/app.py:411
 #: src/harmonia/window_history.py:158
 msgid "Histórico"
 msgstr "Histórico"
 
-#: src/harmonia/app.py:252 src/harmonia/app.py:414
+#: src/harmonia/app.py:255 src/harmonia/app.py:417
 msgid "Estatísticas"
 msgstr "Estatísticas"
 
-#: src/harmonia/app.py:253 src/harmonia/app.py:421
+#: src/harmonia/app.py:256 src/harmonia/app.py:424
 #: src/harmonia/window_history.py:45 src/harmonia/window_library.py:71
 msgid "Downloads"
 msgstr "Downloads"
 
-#: src/harmonia/app.py:254 src/harmonia/app.py:426
+#: src/harmonia/app.py:257 src/harmonia/app.py:429
 #: src/harmonia/window_preferences.py:298
 msgid "Preferências"
 msgstr "Preferências"
 
-#: src/harmonia/app.py:263
+#: src/harmonia/app.py:266
 msgid "Sincronizar biblioteca"
 msgstr "Sincronizar biblioteca"
 
-#: src/harmonia/app.py:268 src/harmonia/app.py:308
+#: src/harmonia/app.py:271 src/harmonia/app.py:311
 #: src/harmonia/window_preferences.py:302
 msgid "Conta"
 msgstr "Conta"
 
-#: src/harmonia/app.py:347
+#: src/harmonia/app.py:350
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr "Conta — {name}"
 
-#: src/harmonia/app.py:382
+#: src/harmonia/app.py:385
 msgid "SUAS MÚSICAS"
 msgstr "SUAS MÚSICAS"
 
-#: src/harmonia/app.py:431 src/harmonia/window_actions.py:112
+#: src/harmonia/app.py:434 src/harmonia/window_actions.py:112
 msgid "Nova playlist"
 msgstr "Nova playlist"
 
-#: src/harmonia/app.py:470
+#: src/harmonia/app.py:473
 msgid "Expandir player"
 msgstr "Expandir player"
 
-#: src/harmonia/app.py:522
+#: src/harmonia/app.py:525
 msgid "Abrir player expandido"
 msgstr "Abrir player expandido"
 
-#: src/harmonia/app.py:535
+#: src/harmonia/app.py:538
 msgid "Curtir"
 msgstr "Curtir"
 
-#: src/harmonia/app.py:552 src/harmonia/app.py:848
+#: src/harmonia/app.py:555 src/harmonia/app.py:851
 msgid "Ordem aleatória"
 msgstr "Ordem aleatória"
 
-#: src/harmonia/app.py:558 src/harmonia/app.py:855
+#: src/harmonia/app.py:561 src/harmonia/app.py:858
 msgid "Anterior"
 msgstr "Anterior"
 
-#: src/harmonia/app.py:563 src/harmonia/app.py:862
+#: src/harmonia/app.py:566 src/harmonia/app.py:865
 msgid "Pausar ou continuar"
 msgstr "Pausar ou continuar"
 
-#: src/harmonia/app.py:569 src/harmonia/app.py:868
+#: src/harmonia/app.py:572 src/harmonia/app.py:871
 msgid "Próxima"
 msgstr "Próxima"
 
-#: src/harmonia/app.py:573 src/harmonia/app.py:873
+#: src/harmonia/app.py:576 src/harmonia/app.py:876
 msgid "Repetir"
 msgstr "Repetir"
 
-#: src/harmonia/app.py:580 src/harmonia/window_playback.py:153
+#: src/harmonia/app.py:583 src/harmonia/window_playback.py:153
 #: src/harmonia/window_playback.py:154
 msgid "Reprodução automática ativada"
 msgstr "Reprodução automática ativada"
 
-#: src/harmonia/app.py:596 src/harmonia/app.py:605 src/harmonia/app.py:830
-#: src/harmonia/app.py:839 src/harmonia/app.py:936 src/harmonia/app.py:937
+#: src/harmonia/app.py:599 src/harmonia/app.py:608 src/harmonia/app.py:833
+#: src/harmonia/app.py:842 src/harmonia/app.py:939 src/harmonia/app.py:940
 #: src/harmonia/window_playback.py:400 src/harmonia/window_playback.py:401
 #: src/harmonia/window_playback.py:402 src/harmonia/window_playback.py:403
-#: src/harmonia/window_playback.py:651 src/harmonia/window_playback.py:652
+#: src/harmonia/window_playback.py:654 src/harmonia/window_playback.py:655
 msgid "0:00"
 msgstr "0:00"
 
-#: src/harmonia/app.py:618 src/harmonia/app.py:626 src/harmonia/app.py:743
-#: src/harmonia/app.py:897 src/harmonia/window_lyrics.py:51
+#: src/harmonia/app.py:621 src/harmonia/app.py:629 src/harmonia/app.py:746
+#: src/harmonia/app.py:900 src/harmonia/window_lyrics.py:51
 msgid "Letras"
 msgstr "Letras"
 
-#: src/harmonia/app.py:627 src/harmonia/app.py:898
+#: src/harmonia/app.py:630 src/harmonia/app.py:901
 #: src/harmonia/window_lyrics.py:52
 msgid "Comece a reproduzir uma música para ver a letra."
 msgstr "Comece a reproduzir uma música para ver a letra."
 
-#: src/harmonia/app.py:631 src/harmonia/window_playback.py:224
+#: src/harmonia/app.py:634 src/harmonia/window_playback.py:224
 msgid "Fila de reprodução"
 msgstr "Fila de reprodução"
 
-#: src/harmonia/app.py:646
+#: src/harmonia/app.py:649
 msgid "Parar"
 msgstr "Parar"
 
-#: src/harmonia/app.py:721
+#: src/harmonia/app.py:724
 msgid "Recolher player (Esc)"
 msgstr "Recolher player (Esc)"
 
-#: src/harmonia/app.py:741
+#: src/harmonia/app.py:744
 msgid "Música"
 msgstr "Música"
 
-#: src/harmonia/app.py:746 src/harmonia/app.py:1050
+#: src/harmonia/app.py:749 src/harmonia/app.py:1053
 #: src/harmonia/window_playback.py:274
 msgid "Relacionadas"
 msgstr "Relacionadas"
 
-#: src/harmonia/app.py:819 src/harmonia/window_actions.py:85
+#: src/harmonia/app.py:822 src/harmonia/window_actions.py:85
 #: src/harmonia/window_detail.py:626 src/harmonia/window_home.py:340
 #: src/harmonia/window_home.py:421
 msgid "Curtir música"
 msgstr "Curtir música"
 
-#: src/harmonia/app.py:929
+#: src/harmonia/app.py:932
 msgid "Nenhuma música reproduzindo"
 msgstr "Nenhuma música reproduzindo"
 
-#: src/harmonia/app.py:930
+#: src/harmonia/app.py:933
 msgid "Escolha uma faixa para começar"
 msgstr "Escolha uma faixa para começar"
 
-#: src/harmonia/app.py:1020
+#: src/harmonia/app.py:1023
 msgid "Fila"
 msgstr "Fila"
 
-#: src/harmonia/app.py:1027
+#: src/harmonia/app.py:1030
 msgid "Nada na fila"
 msgstr "Nada na fila"
 
-#: src/harmonia/app.py:1028
+#: src/harmonia/app.py:1031
 msgid "Escolha uma música para ver as próximas faixas."
 msgstr "Escolha uma música para ver as próximas faixas."
 
-#: src/harmonia/app.py:1062 src/harmonia/window_playback.py:290
+#: src/harmonia/app.py:1065 src/harmonia/window_playback.py:290
 msgid "Adicionar ao fim"
 msgstr "Adicionar ao fim"
 
@@ -335,6 +335,27 @@ msgid ""
 msgstr ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
 
+#: src/harmonia/social.py:102
+msgid "A chave e o segredo da API do Last.fm são obrigatórios"
+msgstr "A chave e o segredo da API do Last.fm são obrigatórios"
+
+#: src/harmonia/social.py:109 src/harmonia/window_social.py:40
+msgid "A conta do Last.fm ainda não foi autorizada"
+msgstr "A conta do Last.fm ainda não foi autorizada"
+
+#: src/harmonia/social.py:123
+#, python-brace-format
+msgid "Falha ao acessar o Last.fm: {error}"
+msgstr "Falha ao acessar o Last.fm: {error}"
+
+#: src/harmonia/social.py:131
+msgid "O Last.fm não retornou um token de autorização"
+msgstr "O Last.fm não retornou um token de autorização"
+
+#: src/harmonia/social.py:143
+msgid "O Last.fm não retornou uma sessão válida"
+msgstr "O Last.fm não retornou uma sessão válida"
+
 #: src/harmonia/ui.py:112 src/harmonia/window_detail.py:135
 #: src/harmonia/window_detail.py:438 src/harmonia/window_library.py:589
 msgid "Reproduzir"
@@ -372,6 +393,7 @@ msgid "Cancelar"
 msgstr "Cancelar"
 
 #: src/harmonia/window_account.py:67 src/harmonia/window_preferences.py:317
+#: src/harmonia/window_preferences.py:518
 msgid "Desconectar"
 msgstr "Desconectar"
 
@@ -1251,16 +1273,16 @@ msgstr "Preparando {title}…"
 msgid "O arquivo local não está mais disponível"
 msgstr "O arquivo local não está mais disponível"
 
-#: src/harmonia/window_playback.py:589
+#: src/harmonia/window_playback.py:592
 msgid "O stream falhou; renovando a conexão…"
 msgstr "O stream falhou; renovando a conexão…"
 
-#: src/harmonia/window_playback.py:614
+#: src/harmonia/window_playback.py:617
 #, python-brace-format
 msgid "Falha na reprodução: {error}"
 msgstr "Falha na reprodução: {error}"
 
-#: src/harmonia/window_playback.py:627
+#: src/harmonia/window_playback.py:630
 #, python-brace-format
 msgid "Falha na reprodução após renovar o stream: {error}"
 msgstr "Falha na reprodução após renovar o stream: {error}"
@@ -1501,30 +1523,117 @@ msgid "Compatível com outras instalações do Harmonia"
 msgstr "Compatível com outras instalações do Harmonia"
 
 #: src/harmonia/window_preferences.py:457
+msgid "Integrações sociais"
+msgstr "Integrações sociais"
+
+#: src/harmonia/window_preferences.py:459
+msgid ""
+"Recursos opcionais; nenhum dado é enviado enquanto estiverem desligados."
+msgstr ""
+"Recursos opcionais; nenhum dado é enviado enquanto estiverem desligados."
+
+#: src/harmonia/window_preferences.py:465
+msgid "Scrobble no Last.fm"
+msgstr "Scrobble no Last.fm"
+
+#: src/harmonia/window_preferences.py:467
+#, python-brace-format
+msgid "Conectado como {username}"
+msgstr "Conectado como {username}"
+
+#: src/harmonia/window_preferences.py:469
+msgid "Configure uma chave de API e autorize a conta"
+msgstr "Configure uma chave de API e autorize a conta"
+
+#: src/harmonia/window_preferences.py:481
+msgid "Chave da API do Last.fm"
+msgstr "Chave da API do Last.fm"
+
+#: src/harmonia/window_preferences.py:482
+msgid "Crie uma API Account gratuita no site do Last.fm"
+msgstr "Crie uma API Account gratuita no site do Last.fm"
+
+#: src/harmonia/window_preferences.py:486
+msgid "API key"
+msgstr "API key"
+
+#: src/harmonia/window_preferences.py:498
+msgid "Segredo da API do Last.fm"
+msgstr "Segredo da API do Last.fm"
+
+#: src/harmonia/window_preferences.py:499
+msgid "Armazenado no chaveiro do sistema"
+msgstr "Armazenado no chaveiro do sistema"
+
+#: src/harmonia/window_preferences.py:502
+msgid "Configurado"
+msgstr "Configurado"
+
+#: src/harmonia/window_preferences.py:502
+msgid "Secret"
+msgstr "Secret"
+
+#: src/harmonia/window_preferences.py:514
+msgid "Autorização do Last.fm"
+msgstr "Autorização do Last.fm"
+
+#: src/harmonia/window_preferences.py:515
+msgid "A autorização é concluída no navegador padrão"
+msgstr "A autorização é concluída no navegador padrão"
+
+#: src/harmonia/window_preferences.py:524
+msgid "Autorizar"
+msgstr "Autorizar"
+
+#: src/harmonia/window_preferences.py:528
+msgid "Concluir"
+msgstr "Concluir"
+
+#: src/harmonia/window_preferences.py:537
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+#: src/harmonia/window_preferences.py:538
+msgid "Mostra a faixa atual usando somente o IPC local do Discord"
+msgstr "Mostra a faixa atual usando somente o IPC local do Discord"
+
+#: src/harmonia/window_preferences.py:549
+msgid "Client ID do Discord"
+msgstr "Client ID do Discord"
+
+#: src/harmonia/window_preferences.py:550
+msgid "ID de uma aplicação criada no Discord Developer Portal"
+msgstr "ID de uma aplicação criada no Discord Developer Portal"
+
+#: src/harmonia/window_preferences.py:554
+msgid "Client ID"
+msgstr "Client ID"
+
+#: src/harmonia/window_preferences.py:569
 msgid "Áudio"
 msgstr "Áudio"
 
-#: src/harmonia/window_preferences.py:458
+#: src/harmonia/window_preferences.py:570
 msgid "Processamento nativo em tempo real pelo GStreamer."
 msgstr "Processamento nativo em tempo real pelo GStreamer."
 
-#: src/harmonia/window_preferences.py:469
+#: src/harmonia/window_preferences.py:581
 msgid "Normalização de volume"
 msgstr "Normalização de volume"
 
-#: src/harmonia/window_preferences.py:469
+#: src/harmonia/window_preferences.py:581
 msgid "Reduz variações de volume entre faixas"
 msgstr "Reduz variações de volume entre faixas"
 
-#: src/harmonia/window_preferences.py:480
+#: src/harmonia/window_preferences.py:592
 msgid "Pular silêncio"
 msgstr "Pular silêncio"
 
-#: src/harmonia/window_preferences.py:480
+#: src/harmonia/window_preferences.py:592
 msgid "Remove trechos silenciosos longos"
 msgstr "Remove trechos silenciosos longos"
 
-#: src/harmonia/window_preferences.py:541
+#: src/harmonia/window_preferences.py:653
 msgid "Temporizador"
 msgstr "Temporizador"
 
@@ -1571,6 +1680,33 @@ msgstr "Carregar mais {category}"
 #, python-brace-format
 msgid "Não foi possível carregar mais resultados: {error}"
 msgstr "Não foi possível carregar mais resultados: {error}"
+
+#: src/harmonia/window_social.py:72
+#, python-brace-format
+msgid "Não foi possível iniciar o Last.fm: {error}"
+msgstr "Não foi possível iniciar o Last.fm: {error}"
+
+#: src/harmonia/window_social.py:79
+msgid "Autorize no navegador e clique em Concluir"
+msgstr "Autorize no navegador e clique em Concluir"
+
+#: src/harmonia/window_social.py:90
+msgid "Inicie a autorização do Last.fm primeiro"
+msgstr "Inicie a autorização do Last.fm primeiro"
+
+#: src/harmonia/window_social.py:105
+#, python-brace-format
+msgid "Não foi possível conectar ao Last.fm: {error}"
+msgstr "Não foi possível conectar ao Last.fm: {error}"
+
+#: src/harmonia/window_social.py:114
+#, python-brace-format
+msgid "Last.fm conectado como {username}"
+msgstr "Last.fm conectado como {username}"
+
+#: src/harmonia/window_social.py:127
+msgid "Last.fm desconectado"
+msgstr "Last.fm desconectado"
 
 #, fuzzy
 #~ msgid "Sua biblioteca do YouTube Music no Linux"

@@ -118,7 +118,7 @@ Auditoria detalhada: [`visual-audit.md`](visual-audit.md).
 
 - [x] Estatísticas de reprodução e retrospectiva.
 - [x] Backup e restauração.
-- [ ] Last.fm e Discord Rich Presence.
+- [x] Last.fm e Discord Rich Presence.
 - [ ] Listen Together.
 - [ ] Reconhecimento de música.
 - [ ] Cast para dispositivos.
@@ -128,8 +128,8 @@ Auditoria detalhada: [`visual-audit.md`](visual-audit.md).
 - [x] Retrospectiva anual privada baseada apenas nas reproduções qualificadas registradas localmente, com totais, tempo, músicas, artistas e atividade mensal.
 - [x] Backup portátil versionado com snapshot SQLite consistente, verificação de integridade e cópia de recuperação anterior à restauração.
 - [x] Credenciais, cookies e arquivos de áudio explicitamente excluídos do backup.
-- [ ] Last.fm: autenticação web, now playing, scrobble e estado visível nas Preferências.
-- [ ] Discord Rich Presence: IPC local opt-in, estado de reprodução e limpeza ao encerrar.
+- [x] Last.fm: autenticação web, now playing, scrobble e estado visível nas Preferências.
+- [x] Discord Rich Presence: IPC local opt-in, estado de reprodução e limpeza ao encerrar.
 - [ ] Listen Together: criação/entrada em sessão, sincronização de fila e transporte e tratamento de atraso.
 - [ ] Reconhecimento de música: captura temporária, provedor configurável e abertura do resultado no Harmonia.
 - [ ] Cast: descoberta na rede local, seleção do dispositivo, handoff e controles remotos.
@@ -353,3 +353,16 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Download da release oficial com verificação SHA-256 obrigatória.
 - [x] Bundle local, abertura após instalar e desinstalação suportados pela mesma interface.
 - [x] Sintaxe POSIX, ajuda e instalação real do bundle validadas; suíte ampliada para 87 testes aprovados.
+
+### 2026-08-13 — Last.fm e Discord Rich Presence
+
+- [x] Fluxo desktop do Last.fm implementado com token temporário, autorização no navegador e sessão persistente.
+- [x] API key permanece nas preferências; segredo e sessão usam Secret Service com fallback `0600` fora do backup.
+- [x] Now playing é enviado ao iniciar e scrobble respeita faixa acima de 30 segundos e o menor limite entre metade da duração e quatro minutos.
+- [x] Discord Rich Presence usa exclusivamente IPC Unix local, reflete tocando/pausado e é limpo ao parar ou fechar.
+- [x] Preferências concentram opt-in, credenciais, autorização, conta conectada e Client ID sem ativação implícita.
+- [x] Manifesto Flatpak concede somente os caminhos de runtime necessários aos sockets do Discord.
+- [x] Assinatura e respostas Last.fm, framing Discord, credenciais, limiares e metadados cobertos por testes determinísticos.
+- [x] Tela de Preferências, build Meson e build Flatpak completo validados; suíte ampliada para 92 testes aprovados.
+
+Observação: a validação automatizada usa respostas protocolares locais e não envia scrobbles nem presença a contas pessoais. O teste ponta a ponta depende das credenciais opt-in informadas pelo usuário nas Preferências.
