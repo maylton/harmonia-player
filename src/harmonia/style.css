@@ -189,7 +189,20 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .detail-page { padding: 52px 32px 48px; }
 .detail-backdrop { filter: blur(28px); }
 .detail-backdrop-shade {
-  background-image: linear-gradient(to bottom, alpha(#242424, .12), #242424 96%);
+  background-image: linear-gradient(
+    to bottom,
+    alpha(#242424, .12) 0,
+    alpha(#242424, .92) 390px,
+    alpha(#242424, .92) 100%
+  );
+}
+.appearance-blur .detail-backdrop-shade {
+  background-image: linear-gradient(
+    to bottom,
+    alpha(#242424, .08) 0,
+    alpha(#242424, .66) 390px,
+    alpha(#242424, .66) 100%
+  );
 }
 .detail-hero {
   min-height: 326px;
