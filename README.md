@@ -68,14 +68,27 @@ meson compile -C build-user
 meson install -C build-user
 ```
 
-## Installing the Flatpak bundle
+## Installing on Linux
 
-Download `Harmonia-0.1.0-beta.1-x86_64.flatpak` from the corresponding GitHub
-release, make sure the GNOME 50 runtime is available, and install it with:
+The portable installer detects Flatpak, configures Flathub for the current user,
+downloads the official bundle, verifies its SHA-256 checksum, and installs the
+required runtime automatically:
 
 ```bash
-flatpak install --user ./Harmonia-0.1.0-beta.1-x86_64.flatpak
-flatpak run io.github.harmonia.Harmonia
+curl -fLO https://raw.githubusercontent.com/maylton/harmonia-player/main/install.sh
+chmod +x install.sh
+./install.sh --run
+```
+
+Inspecting a downloaded script before running it is recommended. Use
+`./install.sh --help` for system-wide, local-bundle, and uninstall options. The
+installer supports distributions based on APT, DNF/YUM, Zypper, Pacman, APK,
+XBPS, and eopkg when Flatpak itself still needs to be installed.
+
+To install a bundle downloaded manually from the corresponding GitHub release:
+
+```bash
+./install.sh --bundle ./Harmonia-0.1.0-beta.1-x86_64.flatpak --run
 ```
 
 The bundle includes both Brazilian Portuguese and English translations. The

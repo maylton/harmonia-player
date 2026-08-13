@@ -97,6 +97,7 @@ Critério de conclusão: timestamps LRC acompanham a posição real do GStreamer
 - [x] Equalizador, normalização, velocidade, tom, silêncio e temporizador.
 - [x] Secret Service para credenciais.
 - [x] Flatpak, ícone próprio, traduções, screenshots e metadados completos.
+- [x] Instalador portátil com detecção de distro, Flatpak, Flathub e verificação SHA-256.
 - [x] Testes de UI, player, login e sincronização assíncrona.
 
 Critério de conclusão: preferências persistem no SQLite e são aplicadas ao InnerTube e ao GStreamer; a sessão migra para o chaveiro do desktop; build Meson, catálogo gettext, manifesto Flatpak e metadados passam nas validações disponíveis; UI e suíte automatizada não apresentam regressões.
@@ -343,3 +344,12 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Navegação entre Home, Biblioteca, Explorar, Histórico, Downloads, quatro categorias e Preferências validada em runtime GTK com diretórios XDG limpos.
 - [x] Build Flatpak recompilou, instalou e iniciou todos os módulos no sandbox sem traceback ou erros GTK/GLib.
 - [x] Suíte ampliada para 82 testes aprovados; Ruff, formatter, compileall, desktop entry, AppStream, gettext, Meson e Flatpak validados.
+
+### 2026-08-13 — Instalador portátil
+
+- [x] Instalação Flatpak por usuário como padrão, com opção explícita para o sistema.
+- [x] Detecção de APT, DNF/YUM, Zypper, Pacman, APK, XBPS e eopkg quando o Flatpak ainda não está disponível.
+- [x] Configuração idempotente do Flathub e resolução automática do runtime GNOME.
+- [x] Download da release oficial com verificação SHA-256 obrigatória.
+- [x] Bundle local, abertura após instalar e desinstalação suportados pela mesma interface.
+- [x] Sintaxe POSIX, ajuda e instalação real do bundle validadas; suíte ampliada para 87 testes aprovados.
