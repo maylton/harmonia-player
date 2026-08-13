@@ -66,6 +66,19 @@ meson compile -C build-user
 meson install -C build-user
 ```
 
+## Installing the Flatpak bundle
+
+Download `Harmonia-0.1.0-beta.1-x86_64.flatpak` from the corresponding GitHub
+release, make sure the GNOME 50 runtime is available, and install it with:
+
+```bash
+flatpak install --user ./Harmonia-0.1.0-beta.1-x86_64.flatpak
+flatpak run io.github.harmonia.Harmonia
+```
+
+The bundle includes both Brazilian Portuguese and English translations. The
+GNOME runtime is resolved separately by Flatpak.
+
 ## Tests
 
 ```bash

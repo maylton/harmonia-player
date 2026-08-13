@@ -29,14 +29,10 @@ configure_file(
   install_dir: get_option('datadir') / 'applications',
 )
 install_data('data/io.github.harmonia.Harmonia.metainfo.xml', install_dir: get_option('datadir') / 'metainfo')
-install_data(
-  'data/screenshots/home.png',
-  'data/screenshots/preferences.png',
-  install_dir: get_option('datadir') / 'metainfo/screenshots',
-)
 install_subdir(
   'data/icons/hicolor',
   install_dir: get_option('datadir') / 'icons',
+  exclude_directories: ['1024x1024'],
 )
 install_data(
   'LICENSE',

@@ -9,3 +9,7 @@ __pycache__/
 .coverage
 htmlcov/
 *.egg-info/
+.flatpak-builder/
+flatpak-build/
+flatpak-repo/
+*.flatpak

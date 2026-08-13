@@ -310,9 +310,14 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Launcher instalado iniciado com diretórios XDG limpos e warnings GLib fatais, sem erros do aplicativo.
 - [x] Workflow de CI adicionado para repetir lint, testes, metadados, traduções e build no GitHub Actions.
 - [x] Repositório Git publicado em `maylton/harmonia-player`, com branch `main`, CI e tag `v0.1.0-beta.1`.
-- [ ] Executar o build Flatpak completo em ambiente com `flatpak-builder`.
+- [x] Executar o build Flatpak completo em ambiente com `flatpak-builder`.
 - [ ] Decompor `HarmoniaWindow` por domínio após o beta; a classe concentra 210 métodos e uma refatoração ampla agora elevaria o risco de regressão.
 - [x] Interface completa internacionalizada em português do Brasil e inglês, incluindo plurais, erros, diálogos, tooltips e metadados AppStream.
 - [x] Catálogos `pt_BR` e `en` com 316 mensagens, cobertura integral e smoketest do pacote instalado nos dois idiomas.
 - [x] Ícone final do lançador integrado ao tema `hicolor` em oito tamanhos, de 16 a 1024 px, e validado na instalação Meson.
 - [x] Desktop Entry usa o caminho absoluto do prefixo instalado e anuncia App ID, nome, ícone e `StartupWMClass` consistentes ao GNOME Shell.
+- [x] Build completo executado com `org.flatpak.Builder`, GNOME Platform/SDK 50 e exportação para repositório OSTree local.
+- [x] Pacote instalado e iniciado na sessão GNOME real sem traceback ou erros GTK/GLib; imports GTK, libadwaita e GStreamer validados dentro do sandbox.
+- [x] Bundle único `Harmonia-0.1.0-beta.1-x86_64.flatpak` gerado com catálogos `pt_BR` e `en` incorporados e reinstalado com sucesso.
+- [x] Limite Flatpak de 512 px aplicado aos ícones exportados; a fonte de 1024 px permanece disponível no repositório.
+- [x] O linter do repositório confirma a estrutura do pacote e registra somente os bloqueios já conhecidos para Flathub: App ID sem correspondência ao repositório e screenshots sem espelhamento pela infraestrutura Flathub.
