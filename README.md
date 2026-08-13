@@ -99,6 +99,8 @@ appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainf
 
 - `src/harmonia/innertube.py`: authentication, requests, pagination, and API parsing;
 - `src/harmonia/app.py`: window composition and libadwaita interface coordination;
+- `src/harmonia/window_*.py`: domain-specific window behavior for Home, library,
+  details, search, playback, lyrics, account, history, and preferences;
 - `src/harmonia/services.py`: YouTube Music service orchestration;
 - `src/harmonia/ui.py`: shared interaction components and visual primitives;
 - `src/harmonia/player.py`: native GStreamer playback;

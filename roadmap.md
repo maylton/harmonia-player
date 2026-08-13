@@ -311,7 +311,7 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Workflow de CI adicionado para repetir lint, testes, metadados, traduções e build no GitHub Actions.
 - [x] Repositório Git publicado em `maylton/harmonia-player`, com branch `main`, CI e tag `v0.1.0-beta.1`.
 - [x] Executar o build Flatpak completo em ambiente com `flatpak-builder`.
-- [ ] Decompor `HarmoniaWindow` por domínio após o beta; a classe concentra 210 métodos e uma refatoração ampla agora elevaria o risco de regressão.
+- [x] Decompor `HarmoniaWindow` por domínio após o beta; composição e chrome permanecem na janela, enquanto comportamentos são organizados em mixins coesos.
 - [x] Interface completa internacionalizada em português do Brasil e inglês, incluindo plurais, erros, diálogos, tooltips e metadados AppStream.
 - [x] Catálogos `pt_BR` e `en` com 316 mensagens, cobertura integral e smoketest do pacote instalado nos dois idiomas.
 - [x] Ícone final do lançador integrado ao tema `hicolor` em oito tamanhos, de 16 a 1024 px, e validado na instalação Meson.
@@ -321,3 +321,14 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Bundle único `Harmonia-0.1.0-beta.1-x86_64.flatpak` gerado com catálogos `pt_BR` e `en` incorporados e reinstalado com sucesso.
 - [x] Limite Flatpak de 512 px aplicado aos ícones exportados; a fonte de 1024 px permanece disponível no repositório.
 - [x] O linter do repositório confirma a estrutura do pacote e registra somente os bloqueios já conhecidos para Flathub: App ID sem correspondência ao repositório e screenshots sem espelhamento pela infraestrutura Flathub.
+
+### 2026-08-13 — Decomposição da HarmoniaWindow
+
+- [x] `app.py` reduzido de 5.581 para 1.142 linhas e de 210 para 30 métodos próprios, preservando somente inicialização, chrome, navegação global e composição da janela.
+- [x] Preferências, histórico/downloads, Home/Explorar, biblioteca, detalhes, busca, mutações, letras, reprodução e conta/sincronização separados em dez módulos de domínio entre 195 e 747 linhas.
+- [x] Auditoria AST confirmou os 210 métodos originais sem perdas ou duplicações entre a janela e os mixins.
+- [x] Testes arquiteturais impedem que comportamentos de domínio retornem ao monólito ou que a janela ultrapasse o limite atual de métodos próprios.
+- [x] `POTFILES` cobre todos os módulos Python traduzíveis, com teste automático de cobertura; catálogos `pt_BR` e `en` permanecem completos e semanticamente inalterados.
+- [x] Navegação entre Home, Biblioteca, Explorar, Histórico, Downloads, quatro categorias e Preferências validada em runtime GTK com diretórios XDG limpos.
+- [x] Build Flatpak recompilou, instalou e iniciou todos os módulos no sandbox sem traceback ou erros GTK/GLib.
+- [x] Suíte ampliada para 82 testes aprovados; Ruff, formatter, compileall, desktop entry, AppStream, gettext, Meson e Flatpak validados.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,22 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 CATALOGS = ("pt_BR", "en")
+GETTEXT_CALL = re.compile(r"(?:^|[^A-Za-z0-9_])(?:_|ngettext)\(")
+
+
+def test_potfiles_covers_every_translatable_python_module() -> None:
+    listed = {
+        line.strip()
+        for line in (ROOT / "po" / "POTFILES").read_text().splitlines()
+        if line.strip().endswith(".py")
+    }
+    translatable = {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "src" / "harmonia").glob("*.py")
+        if GETTEXT_CALL.search(path.read_text())
+    }
+
+    assert translatable <= listed
 
 
 @pytest.mark.parametrize("language", CATALOGS)
