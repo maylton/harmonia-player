@@ -39,7 +39,7 @@ O código-fonte e o pacote Meson estão aptos para o primeiro beta. A inicializa
 
 ## Pendências externas ou pós-beta
 
-- esta cópia ainda não é um repositório Git; criar o repositório e publicar a tag `v0.1.0-beta.1` continua sendo uma ação externa;
-- os URLs e screenshots remotos do AppStream só poderão ser validados após o primeiro push ao GitHub;
+- código-fonte, documentação, screenshots e CI publicados em `https://github.com/maylton/harmonia-player`;
+- beta publicado como pré-release `v0.1.0-beta.1` no GitHub;
 - `flatpak-builder` não está instalado neste ambiente, portanto o build Flatpak completo permanece pendente;
 - `HarmoniaWindow` ainda é um monólito com mais de 200 métodos. A separação por páginas/controladores deve ocorrer depois do beta, com testes de integração, para não introduzir uma refatoração de alto risco na release.

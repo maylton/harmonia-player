@@ -309,7 +309,7 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Suíte ampliada para 79 testes aprovados, incluindo integridade dos catálogos e assets do lançador.
 - [x] Launcher instalado iniciado com diretórios XDG limpos e warnings GLib fatais, sem erros do aplicativo.
 - [x] Workflow de CI adicionado para repetir lint, testes, metadados, traduções e build no GitHub Actions.
-- [ ] Criar o repositório Git e publicar a tag `v0.1.0-beta.1`; os URLs AppStream só serão verificáveis depois do push.
+- [x] Repositório Git publicado em `maylton/harmonia-player`, com branch `main`, CI e tag `v0.1.0-beta.1`.
 - [ ] Executar o build Flatpak completo em ambiente com `flatpak-builder`.
 - [ ] Decompor `HarmoniaWindow` por domínio após o beta; a classe concentra 210 métodos e uma refatoração ampla agora elevaria o risco de regressão.
 - [x] Interface completa internacionalizada em português do Brasil e inglês, incluindo plurais, erros, diálogos, tooltips e metadados AppStream.
