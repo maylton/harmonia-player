@@ -1,60 +1,72 @@
 # Harmonia
 
-Cliente Linux nativo, em GTK 4 e libadwaita, para a biblioteca do YouTube Music. O projeto é inspirado no [Metrolist](https://github.com/MetrolistGroup/Metrolist) e porta sua integração InnerTube para Python. A interface e a reprodução são nativas; WebKitGTK é usado somente durante o login integrado.
+A native GTK 4 and libadwaita client for accessing your YouTube Music library on Linux. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. The interface and playback engine are native; WebKitGTK is used only for the integrated sign-in flow.
 
-> **Beta 0.1:** esta é uma versão de testes. A API InnerTube não é pública e pode mudar sem aviso. Use apenas com sua própria conta. O app nunca solicita nem armazena a senha do Google.
+> **Beta 0.1:** This is a testing release. InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
 
-## Estado atual
+## Features
 
-- interface adaptativa GTK4/libadwaita;
-- login automático em navegador WebKitGTK integrado, com captura segura da sessão;
-- autenticação manual por cookie como alternativa, usando `SAPISIDHASH`;
-- sincronização nativa de playlists, músicas, álbuns e artistas;
-- paginação por continuation token;
-- cache local para abrir a última biblioteca mesmo offline;
-- capas reais com cache local e carregamento em segundo plano;
-- navegação para playlists, álbuns e artistas com listagem de faixas;
-- reprodução de áudio nativa com GStreamer e resolução de streams pelo InnerTube;
-- barra persistente com pausar, continuar e parar;
-- busca nativa de músicas com resultados reproduzíveis;
-- fila de reprodução com anterior, próxima e avanço automático;
-- rádio e reprodução automática via `watch-next`, expandindo a fila com recomendações do YouTube Music;
-- integração MPRIS com os controles de mídia do GNOME, KDE e teclas multimídia;
-- persistência SQLite transacional com migração automática do cache JSON;
-- ações bidirecionais: curtir músicas, inscrição de artistas e gerenciamento de playlists;
-- histórico local de alterações enviadas ao YouTube Music;
-- home personalizada via `FEmusic_home`, preservando as seções da conta;
-- paginação completa da Home, incluindo mixtapes, favoritos antigos, descobertas e prateleiras adicionais;
-- barra de progresso buscável, tempos e fila de reprodução navegável;
-- layout desktop inspirado no conceito: sidebar responsiva, busca persistente e player em três áreas;
-- capas musicais em proporção 1:1, com recorte central e tratamento circular para artistas;
-- filtros segmentados da biblioteca, controle de volume, shuffle e repeat;
-- letras nativas do YouTube Music com painel no player e cache SQLite para acesso posterior;
-- Explorar nativo com lançamentos, paradas, tendências, vídeos, momentos e gêneros navegáveis;
-- credencial protegida pelo Secret Service do desktop, com migração segura do arquivo legado;
-- preferências de qualidade, idioma, região, proxy, cache e processamento de áudio;
-- equalizador, normalização, velocidade, tom, remoção de silêncio e temporizador;
-- manifesto Flatpak, ícone próprio, catálogo de traduções e metadados AppStream.
+- adaptive GTK 4 and libadwaita interface;
+- automatic sign-in through an embedded WebKitGTK browser with secure session capture;
+- manual cookie authentication as a fallback, using `SAPISIDHASH`;
+- native synchronization of playlists, songs, albums, and artists;
+- pagination through continuation tokens;
+- local cache for accessing the latest synchronized library while offline;
+- real artwork with local caching and background loading;
+- playlist, album, and artist pages with complete track listings;
+- native GStreamer playback with streams resolved through InnerTube;
+- persistent player bar with playback controls;
+- native search with playable results;
+- playback queue with previous, next, and automatic track progression;
+- radio and autoplay through `watch-next`, extending the queue with recommendations;
+- MPRIS integration for GNOME, KDE, media keys, and desktop media controls;
+- transactional SQLite persistence with automatic migration from the legacy JSON cache;
+- bidirectional actions for liking songs, subscribing to artists, and managing playlists;
+- local history of changes sent to YouTube Music;
+- personalized Home powered by `FEmusic_home`, preserving the account's original sections;
+- complete Home pagination, including mixtapes, old favorites, discoveries, and additional shelves;
+- seekable progress bar, playback times, and a navigable queue;
+- responsive desktop layout with a sidebar, persistent search, and a three-section player bar;
+- square music artwork with centered cropping and circular treatment for artists;
+- segmented library filters, volume, shuffle, and repeat controls;
+- native YouTube Music lyrics with synchronized scrolling and SQLite caching;
+- native Explore page with releases, charts, trends, videos, moods, and genres;
+- credentials protected by the desktop Secret Service, including safe migration from legacy storage;
+- preferences for quality, language, region, proxy, cache, and audio processing;
+- equalizer, normalization, speed, pitch, silence removal, and sleep timer;
+- optional ambient background and GTK or Material Expressive icon themes;
+- Brazilian Portuguese and English interface translations;
+- Flatpak manifest, application icon, gettext catalogs, and AppStream metadata.
 
-## Executar no código-fonte
+## Running from source
 
-Requer Python 3.11+, PyGObject, GTK 4, libadwaita, WebKitGTK 6, GStreamer 1.0 com plugins de áudio e libsecret.
+Harmonia requires Python 3.11 or later, PyGObject, GTK 4, libadwaita, WebKitGTK 6, GStreamer 1.0 with audio plugins, and libsecret.
 
 ```bash
 PYTHONPATH=src python3 -m harmonia
 ```
 
-Ao abrir, use **Conectar ao YouTube Music** para autenticar no navegador integrado. A entrada manual do cabeçalho `Cookie` permanece disponível como alternativa em ambientes sem WebKitGTK.
+When the application opens, select **Connect to YouTube Music** to authenticate through the embedded browser. Manual entry of the `Cookie` header remains available for environments without WebKitGTK.
 
-## Instalar com Meson
+## Installing with Meson
+
+System-wide installation:
 
 ```bash
-meson setup build
+meson setup build --buildtype=release
 meson compile -C build
-meson install -C build
+sudo meson install -C build
 ```
 
-## Testes
+Installation for the current user:
+
+```bash
+meson setup build-user --prefix="$HOME/.local" --buildtype=release
+meson compile -C build-user
+meson install -C build-user
+```
+
+## Tests
 
 ```bash
 python3 -m pip install -e '.[test]' ruff
@@ -63,23 +75,23 @@ ruff format --check src tests tools
 PYTHONPATH=src python3 -m pytest -q
 ```
 
-Metadados e integração desktop podem ser verificados com:
+Desktop integration and metadata can be checked with:
 
 ```bash
 desktop-file-validate data/io.github.harmonia.Harmonia.desktop
 appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainfo.xml
 ```
 
-## Estrutura
+## Project structure
 
-- `src/harmonia/innertube.py`: autenticação, requisições, paginação e parser da API;
-- `src/harmonia/app.py`: composição da janela e coordenação da interface libadwaita;
-- `src/harmonia/services.py`: orquestração dos serviços do YouTube Music;
-- `src/harmonia/ui.py`: componentes e estilos de interação compartilhados;
-- `src/harmonia/player.py`: reprodução nativa com GStreamer;
-- `src/harmonia/storage.py`: sessão e cache local;
-- `tests/`: testes do protocolo e parser.
+- `src/harmonia/innertube.py`: authentication, requests, pagination, and API parsing;
+- `src/harmonia/app.py`: window composition and libadwaita interface coordination;
+- `src/harmonia/services.py`: YouTube Music service orchestration;
+- `src/harmonia/ui.py`: shared interaction components and visual primitives;
+- `src/harmonia/player.py`: native GStreamer playback;
+- `src/harmonia/storage.py`: session and local cache persistence;
+- `tests/`: protocol, parser, interface, playback, and integration tests.
 
-## Licença
+## License
 
-GPL-3.0-or-later. Metrolist também é GPL-3.0; este projeto é uma implementação independente baseada no comportamento público do protocolo e na arquitetura do projeto de referência.
+Harmonia is licensed under GPL-3.0-or-later. Metrolist is also licensed under GPL-3.0; Harmonia is an independent implementation based on the protocol's observable behavior and the architecture of the reference project.
