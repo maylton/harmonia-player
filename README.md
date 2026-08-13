@@ -36,6 +36,8 @@ A native GTK 4 and libadwaita client for accessing your YouTube Music library on
 - equalizer, normalization, speed, pitch, silence removal, and sleep timer;
 - optional ambient background and GTK or Material Expressive icon themes;
 - Brazilian Portuguese and English interface translations;
+- private annual listening statistics and on-device recap;
+- portable backup and validated restore without account credentials or audio files;
 - Flatpak manifest, application icon, gettext catalogs, and AppStream metadata.
 
 ## Running from source

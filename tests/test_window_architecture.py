@@ -4,6 +4,7 @@ from harmonia.window_actions import WindowActionsMixin
 from harmonia.window_detail import WindowDetailMixin
 from harmonia.window_history import WindowHistoryMixin
 from harmonia.window_home import WindowHomeMixin
+from harmonia.window_insights import WindowInsightsMixin
 from harmonia.window_library import WindowLibraryMixin
 from harmonia.window_lyrics import WindowLyricsMixin
 from harmonia.window_playback import WindowPlaybackMixin
@@ -13,6 +14,7 @@ from harmonia.window_search import WindowSearchMixin
 DOMAIN_METHODS = {
     WindowPreferencesMixin: "show_settings",
     WindowHistoryMixin: "_render_history",
+    WindowInsightsMixin: "show_insights",
     WindowHomeMixin: "_render_home",
     WindowLibraryMixin: "_render",
     WindowDetailMixin: "_show_detail",

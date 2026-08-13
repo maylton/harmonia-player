@@ -9,6 +9,7 @@ src/harmonia/window_constants.py
 src/harmonia/window_detail.py
 src/harmonia/window_history.py
 src/harmonia/window_home.py
+src/harmonia/window_insights.py
 src/harmonia/window_library.py
 src/harmonia/window_lyrics.py
 src/harmonia/window_playback.py

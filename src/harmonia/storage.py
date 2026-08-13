@@ -8,6 +8,13 @@ import sqlite3
 import time
 from pathlib import Path
 
+from .insights import (
+    PlaybackInsights,
+    RankedArtist,
+    RankedMedia,
+    artist_from_subtitle,
+    current_year,
+)
 from .models import (
     DownloadRecord,
     ExploreData,
@@ -577,6 +584,60 @@ class Storage:
     def clear_history(self) -> None:
         with self._connect() as db:
             db.execute("DELETE FROM play_history")
+
+    def playback_insights(self, year: int | None = None, limit: int = 8) -> PlaybackInsights:
+        selected_year = year or current_year()
+        with self._connect() as db:
+            rows = db.execute(
+                """SELECT * FROM play_history
+                WHERE strftime('%Y', played_at, 'unixepoch', 'localtime') = ?
+                ORDER BY played_at""",
+                (str(selected_year),),
+            ).fetchall()
+        track_totals: dict[str, dict] = {}
+        artist_plays: dict[str, int] = {}
+        months = [0] * 12
+        listened_ms = 0
+        for row in rows:
+            listened = max(0, row["position_ms"])
+            listened_ms += listened
+            month = int(time.strftime("%m", time.localtime(row["played_at"]))) - 1
+            months[month] += 1
+            total = track_totals.setdefault(
+                row["item_id"], {"row": row, "plays": 0, "listened_ms": 0}
+            )
+            total["plays"] += 1
+            total["listened_ms"] += listened
+            artist = artist_from_subtitle(row["subtitle"])
+            artist_plays[artist] = artist_plays.get(artist, 0) + 1
+        ranked_tracks = sorted(
+            track_totals.values(),
+            key=lambda value: (value["plays"], value["listened_ms"]),
+            reverse=True,
+        )[:limit]
+        top_tracks = tuple(
+            RankedMedia(
+                self._item_from_row(value["row"]),
+                value["plays"],
+                value["listened_ms"],
+            )
+            for value in ranked_tracks
+        )
+        top_artists = tuple(
+            RankedArtist(name, plays)
+            for name, plays in sorted(
+                artist_plays.items(), key=lambda value: value[1], reverse=True
+            )[:limit]
+        )
+        return PlaybackInsights(
+            selected_year,
+            len(rows),
+            len(track_totals),
+            listened_ms,
+            top_tracks,
+            top_artists,
+            tuple(months),
+        )
 
     def get_setting(self, key: str, default: str = "") -> str:
         with self._connect() as db:

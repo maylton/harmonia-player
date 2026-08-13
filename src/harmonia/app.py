@@ -37,6 +37,7 @@ from .window_constants import EXPLORE_ICON, LIKED_ICON
 from .window_detail import WindowDetailMixin
 from .window_history import WindowHistoryMixin
 from .window_home import WindowHomeMixin
+from .window_insights import WindowInsightsMixin
 from .window_library import WindowLibraryMixin
 from .window_lyrics import WindowLyricsMixin
 from .window_playback import WindowPlaybackMixin
@@ -50,6 +51,7 @@ APP_ID = "io.github.harmonia.Harmonia"
 class HarmoniaWindow(
     WindowPreferencesMixin,
     WindowHistoryMixin,
+    WindowInsightsMixin,
     WindowHomeMixin,
     WindowLibraryMixin,
     WindowDetailMixin,
@@ -247,6 +249,7 @@ class HarmoniaWindow(
             (_("Playlists"), "view-list-symbolic", lambda: self.show_category("playlists")),
             (_("Artistas"), "avatar-default-symbolic", lambda: self.show_category("artists")),
             (_("Histórico"), "document-open-recent-symbolic", self.show_history),
+            (_("Estatísticas"), "applications-multimedia-symbolic", self.show_insights),
             (_("Downloads"), "folder-download-symbolic", self.show_downloads),
             (_("Preferências"), "preferences-system-symbolic", self.show_settings),
         ):
@@ -403,6 +406,14 @@ class HarmoniaWindow(
         self.sidebar.append(
             self._sidebar_button(
                 "history", _("Histórico"), "document-open-recent-symbolic", self.show_history
+            )
+        )
+        self.sidebar.append(
+            self._sidebar_button(
+                "insights",
+                _("Estatísticas"),
+                "applications-multimedia-symbolic",
+                self.show_insights,
             )
         )
         self.sidebar.append(
@@ -1080,7 +1091,7 @@ class HarmoniaWindow(
             self.show_home()
         elif self.main_view.startswith("explore"):
             self.show_explore()
-        elif self.main_view == "history":
+        elif self.main_view == "history" or self.main_view == "insights":
             self.show_home()
         elif self.main_view == "downloads":
             self.show_library()

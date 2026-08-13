@@ -115,12 +115,23 @@ Auditoria detalhada: [`visual-audit.md`](visual-audit.md).
 
 ## Recursos opcionais após a paridade principal
 
-- [ ] Estatísticas de reprodução e retrospectiva.
-- [ ] Backup e restauração.
+- [x] Estatísticas de reprodução e retrospectiva.
+- [x] Backup e restauração.
 - [ ] Last.fm e Discord Rich Presence.
 - [ ] Listen Together.
 - [ ] Reconhecimento de música.
 - [ ] Cast para dispositivos.
+
+### Ciclo de recursos opcionais
+
+- [x] Retrospectiva anual privada baseada apenas nas reproduções qualificadas registradas localmente, com totais, tempo, músicas, artistas e atividade mensal.
+- [x] Backup portátil versionado com snapshot SQLite consistente, verificação de integridade e cópia de recuperação anterior à restauração.
+- [x] Credenciais, cookies e arquivos de áudio explicitamente excluídos do backup.
+- [ ] Last.fm: autenticação web, now playing, scrobble e estado visível nas Preferências.
+- [ ] Discord Rich Presence: IPC local opt-in, estado de reprodução e limpeza ao encerrar.
+- [ ] Listen Together: criação/entrada em sessão, sincronização de fila e transporte e tratamento de atraso.
+- [ ] Reconhecimento de música: captura temporária, provedor configurável e abertura do resultado no Harmonia.
+- [ ] Cast: descoberta na rede local, seleção do dispositivo, handoff e controles remotos.
 
 ## Adaptações específicas para Linux
 

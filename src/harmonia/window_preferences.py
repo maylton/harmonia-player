@@ -11,7 +11,9 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
+from .backup import BackupError, BackupManager
 from .i18n import _, ngettext
+from .preferences import Preferences
 from .ui import (
     style_icon_button,
 )
@@ -209,6 +211,82 @@ class WindowPreferencesMixin:
         self.toast_overlay.add_toast(Adw.Toast(title=_("Conta desconectada")))
         self.show_settings()
 
+    def _export_backup_dialog(self) -> None:
+        dialog = Gtk.FileDialog(
+            title=_("Exportar backup"),
+            initial_name=f"harmonia-backup-{time.strftime('%Y-%m-%d')}.harmonia-backup",
+        )
+
+        def selected(file_dialog: Gtk.FileDialog, result) -> None:
+            try:
+                file = file_dialog.save_finish(result)
+                path = file.get_path()
+                if path:
+                    BackupManager(self.storage).export_to(Path(path))
+                    self.toast_overlay.add_toast(Adw.Toast(title=_("Backup exportado")))
+            except (GLib.Error, OSError, BackupError) as exc:
+                if not isinstance(exc, GLib.Error):
+                    self.toast_overlay.add_toast(
+                        Adw.Toast(
+                            title=_("Não foi possível exportar o backup: {error}").format(
+                                error=exc
+                            ),
+                            timeout=6,
+                        )
+                    )
+
+        dialog.save(self, None, selected)
+
+    def _restore_backup_dialog(self) -> None:
+        dialog = Gtk.FileDialog(title=_("Restaurar backup"))
+
+        def selected(file_dialog: Gtk.FileDialog, result) -> None:
+            try:
+                file = file_dialog.open_finish(result)
+                path = file.get_path()
+                if path:
+                    self._confirm_restore_backup(Path(path))
+            except GLib.Error:
+                return
+
+        dialog.open(self, None, selected)
+
+    def _confirm_restore_backup(self, path: Path) -> None:
+        dialog = Adw.AlertDialog(
+            heading=_("Restaurar este backup?"),
+            body=_(
+                "A biblioteca, o histórico e as preferências locais atuais serão substituídos. "
+                "A sessão da conta e os arquivos de áudio não serão alterados."
+            ),
+        )
+        dialog.add_response("cancel", _("Cancelar"))
+        dialog.add_response("restore", _("Restaurar"))
+        dialog.set_response_appearance("restore", Adw.ResponseAppearance.DESTRUCTIVE)
+
+        def response(_dialog, name: str) -> None:
+            if name != "restore":
+                return
+            try:
+                BackupManager(self.storage).restore_from(path)
+                self.preferences = Preferences.load(self.storage)
+                self.sections = self.storage.load_library()
+                self.home_sections = self.storage.load_home()
+                self.explore_data = self.storage.load_explore()
+                self._apply_audio_preferences()
+                self._apply_appearance_preferences()
+                self.toast_overlay.add_toast(Adw.Toast(title=_("Backup restaurado")))
+                self.show_settings()
+            except (OSError, BackupError) as exc:
+                self.toast_overlay.add_toast(
+                    Adw.Toast(
+                        title=_("Não foi possível restaurar o backup: {error}").format(error=exc),
+                        timeout=6,
+                    )
+                )
+
+        dialog.connect("response", response)
+        dialog.present(self)
+
     def show_settings(self) -> None:
         self.main_view = "settings"
         self.back.set_visible(False)
@@ -353,6 +431,27 @@ class WindowPreferencesMixin:
         cache.add_suffix(clear_cache)
         streaming.add(cache)
         page.add(streaming)
+
+        data = Adw.PreferencesGroup(
+            title=_("Dados e backup"),
+            description=_(
+                "Salva biblioteca, histórico e preferências sem incluir credenciais ou áudio."
+            ),
+        )
+        backup = Adw.ActionRow(
+            title=_("Backup portátil"),
+            subtitle=_("Compatível com outras instalações do Harmonia"),
+        )
+        export = Gtk.Button(label=_("Exportar"), valign=Gtk.Align.CENTER)
+        export.add_css_class("pill")
+        export.connect("clicked", lambda *_: self._export_backup_dialog())
+        backup.add_suffix(export)
+        restore = Gtk.Button(label=_("Restaurar"), valign=Gtk.Align.CENTER)
+        restore.add_css_class("pill")
+        restore.connect("clicked", lambda *_: self._restore_backup_dialog())
+        backup.add_suffix(restore)
+        data.add(backup)
+        page.add(data)
 
         audio = Adw.PreferencesGroup(
             title=_("Áudio"),
