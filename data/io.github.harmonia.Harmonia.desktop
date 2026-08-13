@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=Harmonia
+GenericName=Music Player
+GenericName[pt_BR]=Reprodutor de música
+Comment=Sua biblioteca do YouTube Music no Linux
+Comment[en]=Your YouTube Music library on Linux
+Exec=@BINDIR@/harmonia
+Icon=io.github.harmonia.Harmonia
+StartupWMClass=io.github.harmonia.Harmonia
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Music;Player;GTK;
+Keywords=Music;YouTube;Streaming;Audio;
+Keywords[pt_BR]=Música;YouTube;Streaming;Áudio;
+StartupNotify=true

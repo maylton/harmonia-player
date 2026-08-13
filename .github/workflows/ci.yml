@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            appstream desktop-file-utils gettext gir1.2-adw-1 \
+            gir1.2-gstreamer-1.0 gir1.2-gtk-4.0 gir1.2-secret-1 \
+            gir1.2-webkit-6.0 meson ninja-build python3-gi python3-venv
+
+      - name: Preparar ferramentas Python
+        run: |
+          python3 -m venv --system-site-packages .venv
+          .venv/bin/pip install pytest ruff
+
+      - name: Validar código e testes
+        run: |
+          .venv/bin/ruff check src tests tools
+          .venv/bin/ruff format --check src tests tools
+          .venv/bin/python -m pytest -q
+
+      - name: Validar metadados e traduções
+        run: |
+          desktop-file-validate data/io.github.harmonia.Harmonia.desktop
+          appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainfo.xml
+          msgfmt --check --check-format -o /dev/null po/pt_BR.po
+          msgfmt --check --check-format -o /dev/null po/en.po
+
+      - name: Compilar pacote Meson
+        run: |
+          meson setup build --buildtype=release
+          meson compile -C build

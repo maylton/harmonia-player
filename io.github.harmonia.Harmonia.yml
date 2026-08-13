@@ -1,0 +1,27 @@
+app-id: io.github.harmonia.Harmonia
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: harmonia
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  - --talk-name=org.freedesktop.secrets
+  - --own-name=org.mpris.MediaPlayer2.Harmonia
+modules:
+  - name: harmonia
+    buildsystem: meson
+    sources:
+      - type: dir
+        path: .
+        skip:
+          - .venv
+          - build
+          - build-*
+          - .pytest_cache
+          - .ruff_cache
+          - __pycache__

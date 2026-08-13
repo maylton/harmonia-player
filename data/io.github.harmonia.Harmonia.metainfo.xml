@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.harmonia.Harmonia</id>
+  <name>Harmonia</name>
+  <name xml:lang="pt-BR">Harmonia</name>
+  <summary>Biblioteca do YouTube Music para o Linux</summary>
+  <summary xml:lang="en">Your YouTube Music library on Linux</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <launchable type="desktop-id">io.github.harmonia.Harmonia.desktop</launchable>
+  <description>
+    <p>Cliente GTK4 e libadwaita para acessar, organizar e reproduzir sua biblioteca do YouTube Music.</p>
+    <p xml:lang="en">A GTK4 and libadwaita client for browsing, organizing and playing your YouTube Music library.</p>
+    <ul>
+      <li>Biblioteca, início, exploração, busca, letras e downloads</li>
+      <li xml:lang="en">Library, home, explore, search, lyrics, and downloads</li>
+      <li>Reprodução nativa com fila, MPRIS e processamento GStreamer</li>
+      <li xml:lang="en">Native playback with queue, MPRIS, and GStreamer processing</li>
+      <li>Login integrado e credenciais protegidas pelo Secret Service</li>
+      <li xml:lang="en">Integrated login and credentials protected by Secret Service</li>
+    </ul>
+  </description>
+  <developer id="io.github.harmonia">
+    <name>Harmonia Contributors</name>
+  </developer>
+  <url type="homepage">https://github.com/maylton/harmonia-player</url>
+  <url type="bugtracker">https://github.com/maylton/harmonia-player/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Tela inicial responsiva com prateleiras de música</caption>
+      <caption xml:lang="en">Responsive home screen with music shelves</caption>
+      <image type="source">https://raw.githubusercontent.com/maylton/harmonia-player/main/data/screenshots/home.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Preferências de streaming e processamento de áudio</caption>
+      <caption xml:lang="en">Streaming and audio processing preferences</caption>
+      <image type="source">https://raw.githubusercontent.com/maylton/harmonia-player/main/data/screenshots/preferences.png</image>
+    </screenshot>
+  </screenshots>
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </recommends>
+  <content_rating type="oars-1.1" />
+  <update_contact>harmonia@localhost.invalid</update_contact>
+  <releases>
+    <release version="0.1.0-beta.1" date="2026-08-13" type="development">
+      <description>
+        <p>Primeira versão beta pública do cliente.</p>
+        <p xml:lang="en">First public beta release of the client.</p>
+      </description>
+    </release>
+  </releases>
+</component>

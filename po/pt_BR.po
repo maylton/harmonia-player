@@ -1,0 +1,1381 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Harmonia Contributors
+# This file is distributed under the same license as the Harmonia package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Harmonia 0.1.0-beta.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-13 13:29-0300\n"
+"PO-Revision-Date: 2026-08-13 13:30-0300\n"
+"Last-Translator: Harmonia Contributors\n"
+"Language-Team: Portuguese (Brazil)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/harmonia/app.py:60 src/harmonia/app.py:260 src/harmonia/app.py:403
+#: src/harmonia/innertube.py:110
+msgid "Playlists"
+msgstr "Playlists"
+
+#: src/harmonia/app.py:61 src/harmonia/innertube.py:106
+#: src/harmonia/innertube.py:430
+msgid "Músicas"
+msgstr "Músicas"
+
+#: src/harmonia/app.py:62 src/harmonia/innertube.py:108
+msgid "Álbuns"
+msgstr "Álbuns"
+
+#: src/harmonia/app.py:63 src/harmonia/app.py:261 src/harmonia/app.py:411
+#: src/harmonia/innertube.py:109
+msgid "Artistas"
+msgstr "Artistas"
+
+#: src/harmonia/app.py:78 src/harmonia/app.py:376
+msgid "Harmonia"
+msgstr "Harmonia"
+
+#: src/harmonia/app.py:233
+msgid "Pesquisar músicas, álbuns, artistas…"
+msgstr "Pesquisar músicas, álbuns, artistas…"
+
+#: src/harmonia/app.py:242 src/harmonia/auth.py:40
+msgid "Voltar"
+msgstr "Voltar"
+
+#: src/harmonia/app.py:248
+msgid "Navegação"
+msgstr "Navegação"
+
+#: src/harmonia/app.py:256 src/harmonia/app.py:382 src/harmonia/app.py:1933
+msgid "Início"
+msgstr "Início"
+
+#: src/harmonia/app.py:257 src/harmonia/app.py:385 src/harmonia/app.py:1811
+msgid "Explorar"
+msgstr "Explorar"
+
+#: src/harmonia/app.py:258 src/harmonia/app.py:389 src/harmonia/app.py:2306
+msgid "Biblioteca"
+msgstr "Biblioteca"
+
+#: src/harmonia/app.py:259 src/harmonia/app.py:397
+msgid "Músicas curtidas"
+msgstr "Músicas curtidas"
+
+#: src/harmonia/app.py:262 src/harmonia/app.py:418 src/harmonia/app.py:1690
+msgid "Histórico"
+msgstr "Histórico"
+
+#: src/harmonia/app.py:263 src/harmonia/app.py:423 src/harmonia/app.py:1577
+#: src/harmonia/app.py:2322
+msgid "Downloads"
+msgstr "Downloads"
+
+#: src/harmonia/app.py:264 src/harmonia/app.py:428 src/harmonia/app.py:1327
+msgid "Preferências"
+msgstr "Preferências"
+
+#: src/harmonia/app.py:273
+msgid "Sincronizar biblioteca"
+msgstr "Sincronizar biblioteca"
+
+#: src/harmonia/app.py:278 src/harmonia/app.py:318 src/harmonia/app.py:1331
+msgid "Conta"
+msgstr "Conta"
+
+#: src/harmonia/app.py:357
+#, python-brace-format
+msgid "Conta — {name}"
+msgstr "Conta — {name}"
+
+#: src/harmonia/app.py:392
+msgid "SUAS MÚSICAS"
+msgstr "SUAS MÚSICAS"
+
+#: src/harmonia/app.py:433 src/harmonia/app.py:3989
+msgid "Nova playlist"
+msgstr "Nova playlist"
+
+#: src/harmonia/app.py:472
+msgid "Expandir player"
+msgstr "Expandir player"
+
+#: src/harmonia/app.py:524
+msgid "Abrir player expandido"
+msgstr "Abrir player expandido"
+
+#: src/harmonia/app.py:537
+msgid "Curtir"
+msgstr "Curtir"
+
+#: src/harmonia/app.py:554 src/harmonia/app.py:850
+msgid "Ordem aleatória"
+msgstr "Ordem aleatória"
+
+#: src/harmonia/app.py:560 src/harmonia/app.py:857
+msgid "Anterior"
+msgstr "Anterior"
+
+#: src/harmonia/app.py:565 src/harmonia/app.py:864
+msgid "Pausar ou continuar"
+msgstr "Pausar ou continuar"
+
+#: src/harmonia/app.py:571 src/harmonia/app.py:870
+msgid "Próxima"
+msgstr "Próxima"
+
+#: src/harmonia/app.py:575 src/harmonia/app.py:875
+msgid "Repetir"
+msgstr "Repetir"
+
+#: src/harmonia/app.py:582 src/harmonia/app.py:4409 src/harmonia/app.py:4410
+msgid "Reprodução automática ativada"
+msgstr "Reprodução automática ativada"
+
+#: src/harmonia/app.py:598 src/harmonia/app.py:607 src/harmonia/app.py:832
+#: src/harmonia/app.py:841 src/harmonia/app.py:938 src/harmonia/app.py:939
+#: src/harmonia/app.py:5120 src/harmonia/app.py:5121 src/harmonia/app.py:5122
+#: src/harmonia/app.py:5123 src/harmonia/app.py:5371 src/harmonia/app.py:5372
+msgid "0:00"
+msgstr "0:00"
+
+#: src/harmonia/app.py:620 src/harmonia/app.py:628 src/harmonia/app.py:745
+#: src/harmonia/app.py:899 src/harmonia/app.py:4499
+msgid "Letras"
+msgstr "Letras"
+
+#: src/harmonia/app.py:629 src/harmonia/app.py:900 src/harmonia/app.py:4500
+msgid "Comece a reproduzir uma música para ver a letra."
+msgstr "Comece a reproduzir uma música para ver a letra."
+
+#: src/harmonia/app.py:633 src/harmonia/app.py:4944
+msgid "Fila de reprodução"
+msgstr "Fila de reprodução"
+
+#: src/harmonia/app.py:648
+msgid "Parar"
+msgstr "Parar"
+
+#: src/harmonia/app.py:723
+msgid "Recolher player (Esc)"
+msgstr "Recolher player (Esc)"
+
+#: src/harmonia/app.py:743
+msgid "Música"
+msgstr "Música"
+
+#: src/harmonia/app.py:748 src/harmonia/app.py:1052 src/harmonia/app.py:4994
+msgid "Relacionadas"
+msgstr "Relacionadas"
+
+#: src/harmonia/app.py:821 src/harmonia/app.py:2116 src/harmonia/app.py:2197
+#: src/harmonia/app.py:3560 src/harmonia/app.py:3962
+msgid "Curtir música"
+msgstr "Curtir música"
+
+#: src/harmonia/app.py:931
+msgid "Nenhuma música reproduzindo"
+msgstr "Nenhuma música reproduzindo"
+
+#: src/harmonia/app.py:932
+msgid "Escolha uma faixa para começar"
+msgstr "Escolha uma faixa para começar"
+
+#: src/harmonia/app.py:1022
+msgid "Fila"
+msgstr "Fila"
+
+#: src/harmonia/app.py:1029
+msgid "Nada na fila"
+msgstr "Nada na fila"
+
+#: src/harmonia/app.py:1030
+msgid "Escolha uma música para ver as próximas faixas."
+msgstr "Escolha uma música para ver as próximas faixas."
+
+#: src/harmonia/app.py:1064 src/harmonia/app.py:5010
+msgid "Adicionar ao fim"
+msgstr "Adicionar ao fim"
+
+#: src/harmonia/app.py:1252
+msgid "0 B armazenados"
+msgstr "0 B armazenados"
+
+#: src/harmonia/app.py:1255
+#, python-brace-format
+msgid "Cache limpo · {size} removidos"
+msgstr "Cache limpo · {size} removidos"
+
+#: src/harmonia/app.py:1272
+#, python-brace-format
+msgid "Temporizador definido para {count} minuto"
+msgid_plural "Temporizador definido para {count} minutos"
+msgstr[0] "Temporizador definido para {count} minuto"
+msgstr[1] "Temporizador definido para {count} minutos"
+
+#: src/harmonia/app.py:1283
+msgid "Reprodução pausada pelo temporizador"
+msgstr "Reprodução pausada pelo temporizador"
+
+#: src/harmonia/app.py:1287
+msgid "Validando sessão…"
+msgstr "Validando sessão…"
+
+#: src/harmonia/app.py:1300
+msgid "Conectada e válida"
+msgstr "Conectada e válida"
+
+#: src/harmonia/app.py:1300
+msgid "Sessão inválida ou expirada"
+msgstr "Sessão inválida ou expirada"
+
+#: src/harmonia/app.py:1303
+msgid "Conta validada"
+msgstr "Conta validada"
+
+#: src/harmonia/app.py:1305
+#, python-brace-format
+msgid "Não foi possível validar a conta{detail}"
+msgstr "Não foi possível validar a conta{detail}"
+
+#: src/harmonia/app.py:1316
+msgid "Conta desconectada"
+msgstr "Conta desconectada"
+
+#: src/harmonia/app.py:1332
+msgid "Sessão protegida pelo chaveiro Secret Service do sistema."
+msgstr "Sessão protegida pelo chaveiro Secret Service do sistema."
+
+#: src/harmonia/app.py:1335 src/harmonia/app.py:1734 src/harmonia/app.py:2320
+msgid "YouTube Music"
+msgstr "YouTube Music"
+
+#: src/harmonia/app.py:1336
+msgid "Conectada"
+msgstr "Conectada"
+
+#: src/harmonia/app.py:1336
+msgid "Não conectada"
+msgstr "Não conectada"
+
+#: src/harmonia/app.py:1340
+msgid "Validar"
+msgstr "Validar"
+
+#: src/harmonia/app.py:1346 src/harmonia/app.py:5425
+msgid "Desconectar"
+msgstr "Desconectar"
+
+#: src/harmonia/app.py:1354 src/harmonia/app.py:5427
+msgid "Conectar"
+msgstr "Conectar"
+
+#: src/harmonia/app.py:1363
+msgid "Streaming"
+msgstr "Streaming"
+
+#: src/harmonia/app.py:1364
+msgid "Estas opções são aplicadas à próxima requisição ao YouTube Music."
+msgstr "Estas opções são aplicadas à próxima requisição ao YouTube Music."
+
+#: src/harmonia/app.py:1381
+msgid "Aparência"
+msgstr "Aparência"
+
+#: src/harmonia/app.py:1382
+msgid "Personalize o ambiente visual sem alterar o conteúdo."
+msgstr "Personalize o ambiente visual sem alterar o conteúdo."
+
+#: src/harmonia/app.py:1385
+msgid "Fundo ambiente desfocado"
+msgstr "Fundo ambiente desfocado"
+
+#: src/harmonia/app.py:1386
+msgid "Usa as cores da capa atual atrás da interface"
+msgstr "Usa as cores da capa atual atrás da interface"
+
+#: src/harmonia/app.py:1396
+msgid "Estilo dos ícones"
+msgstr "Estilo dos ícones"
+
+#: src/harmonia/app.py:1398
+msgid "GTK — padrão do sistema"
+msgstr "GTK — padrão do sistema"
+
+#: src/harmonia/app.py:1399
+msgid "Material Expressive"
+msgstr "Material Expressive"
+
+#: src/harmonia/app.py:1409
+msgid "Qualidade do áudio"
+msgstr "Qualidade do áudio"
+
+#: src/harmonia/app.py:1410
+msgid "Alta"
+msgstr "Alta"
+
+#: src/harmonia/app.py:1410
+msgid "Média"
+msgstr "Média"
+
+#: src/harmonia/app.py:1410
+msgid "Econômica"
+msgstr "Econômica"
+
+#: src/harmonia/app.py:1417
+msgid "Idioma"
+msgstr "Idioma"
+
+#: src/harmonia/app.py:1419
+msgid "Português (Brasil)"
+msgstr "Português (Brasil)"
+
+#: src/harmonia/app.py:1420
+msgid "English"
+msgstr "English"
+
+#: src/harmonia/app.py:1421
+msgid "Español"
+msgstr "Español"
+
+#: src/harmonia/app.py:1430
+msgid "Região"
+msgstr "Região"
+
+#: src/harmonia/app.py:1432
+msgid "Brasil"
+msgstr "Brasil"
+
+#: src/harmonia/app.py:1433
+msgid "Estados Unidos"
+msgstr "Estados Unidos"
+
+#: src/harmonia/app.py:1434
+msgid "Portugal"
+msgstr "Portugal"
+
+#: src/harmonia/app.py:1435
+msgid "Japão"
+msgstr "Japão"
+
+#: src/harmonia/app.py:1442
+msgid "Proxy HTTP(S)"
+msgstr "Proxy HTTP(S)"
+
+#: src/harmonia/app.py:1442
+msgid "Opcional · exemplo: http://127.0.0.1:8080"
+msgstr "Opcional · exemplo: http://127.0.0.1:8080"
+
+#: src/harmonia/app.py:1445
+msgid "Sem proxy"
+msgstr "Sem proxy"
+
+#: src/harmonia/app.py:1454
+msgid "Cache de capas"
+msgstr "Cache de capas"
+
+#: src/harmonia/app.py:1455
+#, python-brace-format
+msgid "{size} armazenados"
+msgstr "{size} armazenados"
+
+#: src/harmonia/app.py:1457
+msgid "Limpar"
+msgstr "Limpar"
+
+#: src/harmonia/app.py:1465
+msgid "Áudio"
+msgstr "Áudio"
+
+#: src/harmonia/app.py:1466
+msgid "Processamento nativo em tempo real pelo GStreamer."
+msgstr "Processamento nativo em tempo real pelo GStreamer."
+
+#: src/harmonia/app.py:1477
+msgid "Normalização de volume"
+msgstr "Normalização de volume"
+
+#: src/harmonia/app.py:1477
+msgid "Reduz variações de volume entre faixas"
+msgstr "Reduz variações de volume entre faixas"
+
+#: src/harmonia/app.py:1488
+msgid "Pular silêncio"
+msgstr "Pular silêncio"
+
+#: src/harmonia/app.py:1488
+msgid "Remove trechos silenciosos longos"
+msgstr "Remove trechos silenciosos longos"
+
+#: src/harmonia/app.py:1549
+msgid "Temporizador"
+msgstr "Temporizador"
+
+#: src/harmonia/app.py:1568
+msgid "Validar conta"
+msgstr "Validar conta"
+
+#: src/harmonia/app.py:1579
+#, python-brace-format
+msgid "{count} item · {size} utilizado"
+msgid_plural "{count} itens · {size} utilizados"
+msgstr[0] "{count} item · {size} utilizado"
+msgstr[1] "{count} itens · {size} utilizados"
+
+#: src/harmonia/app.py:1593
+msgid "Nenhum download"
+msgstr "Nenhum download"
+
+#: src/harmonia/app.py:1595
+msgid "Use o botão de download em um álbum ou playlist para ouvir offline."
+msgstr "Use o botão de download em um álbum ou playlist para ouvir offline."
+
+#: src/harmonia/app.py:1602
+msgid "Na fila"
+msgstr "Na fila"
+
+#: src/harmonia/app.py:1603
+msgid "Baixando"
+msgstr "Baixando"
+
+#: src/harmonia/app.py:1604
+msgid "Pausado"
+msgstr "Pausado"
+
+#: src/harmonia/app.py:1605
+msgid "Disponível offline"
+msgstr "Disponível offline"
+
+#: src/harmonia/app.py:1606
+msgid "Falha"
+msgstr "Falha"
+
+#: src/harmonia/app.py:1622
+msgid "Pausar"
+msgstr "Pausar"
+
+#: src/harmonia/app.py:1629
+msgid "Retomar"
+msgstr "Retomar"
+
+#: src/harmonia/app.py:1636
+msgid "Reproduzir offline"
+msgstr "Reproduzir offline"
+
+#: src/harmonia/app.py:1643 src/harmonia/app.py:2693
+msgid "Excluir download"
+msgstr "Excluir download"
+
+#: src/harmonia/app.py:1671
+#, python-brace-format
+msgid "O histórico local foi preservado; o remoto falhou: {error}"
+msgstr "O histórico local foi preservado; o remoto falhou: {error}"
+
+#: src/harmonia/app.py:1685
+msgid "Limpar local"
+msgstr "Limpar local"
+
+#: src/harmonia/app.py:1691
+msgid "Reproduções da conta e deste dispositivo"
+msgstr "Reproduções da conta e deste dispositivo"
+
+#: src/harmonia/app.py:1698
+msgid "Registrar neste dispositivo"
+msgstr "Registrar neste dispositivo"
+
+#: src/harmonia/app.py:1700
+msgid "Quando desativado, o Harmonia não grava novas reproduções localmente."
+msgstr "Quando desativado, o Harmonia não grava novas reproduções localmente."
+
+#: src/harmonia/app.py:1721
+msgid "Nenhuma reprodução"
+msgstr "Nenhuma reprodução"
+
+#: src/harmonia/app.py:1722
+msgid "As músicas tocadas aparecerão aqui."
+msgstr "As músicas tocadas aparecerão aqui."
+
+#: src/harmonia/app.py:1734
+msgid "Neste dispositivo"
+msgstr "Neste dispositivo"
+
+#: src/harmonia/app.py:1739
+msgid "Remover do histórico"
+msgstr "Remover do histórico"
+
+#: src/harmonia/app.py:1761
+msgid "Histórico local ativado"
+msgstr "Histórico local ativado"
+
+#: src/harmonia/app.py:1763
+msgid "Histórico local pausado"
+msgstr "Histórico local pausado"
+
+#: src/harmonia/app.py:1794
+#, python-brace-format
+msgid "Não foi possível remover: {error}"
+msgstr "Não foi possível remover: {error}"
+
+#: src/harmonia/app.py:1812
+msgid "Lançamentos, paradas e sons para cada momento."
+msgstr "Lançamentos, paradas e sons para cada momento."
+
+#: src/harmonia/app.py:1829
+msgid "Descubra"
+msgstr "Descubra"
+
+#: src/harmonia/app.py:1834
+msgid "Momentos e gêneros"
+msgstr "Momentos e gêneros"
+
+#: src/harmonia/app.py:1839
+msgid "Preparando o Explorar…"
+msgstr "Preparando o Explorar…"
+
+#: src/harmonia/app.py:1840
+msgid "Buscando novidades no YouTube Music"
+msgstr "Buscando novidades no YouTube Music"
+
+#: src/harmonia/app.py:1888 src/harmonia/app.py:2978 src/harmonia/app.py:3138
+#, python-brace-format
+msgid "Carregando {title}…"
+msgstr "Carregando {title}…"
+
+#: src/harmonia/app.py:1889
+msgid "Consultando o YouTube Music"
+msgstr "Consultando o YouTube Music"
+
+#: src/harmonia/app.py:1915 src/harmonia/app.py:3194
+msgid "Não foi possível abrir"
+msgstr "Não foi possível abrir"
+
+#: src/harmonia/app.py:1921
+msgid "Seleção atualizada pelo YouTube Music."
+msgstr "Seleção atualizada pelo YouTube Music."
+
+#: src/harmonia/app.py:1933
+msgid "Escolhas feitas para você pelo YouTube Music"
+msgstr "Escolhas feitas para você pelo YouTube Music"
+
+#: src/harmonia/app.py:1938
+msgid "Preparando sua música…"
+msgstr "Preparando sua música…"
+
+#: src/harmonia/app.py:1939
+msgid "Carregando recomendações personalizadas"
+msgstr "Carregando recomendações personalizadas"
+
+#: src/harmonia/app.py:2109 src/harmonia/app.py:3572
+msgid "Opções da faixa"
+msgstr "Opções da faixa"
+
+#: src/harmonia/app.py:2116 src/harmonia/app.py:2197
+msgid "Remover das curtidas"
+msgstr "Remover das curtidas"
+
+#: src/harmonia/app.py:2119 src/harmonia/app.py:3578 src/harmonia/app.py:4236
+msgid "Adicionar à playlist"
+msgstr "Adicionar à playlist"
+
+#: src/harmonia/app.py:2123 src/harmonia/app.py:3581
+msgid "Baixar"
+msgstr "Baixar"
+
+#: src/harmonia/app.py:2229
+msgid "Tocar tudo"
+msgstr "Tocar tudo"
+
+#: src/harmonia/app.py:2230
+#, python-brace-format
+msgid "Reproduzir tudo em {title}"
+msgstr "Reproduzir tudo em {title}"
+
+#: src/harmonia/app.py:2239
+#, python-brace-format
+msgid "Voltar em {title}"
+msgstr "Voltar em {title}"
+
+#: src/harmonia/app.py:2243
+#, python-brace-format
+msgid "Avançar em {title}"
+msgstr "Avançar em {title}"
+
+#: src/harmonia/app.py:2321
+msgid "Uploads"
+msgstr "Uploads"
+
+#: src/harmonia/app.py:2323
+msgid "Arquivos locais"
+msgstr "Arquivos locais"
+
+#: src/harmonia/app.py:2324
+msgid "Podcasts"
+msgstr "Podcasts"
+
+#: src/harmonia/app.py:2333
+msgid "Mais recentes"
+msgstr "Mais recentes"
+
+#: src/harmonia/app.py:2333
+msgid "A-Z"
+msgstr "A-Z"
+
+#: src/harmonia/app.py:2372 src/harmonia/app.py:2843
+msgid "Adicionar arquivos"
+msgstr "Adicionar arquivos"
+
+#: src/harmonia/app.py:2377 src/harmonia/app.py:4069
+msgid "Importar playlist"
+msgstr "Importar playlist"
+
+#: src/harmonia/app.py:2382 src/harmonia/app.py:4015
+msgid "Nova playlist local"
+msgstr "Nova playlist local"
+
+#: src/harmonia/app.py:2391
+msgid "Sincronizando…"
+msgstr "Sincronizando…"
+
+#: src/harmonia/app.py:2392
+msgid "Buscando sua biblioteca no YouTube Music"
+msgstr "Buscando sua biblioteca no YouTube Music"
+
+#: src/harmonia/app.py:2399
+msgid "Nada nesta visualização"
+msgstr "Nada nesta visualização"
+
+#: src/harmonia/app.py:2400
+msgid "Altere a origem ou adicione conteúdo à biblioteca."
+msgstr "Altere a origem ou adicione conteúdo à biblioteca."
+
+#: src/harmonia/app.py:2420
+msgid "Músicas enviadas à sua conta do YouTube Music."
+msgstr "Músicas enviadas à sua conta do YouTube Music."
+
+#: src/harmonia/app.py:2421
+msgid "Conteúdo disponível para reprodução offline."
+msgstr "Conteúdo disponível para reprodução offline."
+
+#: src/harmonia/app.py:2422
+msgid "Arquivos e playlists armazenados neste computador."
+msgstr "Arquivos e playlists armazenados neste computador."
+
+#: src/harmonia/app.py:2423
+msgid "Programas e episódios salvos na sua conta."
+msgstr "Programas e episódios salvos na sua conta."
+
+#: src/harmonia/app.py:2426
+msgid "Álbuns e EPs salvos na sua coleção."
+msgstr "Álbuns e EPs salvos na sua coleção."
+
+#: src/harmonia/app.py:2427
+msgid "Artistas que você acompanha."
+msgstr "Artistas que você acompanha."
+
+#: src/harmonia/app.py:2428
+msgid "Todas as músicas marcadas como favoritas."
+msgstr "Todas as músicas marcadas como favoritas."
+
+#: src/harmonia/app.py:2429
+msgid "Playlists salvas na sua conta."
+msgstr "Playlists salvas na sua conta."
+
+#: src/harmonia/app.py:2505
+msgid "Sua música, no seu desktop"
+msgstr "Sua música, no seu desktop"
+
+#: src/harmonia/app.py:2507
+msgid ""
+"Conecte sua sessão do YouTube Music para sincronizar playlists, músicas, "
+"álbuns e artistas."
+msgstr ""
+"Conecte sua sessão do YouTube Music para sincronizar playlists, músicas, "
+"álbuns e artistas."
+
+#: src/harmonia/app.py:2511 src/harmonia/app.py:5413 src/harmonia/auth.py:23
+msgid "Conectar ao YouTube Music"
+msgstr "Conectar ao YouTube Music"
+
+#: src/harmonia/app.py:2523 src/harmonia/app.py:3128
+msgid "Mostrar tudo"
+msgstr "Mostrar tudo"
+
+#: src/harmonia/app.py:2680
+msgid "Remover da biblioteca local"
+msgstr "Remover da biblioteca local"
+
+#: src/harmonia/app.py:2700
+msgid "Remover das músicas marcadas"
+msgstr "Remover das músicas marcadas"
+
+#: src/harmonia/app.py:2814
+msgid "Carregando…"
+msgstr "Carregando…"
+
+#: src/harmonia/app.py:2815
+#, python-brace-format
+msgid "Buscando {title}"
+msgstr "Buscando {title}"
+
+#: src/harmonia/app.py:2840 src/harmonia/app.py:3069 src/harmonia/app.py:3372
+#: src/harmonia/ui.py:112
+msgid "Reproduzir"
+msgstr "Reproduzir"
+
+#: src/harmonia/app.py:2845
+msgid "Exportar"
+msgstr "Exportar"
+
+#: src/harmonia/app.py:2847 src/harmonia/app.py:3409 src/harmonia/app.py:4183
+msgid "Renomear playlist"
+msgstr "Renomear playlist"
+
+#: src/harmonia/app.py:2850 src/harmonia/app.py:3415
+msgid "Excluir playlist"
+msgstr "Excluir playlist"
+
+#: src/harmonia/app.py:2853
+#, python-brace-format
+msgid "{count} faixa"
+msgid_plural "{count} faixas"
+msgstr[0] "{count} faixa"
+msgstr[1] "{count} faixas"
+
+#: src/harmonia/app.py:2859
+#, python-brace-format
+msgid "Playlist local · {tracks}"
+msgstr "Playlist local · {tracks}"
+
+#: src/harmonia/app.py:2876 src/harmonia/app.py:4965
+msgid "Mover para cima"
+msgstr "Mover para cima"
+
+#: src/harmonia/app.py:2877 src/harmonia/app.py:4966
+msgid "Mover para baixo"
+msgstr "Mover para baixo"
+
+#: src/harmonia/app.py:2878
+msgid "Remover"
+msgstr "Remover"
+
+#: src/harmonia/app.py:2935
+msgid "Excluir playlist local?"
+msgstr "Excluir playlist local?"
+
+#: src/harmonia/app.py:2937
+#, python-brace-format
+msgid ""
+"“{title}” será removida deste dispositivo. Os arquivos de áudio serão "
+"preservados."
+msgstr ""
+"“{title}” será removida deste dispositivo. Os arquivos de áudio serão "
+"preservados."
+
+#: src/harmonia/app.py:2940 src/harmonia/app.py:2957 src/harmonia/app.py:3994
+#: src/harmonia/app.py:4020 src/harmonia/app.py:4186 src/harmonia/app.py:4212
+#: src/harmonia/app.py:4247 src/harmonia/app.py:5423
+msgid "Cancelar"
+msgstr "Cancelar"
+
+#: src/harmonia/app.py:2941 src/harmonia/app.py:4213
+msgid "Excluir"
+msgstr "Excluir"
+
+#: src/harmonia/app.py:2954
+msgid "Renomear playlist local"
+msgstr "Renomear playlist local"
+
+#: src/harmonia/app.py:2958 src/harmonia/app.py:4187
+msgid "Renomear"
+msgstr "Renomear"
+
+#: src/harmonia/app.py:2979
+msgid "Buscando a página completa do artista"
+msgstr "Buscando a página completa do artista"
+
+#: src/harmonia/app.py:3008
+msgid "Não foi possível abrir o artista"
+msgstr "Não foi possível abrir o artista"
+
+#: src/harmonia/app.py:3052 src/harmonia/app.py:3254
+msgid "ARTISTA"
+msgstr "ARTISTA"
+
+#: src/harmonia/app.py:3074
+msgid "Rádio"
+msgstr "Rádio"
+
+#: src/harmonia/app.py:3081 src/harmonia/app.py:3112
+msgid "Inscrito"
+msgstr "Inscrito"
+
+#: src/harmonia/app.py:3112
+msgid "Inscrever-se"
+msgstr "Inscrever-se"
+
+#: src/harmonia/app.py:3121 src/harmonia/app.py:3978
+msgid "Inscrição realizada"
+msgstr "Inscrição realizada"
+
+#: src/harmonia/app.py:3121 src/harmonia/app.py:3978
+msgid "Inscrição cancelada"
+msgstr "Inscrição cancelada"
+
+#: src/harmonia/app.py:3164 src/harmonia/app.py:4551
+msgid "Não foi possível carregar"
+msgstr "Não foi possível carregar"
+
+#: src/harmonia/app.py:3252
+msgid "ÁLBUM"
+msgstr "ÁLBUM"
+
+#: src/harmonia/app.py:3253
+msgid "PLAYLIST"
+msgstr "PLAYLIST"
+
+#: src/harmonia/app.py:3255
+msgid "COLEÇÃO"
+msgstr "COLEÇÃO"
+
+#: src/harmonia/app.py:3276
+msgid "Nenhuma faixa"
+msgstr "Nenhuma faixa"
+
+#: src/harmonia/app.py:3277
+msgid "Esta coleção ainda não possui músicas disponíveis."
+msgstr "Esta coleção ainda não possui músicas disponíveis."
+
+#: src/harmonia/app.py:3347
+#, python-brace-format
+msgid "{count} música"
+msgid_plural "{count} músicas"
+msgstr[0] "{count} música"
+msgstr[1] "{count} músicas"
+
+#: src/harmonia/app.py:3352
+msgid "•"
+msgstr "•"
+
+#: src/harmonia/app.py:3378
+msgid "Reproduzir em ordem aleatória"
+msgstr "Reproduzir em ordem aleatória"
+
+#: src/harmonia/app.py:3388 src/harmonia/app.py:3463
+msgid "Salvo na biblioteca"
+msgstr "Salvo na biblioteca"
+
+#: src/harmonia/app.py:3388 src/harmonia/app.py:3463
+msgid "Salvar na biblioteca"
+msgstr "Salvar na biblioteca"
+
+#: src/harmonia/app.py:3398
+msgid "Fazer download"
+msgstr "Fazer download"
+
+#: src/harmonia/app.py:3403
+msgid "Mais opções"
+msgstr "Mais opções"
+
+#: src/harmonia/app.py:3422
+msgid "Cancelar inscrição"
+msgstr "Cancelar inscrição"
+
+#: src/harmonia/app.py:3428
+msgid "Mais ações para álbuns em breve"
+msgstr "Mais ações para álbuns em breve"
+
+#: src/harmonia/app.py:3451
+msgid "O YouTube Music não informou como salvar este item"
+msgstr "O YouTube Music não informou como salvar este item"
+
+#: src/harmonia/app.py:3458
+msgid "Adicionado à biblioteca"
+msgstr "Adicionado à biblioteca"
+
+#: src/harmonia/app.py:3458
+msgid "Removido da biblioteca"
+msgstr "Removido da biblioteca"
+
+#: src/harmonia/app.py:3490
+msgid "Nenhuma faixa disponível para download"
+msgstr "Nenhuma faixa disponível para download"
+
+#: src/harmonia/app.py:3498
+#, python-brace-format
+msgid "{count} download iniciado"
+msgid_plural "{count} downloads adicionados à fila"
+msgstr[0] "{count} download iniciado"
+msgstr[1] "{count} downloads adicionados à fila"
+
+#: src/harmonia/app.py:3509
+msgid "#"
+msgstr "#"
+
+#: src/harmonia/app.py:3511
+msgid "TÍTULO"
+msgstr "TÍTULO"
+
+#: src/harmonia/app.py:3545
+#, python-brace-format
+msgid "Reproduzir {title}"
+msgstr "Reproduzir {title}"
+
+#: src/harmonia/app.py:3560 src/harmonia/app.py:3962
+msgid "Remover das músicas curtidas"
+msgstr "Remover das músicas curtidas"
+
+#: src/harmonia/app.py:3585
+msgid "Remover desta playlist"
+msgstr "Remover desta playlist"
+
+#: src/harmonia/app.py:3747
+msgid "Buscando…"
+msgstr "Buscando…"
+
+#: src/harmonia/app.py:3779
+msgid "A busca falhou"
+msgstr "A busca falhou"
+
+#: src/harmonia/app.py:3784
+msgid " Algumas categorias não puderam ser consultadas."
+msgstr " Algumas categorias não puderam ser consultadas."
+
+#: src/harmonia/app.py:3787
+msgid "Nenhum resultado"
+msgstr "Nenhum resultado"
+
+#: src/harmonia/app.py:3788
+#, python-brace-format
+msgid "Nada encontrado para “{query}”"
+msgstr "Nada encontrado para “{query}”"
+
+#: src/harmonia/app.py:3796
+#, python-brace-format
+msgid "Resultados para “{query}”"
+msgstr "Resultados para “{query}”"
+
+#: src/harmonia/app.py:3800
+msgid ""
+"Algumas categorias não puderam ser carregadas; os resultados disponíveis "
+"foram preservados."
+msgstr ""
+"Algumas categorias não puderam ser carregadas; os resultados disponíveis "
+"foram preservados."
+
+#: src/harmonia/app.py:3842
+#, python-brace-format
+msgid "Carregar mais {category}"
+msgstr "Carregar mais {category}"
+
+#: src/harmonia/app.py:3891
+#, python-brace-format
+msgid "Não foi possível carregar mais resultados: {error}"
+msgstr "Não foi possível carregar mais resultados: {error}"
+
+#: src/harmonia/app.py:3908
+msgid "Enviando alteração ao YouTube Music…"
+msgstr "Enviando alteração ao YouTube Music…"
+
+#: src/harmonia/app.py:3924
+#, python-brace-format
+msgid "Alteração não aplicada: {error}"
+msgstr "Alteração não aplicada: {error}"
+
+#: src/harmonia/app.py:3939
+msgid "Música adicionada à biblioteca"
+msgstr "Música adicionada à biblioteca"
+
+#: src/harmonia/app.py:3939
+msgid "Música removida da biblioteca"
+msgstr "Música removida da biblioteca"
+
+#: src/harmonia/app.py:3990
+msgid "Ela será criada como privada na sua conta do YouTube Music."
+msgstr "Ela será criada como privada na sua conta do YouTube Music."
+
+#: src/harmonia/app.py:3992 src/harmonia/app.py:4018
+msgid "Nome da playlist"
+msgstr "Nome da playlist"
+
+#: src/harmonia/app.py:3995 src/harmonia/app.py:4021
+msgid "Criar"
+msgstr "Criar"
+
+#: src/harmonia/app.py:4006
+msgid "Playlist criada"
+msgstr "Playlist criada"
+
+#: src/harmonia/app.py:4016
+msgid "A playlist ficará somente neste computador."
+msgstr "A playlist ficará somente neste computador."
+
+#: src/harmonia/app.py:4037
+msgid "Arquivos de áudio"
+msgstr "Arquivos de áudio"
+
+#: src/harmonia/app.py:4044
+msgid "Adicionar arquivos de áudio"
+msgstr "Adicionar arquivos de áudio"
+
+#: src/harmonia/app.py:4070
+msgid "Playlists M3U ou JSON"
+msgstr "Playlists M3U ou JSON"
+
+#: src/harmonia/app.py:4120
+#, python-brace-format
+msgid "Não foi possível importar: {error}"
+msgstr "Não foi possível importar: {error}"
+
+#: src/harmonia/app.py:4128
+msgid "Exportar playlist"
+msgstr "Exportar playlist"
+
+#: src/harmonia/app.py:4171
+msgid "Playlist exportada"
+msgstr "Playlist exportada"
+
+#: src/harmonia/app.py:4175
+#, python-brace-format
+msgid "Não foi possível exportar: {error}"
+msgstr "Não foi possível exportar: {error}"
+
+#: src/harmonia/app.py:4198
+msgid "Playlist renomeada"
+msgstr "Playlist renomeada"
+
+#: src/harmonia/app.py:4207
+msgid "Excluir playlist?"
+msgstr "Excluir playlist?"
+
+#: src/harmonia/app.py:4208
+#, python-brace-format
+msgid "“{title}” será removida permanentemente da sua conta."
+msgstr "“{title}” será removida permanentemente da sua conta."
+
+#: src/harmonia/app.py:4223
+msgid "Playlist excluída"
+msgstr "Playlist excluída"
+
+#: src/harmonia/app.py:4234
+msgid "Crie uma playlist primeiro"
+msgstr "Crie uma playlist primeiro"
+
+#: src/harmonia/app.py:4248
+msgid "Adicionar"
+msgstr "Adicionar"
+
+#: src/harmonia/app.py:4259 src/harmonia/app.py:4266
+#, python-brace-format
+msgid "Adicionada a {title}"
+msgstr "Adicionada a {title}"
+
+#: src/harmonia/app.py:4279
+msgid "Faixa removida da playlist"
+msgstr "Faixa removida da playlist"
+
+#: src/harmonia/app.py:4416 src/harmonia/app.py:4417
+msgid "Reprodução automática desativada"
+msgstr "Reprodução automática desativada"
+
+#: src/harmonia/app.py:4456
+#, python-brace-format
+msgid "Não foi possível continuar a rádio: {error}"
+msgstr "Não foi possível continuar a rádio: {error}"
+
+#: src/harmonia/app.py:4473
+msgid "A rádio não encontrou novas músicas"
+msgstr "A rádio não encontrou novas músicas"
+
+#: src/harmonia/app.py:4487
+msgid "Tentar novamente"
+msgstr "Tentar novamente"
+
+#: src/harmonia/app.py:4524
+msgid "Carregando letra…"
+msgstr "Carregando letra…"
+
+#: src/harmonia/app.py:4556
+msgid "Letra indisponível"
+msgstr "Letra indisponível"
+
+#: src/harmonia/app.py:4557
+msgid "Nenhum dos provedores encontrou uma letra para esta faixa."
+msgstr "Nenhum dos provedores encontrou uma letra para esta faixa."
+
+#: src/harmonia/app.py:4599
+msgid "sincronizada"
+msgstr "sincronizada"
+
+#: src/harmonia/app.py:4599
+msgid "não sincronizada"
+msgstr "não sincronizada"
+
+#: src/harmonia/app.py:4601
+#, python-brace-format
+msgid "{provider} · Letra {mode}"
+msgstr "{provider} · Letra {mode}"
+
+#: src/harmonia/app.py:4623
+#, python-brace-format
+msgid "Ir para {time}"
+msgstr "Ir para {time}"
+
+#: src/harmonia/app.py:4677 src/harmonia/app.py:4680
+msgid "Automática"
+msgstr "Automática"
+
+#: src/harmonia/app.py:4679
+#, python-brace-format
+msgid "Fonte: {provider}"
+msgstr "Fonte: {provider}"
+
+#: src/harmonia/app.py:4682
+msgid "Alternar provedor de letras"
+msgstr "Alternar provedor de letras"
+
+#: src/harmonia/app.py:4688
+msgid "Traduzir para português"
+msgstr "Traduzir para português"
+
+#: src/harmonia/app.py:4693
+msgid "Copiar letra"
+msgstr "Copiar letra"
+
+#: src/harmonia/app.py:4698
+msgid "Adiantar letra em 250 ms"
+msgstr "Adiantar letra em 250 ms"
+
+#: src/harmonia/app.py:4703
+msgid "Zerar ajuste de tempo"
+msgstr "Zerar ajuste de tempo"
+
+#: src/harmonia/app.py:4708
+msgid "Atrasar letra em 250 ms"
+msgstr "Atrasar letra em 250 ms"
+
+#: src/harmonia/app.py:4754
+msgid "Letra copiada"
+msgstr "Letra copiada"
+
+#: src/harmonia/app.py:4770
+msgid "Traduzindo letra…"
+msgstr "Traduzindo letra…"
+
+#: src/harmonia/app.py:4791
+#, python-brace-format
+msgid "Falha ao traduzir: {error}"
+msgstr "Falha ao traduzir: {error}"
+
+#: src/harmonia/app.py:4792
+msgid "resposta vazia"
+msgstr "resposta vazia"
+
+#: src/harmonia/app.py:4808
+msgid "Letra traduzida"
+msgstr "Letra traduzida"
+
+#: src/harmonia/app.py:4967
+msgid "Remover da fila"
+msgstr "Remover da fila"
+
+#: src/harmonia/app.py:5007
+msgid "Tocar em seguida"
+msgstr "Tocar em seguida"
+
+#: src/harmonia/app.py:5031
+msgid "As recomendações aparecem conforme a fila avança."
+msgstr "As recomendações aparecem conforme a fila avança."
+
+#: src/harmonia/app.py:5125
+#, python-brace-format
+msgid "Preparando {title}…"
+msgstr "Preparando {title}…"
+
+#: src/harmonia/app.py:5138
+msgid "O arquivo local não está mais disponível"
+msgstr "O arquivo local não está mais disponível"
+
+#: src/harmonia/app.py:5309
+msgid "O stream falhou; renovando a conexão…"
+msgstr "O stream falhou; renovando a conexão…"
+
+#: src/harmonia/app.py:5334
+#, python-brace-format
+msgid "Falha na reprodução: {error}"
+msgstr "Falha na reprodução: {error}"
+
+#: src/harmonia/app.py:5347
+#, python-brace-format
+msgid "Falha na reprodução após renovar o stream: {error}"
+msgstr "Falha na reprodução após renovar o stream: {error}"
+
+#: src/harmonia/app.py:5392
+#, python-brace-format
+msgid "Navegador integrado indisponível: {error}"
+msgstr "Navegador integrado indisponível: {error}"
+
+#: src/harmonia/app.py:5406
+msgid "Conta conectada. Sincronizando…"
+msgstr "Conta conectada. Sincronizando…"
+
+#: src/harmonia/app.py:5415
+msgid ""
+"No navegador, abra music.youtube.com já conectado, copie o cabeçalho Cookie "
+"de uma requisição nas ferramentas de desenvolvedor e cole abaixo. A senha "
+"nunca é solicitada."
+msgstr ""
+"No navegador, abra music.youtube.com já conectado, copie o cabeçalho Cookie "
+"de uma requisição nas ferramentas de desenvolvedor e cole abaixo. A senha "
+"nunca é solicitada."
+
+#: src/harmonia/app.py:5419
+msgid "SAPISID=…; __Secure-3PAPISID=…"
+msgstr "SAPISID=…; __Secure-3PAPISID=…"
+
+#: src/harmonia/app.py:5443
+msgid "Cookie inválido: SAPISID não encontrado"
+msgstr "Cookie inválido: SAPISID não encontrado"
+
+#: src/harmonia/app.py:5461
+msgid "Sincronizando biblioteca…"
+msgstr "Sincronizando biblioteca…"
+
+#: src/harmonia/app.py:5504
+#, python-brace-format
+msgid "Não foi possível atualizar o início: {error}"
+msgstr "Não foi possível atualizar o início: {error}"
+
+#: src/harmonia/app.py:5519
+#, python-brace-format
+msgid "Não foi possível atualizar o Explorar: {error}"
+msgstr "Não foi possível atualizar o Explorar: {error}"
+
+#: src/harmonia/app.py:5532
+#, python-brace-format
+msgid "Falha na sincronização: {error}"
+msgstr "Falha na sincronização: {error}"
+
+#: src/harmonia/app.py:5547
+#, python-brace-format
+msgid "Biblioteca atualizada · {count} item"
+msgid_plural "Biblioteca atualizada · {count} itens"
+msgstr[0] "Biblioteca atualizada · {count} item"
+msgstr[1] "Biblioteca atualizada · {count} itens"
+
+#: src/harmonia/auth.py:46
+msgid "Usar cookie manualmente"
+msgstr "Usar cookie manualmente"
+
+#: src/harmonia/innertube.py:107
+msgid "Vídeos"
+msgstr "Vídeos"
+
+#: src/harmonia/innertube.py:136
+msgid ""
+"O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
+"o cookie completo."
+msgstr ""
+"O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
+"o cookie completo."
+
+#: src/harmonia/innertube.py:188
+msgid "O YouTube Music não retornou o perfil da conta ativa."
+msgstr "O YouTube Music não retornou o perfil da conta ativa."
+
+#: src/harmonia/innertube.py:490
+msgid "Artista"
+msgstr "Artista"
+
+#: src/harmonia/innertube.py:634
+msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
+msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
+
+#: src/harmonia/innertube.py:638
+#, python-brace-format
+msgid "YouTube Music respondeu HTTP {code}: {detail}"
+msgstr "YouTube Music respondeu HTTP {code}: {detail}"
+
+#: src/harmonia/innertube.py:645
+#, python-brace-format
+msgid "Não foi possível conectar ao YouTube Music: {error}"
+msgstr "Não foi possível conectar ao YouTube Music: {error}"
+
+#: src/harmonia/innertube.py:648
+msgid "Não foi possível concluir a requisição ao YouTube Music."
+msgstr "Não foi possível concluir a requisição ao YouTube Music."
+
+#: src/harmonia/innertube.py:663
+#, python-brace-format
+msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
+msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
+
+#: src/harmonia/innertube.py:694
+#, python-brace-format
+msgid "Categoria de busca desconhecida: {category}"
+msgstr "Categoria de busca desconhecida: {category}"
+
+#: src/harmonia/innertube.py:767
+msgid "O artista não possui um identificador"
+msgstr "O artista não possui um identificador"
+
+#: src/harmonia/innertube.py:797
+msgid "O YouTube Music não forneceu um token de remoção"
+msgstr "O YouTube Music não forneceu um token de remoção"
+
+#: src/harmonia/innertube.py:832
+#, python-brace-format
+msgid "Categoria desconhecida: {category}"
+msgstr "Categoria desconhecida: {category}"
+
+#: src/harmonia/innertube.py:882
+msgid "A faixa não contém um identificador reproduzível."
+msgstr "A faixa não contém um identificador reproduzível."
+
+#: src/harmonia/innertube.py:991
+#, python-brace-format
+msgid "Não foi possível obter um stream reproduzível. {details}"
+msgstr "Não foi possível obter um stream reproduzível. {details}"
+
+#: src/harmonia/innertube.py:1048
+#, python-brace-format
+msgid "Não foi possível registrar a reprodução: {error}"
+msgstr "Não foi possível registrar a reprodução: {error}"
+
+#: src/harmonia/innertube.py:1071
+msgid "O nome da playlist não pode ficar vazio"
+msgstr "O nome da playlist não pode ficar vazio"
+
+#: src/harmonia/innertube.py:1078
+msgid "O YouTube criou a playlist sem retornar o identificador"
+msgstr "O YouTube criou a playlist sem retornar o identificador"
+
+#: src/harmonia/innertube.py:1101
+msgid ""
+"A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
+msgstr ""
+"A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
+
+#: src/harmonia/player.py:50
+msgid "Intervalo HTTP inválido"
+msgstr "Intervalo HTTP inválido"
+
+#: src/harmonia/player.py:75
+msgid "O servidor de áudio não informou o tamanho total"
+msgstr "O servidor de áudio não informou o tamanho total"
+
+#: src/harmonia/player.py:157
+msgid "O elemento GStreamer playbin não está disponível"
+msgstr "O elemento GStreamer playbin não está disponível"
+
+#: src/harmonia/player.py:299
+#, python-brace-format
+msgid ""
+"O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
+msgstr ""
+"O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"

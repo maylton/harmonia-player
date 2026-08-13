@@ -1,0 +1,19 @@
+[Icon Theme]
+Name=Harmonia Material Expressive
+Comment=Bold expressive icons for Harmonia
+Inherits=Adwaita,hicolor
+Directories=scalable/actions,scalable/places
+
+[scalable/actions]
+Size=16
+Type=Scalable
+MinSize=8
+MaxSize=128
+Context=Actions
+
+[scalable/places]
+Size=16
+Type=Scalable
+MinSize=8
+MaxSize=128
+Context=Places
