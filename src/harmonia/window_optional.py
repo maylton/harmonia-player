@@ -35,8 +35,8 @@ class WindowOptionalMixin:
         self._cast_started = 0.0
         self._current_stream_url = ""
         self._cast_media_server = None
-        GLib.timeout_add_seconds(1, self._optional_tick)
-        self.connect("close-request", self._close_optional_services)
+        self._shutdown_started = False
+        self._optional_tick_source = GLib.timeout_add_seconds(1, self._optional_tick)
 
     def _append_optional_preferences(self, page: Adw.PreferencesPage) -> None:
         together = Adw.PreferencesGroup(
@@ -493,3 +493,24 @@ class WindowOptionalMixin:
         self._leave_together_session(refresh=False)
         self._optional_stop()
         return False
+
+    def _shutdown_application(self, *_args) -> bool:
+        if self._shutdown_started:
+            return False
+        self._shutdown_started = True
+        if self._optional_tick_source:
+            GLib.source_remove(self._optional_tick_source)
+            self._optional_tick_source = 0
+        self._close_optional_services()
+        self._close_social_integrations()
+        self.mpris.close()
+        self.player.close()
+        application = self.get_application()
+        if application:
+            GLib.idle_add(self._quit_after_close, application)
+        return False
+
+    @staticmethod
+    def _quit_after_close(application) -> bool:
+        application.quit()
+        return GLib.SOURCE_REMOVE

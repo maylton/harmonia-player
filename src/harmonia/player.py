@@ -139,6 +139,11 @@ class _StreamRelay:
                 self.streams.pop(generation, None)
         return f"http://127.0.0.1:{self.server.server_port}/stream/{self.generation}"
 
+    def close(self) -> None:
+        self.streams.clear()
+        self.server.shutdown()
+        self.server.server_close()
+
 
 class NativePlayer:
     """Thin GStreamer playbin wrapper kept independent from the GTK widgets."""
@@ -162,9 +167,9 @@ class NativePlayer:
         self.on_eos = on_eos
         self._last_position_us = 0
         self._relay = _StreamRelay()
-        bus = self._playbin.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self._on_message)
+        self._bus = self._playbin.get_bus()
+        self._bus.add_signal_watch()
+        self._bus.connect("message", self._on_message)
 
     def _install_audio_filter(self) -> None:
         """Attach one reusable native processing graph to playbin."""
@@ -246,6 +251,11 @@ class NativePlayer:
     def stop(self) -> None:
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+
+    def close(self) -> None:
+        self.stop()
+        self._bus.remove_signal_watch()
+        self._relay.close()
 
     @property
     def volume(self) -> float:

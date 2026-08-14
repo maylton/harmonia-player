@@ -203,6 +203,7 @@ class HarmoniaWindow(
                 "position": self._playback_position_us,
             },
         )
+        self.connect("close-request", self._shutdown_application)
         self._build_player_bar()
         compact_player = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 900px"))
         compact_player.add_setter(self.sidebar, "visible", False)

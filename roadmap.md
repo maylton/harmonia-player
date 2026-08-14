@@ -381,3 +381,11 @@ Observação: a validação automatizada usa respostas protocolares locais e nã
 - [x] Imports dos três recursos, lançador e catálogos pt-BR/en verificados dentro do sandbox instalado.
 
 Observação: reconhecimento real exige um token opt-in do provedor, enquanto a validação ponta a ponta do Cast exige um Media Renderer UPnP/DLNA disponível na rede local.
+
+### 2026-08-13 — Encerramento completo da aplicação
+
+- [x] Fechamento da última janela centralizado em uma única rotina idempotente.
+- [x] GStreamer, relay HTTP, MPRIS, Discord, Cast e Listen Together são liberados antes da saída.
+- [x] A ação `Quit` do MPRIS fecha a janela pelo mesmo ciclo de vida do botão do GNOME.
+- [x] Flatpak atualizado para o commit OSTree `4dff080f1c9b`; encerramento validado sem processo, sandbox ou proprietário D-Bus residual.
+- [x] Suíte ampliada para 100 testes aprovados, incluindo liberação do MPRIS e proteção contra shutdown duplicado.

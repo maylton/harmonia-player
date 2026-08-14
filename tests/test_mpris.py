@@ -17,6 +17,8 @@ def service_stub():
     service.item = None
     service.duration_us = 0
     service.connection = None
+    service.registrations = []
+    service.owner = 0
     return service
 
 
@@ -65,3 +67,25 @@ def test_mpris_clear_removes_stale_track_metadata():
 
     assert service.item is None
     assert service.duration_us == 0
+
+
+def test_mpris_close_releases_registered_objects_and_name(monkeypatch):
+    service = service_stub()
+    unregistered = []
+
+    class Connection:
+        def unregister_object(self, registration):
+            unregistered.append(registration)
+
+    released = []
+    monkeypatch.setattr("harmonia.mpris.Gio.bus_unown_name", released.append)
+    service.connection = Connection()
+    service.registrations = [3, 7]
+    service.owner = 11
+
+    service.close()
+
+    assert unregistered == [3, 7]
+    assert released == [11]
+    assert service.connection is None
+    assert service.owner == 0

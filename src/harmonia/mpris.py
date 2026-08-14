@@ -82,7 +82,8 @@ class MprisService:
             if window:
                 window.present()
         elif method == "Quit":
-            self.app.quit()
+            window = self.app.get_active_window()
+            window.close() if window else self.app.quit()
         elif method in actions and actions[method] in self.callbacks:
             self.callbacks[actions[method]]()
         elif method == "Seek":
@@ -200,3 +201,13 @@ class MprisService:
         self.item = None
         self.duration_us = 0
         self.update()
+
+    def close(self) -> None:
+        if self.connection:
+            for registration in self.registrations:
+                self.connection.unregister_object(registration)
+        self.registrations.clear()
+        self.connection = None
+        if self.owner:
+            Gio.bus_unown_name(self.owner)
+            self.owner = 0

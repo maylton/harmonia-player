@@ -31,7 +31,6 @@ class WindowSocialMixin:
         self._lastfm_scrobbled_request = -1
         self.discord_presence = None
         self._configure_discord_presence()
-        self.connect("close-request", self._close_social_integrations)
 
     def _lastfm_client(self, *, require_session: bool = True) -> LastFmClient:
         credentials = self.lastfm_credentials.load()

@@ -13,6 +13,7 @@ from harmonia.cast import CastDevice, LocalMediaServer, UpnpDiscovery, UpnpRende
 from harmonia.models import LibraryItem
 from harmonia.recognition import AuddRecognitionProvider, MusicRecognizer
 from harmonia.together import TogetherClient, TogetherHost, TogetherState
+from harmonia.window_optional import WindowOptionalMixin
 
 
 class Response(io.BytesIO):
@@ -159,3 +160,31 @@ def test_local_cast_media_server_supports_ranges(monkeypatch, tmp_path):
             assert response.read() == b"3456"
     finally:
         server.close()
+
+
+def test_window_shutdown_releases_services_and_quits_once(monkeypatch):
+    events = []
+
+    class Service:
+        def close(self):
+            events.append("close")
+
+    class Application:
+        def quit(self):
+            events.append("quit")
+
+    window = WindowOptionalMixin()
+    window._shutdown_started = False
+    window._optional_tick_source = 0
+    window.mpris = Service()
+    window.player = Service()
+    window._close_optional_services = lambda: events.append("optional")
+    window._close_social_integrations = lambda: events.append("social")
+    window.get_application = Application
+    monkeypatch.setattr(
+        "harmonia.window_optional.GLib.idle_add", lambda callback, *args: callback(*args)
+    )
+
+    assert window._shutdown_application() is False
+    assert window._shutdown_application() is False
+    assert events == ["optional", "social", "close", "close", "quit"]
