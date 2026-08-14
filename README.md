@@ -40,6 +40,12 @@ A native GTK 4 and libadwaita client for accessing your YouTube Music library on
 - portable backup and validated restore without account credentials or audio files;
 - optional Last.fm now-playing and scrobbling with browser authorization;
 - optional Discord Rich Presence through local IPC only;
+- Listen Together sessions for synchronizing a queue and playback across Harmonia
+  clients on the same local network;
+- opt-in song recognition through AudD or a compatible configurable provider,
+  using a temporary microphone sample that is deleted immediately;
+- UPnP/DLNA renderer discovery, playback handoff, remote transport controls, and
+  LAN streaming for downloaded or local tracks;
 - Flatpak manifest, application icon, gettext catalogs, and AppStream metadata.
 
 ## Running from source
@@ -121,6 +127,9 @@ appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainf
 - `src/harmonia/services.py`: YouTube Music service orchestration;
 - `src/harmonia/ui.py`: shared interaction components and visual primitives;
 - `src/harmonia/player.py`: native GStreamer playback;
+- `src/harmonia/together.py`: authenticated local-network playback sessions;
+- `src/harmonia/recognition.py`: temporary audio capture and recognition providers;
+- `src/harmonia/cast.py`: UPnP/DLNA discovery, transport, and local media relay;
 - `src/harmonia/storage.py`: session and local cache persistence;
 - `tests/`: protocol, parser, interface, playback, and integration tests.
 

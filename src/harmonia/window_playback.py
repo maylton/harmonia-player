@@ -27,7 +27,7 @@ class WindowPlaybackMixin:
     def _current_playback_state(self, position_ms: int | None = None) -> PlaybackState:
         if position_ms is None:
             position_ms = (
-                self.player.position_us // 1000
+                self._playback_position_us() // 1000
                 if self._stream_ready
                 else self._restored_position_ms
             )
@@ -107,7 +107,7 @@ class WindowPlaybackMixin:
         return False
 
     def _play_previous(self):
-        if self.player.position_us > 3_000_000:
+        if self._playback_position_us() > 3_000_000:
             self.play_item(self.queue[self.queue_index])
         elif self.queue_index > 0:
             self.queue_index -= 1
@@ -452,8 +452,10 @@ class WindowPlaybackMixin:
         self.expanded_duration_label.set_label(self._format_time(self.current_duration_ms))
         self.progress.set_sensitive(True)
         self.expanded_progress.set_sensitive(True)
-        self.player.play(url)
+        if not self._optional_start_stream(url):
+            self.player.play(url)
         self._social_track_started(self._pending_seek_ms)
+        self._optional_stream_started()
         if self._pending_seek_ms:
             GLib.timeout_add(700, self._apply_pending_seek, request_id, self._pending_seek_ms)
         self._history_tracking_request = request_id
@@ -477,13 +479,13 @@ class WindowPlaybackMixin:
         if (
             request_id != self._play_request
             or request_id != self._history_tracking_request
-            or self.player.position_us < 28_000_000
+            or self._playback_position_us() < 28_000_000
             or not self.storage.history_enabled()
         ):
             return False
         if self._history_recorded_request == request_id:
             return False
-        self.storage.record_history(item, self.player.position_us // 1000)
+        self.storage.record_history(item, self._playback_position_us() // 1000)
         self._history_recorded_request = request_id
         if tracking_url:
             threading.Thread(
@@ -504,7 +506,7 @@ class WindowPlaybackMixin:
 
     def _apply_pending_seek(self, request_id: int, position_ms: int) -> bool:
         if request_id == self._play_request and self.current_duration_ms > position_ms:
-            self.player.seek(position_ms * 1000)
+            self._seek_playback(position_ms * 1000)
         self._pending_seek_ms = 0
         return False
 
@@ -515,6 +517,8 @@ class WindowPlaybackMixin:
 
     def _toggle_player(self) -> None:
         """Pause/resume a loaded stream, or resolve the selected track again."""
+        if self._optional_toggle_player():
+            return
         if self._stream_ready:
             self.player.toggle()
         elif getattr(self, "current_item", None):
@@ -536,7 +540,7 @@ class WindowPlaybackMixin:
                 self.progress.set_sensitive(True)
                 self.expanded_progress.set_sensitive(True)
         if self.current_duration_ms > 0:
-            position_ms = self.player.position_us // 1000
+            position_ms = self._playback_position_us() // 1000
             self._updating_progress = True
             value = min(100, position_ms * 100 / self.current_duration_ms)
             self.progress.set_value(value)
@@ -554,14 +558,16 @@ class WindowPlaybackMixin:
     def _seek_requested(self, _scale, _scroll, value):
         if not self._updating_progress and self.current_duration_ms > 0:
             position_us = int(self.current_duration_ms * 1000 * value / 100)
-            if self.player.seek(position_us):
+            if self._seek_playback(position_us):
                 elapsed = self._format_time(position_us // 1000)
                 self.elapsed_label.set_label(elapsed)
                 self.expanded_elapsed_label.set_label(elapsed)
                 self._update_synced_lyrics(position_us // 1000, allow_backward=True)
         return False
 
-    def _player_state(self, playing: bool):
+    def _player_state(self, playing: bool, remote: bool = False):
+        if self._optional_ignore_local_state() and not remote:
+            return False
         icon = "media-playback-pause-symbolic" if playing else "media-playback-start-symbolic"
         self.play_button.set_icon_name(icon)
         self.expanded_play_button.set_icon_name(icon)
@@ -572,11 +578,15 @@ class WindowPlaybackMixin:
         return False
 
     def _pause(self):
-        if self.player.playing:
+        if self.cast_renderer and self._cast_playing:
+            self._optional_toggle_player()
+        elif self.player.playing:
             self.player.toggle()
 
     def _resume(self):
-        if not self.player.playing:
+        if self.cast_renderer and not self._cast_playing:
+            self._optional_toggle_player()
+        elif not self.player.playing:
             self._toggle_player()
 
     def _player_error(self, error: str):
@@ -634,6 +644,7 @@ class WindowPlaybackMixin:
         return False
 
     def _stop_player(self) -> None:
+        self._optional_stop()
         self._play_request += 1
         self._lyrics_request += 1
         self._autoplay_request += 1

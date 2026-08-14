@@ -571,6 +571,7 @@ class WindowPreferencesMixin:
         discord_id.add_suffix(discord_id_entry)
         social.add(discord_id)
         page.add(social)
+        self._append_optional_preferences(page)
 
         audio = Adw.PreferencesGroup(
             title=_("Áudio"),

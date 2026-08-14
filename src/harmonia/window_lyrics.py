@@ -137,7 +137,7 @@ class WindowLyricsMixin:
         content.append(scroll)
         self.lyrics_popover.set_child(content)
         self._render_expanded_lyrics(item, document)
-        self._update_synced_lyrics(self.player.position_us // 1000)
+        self._update_synced_lyrics(self._playback_position_us() // 1000)
 
     def _lyrics_surface(
         self, item: LibraryItem, document: LyricsDocument, expanded: bool
@@ -401,7 +401,7 @@ class WindowLyricsMixin:
     def _follow_visible_lyric_views(self) -> None:
         """Resume following without replacing either lyrics scroller."""
         if self._active_lyric_index < 0:
-            self._update_synced_lyrics(self.player.position_us // 1000)
+            self._update_synced_lyrics(self._playback_position_us() // 1000)
             return
         for view in self._lyric_views:
             visible = (

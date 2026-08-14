@@ -86,9 +86,10 @@ class MprisService:
         elif method in actions and actions[method] in self.callbacks:
             self.callbacks[actions[method]]()
         elif method == "Seek":
-            self.player.seek(self.player.position_us + params.unpack()[0])
+            target = int(self._state("position", self.player.position_us)) + params.unpack()[0]
+            (self.callbacks.get("seek") or self.player.seek)(target)
         elif method == "SetPosition":
-            self.player.seek(params.unpack()[1])
+            (self.callbacks.get("seek") or self.player.seek)(params.unpack()[1])
         invocation.return_value(None)
 
     def _get_property(self, _conn, _sender, _path, interface, prop):
@@ -104,13 +105,15 @@ class MprisService:
             }
         else:
             values = {
-                "PlaybackStatus": "Playing" if self.player.playing else "Paused",
+                "PlaybackStatus": "Playing"
+                if self._state("playing", self.player.playing)
+                else "Paused",
                 "LoopStatus": "Track" if self._state("repeat", False) else "None",
                 "Rate": 1.0,
                 "Shuffle": bool(self._state("shuffle", False)),
                 "Metadata": self._metadata(),
                 "Volume": self.player.volume,
-                "Position": self.player.position_us,
+                "Position": int(self._state("position", self.player.position_us)),
                 "MinimumRate": 1.0,
                 "MaximumRate": 1.0,
                 "CanGoNext": True,
@@ -180,7 +183,9 @@ class MprisService:
             self.duration_us = duration_us
         if self.connection:
             changed = {
-                "PlaybackStatus": GLib.Variant("s", "Playing" if self.player.playing else "Paused"),
+                "PlaybackStatus": GLib.Variant(
+                    "s", "Playing" if self._state("playing", self.player.playing) else "Paused"
+                ),
                 "Metadata": GLib.Variant("a{sv}", self._metadata()),
             }
             self.connection.emit_signal(

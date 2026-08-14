@@ -21,6 +21,8 @@ class Preferences:
     lastfm_api_key: str = ""
     discord_enabled: bool = False
     discord_client_id: str = ""
+    recognition_provider: str = "audd"
+    recognition_endpoint: str = "https://api.audd.io/"
 
     QUALITY_BITRATES: ClassVar[dict[str, int]] = {
         "low": 70_000,
@@ -58,6 +60,14 @@ class Preferences:
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
             discord_client_id=storage.get_setting("discord_client_id", ""),
+            recognition_provider=(
+                storage.get_setting("recognition_provider", "audd")
+                if storage.get_setting("recognition_provider", "audd") in {"audd", "custom"}
+                else "audd"
+            ),
+            recognition_endpoint=storage.get_setting(
+                "recognition_endpoint", "https://api.audd.io/"
+            ),
         )
 
     def save(self, storage) -> None:
@@ -77,6 +87,8 @@ class Preferences:
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",
             "discord_client_id": self.discord_client_id,
+            "recognition_provider": self.recognition_provider,
+            "recognition_endpoint": self.recognition_endpoint,
         }
         for key, value in values.items():
             storage.set_setting(key, value)

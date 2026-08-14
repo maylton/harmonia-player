@@ -141,7 +141,7 @@ class WindowSocialMixin:
         self._preference_changed(name, value)
         self._configure_discord_presence()
         if self.discord_presence and getattr(self, "current_item", None):
-            self._social_playback_changed(self.player.playing)
+            self._social_playback_changed(self._playback_is_playing())
 
     def _social_track_started(self, position_ms: int = 0) -> None:
         self._social_started_at = playback_started_at(position_ms)

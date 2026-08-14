@@ -40,6 +40,7 @@ from .window_home import WindowHomeMixin
 from .window_insights import WindowInsightsMixin
 from .window_library import WindowLibraryMixin
 from .window_lyrics import WindowLyricsMixin
+from .window_optional import WindowOptionalMixin
 from .window_playback import WindowPlaybackMixin
 from .window_preferences import WindowPreferencesMixin
 from .window_search import WindowSearchMixin
@@ -60,6 +61,7 @@ class HarmoniaWindow(
     WindowActionsMixin,
     WindowLyricsMixin,
     WindowPlaybackMixin,
+    WindowOptionalMixin,
     WindowSocialMixin,
     WindowAccountMixin,
     Adw.ApplicationWindow,
@@ -178,6 +180,7 @@ class HarmoniaWindow(
         compact.add_setter(self.compact_menu, "visible", True)
         self.add_breakpoint(compact)
         self.player = NativePlayer(self._player_state, self._player_error, self._play_next)
+        self._initialize_optional_services()
         self._apply_audio_preferences()
         self.mpris = MprisService(
             app,
@@ -191,10 +194,13 @@ class HarmoniaWindow(
                 "repeat": self._set_repeat,
                 "shuffle": self._set_shuffle,
                 "stop": self._stop_player,
+                "seek": self._seek_playback,
             },
             {
                 "repeat": lambda: self.repeat_enabled,
                 "shuffle": lambda: self.shuffle_enabled,
+                "playing": self._playback_is_playing,
+                "position": self._playback_position_us,
             },
         )
         self._build_player_bar()

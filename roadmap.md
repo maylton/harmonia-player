@@ -119,9 +119,9 @@ Auditoria detalhada: [`visual-audit.md`](visual-audit.md).
 - [x] Estatísticas de reprodução e retrospectiva.
 - [x] Backup e restauração.
 - [x] Last.fm e Discord Rich Presence.
-- [ ] Listen Together.
-- [ ] Reconhecimento de música.
-- [ ] Cast para dispositivos.
+- [x] Listen Together.
+- [x] Reconhecimento de música.
+- [x] Cast para dispositivos.
 
 ### Ciclo de recursos opcionais
 
@@ -130,9 +130,9 @@ Auditoria detalhada: [`visual-audit.md`](visual-audit.md).
 - [x] Credenciais, cookies e arquivos de áudio explicitamente excluídos do backup.
 - [x] Last.fm: autenticação web, now playing, scrobble e estado visível nas Preferências.
 - [x] Discord Rich Presence: IPC local opt-in, estado de reprodução e limpeza ao encerrar.
-- [ ] Listen Together: criação/entrada em sessão, sincronização de fila e transporte e tratamento de atraso.
-- [ ] Reconhecimento de música: captura temporária, provedor configurável e abertura do resultado no Harmonia.
-- [ ] Cast: descoberta na rede local, seleção do dispositivo, handoff e controles remotos.
+- [x] Listen Together: criação/entrada em sessão, sincronização de fila e transporte e tratamento de atraso.
+- [x] Reconhecimento de música: captura temporária, provedor configurável e abertura do resultado no Harmonia.
+- [x] Cast: descoberta na rede local, seleção do dispositivo, handoff e controles remotos.
 
 ## Adaptações específicas para Linux
 
@@ -366,3 +366,18 @@ Observação: a suíte emite apenas um aviso de depreciação do PyGObject sobre
 - [x] Tela de Preferências, build Meson e build Flatpak completo validados; suíte ampliada para 92 testes aprovados.
 
 Observação: a validação automatizada usa respostas protocolares locais e não envia scrobbles nem presença a contas pessoais. O teste ponta a ponta depende das credenciais opt-in informadas pelo usuário nas Preferências.
+
+### 2026-08-13 — Conclusão dos recursos opcionais
+
+- [x] Listen Together cria links autenticados `harmonia://`, sincroniza fila, índice, posição e estado de reprodução a cada segundo e corrige desvios acima de 1,5 segundo.
+- [x] Reconhecimento captura 12 segundos pelo GStreamer em diretório temporário, remove a amostra após a consulta e aceita AudD ou endpoint compatível configurável.
+- [x] Resultado reconhecido abre diretamente a busca do Harmonia sem salvar a gravação ou incluí-la em backups.
+- [x] Cast descobre Media Renderers UPnP/DLNA por SSDP, realiza handoff e controla play, pause, seek e stop remotamente.
+- [x] Downloads e arquivos locais são expostos somente durante a transmissão por um relay LAN efêmero com suporte a intervalos HTTP.
+- [x] Estado remoto foi integrado ao footer, player expandido, letras, histórico, Last.fm, Discord e MPRIS.
+- [x] Testes protocolares usam servidor HTTP local e respostas simuladas, sem depender de contas AudD ou dispositivos físicos.
+- [x] Suíte ampliada para 98 testes aprovados; Ruff, formatter, compileall, gettext, Meson, Desktop Entry e AppStream validados.
+- [x] Flatpak completo exportado e instalação do usuário atualizada para o commit OSTree `4643af345f13`.
+- [x] Imports dos três recursos, lançador e catálogos pt-BR/en verificados dentro do sandbox instalado.
+
+Observação: reconhecimento real exige um token opt-in do provedor, enquanto a validação ponta a ponta do Cast exige um Media Renderer UPnP/DLNA disponível na rede local.

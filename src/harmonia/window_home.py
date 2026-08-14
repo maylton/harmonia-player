@@ -403,7 +403,7 @@ class WindowHomeMixin:
         active = (
             getattr(self, "current_item", None) is not None and self.current_item.id == track.id
         )
-        playing = active and self.player.playing
+        playing = active and self._playback_is_playing()
         hovered = state["hovered"]
         if active:
             state["row"].add_css_class("home-song-current")

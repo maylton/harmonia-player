@@ -26,6 +26,8 @@ def test_preferences_roundtrip_and_bounds():
     preferences.lastfm_api_key = "lastfm-key"
     preferences.discord_enabled = True
     preferences.discord_client_id = "discord-id"
+    preferences.recognition_provider = "custom"
+    preferences.recognition_endpoint = "https://recognize.example/"
     preferences.save(storage)
     restored = Preferences.load(storage)
     assert (restored.language, restored.region, restored.max_bitrate) == ("en-US", "US", 160_000)
@@ -36,6 +38,8 @@ def test_preferences_roundtrip_and_bounds():
     assert restored.lastfm_api_key == "lastfm-key"
     assert restored.discord_enabled is True
     assert restored.discord_client_id == "discord-id"
+    assert restored.recognition_provider == "custom"
+    assert restored.recognition_endpoint == "https://recognize.example/"
 
 
 def test_removed_ios_icon_style_migrates_to_gtk():

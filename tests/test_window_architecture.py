@@ -7,6 +7,7 @@ from harmonia.window_home import WindowHomeMixin
 from harmonia.window_insights import WindowInsightsMixin
 from harmonia.window_library import WindowLibraryMixin
 from harmonia.window_lyrics import WindowLyricsMixin
+from harmonia.window_optional import WindowOptionalMixin
 from harmonia.window_playback import WindowPlaybackMixin
 from harmonia.window_preferences import WindowPreferencesMixin
 from harmonia.window_search import WindowSearchMixin
@@ -22,6 +23,7 @@ DOMAIN_METHODS = {
     WindowSearchMixin: "search",
     WindowActionsMixin: "_mutate",
     WindowLyricsMixin: "_render_lyrics",
+    WindowOptionalMixin: "_initialize_optional_services",
     WindowPlaybackMixin: "play_item",
     WindowSocialMixin: "_initialize_social",
     WindowAccountMixin: "sync",
