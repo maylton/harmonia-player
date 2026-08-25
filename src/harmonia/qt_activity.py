@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from bisect import bisect_right
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable
 
 from PySide6.QtCore import QObject, Signal
 
