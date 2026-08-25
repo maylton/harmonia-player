@@ -135,7 +135,10 @@ Rectangle {
                 }
 
                 Controls.ToolButton {
-                    icon.name: "media-playlist-consecutive"
+                    text: "∞"
+                    display: Controls.AbstractButton.TextOnly
+                    font.weight: Font.DemiBold
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.15
                     checked: backend.autoplay
                     checkable: true
                     enabled: backend.currentId.length > 0
@@ -215,7 +218,7 @@ Rectangle {
 
             Controls.ToolButton {
                 text: "Parar"
-                icon.name: "window-close"
+                icon.name: "media-playback-stop"
                 enabled: backend.currentId.length > 0
                 onClicked: backend.stopPlayback()
                 Controls.ToolTip.visible: hovered
