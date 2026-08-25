@@ -15,7 +15,6 @@ Column {
 
     width: parent ? parent.width : implicitWidth
     spacing: Kirigami.Units.smallSpacing
-    implicitHeight: header.implicitHeight + Kirigami.Units.smallSpacing + shelf.height
 
     function visibleColumns() {
         const viewport = Math.max(1, shelf.width)
