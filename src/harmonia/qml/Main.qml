@@ -28,6 +28,7 @@ Kirigami.ApplicationWindow {
     }
 
     function showLibraryCategory(category) {
+        backend.setLibraryOrigin("youtube")
         backend.setLibraryCategory(category)
         currentView = 2
     }
@@ -99,6 +100,11 @@ Kirigami.ApplicationWindow {
                 text: "Preferências"
                 icon.name: "settings-configure"
                 onTriggered: root.currentView = 6
+            },
+            Kirigami.Action {
+                text: "Nova playlist"
+                icon.name: "list-add"
+                onTriggered: remotePlaylistDialog.open()
             }
         ]
     }
@@ -131,6 +137,7 @@ Kirigami.ApplicationWindow {
                     currentCategory: backend.currentLibraryCategory
                     onViewRequested: function(view) { root.currentView = view }
                     onCategoryRequested: function(category) { root.showLibraryCategory(category) }
+                    onCreatePlaylistRequested: remotePlaylistDialog.open()
                 }
 
                 ColumnLayout {
@@ -198,7 +205,11 @@ Kirigami.ApplicationWindow {
                         }
 
                         DownloadsPage {}
-                        SettingsPage {}
+
+                        SettingsPage {
+                            onConnectRequested: cookieDialog.open()
+                        }
+
                         HistoryPage {}
                         InsightsPage {}
                     }
@@ -209,6 +220,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 onLyricsRequested: lyricsPanel.open()
                 onQueueRequested: queuePanel.open()
+                onExpandedRequested: expandedPlayer.open()
             }
         }
     }
@@ -220,6 +232,11 @@ Kirigami.ApplicationWindow {
 
     LyricsPanel {
         id: lyricsPanel
+        parent: root.contentItem
+    }
+
+    ExpandedPlayer {
+        id: expandedPlayer
         parent: root.contentItem
     }
 
@@ -253,6 +270,36 @@ Kirigami.ApplicationWindow {
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 8
                 placeholderText: "Cookie do music.youtube.com"
                 wrapMode: TextEdit.WrapAnywhere
+            }
+        }
+    }
+
+    Controls.Dialog {
+        id: remotePlaylistDialog
+        parent: root.contentItem
+        title: "Nova playlist"
+        modal: true
+        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
+
+        onAccepted: {
+            backend.createRemotePlaylist(remotePlaylistName.text)
+            remotePlaylistName.clear()
+        }
+
+        contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
+
+            Controls.Label {
+                Layout.fillWidth: true
+                text: "A playlist será criada como privada na sua conta do YouTube Music."
+                wrapMode: Text.WordWrap
+            }
+
+            Controls.TextField {
+                id: remotePlaylistName
+                Layout.fillWidth: true
+                placeholderText: "Nome da playlist"
+                selectByMouse: true
             }
         }
     }
