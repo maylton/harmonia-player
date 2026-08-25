@@ -77,6 +77,13 @@ Item {
         visible: false
         layer.enabled: true
         layer.smooth: true
+        // Keep the known-good mask thresholds below untouched. Rendering only
+        // the mask texture at 2x lets Qt linearly downsample its curved alpha
+        // edge, improving circles and rounded corners without changing shape.
+        layer.textureSize: Qt.size(
+            Math.max(1, Math.ceil(root.width * 2)),
+            Math.max(1, Math.ceil(root.height * 2))
+        )
     }
 
     Image {
