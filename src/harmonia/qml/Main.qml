@@ -28,31 +28,24 @@ Kirigami.ApplicationWindow {
         title: "Harmonia"
         titleIcon: "audio-headphones"
         isMenu: true
-
         actions: [
             Kirigami.Action {
                 text: "Início"
                 icon.name: "go-home"
-                checked: root.currentView === 0
                 onTriggered: root.currentView = 0
             },
             Kirigami.Action {
                 text: "Biblioteca"
                 icon.name: "folder-music"
-                checked: root.currentView === 1
                 onTriggered: root.currentView = 1
             },
             Kirigami.Action {
                 text: "Pesquisar"
                 icon.name: "edit-find"
-                checked: root.currentView === 2
                 onTriggered: {
                     root.currentView = 2
                     searchField.forceActiveFocus()
                 }
-            },
-            Kirigami.Action {
-                separator: true
             },
             Kirigami.Action {
                 text: "Sincronizar"
@@ -61,6 +54,13 @@ Kirigami.ApplicationWindow {
                 onTriggered: backend.syncAll()
             }
         ]
+    }
+
+    Kirigami.Action {
+        id: connectAction
+        text: "Conectar"
+        icon.name: "user-online"
+        onTriggered: cookieDialog.open()
     }
 
     pageStack.initialPage: Kirigami.Page {
@@ -73,13 +73,12 @@ Kirigami.ApplicationWindow {
 
             Controls.ToolBar {
                 Layout.fillWidth: true
-
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.smallSpacing
 
                     Controls.ToolButton {
-                        icon.name: "sidebar-show"
                         text: "Navegação"
+                        icon.name: "sidebar-show"
                         display: Controls.AbstractButton.IconOnly
                         onClicked: root.globalDrawer.open()
                         Controls.ToolTip.visible: hovered
@@ -101,8 +100,8 @@ Kirigami.ApplicationWindow {
                     Item { Layout.fillWidth: true }
 
                     Controls.ToolButton {
-                        icon.name: "view-refresh"
                         text: "Sincronizar"
+                        icon.name: "view-refresh"
                         display: Controls.AbstractButton.IconOnly
                         enabled: backend.loggedIn && !backend.busy
                         onClicked: backend.syncAll()
@@ -111,8 +110,8 @@ Kirigami.ApplicationWindow {
                     }
 
                     Controls.ToolButton {
-                        icon.name: backend.loggedIn ? "user-available" : "user-offline"
                         text: backend.loggedIn ? "Conta conectada" : "Conectar conta"
+                        icon.name: backend.loggedIn ? "user-available" : "user-offline"
                         display: Controls.AbstractButton.IconOnly
                         onClicked: backend.loggedIn ? accountMenu.open() : cookieDialog.open()
                         Controls.ToolTip.visible: hovered
@@ -146,13 +145,6 @@ Kirigami.ApplicationWindow {
                 actions: !backend.loggedIn ? [connectAction] : []
             }
 
-            Kirigami.Action {
-                id: connectAction
-                text: "Conectar"
-                icon.name: "user-online"
-                onTriggered: cookieDialog.open()
-            }
-
             Controls.ProgressBar {
                 Layout.fillWidth: true
                 visible: backend.busy
@@ -164,41 +156,45 @@ Kirigami.ApplicationWindow {
                 Layout.fillHeight: true
                 currentIndex: root.currentView
 
-                // Home
-                Controls.ScrollView {
-                    id: homeScroll
-                    clip: true
-
+                Item {
                     Flickable {
+                        id: homeFlick
+                        anchors.fill: parent
                         contentWidth: width
-                        contentHeight: homeColumn.implicitHeight + Kirigami.Units.gridUnit * 2
+                        contentHeight: homeColumn.height + Kirigami.Units.largeSpacing * 2
+                        clip: true
 
                         Column {
                             id: homeColumn
-                            width: homeScroll.availableWidth
+                            x: Kirigami.Units.largeSpacing
+                            y: Kirigami.Units.largeSpacing
+                            width: Math.max(0, homeFlick.width - Kirigami.Units.largeSpacing * 2)
+                            height: childrenRect.height
                             spacing: Kirigami.Units.largeSpacing
-                            padding: Kirigami.Units.largeSpacing
 
                             Repeater {
                                 model: backend.homeSections
-
                                 delegate: Column {
                                     required property int index
                                     required property var modelData
                                     property int sectionIndex: index
                                     property var sectionData: modelData
 
-                                    width: homeColumn.width - homeColumn.leftPadding - homeColumn.rightPadding
+                                    width: homeColumn.width
+                                    height: sectionTitle.implicitHeight + Kirigami.Units.smallSpacing + sectionList.height
                                     spacing: Kirigami.Units.smallSpacing
 
                                     Kirigami.Heading {
+                                        id: sectionTitle
+                                        width: parent.width
                                         text: sectionData.title
                                         level: 2
                                     }
 
                                     ListView {
+                                        id: sectionList
                                         width: parent.width
-                                        height: Kirigami.Units.gridUnit * 12.5
+                                        height: Kirigami.Units.gridUnit * 12
                                         orientation: ListView.Horizontal
                                         spacing: Kirigami.Units.largeSpacing
                                         clip: true
@@ -214,14 +210,12 @@ Kirigami.ApplicationWindow {
 
                                             contentItem: Column {
                                                 spacing: Kirigami.Units.smallSpacing
-
                                                 Rectangle {
                                                     width: parent.width
                                                     height: width
                                                     radius: Kirigami.Units.cornerRadius
                                                     clip: true
                                                     color: Kirigami.Theme.alternateBackgroundColor
-
                                                     Image {
                                                         anchors.fill: parent
                                                         source: modelData.thumbnail
@@ -229,7 +223,6 @@ Kirigami.ApplicationWindow {
                                                         asynchronous: true
                                                         cache: true
                                                     }
-
                                                     Kirigami.Icon {
                                                         anchors.centerIn: parent
                                                         width: Kirigami.Units.iconSizes.large
@@ -238,21 +231,17 @@ Kirigami.ApplicationWindow {
                                                         visible: !modelData.thumbnail
                                                     }
                                                 }
-
                                                 Controls.Label {
                                                     width: parent.width
                                                     text: modelData.title
                                                     font.weight: Font.DemiBold
                                                     elide: Text.ElideRight
-                                                    maximumLineCount: 1
                                                 }
-
                                                 Controls.Label {
                                                     width: parent.width
                                                     text: modelData.subtitle
                                                     opacity: 0.7
                                                     elide: Text.ElideRight
-                                                    maximumLineCount: 1
                                                 }
                                             }
                                         }
@@ -261,7 +250,7 @@ Kirigami.ApplicationWindow {
                             }
 
                             Kirigami.PlaceholderMessage {
-                                width: parent.width
+                                width: homeColumn.width
                                 visible: backend.homeSections.length === 0
                                 text: backend.loggedIn ? "Sincronize para carregar seu Início" : "Conecte sua conta para começar"
                                 icon.name: "audio-headphones"
@@ -270,27 +259,17 @@ Kirigami.ApplicationWindow {
                     }
                 }
 
-                // Library
-                Controls.ScrollView {
-                    clip: true
-
+                Item {
                     ColumnLayout {
-                        width: parent.width
-                        spacing: Kirigami.Units.largeSpacing
+                        anchors.fill: parent
+                        spacing: Kirigami.Units.smallSpacing
 
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.margins: Kirigami.Units.largeSpacing
-
-                            Kirigami.Heading {
-                                text: "Biblioteca"
-                                level: 1
-                            }
-
+                            Kirigami.Heading { text: "Biblioteca"; level: 1 }
                             Item { Layout.fillWidth: true }
-
                             Controls.ComboBox {
-                                id: categoryBox
                                 model: backend.libraryCategories
                                 textRole: "label"
                                 valueRole: "key"
@@ -304,6 +283,7 @@ Kirigami.ApplicationWindow {
                             Layout.fillHeight: true
                             Layout.leftMargin: Kirigami.Units.largeSpacing
                             Layout.rightMargin: Kirigami.Units.largeSpacing
+                            clip: true
                             cellWidth: Kirigami.Units.gridUnit * 10
                             cellHeight: Kirigami.Units.gridUnit * 12
                             model: backend.libraryItems
@@ -318,21 +298,18 @@ Kirigami.ApplicationWindow {
 
                                 contentItem: Column {
                                     spacing: Kirigami.Units.smallSpacing
-
                                     Rectangle {
                                         width: parent.width
                                         height: width
                                         radius: Kirigami.Units.cornerRadius
                                         clip: true
                                         color: Kirigami.Theme.alternateBackgroundColor
-
                                         Image {
                                             anchors.fill: parent
                                             source: modelData.thumbnail
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                         }
-
                                         Kirigami.Icon {
                                             anchors.centerIn: parent
                                             width: Kirigami.Units.iconSizes.large
@@ -341,14 +318,12 @@ Kirigami.ApplicationWindow {
                                             visible: !modelData.thumbnail
                                         }
                                     }
-
                                     Controls.Label {
                                         width: parent.width
                                         text: modelData.title
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
                                     }
-
                                     Controls.Label {
                                         width: parent.width
                                         text: modelData.subtitle
@@ -361,85 +336,68 @@ Kirigami.ApplicationWindow {
                     }
                 }
 
-                // Search
-                Controls.ScrollView {
-                    clip: true
+                Item {
+                    ListView {
+                        id: searchList
+                        anchors.fill: parent
+                        anchors.margins: Kirigami.Units.largeSpacing
+                        clip: true
+                        spacing: Kirigami.Units.smallSpacing
+                        model: backend.searchItems
 
-                    ColumnLayout {
-                        width: parent.width
-                        spacing: Kirigami.Units.largeSpacing
+                        delegate: Controls.ItemDelegate {
+                            required property int index
+                            required property var modelData
+                            width: searchList.width
+                            height: Kirigami.Units.gridUnit * 4
+                            onClicked: backend.playSearchItem(index)
 
-                        Kirigami.Heading {
-                            Layout.margins: Kirigami.Units.largeSpacing
-                            text: "Resultados"
-                            level: 1
+                            contentItem: RowLayout {
+                                spacing: Kirigami.Units.largeSpacing
+                                Rectangle {
+                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                                    Layout.preferredHeight: width
+                                    radius: Kirigami.Units.cornerRadius
+                                    clip: true
+                                    color: Kirigami.Theme.alternateBackgroundColor
+                                    Image {
+                                        anchors.fill: parent
+                                        source: modelData.thumbnail
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                    }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    Controls.Label {
+                                        Layout.fillWidth: true
+                                        text: modelData.title
+                                        font.weight: Font.DemiBold
+                                        elide: Text.ElideRight
+                                    }
+                                    Controls.Label {
+                                        Layout.fillWidth: true
+                                        text: modelData.subtitle
+                                        opacity: 0.7
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                                Kirigami.Icon { source: "media-playback-start" }
+                            }
                         }
 
                         Kirigami.PlaceholderMessage {
-                            Layout.fillWidth: true
+                            anchors.centerIn: parent
+                            width: Math.min(parent.width, Kirigami.Units.gridUnit * 28)
                             visible: backend.searchItems.length === 0 && !backend.busy
                             text: "Pesquise músicas, vídeos, álbuns, artistas e playlists"
                             icon.name: "edit-find"
-                        }
-
-                        Repeater {
-                            model: backend.searchItems
-
-                            delegate: Controls.ItemDelegate {
-                                required property int index
-                                required property var modelData
-                                Layout.fillWidth: true
-                                Layout.leftMargin: Kirigami.Units.largeSpacing
-                                Layout.rightMargin: Kirigami.Units.largeSpacing
-                                onClicked: backend.playSearchItem(index)
-
-                                contentItem: RowLayout {
-                                    spacing: Kirigami.Units.largeSpacing
-
-                                    Rectangle {
-                                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
-                                        Layout.preferredHeight: width
-                                        radius: Kirigami.Units.cornerRadius
-                                        clip: true
-                                        color: Kirigami.Theme.alternateBackgroundColor
-
-                                        Image {
-                                            anchors.fill: parent
-                                            source: modelData.thumbnail
-                                            fillMode: Image.PreserveAspectCrop
-                                            asynchronous: true
-                                        }
-                                    }
-
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 0
-
-                                        Controls.Label {
-                                            Layout.fillWidth: true
-                                            text: modelData.title
-                                            font.weight: Font.DemiBold
-                                            elide: Text.ElideRight
-                                        }
-                                        Controls.Label {
-                                            Layout.fillWidth: true
-                                            text: modelData.subtitle
-                                            opacity: 0.7
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-
-                                    Kirigami.Icon {
-                                        source: "media-playback-start"
-                                    }
-                                }
-                            }
                         }
                     }
                 }
             }
 
-            // Persistent player bar
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 6
@@ -458,14 +416,12 @@ Kirigami.ApplicationWindow {
                         radius: Kirigami.Units.cornerRadius
                         clip: true
                         color: Kirigami.Theme.alternateBackgroundColor
-
                         Image {
                             anchors.fill: parent
                             source: backend.currentArtwork
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                         }
-
                         Kirigami.Icon {
                             anchors.centerIn: parent
                             width: Kirigami.Units.iconSizes.medium
@@ -479,7 +435,6 @@ Kirigami.ApplicationWindow {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 13
                         Layout.maximumWidth: Kirigami.Units.gridUnit * 18
                         spacing: 0
-
                         Controls.Label {
                             Layout.fillWidth: true
                             text: backend.currentTitle
@@ -499,23 +454,17 @@ Kirigami.ApplicationWindow {
                         enabled: backend.canPrevious || backend.position > 5000
                         onClicked: backend.previous()
                     }
-
                     Controls.ToolButton {
                         icon.name: backend.playing ? "media-playback-pause" : "media-playback-start"
                         onClicked: backend.togglePlayback()
                     }
-
                     Controls.ToolButton {
                         icon.name: "media-skip-forward"
                         enabled: backend.canNext
                         onClicked: backend.next()
                     }
 
-                    Controls.Label {
-                        text: root.formatTime(backend.position)
-                        font.features: {"tnum": 1}
-                    }
-
+                    Controls.Label { text: root.formatTime(backend.position) }
                     Controls.Slider {
                         id: positionSlider
                         Layout.fillWidth: true
@@ -523,19 +472,12 @@ Kirigami.ApplicationWindow {
                         to: Math.max(1, backend.duration)
                         value: backend.position
                         enabled: backend.duration > 0
-                        onMoved: if (pressed) value = Math.round(value)
                         onPressedChanged: if (!pressed) backend.seek(Math.round(value))
                     }
-
-                    Controls.Label {
-                        text: root.formatTime(backend.duration)
-                        font.features: {"tnum": 1}
-                    }
-
+                    Controls.Label { text: root.formatTime(backend.duration) }
                     Kirigami.Icon {
                         source: backend.volume === 0 ? "audio-volume-muted" : "audio-volume-high"
                     }
-
                     Controls.Slider {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 7
                         from: 0
@@ -550,12 +492,13 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: cookieDialog
+        parent: root.contentItem
         title: "Conectar ao YouTube Music"
         modal: true
-        anchors.centerIn: parent
         width: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 34)
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
         standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
-
         onAccepted: {
             backend.connectCookie(cookieInput.text)
             cookieInput.clear()
@@ -563,18 +506,16 @@ Kirigami.ApplicationWindow {
 
         contentItem: ColumnLayout {
             spacing: Kirigami.Units.largeSpacing
-
             Controls.Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: "O login WebEngine será portado na próxima etapa. Por enquanto, a sessão existente do Harmonia é reutilizada quando disponível; este campo permite conectar manualmente em uma instalação nova."
+                text: "A sessão existente do Harmonia é reutilizada quando disponível. Para uma instalação nova, você também pode conectar manualmente colando o cookie do music.youtube.com."
             }
-
             Controls.TextArea {
                 id: cookieInput
                 Layout.fillWidth: true
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 8
-                placeholderText: "Cole aqui o cookie do music.youtube.com"
+                placeholderText: "Cookie do music.youtube.com"
                 wrapMode: TextEdit.WrapAnywhere
             }
         }
