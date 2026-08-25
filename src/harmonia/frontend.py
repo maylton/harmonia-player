@@ -44,6 +44,7 @@ def selected_frontend(argv: list[str] | None = None) -> str:
 def main() -> int:
     frontend = selected_frontend()
     forced_qt = "--qt" in sys.argv[1:] or os.environ.get("HARMONIA_FRONTEND", "").lower() == "qt"
+    sys.argv[:] = [arg for arg in sys.argv if arg not in {"--gtk", "--qt"}]
 
     if frontend == "qt":
         try:
