@@ -34,28 +34,13 @@ Item {
                 width: parent.width
                 spacing: Kirigami.Units.gridUnit * 2.2
 
-                Rectangle {
+                CoverArt {
                     Layout.preferredWidth: Math.min(Kirigami.Units.gridUnit * 14, contentColumn.width * 0.28)
                     Layout.preferredHeight: width
                     Layout.alignment: Qt.AlignTop
-                    radius: backend.detailIsArtist ? width / 2 : Kirigami.Units.cornerRadius
-                    clip: true
-                    color: Kirigami.Theme.alternateBackgroundColor
-
-                    Image {
-                        anchors.fill: parent
-                        source: backend.detailItem.thumbnail || ""
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                    }
-
-                    Kirigami.Icon {
-                        anchors.centerIn: parent
-                        width: Kirigami.Units.iconSizes.huge
-                        height: width
-                        source: backend.detailIsArtist ? "avatar-default" : "audio-x-generic"
-                        visible: !backend.detailItem.thumbnail
-                    }
+                    source: backend.detailItem.thumbnail || ""
+                    kind: backend.detailIsArtist ? "artists" : (backend.detailItem.kind || "item")
+                    emphasized: true
                 }
 
                 ColumnLayout {
@@ -161,19 +146,12 @@ Item {
                                      : Kirigami.Theme.textColor
                             }
 
-                            Rectangle {
+                            CoverArt {
                                 Layout.preferredWidth: Kirigami.Units.gridUnit * 2.5
                                 Layout.preferredHeight: width
-                                radius: Kirigami.Units.cornerRadius
-                                clip: true
-                                color: Kirigami.Theme.alternateBackgroundColor
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: modelData.thumbnail
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                }
+                                source: modelData.thumbnail
+                                kind: modelData.kind
+                                cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
                             }
 
                             ColumnLayout {
