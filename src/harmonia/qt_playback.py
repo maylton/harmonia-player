@@ -3,14 +3,14 @@ from __future__ import annotations
 import logging
 import random
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable
 
-from PySide6.QtCore import QObject, QUrl, Signal
-from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
+from PySide6.QtCore import QObject, QTimer, Signal
 
 from .downloads import DownloadManager
 from .models import HistoryEntry, LibraryItem, PlaybackState
+from .player import NativePlayer
 from .services import YouTubeMusicService
 from .storage import Storage
 
@@ -18,6 +18,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class QtPlaybackController(QObject):
+    """Qt-facing playback state backed by the same NativePlayer used by GTK."""
+
     nowPlayingChanged = Signal()
     playbackChanged = Signal()
     positionChanged = Signal()
@@ -26,6 +28,7 @@ class QtPlaybackController(QObject):
     queueChanged = Signal()
     autoplayLoadingChanged = Signal()
     trackChanged = Signal()
+    trackStarted = Signal(object, int)
     historyRecorded = Signal(object)
 
     _streamReady = Signal(int, object, str)
@@ -61,10 +64,17 @@ class QtPlaybackController(QObject):
 
         self._stream_request = 0
         self._radio_request = 0
+        self._duration_ms = 0
+        self._restored_position_ms = 0
+        self._stream_ready = False
+        self._stream_recovery_attempts = 0
         self._last_state_save = time.monotonic()
         self._play_generation = 0
         self._history_recorded_generation = -1
         self._pending_tracking_url = ""
+        self._last_position = -1
+        self._last_duration = -1
+        self._last_volume = -1
 
         restored = self.storage.load_playback_state()
         if restored and restored.queue:
@@ -75,37 +85,38 @@ class QtPlaybackController(QObject):
             self.shuffle = restored.shuffle
             self.repeat = restored.repeat
             self.autoplay = restored.autoplay
+            self._restored_position_ms = restored.position_ms
             self._play_generation = 1
 
-        self.audio = QAudioOutput(self)
-        self.audio.setVolume(0.85)
-        self.player = QMediaPlayer(self)
-        self.player.setAudioOutput(self.audio)
-        self.player.positionChanged.connect(self._on_position_changed)
-        self.player.durationChanged.connect(lambda *_: self.durationChanged.emit())
-        self.player.playbackStateChanged.connect(lambda *_: self.playbackChanged.emit())
-        self.player.mediaStatusChanged.connect(self._media_status_changed)
-        self.player.errorOccurred.connect(self._player_error)
-        self.audio.volumeChanged.connect(lambda *_: self.volumeChanged.emit())
+        self.player = NativePlayer(self._on_player_state, self._player_error, self.next)
+        self.player.volume = 0.85
 
         self._streamReady.connect(self._apply_stream)
         self._radioReady.connect(self._apply_radio)
 
+        self._progress_timer = QTimer(self)
+        self._progress_timer.setInterval(250)
+        self._progress_timer.timeout.connect(self._tick)
+        self._progress_timer.start()
+
     @property
     def playing(self) -> bool:
-        return self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
+        return self.player.playing
 
     @property
     def position(self) -> int:
-        return int(self.player.position())
+        if not self._stream_ready:
+            return max(0, self._restored_position_ms)
+        return max(0, self.player.position_us // 1000)
 
     @property
     def duration(self) -> int:
-        return int(self.player.duration())
+        queried = self.player.duration_us // 1000 if self._stream_ready else 0
+        return max(0, self._duration_ms or queried)
 
     @property
     def volume(self) -> int:
-        return round(self.audio.volume() * 100)
+        return round(self.player.volume * 100)
 
     @property
     def can_previous(self) -> bool:
@@ -118,6 +129,40 @@ class QtPlaybackController(QObject):
             or (self.repeat and bool(self.queue))
             or self.autoplay
         )
+
+    def apply_audio_settings(
+        self,
+        *,
+        normalization: bool,
+        equalizer: str,
+        speed: float,
+        pitch: float,
+        skip_silence: bool,
+    ) -> None:
+        self.player.apply_audio_settings(
+            normalization=normalization,
+            equalizer=equalizer,
+            speed=speed,
+            pitch=pitch,
+            skip_silence=skip_silence,
+        )
+
+    def _tick(self) -> None:
+        position = self.position
+        duration = self.duration
+        volume = self.volume
+        if position != self._last_position:
+            self._last_position = position
+            self.positionChanged.emit()
+        if duration != self._last_duration:
+            self._last_duration = duration
+            self.durationChanged.emit()
+        if volume != self._last_volume:
+            self._last_volume = volume
+            self.volumeChanged.emit()
+        self._maybe_record_history(position)
+        if self.queue and time.monotonic() - self._last_state_save >= 5:
+            self._save_state(position)
 
     def _set_autoplay_loading(self, value: bool) -> None:
         if self.autoplay_loading == value:
@@ -140,12 +185,6 @@ class QtPlaybackController(QObject):
             )
         )
         self._last_state_save = time.monotonic()
-
-    def _on_position_changed(self, value: int) -> None:
-        self.positionChanged.emit()
-        self._maybe_record_history(value)
-        if self.queue and time.monotonic() - self._last_state_save >= 5:
-            self._save_state(value)
 
     def _maybe_record_history(self, position_ms: int) -> None:
         if (
@@ -181,6 +220,10 @@ class QtPlaybackController(QObject):
         self._play_generation += 1
         self._history_recorded_generation = -1
         self._pending_tracking_url = ""
+        self._restored_position_ms = 0
+        self._duration_ms = 0
+        self._stream_ready = False
+        self._stream_recovery_attempts = 0
         self.nowPlayingChanged.emit()
         self.queueChanged.emit()
         self.trackChanged.emit()
@@ -209,12 +252,19 @@ class QtPlaybackController(QObject):
         self._stream_request += 1
         request_id = self._stream_request
         self._pending_tracking_url = ""
+        self._stream_ready = False
+
+        if item.id.startswith("local:"):
+            local_path = self.storage.local_media_path(item.id)
+            if not local_path or not local_path.is_file():
+                self.set_status("O arquivo local não está mais disponível.")
+                return
+            self._start_uri(request_id, local_path.as_uri(), None, None)
+            return
+
         offline = self.downloads.offline_path(item.id)
         if offline:
-            self.player.setSource(QUrl.fromLocalFile(str(offline)))
-            self.player.play()
-            self.set_status("")
-            self.ensure_autoplay()
+            self._start_uri(request_id, offline.as_uri(), None, None)
             return
 
         self.set_busy(True)
@@ -230,73 +280,132 @@ class QtPlaybackController(QObject):
 
         self.executor.submit(worker)
 
-    def _apply_stream(self, request_id: int, stream, error: str) -> None:
+    def _start_uri(
+        self,
+        request_id: int,
+        uri: str,
+        duration_ms: int | None,
+        tracking_url: str | None,
+    ) -> None:
         if request_id != self._stream_request:
             return
         self.set_busy(False)
+        self._duration_ms = max(0, int(duration_ms or 0))
+        self._pending_tracking_url = tracking_url or ""
+        self._stream_ready = True
+        self.player.play(uri)
+        self.playbackChanged.emit()
+        self.durationChanged.emit()
+        self.positionChanged.emit()
+        self.trackStarted.emit(self.current_item, self._duration_ms)
+        self.set_status("")
+        restored = self._restored_position_ms
+        self._restored_position_ms = 0
+        if restored:
+            QTimer.singleShot(700, lambda: self.seek(restored))
+        self._save_state(restored)
+        self.ensure_autoplay()
+
+    def _apply_stream(self, request_id: int, stream, error: str) -> None:
+        if request_id != self._stream_request:
+            return
         if error or stream is None:
+            self.set_busy(False)
             self.set_status(f"Não foi possível reproduzir a faixa: {error}")
             return
-        self._pending_tracking_url = stream.playback_tracking_url or ""
-        self.player.setSource(QUrl(stream.url))
-        self.player.play()
-        self.set_status("")
-        self.ensure_autoplay()
+        self._start_uri(
+            request_id,
+            stream.url,
+            stream.duration_ms,
+            stream.playback_tracking_url,
+        )
 
     def toggle_playback(self) -> None:
         if self.current_item is None:
             return
-        if self.player.source().isEmpty():
+        if not self._stream_ready:
             self.resolve_current()
-        elif self.playing:
-            self.player.pause()
         else:
-            self.player.play()
+            self.player.toggle()
 
-    def next(self) -> None:
+    def stop(self) -> None:
+        self._stream_request += 1
+        self._radio_request += 1
+        self.player.stop()
+        self._stream_ready = False
+        self._duration_ms = 0
+        self._restored_position_ms = 0
+        self.current_item = None
+        self.queue = []
+        self.related_items = []
+        self.queue_index = -1
+        self.waiting_for_autoplay = False
+        self._set_autoplay_loading(False)
+        self.storage.clear_playback_state()
+        self.nowPlayingChanged.emit()
+        self.queueChanged.emit()
+        self.trackChanged.emit()
+        self.playbackChanged.emit()
+        self.positionChanged.emit()
+        self.durationChanged.emit()
+
+    def next(self) -> bool:
         if not self.queue:
-            return
-        if self.shuffle and len(self.queue) > 1:
-            choices = [index for index in range(len(self.queue)) if index != self.queue_index]
-            self.set_current(random.choice(choices))
-            self.ensure_autoplay()
-            return
+            return False
         if self.queue_index + 1 < len(self.queue):
             self.set_current(self.queue_index + 1)
             self.ensure_autoplay()
-            return
+            return False
         if self.repeat:
             self.set_current(0)
             self.ensure_autoplay()
-            return
-        if not self.autoplay:
-            return
-        if self.related_items:
-            self._promote_related_index(0, True)
-            self.set_current(self.queue_index + 1)
-        else:
-            self.waiting_for_autoplay = True
-            self.ensure_autoplay(force=True)
+            return False
+        if self.autoplay:
+            if self.related_items:
+                self._promote_related_index(0, False)
+                self.set_current(self.queue_index + 1)
+            else:
+                self.waiting_for_autoplay = True
+                self.ensure_autoplay(force=True)
+        return False
 
     def previous(self) -> None:
-        if self.position > 5000:
-            self.player.setPosition(0)
+        if self.position > 3000:
+            self.seek(0)
             return
         if self.queue_index > 0:
             self.set_current(self.queue_index - 1)
         elif self.repeat and self.queue:
             self.set_current(len(self.queue) - 1)
 
-    def toggle_shuffle(self) -> None:
-        self.shuffle = not self.shuffle
+    def set_shuffle(self, enabled: bool) -> None:
+        if enabled == self.shuffle:
+            return
+        self.shuffle = enabled
+        if enabled and self.queue:
+            current = self.queue[self.queue_index]
+            remainder = [item for index, item in enumerate(self.queue) if index != self.queue_index]
+            random.shuffle(remainder)
+            self.queue = [current, *remainder]
+            self.queue_index = 0
+            self.queueChanged.emit()
+            self.nowPlayingChanged.emit()
         self.playbackChanged.emit()
         self._save_state()
 
-    def toggle_repeat(self) -> None:
-        self.repeat = not self.repeat
+    def toggle_shuffle(self) -> None:
+        self.set_shuffle(not self.shuffle)
+
+    def set_repeat(self, enabled: bool) -> None:
+        if enabled == self.repeat:
+            return
+        self.repeat = enabled
         self.playbackChanged.emit()
         self.nowPlayingChanged.emit()
         self._save_state()
+
+    def toggle_repeat(self) -> None:
+        self.set_repeat(not self.repeat)
 
     def toggle_autoplay(self) -> None:
         self.autoplay = not self.autoplay
@@ -316,7 +425,7 @@ class QtPlaybackController(QObject):
         if self.related_items:
             if self.waiting_for_autoplay:
                 self.waiting_for_autoplay = False
-                self._promote_related_index(0, True)
+                self._promote_related_index(0, False)
                 self.set_current(self.queue_index + 1)
             return
         remaining = len(self.queue) - self.queue_index - 1
@@ -352,7 +461,7 @@ class QtPlaybackController(QObject):
         self._save_state()
         if self.waiting_for_autoplay and self.related_items:
             self.waiting_for_autoplay = False
-            self._promote_related_index(0, True)
+            self._promote_related_index(0, False)
             self.set_current(self.queue_index + 1)
         elif self.waiting_for_autoplay:
             self.waiting_for_autoplay = False
@@ -395,15 +504,7 @@ class QtPlaybackController(QObject):
         removing_current = index == self.queue_index
         self.queue.pop(index)
         if not self.queue:
-            self.player.stop()
-            self.player.setSource(QUrl())
-            self.current_item = None
-            self.queue_index = -1
-            self.related_items = []
-            self.storage.clear_playback_state()
-            self.nowPlayingChanged.emit()
-            self.queueChanged.emit()
-            self.trackChanged.emit()
+            self.stop()
             return
         if index < self.queue_index:
             self.queue_index -= 1
@@ -417,11 +518,19 @@ class QtPlaybackController(QObject):
             self._save_state()
 
     def seek(self, position_ms: int) -> None:
-        self.player.setPosition(max(0, min(position_ms, self.duration)))
-        self._save_state(position_ms)
+        target = max(0, min(position_ms, self.duration or position_ms))
+        if self._stream_ready and self.player.seek(target * 1000):
+            self._restored_position_ms = 0
+            self.positionChanged.emit()
+            self._save_state(target)
+        elif not self._stream_ready:
+            self._restored_position_ms = target
+            self.positionChanged.emit()
+            self._save_state(target)
 
     def set_volume(self, value: int) -> None:
-        self.audio.setVolume(max(0.0, min(1.0, value / 100.0)))
+        self.player.volume = max(0.0, min(1.0, value / 100.0))
+        self.volumeChanged.emit()
 
     def find_item(self, item_id: str) -> LibraryItem | None:
         for group in (self.queue, self.related_items):
@@ -432,15 +541,35 @@ class QtPlaybackController(QObject):
             return self.current_item
         return None
 
-    def _media_status_changed(self, status: QMediaPlayer.MediaStatus) -> None:
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            self.next()
+    def _on_player_state(self, _playing: bool) -> bool:
+        self.playbackChanged.emit()
+        return False
 
-    def _player_error(self, _error, error_string: str) -> None:
+    def _player_error(self, error_string: str) -> bool:
+        self._stream_ready = False
+        item = self.current_item
+        if item is not None and not item.id.startswith("local:") and self._stream_recovery_attempts < 1:
+            self._stream_recovery_attempts += 1
+            request_id = self._stream_request
+            self.set_status("O stream falhou; renovando a conexão…")
+
+            def recover() -> None:
+                try:
+                    stream = self.youtube.resolve_stream(item.id, force=True)
+                    self._streamReady.emit(request_id, stream, "")
+                except Exception as exc:
+                    LOGGER.exception("Qt stream recovery failed")
+                    self._streamReady.emit(request_id, None, str(exc))
+
+            self.executor.submit(recover)
+            return False
         if error_string:
             self.set_status(f"Erro de reprodução: {error_string}")
+        self.playbackChanged.emit()
+        return False
 
     def shutdown(self) -> None:
+        self._progress_timer.stop()
         if self.queue:
             self._save_state()
-        self.player.stop()
+        self.player.close()
