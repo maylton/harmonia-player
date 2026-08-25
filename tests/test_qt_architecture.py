@@ -88,6 +88,15 @@ def test_loaded_cover_art_uses_curve_renderer_for_native_antialiasing() -> None:
     assert 'kind === "artist"' in source
 
 
+def test_curve_cover_fill_preserves_image_crop_via_layered_texture() -> None:
+    source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
+    assert "fillMode: Image.PreserveAspectCrop" in source
+    assert "layer.enabled: true" in source
+    assert "layer.smooth: true" in source
+    assert "layer.mipmap: true" in source
+    assert "fillItem: artwork" in source
+
+
 def test_qt_app_does_not_force_global_msaa_for_curve_covers() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert "QSurfaceFormat" not in source
