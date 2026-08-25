@@ -5,10 +5,11 @@ from bisect import bisect_right
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtCore import QObject, Signal
 
-from .lyrics import LyricsResolver
-from .models import HistoryEntry, LibraryItem
+from .lyrics import GoogleTranslationClient, LyricsResolver
+from .models import HistoryEntry, LibraryItem, LyricLine
 from .services import YouTubeMusicService
 from .storage import Storage
 
@@ -151,6 +152,7 @@ class QtLyricsController(QObject):
     lyricPositionChanged = Signal()
 
     _lyricsReady = Signal(int, object, str)
+    _translationReady = Signal(int, str, object, str)
 
     def __init__(
         self,
@@ -166,6 +168,7 @@ class QtLyricsController(QObject):
         super().__init__(parent)
         self.storage = storage
         self.resolver = LyricsResolver(youtube.lyrics)
+        self.translation_client = GoogleTranslationClient()
         self.executor = executor
         self.current_item = current_item
         self.duration = duration
@@ -176,7 +179,16 @@ class QtLyricsController(QObject):
         self.loading = False
         self.request = 0
         self.active_index = -1
+        self.provider = self.storage.get_setting("lyrics_provider", "auto")
+        if self.provider not in {"auto", "lrclib", "youtube"}:
+            self.provider = "auto"
+        try:
+            self.offset_ms = int(self.storage.get_setting("lyrics_offset_ms", "0"))
+        except ValueError:
+            self.offset_ms = 0
+
         self._lyricsReady.connect(self._apply_lyrics)
+        self._translationReady.connect(self._apply_translation)
 
     def reset(self) -> None:
         self.request += 1
@@ -191,11 +203,8 @@ class QtLyricsController(QObject):
         if item is None:
             self.reset()
             return
-        provider = self.storage.get_setting("lyrics_provider", "auto")
-        if provider not in {"auto", "lrclib", "youtube"}:
-            provider = "auto"
         if not force:
-            cached = self.storage.load_lyrics_document(item.id, provider)
+            cached = self.storage.load_lyrics_document(item.id, self.provider)
             if cached:
                 self.document = cached
                 self.loading = False
@@ -213,7 +222,7 @@ class QtLyricsController(QObject):
 
         def worker() -> None:
             try:
-                document = self.resolver.fetch(item, self.duration(), provider)
+                document = self.resolver.fetch(item, self.duration(), self.provider)
                 self._lyricsReady.emit(request_id, document, "")
             except Exception as exc:
                 LOGGER.exception("Qt lyrics fetch failed")
@@ -234,10 +243,119 @@ class QtLyricsController(QObject):
         if error:
             self.set_status(f"Não foi possível carregar a letra: {error}")
 
-    def update_position(self, position_ms: int) -> None:
+    def set_provider(self, provider: str) -> None:
+        if provider not in {"auto", "lrclib", "youtube"} or provider == self.provider:
+            return
+        self.provider = provider
+        self.storage.set_setting("lyrics_provider", provider)
+        self.lyricsChanged.emit()
+        self.load(force=False)
+
+    def cycle_provider(self) -> None:
+        providers = ("auto", "lrclib", "youtube")
+        self.set_provider(providers[(providers.index(self.provider) + 1) % len(providers)])
+
+    def set_offset(self, value: int) -> None:
+        value = max(-5000, min(5000, int(value)))
+        if value == self.offset_ms:
+            return
+        self.offset_ms = value
+        self.storage.set_setting("lyrics_offset_ms", str(value))
+        self.lyricsChanged.emit()
+        self.update_position(self.position(), force=True)
+
+    def change_offset(self, delta: int) -> None:
+        self.set_offset(self.offset_ms + delta)
+
+    def seek_target(self, start_ms: int) -> int:
+        return max(0, int(start_ms) - self.offset_ms)
+
+    def copy(self) -> None:
+        document = self.document
+        if not document:
+            return
+        value = document.display_text
+        if document.translation:
+            value += "\n\n" + document.translation
+        if document.synced and any(line.translation for line in document.synced):
+            value = "\n".join(
+                f"{line.text}\n{line.translation}" if line.translation else line.text
+                for line in document.synced
+            )
+        clipboard = QGuiApplication.clipboard()
+        if clipboard:
+            clipboard.setText(value)
+            self.set_status("Letra copiada.")
+
+    def translate(self) -> None:
+        item = self.current_item()
+        document = self.document
+        if not item or not document:
+            return
+        if document.translation_language == "pt" and (
+            document.translation or any(line.translation for line in document.synced)
+        ):
+            document.translation = ""
+            document.translation_language = ""
+            document.synced = [LyricLine(line.start_ms, line.text) for line in document.synced]
+            self.storage.save_lyrics_document(item.id, document)
+            self.lyricsChanged.emit()
+            return
+
+        self.set_status("Traduzindo letra…")
+        request_id = self.request
+        lines = [line.text for line in document.synced] or document.display_text.splitlines()
+
+        def worker() -> None:
+            try:
+                result = self.translation_client.translate(lines, "pt")
+                self._translationReady.emit(request_id, item.id, result, "")
+            except Exception as exc:
+                LOGGER.exception("Qt lyrics translation failed")
+                self._translationReady.emit(request_id, item.id, [], str(exc))
+
+        self.executor.submit(worker)
+
+    def _apply_translation(
+        self,
+        request_id: int,
+        video_id: str,
+        result,
+        error: str,
+    ) -> None:
+        item = self.current_item()
+        document = self.document
+        if (
+            request_id != self.request
+            or not item
+            or item.id != video_id
+            or document is None
+        ):
+            return
+        if error or not result or not any(result):
+            self.set_status(f"Falha ao traduzir: {error or 'resposta vazia'}")
+            return
+        if document.synced:
+            document.synced = [
+                LyricLine(
+                    line.start_ms,
+                    line.text,
+                    result[index] if index < len(result) else "",
+                )
+                for index, line in enumerate(document.synced)
+            ]
+        else:
+            document.translation = "\n".join(result)
+        document.translation_language = "pt"
+        self.storage.save_lyrics_document(item.id, document)
+        self.lyricsChanged.emit()
+        self.set_status("Letra traduzida.")
+
+    def update_position(self, position_ms: int, *, force: bool = False) -> None:
         lines = self.document.synced if self.document else []
-        index = bisect_right([line.start_ms for line in lines], position_ms) - 1 if lines else -1
-        if index == self.active_index:
+        adjusted = max(0, int(position_ms) + self.offset_ms)
+        index = bisect_right([line.start_ms for line in lines], adjusted) - 1 if lines else -1
+        if index == self.active_index and not force:
             return
         self.active_index = index
         self.lyricPositionChanged.emit()
