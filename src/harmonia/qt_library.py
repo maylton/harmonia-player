@@ -56,19 +56,19 @@ class QtLibraryController(QObject):
 
     @property
     def filters(self) -> list[dict[str, str]]:
-        supported = {"songs", "playlists"} if self.origin in {"downloads", "local", "podcasts"} else {
-            "albums",
-            "artists",
-            "songs",
-            "playlists",
-        }
+        supported = (
+            {"songs", "playlists"}
+            if self.origin in {"downloads", "local", "podcasts"}
+            else {
+                "albums",
+                "artists",
+                "songs",
+                "playlists",
+            }
+        )
         if self.origin == "uploads":
             supported = {"albums", "songs"}
-        return [
-            {"key": key, "label": label}
-            for key, label in FILTERS
-            if key in supported
-        ]
+        return [{"key": key, "label": label} for key, label in FILTERS if key in supported]
 
     @property
     def description(self) -> str:
@@ -120,7 +120,11 @@ class QtLibraryController(QObject):
             items = list(library.get(key, [])) if self.category in {"albums", "songs"} else []
         elif self.origin == "downloads":
             items = (
-                [record.item for record in self.storage.load_downloads() if record.status == "completed"]
+                [
+                    record.item
+                    for record in self.storage.load_downloads()
+                    if record.status == "completed"
+                ]
                 if self.category == "songs"
                 else []
             )
@@ -128,15 +132,16 @@ class QtLibraryController(QObject):
             if self.category == "songs":
                 items = self.storage.load_local_media()
             elif self.category == "playlists":
-                items = [self._playlist_item(playlist) for playlist in self.storage.load_local_playlists()]
+                items = [
+                    self._playlist_item(playlist)
+                    for playlist in self.storage.load_local_playlists()
+                ]
             else:
                 items = []
         else:
             if self.category == "songs":
                 items = [
-                    item
-                    for item in library.get("podcast-episodes", [])
-                    if item.kind == "songs"
+                    item for item in library.get("podcast-episodes", []) if item.kind == "songs"
                 ]
             elif self.category == "playlists":
                 items = list(library.get("podcasts", []))
@@ -248,7 +253,10 @@ class QtLibraryController(QObject):
         target = index + direction
         if not (0 <= index < len(playlist.items) and 0 <= target < len(playlist.items)):
             return
-        playlist.items[index], playlist.items[target] = playlist.items[target], playlist.items[index]
+        playlist.items[index], playlist.items[target] = (
+            playlist.items[target],
+            playlist.items[index],
+        )
         self.storage.save_local_playlist(playlist)
         self.catalog.show_local_playlist(playlist)
         self.detailChanged.emit()

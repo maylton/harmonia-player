@@ -434,8 +434,7 @@ class HarmoniaQtBridge(QObject):
                 for index, ranked in enumerate(data.top_tracks)
             ],
             "topArtists": [
-                {"name": ranked.name, "plays": ranked.plays}
-                for ranked in data.top_artists
+                {"name": ranked.name, "plays": ranked.plays} for ranked in data.top_artists
             ],
             "months": [
                 {"label": label, "plays": plays, "ratio": plays / maximum}
@@ -1247,7 +1246,9 @@ class HarmoniaQtBridge(QObject):
     @Slot()
     def clearLocalHistory(self) -> None:
         self.storage.clear_history()
-        self._history_entries = [entry for entry in self._history_entries if entry.source != "local"]
+        self._history_entries = [
+            entry for entry in self._history_entries if entry.source != "local"
+        ]
         self.historyChanged.emit()
         self.refreshInsights()
 

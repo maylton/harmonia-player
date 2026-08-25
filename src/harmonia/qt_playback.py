@@ -456,7 +456,9 @@ class QtPlaybackController(QObject):
                 self.set_status(f"Não foi possível continuar a rádio: {error}")
             return
         existing = {item.id for item in self.queue}
-        self.related_items = [item for item in list(recommendations or []) if item.id not in existing]
+        self.related_items = [
+            item for item in list(recommendations or []) if item.id not in existing
+        ]
         self.queueChanged.emit()
         self._save_state()
         if self.waiting_for_autoplay and self.related_items:
@@ -548,7 +550,11 @@ class QtPlaybackController(QObject):
     def _player_error(self, error_string: str) -> bool:
         self._stream_ready = False
         item = self.current_item
-        if item is not None and not item.id.startswith("local:") and self._stream_recovery_attempts < 1:
+        if (
+            item is not None
+            and not item.id.startswith("local:")
+            and self._stream_recovery_attempts < 1
+        ):
             self._stream_recovery_attempts += 1
             request_id = self._stream_request
             self.set_status("O stream falhou; renovando a conexão…")

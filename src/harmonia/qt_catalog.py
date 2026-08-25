@@ -436,9 +436,7 @@ class QtCatalogController(QObject):
 
     def open_explore_destination(self, group: str, index: int) -> None:
         values = (
-            self.explore_display.shortcuts
-            if group == "shortcuts"
-            else self.explore_display.genres
+            self.explore_display.shortcuts if group == "shortcuts" else self.explore_display.genres
         )
         if not 0 <= index < len(values):
             return

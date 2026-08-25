@@ -325,12 +325,7 @@ class QtLyricsController(QObject):
     ) -> None:
         item = self.current_item()
         document = self.document
-        if (
-            request_id != self.request
-            or not item
-            or item.id != video_id
-            or document is None
-        ):
+        if request_id != self.request or not item or item.id != video_id or document is None:
             return
         if error or not result or not any(result):
             self.set_status(f"Falha ao traduzir: {error or 'resposta vazia'}")
