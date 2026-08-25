@@ -82,6 +82,14 @@ Item {
         sourceSize.height: root.decodeSize
         visible: false
 
+        // ShapePath.fillItem receives an Image's raw source texture by default,
+        // which excludes Image.fillMode. Turning the Image into a layered texture
+        // provider makes the Shape consume the rendered PreserveAspectCrop result
+        // while keeping the CurveRenderer's high-quality antialiased outline.
+        layer.enabled: true
+        layer.smooth: true
+        layer.mipmap: true
+
         property bool useFallback: false
 
         onStatusChanged: {
