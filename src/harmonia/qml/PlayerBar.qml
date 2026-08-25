@@ -32,27 +32,12 @@ Rectangle {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             spacing: Kirigami.Units.largeSpacing
 
-            Rectangle {
+            CoverArt {
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3.1
                 Layout.preferredHeight: width
-                radius: Kirigami.Units.cornerRadius
-                clip: true
-                color: Kirigami.Theme.alternateBackgroundColor
-
-                Image {
-                    anchors.fill: parent
-                    source: backend.currentArtwork
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                }
-
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    width: Kirigami.Units.iconSizes.medium
-                    height: width
-                    source: "audio-x-generic"
-                    visible: !backend.currentArtwork
-                }
+                source: backend.currentArtwork
+                kind: "songs"
+                cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
             }
 
             ColumnLayout {
