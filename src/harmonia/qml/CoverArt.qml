@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Effects
+import QtQuick.Shapes
 import org.kde.kirigami as Kirigami
 import "Artwork.js" as Artwork
 
@@ -49,6 +49,7 @@ Item {
         color: Kirigami.Theme.alternateBackgroundColor
         antialiasing: true
         border.width: 1
+        border.pixelAligned: false
         border.color: Qt.rgba(
             Kirigami.Theme.textColor.r,
             Kirigami.Theme.textColor.g,
@@ -68,24 +69,6 @@ Item {
         }
     }
 
-    Rectangle {
-        id: artworkMask
-        anchors.fill: parent
-        radius: root.maskRadius
-        color: "white"
-        antialiasing: true
-        visible: false
-        layer.enabled: true
-        layer.smooth: true
-        // Keep the known-good mask thresholds below untouched. Rendering only
-        // the mask texture at 2x lets Qt linearly downsample its curved alpha
-        // edge, improving circles and rounded corners without changing shape.
-        layer.textureSize: Qt.size(
-            Math.max(1, Math.ceil(root.width * 2)),
-            Math.max(1, Math.ceil(root.height * 2))
-        )
-    }
-
     Image {
         id: artwork
         anchors.fill: parent
@@ -97,17 +80,7 @@ Item {
         mipmap: true
         sourceSize.width: root.decodeSize
         sourceSize.height: root.decodeSize
-        visible: status === Image.Ready
-        opacity: visible ? 1 : 0
-        layer.enabled: visible
-        layer.smooth: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: false
-            maskEnabled: true
-            maskSource: artworkMask
-            maskThresholdMin: 0.5
-            maskSpreadAtMin: 0.0
-        }
+        visible: false
 
         property bool useFallback: false
 
@@ -119,6 +92,68 @@ Item {
         Connections {
             target: root
             function onSourceChanged() { artwork.useFallback = false }
+        }
+    }
+
+    Shape {
+        id: artworkShape
+        anchors.fill: parent
+        visible: artwork.status === Image.Ready
+        opacity: visible ? 1 : 0
+        asynchronous: true
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: -1
+            fillColor: "transparent"
+            fillItem: artwork
+            startX: root.maskRadius
+            startY: 0
+
+            PathLine {
+                x: root.width - root.maskRadius
+                y: 0
+            }
+            PathArc {
+                x: root.width
+                y: root.maskRadius
+                radiusX: root.maskRadius
+                radiusY: root.maskRadius
+                direction: PathArc.Clockwise
+            }
+            PathLine {
+                x: root.width
+                y: root.height - root.maskRadius
+            }
+            PathArc {
+                x: root.width - root.maskRadius
+                y: root.height
+                radiusX: root.maskRadius
+                radiusY: root.maskRadius
+                direction: PathArc.Clockwise
+            }
+            PathLine {
+                x: root.maskRadius
+                y: root.height
+            }
+            PathArc {
+                x: 0
+                y: root.height - root.maskRadius
+                radiusX: root.maskRadius
+                radiusY: root.maskRadius
+                direction: PathArc.Clockwise
+            }
+            PathLine {
+                x: 0
+                y: root.maskRadius
+            }
+            PathArc {
+                x: root.maskRadius
+                y: 0
+                radiusX: root.maskRadius
+                radiusY: root.maskRadius
+                direction: PathArc.Clockwise
+            }
         }
 
         Behavior on opacity {
