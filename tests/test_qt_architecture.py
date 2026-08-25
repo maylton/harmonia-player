@@ -74,15 +74,17 @@ def test_cover_art_is_the_only_shared_artwork_loader() -> None:
         assert "Image {" not in source, filename
 
 
-def test_loaded_cover_art_uses_a_soft_real_qt_quick_mask() -> None:
+def test_loaded_cover_art_keeps_the_working_layer_mask_pipeline() -> None:
     source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
     assert "import QtQuick.Effects" in source
     assert 'import "Artwork.js" as Artwork' in source
+    assert "layer.effect: MultiEffect" in source
     assert "maskEnabled: true" in source
     assert "maskSource: artworkMask" in source
-    assert "maskThresholdMin: 0.0" in source
-    assert "maskSpreadAtMin:" in source
+    assert "maskThresholdMin: 0.5" in source
+    assert "maskSpreadAtMin: 0.0" in source
     assert "mipmap: true" in source
+    assert "layer.smooth: true" in source
     assert 'kind === "artist"' in source
 
 
