@@ -7,16 +7,17 @@ Controls.Dialog {
 
     title: "Letras"
     modal: false
+    popupType: Controls.Popup.Item
     standardButtons: Controls.Dialog.Close
     width: Math.min(
-        parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
-        Kirigami.Units.gridUnit * 34
-    )
-    height: Math.min(
-        parent ? parent.height - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 38,
+        parent ? parent.width - Kirigami.Units.gridUnit * 3 : Kirigami.Units.gridUnit * 38,
         Kirigami.Units.gridUnit * 38
     )
-    x: parent ? parent.width - width - Kirigami.Units.gridUnit * 1.2 : 0
+    height: Math.min(
+        parent ? parent.height - Kirigami.Units.gridUnit * 3 : Kirigami.Units.gridUnit * 38,
+        Kirigami.Units.gridUnit * 38
+    )
+    x: parent ? parent.width - width - Kirigami.Units.gridUnit : 0
     y: parent ? (parent.height - height) / 2 : 0
 
     onOpened: backend.loadLyrics()
