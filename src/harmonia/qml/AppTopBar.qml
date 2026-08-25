@@ -8,10 +8,31 @@ Controls.ToolBar {
 
     property bool wideLayout: true
     property int currentView: 0
+    property bool ambientMode: false
     signal navigationRequested()
     signal backRequested()
     signal searchRequested(string query)
     signal connectRequested()
+
+    background: Rectangle {
+        color: root.ambientMode
+               ? Qt.rgba(
+                     Kirigami.Theme.backgroundColor.r,
+                     Kirigami.Theme.backgroundColor.g,
+                     Kirigami.Theme.backgroundColor.b,
+                     0.84
+                 )
+               : Kirigami.Theme.backgroundColor
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Kirigami.Theme.disabledTextColor
+            opacity: 0.20
+        }
+    }
 
     contentItem: Item {
         implicitHeight: Math.max(
