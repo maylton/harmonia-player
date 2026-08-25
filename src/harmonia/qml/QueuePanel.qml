@@ -8,6 +8,7 @@ Controls.Dialog {
 
     title: "Fila de reprodução"
     modal: false
+    popupType: Controls.Popup.Item
     standardButtons: Controls.Dialog.Close
     width: Math.min(
         parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
@@ -61,7 +62,7 @@ Controls.Dialog {
 
             Controls.TabButton {
                 text: "Relacionadas"
-                icon.name: "media-playlist-consecutive"
+                icon.name: "view-media-playlist"
             }
         }
 
@@ -229,7 +230,7 @@ Controls.Dialog {
 
                             Controls.ToolButton {
                                 text: "Tocar em seguida"
-                                icon.name: "media-playlist-consecutive"
+                                icon.name: "go-next"
                                 display: Controls.AbstractButton.IconOnly
                                 onClicked: backend.promoteRelated(relatedDelegate.index, true)
                                 Controls.ToolTip.visible: hovered
@@ -255,7 +256,7 @@ Controls.Dialog {
                         explanation: backend.autoplay
                                      ? "As recomendações aparecem conforme a fila avança."
                                      : "Ative o Autoplay para carregar músicas relacionadas."
-                        icon.name: "media-playlist-consecutive"
+                        icon.name: "view-media-playlist"
                     }
 
                     Controls.BusyIndicator {
