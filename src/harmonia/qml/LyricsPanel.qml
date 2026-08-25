@@ -102,9 +102,6 @@ Controls.Dialog {
                             Layout.fillWidth: true
                             text: modelData.text
                             wrapMode: Text.WordWrap
-                            font.pointSize: index === backend.activeLyricIndex
-                                            ? Kirigami.Theme.defaultFont.pointSize + 2
-                                            : Kirigami.Theme.defaultFont.pointSize
                             font.weight: index === backend.activeLyricIndex ? Font.Bold : Font.Normal
                             color: index === backend.activeLyricIndex
                                    ? Kirigami.Theme.highlightColor
