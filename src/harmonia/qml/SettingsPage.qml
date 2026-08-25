@@ -19,21 +19,10 @@ Item {
             width: Math.min(parent.width - Kirigami.Units.gridUnit * 3, Kirigami.Units.gridUnit * 42)
             spacing: Kirigami.Units.gridUnit * 1.4
 
-            Column {
+            PageHeader {
                 width: parent.width
-                spacing: Kirigami.Units.smallSpacing
-
-                Kirigami.Heading {
-                    text: "Preferências"
-                    level: 1
-                }
-
-                Controls.Label {
-                    width: parent.width
-                    text: "Configurações compartilhadas pelos frontends GTK e KDE"
-                    opacity: 0.7
-                    wrapMode: Text.WordWrap
-                }
+                title: "Preferências"
+                subtitle: "Configurações compartilhadas pelos frontends GTK e KDE"
             }
 
             Kirigami.FormLayout {
