@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import org.kde.kirigami as Kirigami
 
 Item {
@@ -11,6 +12,8 @@ Item {
                                 ? Math.max(12, Kirigami.Units.cornerRadius * 1.8)
                                 : Math.max(8, Kirigami.Units.cornerRadius * 1.45)
     readonly property bool artist: kind === "artists"
+                                   || kind === "artist"
+                                   || kind === "uploaded-artists"
     readonly property real maskRadius: artist ? Math.min(width, height) / 2 : cornerRadius
     readonly property int decodeSize: Math.max(256, Math.ceil(Math.max(width, height) * 2))
     readonly property string placeholderIcon: {
@@ -39,7 +42,6 @@ Item {
         id: frame
         anchors.fill: parent
         radius: root.maskRadius
-        clip: true
         color: Kirigami.Theme.alternateBackgroundColor
         border.width: 1
         border.color: Qt.rgba(
@@ -57,22 +59,42 @@ Item {
             opacity: artwork.status === Image.Error ? 0.72 : 0.46
             visible: artwork.status !== Image.Ready
         }
+    }
 
-        Image {
-            id: artwork
-            anchors.fill: parent
-            source: root.source
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: true
-            sourceSize.width: root.decodeSize
-            sourceSize.height: root.decodeSize
-            visible: status === Image.Ready
-            opacity: visible ? 1 : 0
+    Rectangle {
+        id: artworkMask
+        anchors.fill: parent
+        radius: root.maskRadius
+        color: "white"
+        antialiasing: true
+        visible: false
+        layer.enabled: true
+        layer.smooth: true
+    }
 
-            Behavior on opacity {
-                NumberAnimation { duration: 130 }
-            }
+    Image {
+        id: artwork
+        anchors.fill: parent
+        source: root.source
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        cache: true
+        sourceSize.width: root.decodeSize
+        sourceSize.height: root.decodeSize
+        visible: status === Image.Ready
+        opacity: visible ? 1 : 0
+        layer.enabled: visible
+        layer.smooth: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            maskEnabled: true
+            maskSource: artworkMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.0
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: 130 }
         }
     }
 }
