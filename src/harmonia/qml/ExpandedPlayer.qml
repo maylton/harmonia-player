@@ -159,13 +159,43 @@ Controls.Dialog {
                                 }
 
                                 Controls.RoundButton {
-                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 4
+                                    id: primaryPlayButton
+                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3.6
                                     Layout.preferredHeight: width
-                                    icon.name: backend.playing
-                                               ? "media-playback-pause"
-                                               : "media-playback-start"
                                     enabled: backend.currentId.length > 0
+                                    padding: 0
                                     onClicked: backend.togglePlayback()
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: backend.playing ? "Pausar" : "Reproduzir"
+
+                                    background: Rectangle {
+                                        radius: width / 2
+                                        color: primaryPlayButton.down
+                                               ? Qt.darker(Kirigami.Theme.highlightColor, 1.14)
+                                               : primaryPlayButton.hovered
+                                                 ? Qt.lighter(Kirigami.Theme.highlightColor, 1.08)
+                                                 : Kirigami.Theme.highlightColor
+                                        opacity: primaryPlayButton.enabled ? 0.94 : 0.45
+                                        border.width: 1
+                                        border.color: Qt.rgba(
+                                            Kirigami.Theme.highlightedTextColor.r,
+                                            Kirigami.Theme.highlightedTextColor.g,
+                                            Kirigami.Theme.highlightedTextColor.b,
+                                            0.20
+                                        )
+                                        antialiasing: true
+                                    }
+
+                                    contentItem: Kirigami.Icon {
+                                        anchors.centerIn: parent
+                                        width: Math.round(primaryPlayButton.width * 0.42)
+                                        height: width
+                                        source: backend.playing
+                                                ? "media-playback-pause"
+                                                : "media-playback-start"
+                                        isMask: true
+                                        color: Kirigami.Theme.highlightedTextColor
+                                    }
                                 }
 
                                 Controls.ToolButton {
