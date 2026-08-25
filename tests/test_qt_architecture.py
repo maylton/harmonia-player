@@ -8,6 +8,7 @@ def test_qt_app_uses_modular_backend() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert "from .qt_backend import HarmoniaQtBackend" in source
     assert "from .qt_bridge import" not in source
+    assert not (ROOT / "src" / "harmonia" / "qt_bridge.py").exists()
 
 
 def test_main_qml_keeps_major_regions_componentized() -> None:
