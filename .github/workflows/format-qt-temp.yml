@@ -1,0 +1,33 @@
+name: Format Qt frontend (temporary)
+
+on:
+  push:
+    branches:
+      - feature/qt-kirigami-frontend
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feature/qt-kirigami-frontend
+      - name: Install Ruff used by CI
+        run: python3 -m pip install --user ruff==0.16.4
+      - name: Format Python sources
+        run: ~/.local/bin/ruff format src tests tools
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src tests tools
+          git commit -m "Format Qt frontend"
+          git push origin HEAD:feature/qt-kirigami-frontend
