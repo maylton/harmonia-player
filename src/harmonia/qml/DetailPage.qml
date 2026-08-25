@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -7,6 +8,12 @@ Item {
     id: root
 
     signal backRequested()
+    property string pendingPlaylistItemId: ""
+
+    function openAddToPlaylist(itemId) {
+        pendingPlaylistItemId = itemId
+        addToPlaylistDialog.open()
+    }
 
     Flickable {
         id: detailFlick
@@ -52,11 +59,13 @@ Item {
                         Layout.fillWidth: true
                         text: backend.detailIsArtist
                               ? "ARTISTA"
-                              : backend.detailItem.kind === "albums"
-                                ? "ÁLBUM"
-                                : backend.detailItem.kind === "playlists"
-                                  ? "PLAYLIST"
-                                  : "COLEÇÃO"
+                              : backend.detailIsLocalPlaylist
+                                ? "PLAYLIST LOCAL"
+                                : backend.detailItem.kind === "albums"
+                                  ? "ÁLBUM"
+                                  : backend.detailItem.kind === "playlists"
+                                    ? "PLAYLIST"
+                                    : "COLEÇÃO"
                         opacity: 0.62
                         font.weight: Font.DemiBold
                     }
@@ -86,8 +95,9 @@ Item {
                         elide: Text.ElideRight
                     }
 
-                    RowLayout {
-                        Layout.topMargin: Kirigami.Units.smallSpacing
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.smallSpacing
 
                         Controls.Button {
                             text: "Reproduzir"
@@ -96,12 +106,75 @@ Item {
                             onClicked: backend.playDetailAll()
                         }
 
+                        Controls.ToolButton {
+                            text: "Ordem aleatória"
+                            icon.name: "media-playlist-shuffle"
+                            enabled: backend.detailTracks.length > 0
+                            onClicked: backend.shuffleDetail()
+                            Controls.ToolTip.visible: hovered
+                            Controls.ToolTip.text: text
+                        }
+
                         Controls.Button {
+                            visible: backend.detailItem.kind === "albums" || backend.detailItem.kind === "playlists"
+                            text: backend.detailSaved ? "Salvo" : "Salvar"
+                            icon.name: backend.detailSaved ? "emblem-ok" : "bookmark-new"
+                            flat: true
+                            onClicked: backend.toggleDetailSaved()
+                        }
+
+                        Controls.Button {
+                            visible: backend.detailIsArtist
+                            text: backend.detailArtistSubscribed ? "Inscrito" : "Inscrever-se"
+                            icon.name: backend.detailArtistSubscribed ? "emblem-ok" : "list-add-user"
+                            flat: !backend.detailArtistSubscribed
+                            onClicked: backend.toggleArtistSubscription()
+                        }
+
+                        Controls.Button {
+                            visible: !backend.detailIsLocalPlaylist
                             text: "Baixar"
                             icon.name: "download"
                             enabled: backend.detailTracks.length > 0
                             flat: true
                             onClicked: backend.downloadDetail()
+                        }
+
+                        Controls.Button {
+                            visible: backend.detailIsLocalPlaylist
+                            text: "Adicionar arquivos"
+                            icon.name: "list-add"
+                            flat: true
+                            onClicked: localPlaylistFiles.open()
+                        }
+
+                        Controls.ToolButton {
+                            id: detailMenuButton
+                            text: "Mais opções"
+                            icon.name: "overflow-menu"
+                            display: Controls.AbstractButton.IconOnly
+                            onClicked: detailMenu.open()
+                            Controls.ToolTip.visible: hovered
+                            Controls.ToolTip.text: text
+
+                            Controls.Menu {
+                                id: detailMenu
+                                y: detailMenuButton.height
+
+                                Controls.MenuItem {
+                                    visible: backend.detailItem.kind === "playlists" || backend.detailIsLocalPlaylist
+                                    text: "Renomear playlist"
+                                    icon.name: "document-edit"
+                                    onTriggered: renameDialog.open()
+                                }
+
+                                Controls.MenuItem {
+                                    visible: backend.detailItem.kind === "playlists" || backend.detailIsLocalPlaylist
+                                    text: "Excluir playlist"
+                                    icon.name: "edit-delete"
+                                    onTriggered: deleteDialog.open()
+                                }
+                            }
                         }
                     }
                 }
@@ -184,8 +257,37 @@ Item {
                                 visible: modelData.liked
                             }
 
+                            RowLayout {
+                                visible: backend.detailIsLocalPlaylist
+                                spacing: 0
+
+                                Controls.ToolButton {
+                                    icon.name: "go-up"
+                                    enabled: index > 0
+                                    onClicked: backend.moveCurrentLocalPlaylistItem(index, -1)
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: "Mover para cima"
+                                }
+
+                                Controls.ToolButton {
+                                    icon.name: "go-down"
+                                    enabled: index + 1 < backend.detailTracks.length
+                                    onClicked: backend.moveCurrentLocalPlaylistItem(index, 1)
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: "Mover para baixo"
+                                }
+
+                                Controls.ToolButton {
+                                    icon.name: "list-remove"
+                                    onClicked: backend.removeCurrentLocalPlaylistItem(index)
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: "Remover da playlist"
+                                }
+                            }
+
                             Controls.ToolButton {
                                 id: options
+                                visible: !backend.detailIsLocalPlaylist
                                 icon.name: "overflow-menu"
                                 display: Controls.AbstractButton.IconOnly
                                 opacity: trackRow.hovered || trackMenu.visible ? 1 : 0
@@ -202,9 +304,22 @@ Item {
                                     }
 
                                     Controls.MenuItem {
+                                        text: "Adicionar à playlist"
+                                        icon.name: "list-add"
+                                        onTriggered: root.openAddToPlaylist(modelData.id)
+                                    }
+
+                                    Controls.MenuItem {
                                         text: "Baixar"
                                         icon.name: "download"
                                         onTriggered: backend.downloadItem(modelData.id)
+                                    }
+
+                                    Controls.MenuItem {
+                                        visible: backend.detailItem.kind === "playlists" && modelData.setVideoId.length > 0
+                                        text: "Remover desta playlist"
+                                        icon.name: "list-remove"
+                                        onTriggered: backend.removeDetailTrackFromPlaylist(index)
                                     }
                                 }
                             }
@@ -229,6 +344,21 @@ Item {
                     required property int index
                     required property var modelData
                     width: contentColumn.width
+                    spacing: Kirigami.Units.smallSpacing
+
+                    RowLayout {
+                        width: parent.width
+                        visible: modelData.canExpand
+
+                        Item { Layout.fillWidth: true }
+
+                        Controls.Button {
+                            text: "Mostrar tudo"
+                            icon.name: "go-next"
+                            flat: true
+                            onClicked: backend.expandDetailSection(index)
+                        }
+                    }
 
                     SongShelf {
                         width: parent.width
@@ -257,5 +387,90 @@ Item {
                 }
             }
         }
+    }
+
+    Controls.Dialog {
+        id: addToPlaylistDialog
+        parent: root
+        title: "Adicionar à playlist"
+        modal: true
+        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
+        enabled: backend.playlistChoices.length > 0
+        onAccepted: backend.addItemToPlaylist(root.pendingPlaylistItemId, playlistChoice.currentIndex)
+
+        contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
+
+            Controls.Label {
+                Layout.fillWidth: true
+                text: backend.playlistChoices.length > 0
+                      ? "Escolha uma playlist remota ou local."
+                      : "Crie uma playlist primeiro."
+                wrapMode: Text.WordWrap
+            }
+
+            Controls.ComboBox {
+                id: playlistChoice
+                Layout.fillWidth: true
+                model: backend.playlistChoices
+                textRole: "title"
+                enabled: count > 0
+            }
+        }
+    }
+
+    Controls.Dialog {
+        id: renameDialog
+        parent: root
+        title: "Renomear playlist"
+        modal: true
+        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
+        onOpened: renameField.text = backend.detailItem.title || ""
+        onAccepted: {
+            if (backend.detailIsLocalPlaylist)
+                backend.renameCurrentLocalPlaylist(renameField.text)
+            else
+                backend.renameCurrentRemotePlaylist(renameField.text)
+        }
+
+        contentItem: Controls.TextField {
+            id: renameField
+            selectByMouse: true
+        }
+    }
+
+    Controls.Dialog {
+        id: deleteDialog
+        parent: root
+        title: "Excluir playlist?"
+        modal: true
+        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
+        onAccepted: {
+            if (backend.detailIsLocalPlaylist)
+                backend.deleteCurrentLocalPlaylist()
+            else
+                backend.deleteCurrentRemotePlaylist()
+            root.backRequested()
+        }
+
+        contentItem: Controls.Label {
+            text: backend.detailIsLocalPlaylist
+                  ? "A playlist local será removida deste dispositivo. Os arquivos de áudio serão preservados."
+                  : "A playlist será removida permanentemente da sua conta do YouTube Music."
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    Dialogs.FileDialog {
+        id: localPlaylistFiles
+        title: "Adicionar arquivos à playlist"
+        fileMode: Dialogs.FileDialog.OpenFiles
+        nameFilters: [
+            "Arquivos de áudio (*.mp3 *.m4a *.aac *.ogg *.opus *.flac *.wav *.wma)",
+            "Todos os arquivos (*)"
+        ]
+        onAccepted: backend.addFilesToCurrentLocalPlaylist(
+            selectedFiles.map(function(value) { return value.toString() })
+        )
     }
 }
