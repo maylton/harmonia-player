@@ -10,6 +10,7 @@ Item {
     signal connectRequested()
 
     Flickable {
+        id: settingsFlick
         anchors.fill: parent
         contentWidth: width
         contentHeight: contentColumn.height + Kirigami.Units.gridUnit * 3
@@ -18,29 +19,66 @@ Item {
 
         Column {
             id: contentColumn
-            x: Kirigami.Units.gridUnit * 1.5
+            width: Math.min(
+                Math.max(0, settingsFlick.width - Kirigami.Units.gridUnit * 3),
+                Kirigami.Units.gridUnit * 50
+            )
+            x: Math.max(
+                Kirigami.Units.gridUnit * 1.5,
+                (settingsFlick.width - width) / 2
+            )
             y: Kirigami.Units.gridUnit * 1.35
-            width: Math.min(parent.width - Kirigami.Units.gridUnit * 3, Kirigami.Units.gridUnit * 46)
-            spacing: Kirigami.Units.gridUnit * 1.5
+            spacing: Kirigami.Units.gridUnit * 1.15
 
             PageHeader {
                 width: parent.width
                 title: "Preferências"
-                subtitle: "Configurações compartilhadas pelos frontends GTK e KDE"
+                subtitle: "Conta, aparência, streaming, áudio e dados — compartilhados entre GTK e KDE"
             }
 
-            Kirigami.Heading { text: "Conta"; level: 2 }
-
-            Kirigami.FormLayout {
+            SettingsSection {
                 width: parent.width
-
-                Controls.Label {
-                    Kirigami.FormData.label: "YouTube Music:"
-                    text: backend.loggedIn ? "Conectada" : "Não conectada"
-                }
+                title: "Conta"
+                subtitle: "Sessão usada para biblioteca, recomendações e sincronização do YouTube Music."
+                iconName: "user-identity"
 
                 RowLayout {
-                    Kirigami.FormData.label: "Sessão:"
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.largeSpacing
+
+                    CoverArt {
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3.2
+                        Layout.preferredHeight: width
+                        source: backend.loggedIn ? backend.accountAvatarUrl : ""
+                        kind: "artist"
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: backend.loggedIn
+                                  ? (backend.accountName.length > 0
+                                     ? backend.accountName
+                                     : "YouTube Music conectado")
+                                  : "Conta não conectada"
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: backend.loggedIn
+                                  ? (backend.accountEmail.length > 0
+                                     ? backend.accountEmail
+                                     : "Sessão disponível para sincronização")
+                                  : "Conecte sua conta para carregar biblioteca e recomendações."
+                            opacity: 0.62
+                            elide: Text.ElideRight
+                        }
+                    }
 
                     Controls.Button {
                         visible: backend.loggedIn
@@ -60,213 +98,262 @@ Item {
                         visible: !backend.loggedIn
                         text: "Conectar"
                         icon.name: "user-online"
+                        highlighted: true
                         onClicked: root.connectRequested()
                     }
                 }
             }
 
-            Kirigami.Separator { width: parent.width }
-            Kirigami.Heading { text: "Aparência"; level: 2 }
-
-            Kirigami.FormLayout {
+            SettingsSection {
                 width: parent.width
+                title: "Aparência"
+                subtitle: "Integração visual com o Plasma e o fundo ambiente do player."
+                iconName: "preferences-desktop-theme"
 
-                Controls.Switch {
-                    Kirigami.FormData.label: "Fundo ambiente desfocado:"
-                    checked: preferences.backgroundBlur
-                    onToggled: preferences.setBackgroundBlur(checked)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.largeSpacing
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: "Fundo ambiente desfocado"
+                            font.weight: Font.DemiBold
+                        }
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: "Usa a capa atual para colorir o fundo e tornar as superfícies mais translúcidas."
+                            opacity: 0.62
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    Controls.Switch {
+                        checked: preferences.backgroundBlur
+                        onToggled: preferences.setBackgroundBlur(checked)
+                    }
                 }
 
-                Controls.Label {
-                    Kirigami.FormData.label: "Integração com o Plasma:"
-                    text: "Cores e ícones seguem o tema KDE automaticamente."
-                    wrapMode: Text.WordWrap
+                Kirigami.InlineMessage {
+                    Layout.fillWidth: true
+                    type: Kirigami.MessageType.Information
+                    text: "A mesma preferência é usada pelo frontend GTK. No Plasma, cores e ícones seguem automaticamente o tema KDE."
                 }
             }
 
-            Controls.Label {
+            SettingsSection {
                 width: parent.width
-                text: "Esta é a mesma preferência usada no frontend GTK: a capa atual colore o fundo desfocado e as superfícies ficam mais translúcidas."
-                opacity: 0.68
-                wrapMode: Text.WordWrap
-            }
+                title: "Streaming"
+                subtitle: "Qualidade, localização, rede e cache das capas."
+                iconName: "network-connect"
 
-            Kirigami.Separator { width: parent.width }
-            Kirigami.Heading { text: "Streaming"; level: 2 }
+                Kirigami.FormLayout {
+                    Layout.fillWidth: true
 
-            Kirigami.FormLayout {
-                width: parent.width
+                    Controls.ComboBox {
+                        id: qualityBox
+                        Kirigami.FormData.label: "Qualidade de áudio:"
+                        model: [
+                            { "text": "Alta", "value": "high" },
+                            { "text": "Média", "value": "medium" },
+                            { "text": "Econômica", "value": "low" }
+                        ]
+                        textRole: "text"
+                        Component.onCompleted: syncValue()
+                        onActivated: backend.setQuality(model[currentIndex].value)
 
-                Controls.ComboBox {
-                    id: qualityBox
-                    Kirigami.FormData.label: "Qualidade de áudio:"
-                    model: [
-                        { "text": "Alta", "value": "high" },
-                        { "text": "Média", "value": "medium" },
-                        { "text": "Econômica", "value": "low" }
-                    ]
-                    textRole: "text"
-                    Component.onCompleted: syncValue()
-                    onActivated: backend.setQuality(model[currentIndex].value)
-
-                    function syncValue() {
-                        for (let i = 0; i < model.length; ++i) {
-                            if (model[i].value === backend.quality) {
-                                currentIndex = i
-                                return
+                        function syncValue() {
+                            for (let i = 0; i < model.length; ++i) {
+                                if (model[i].value === backend.quality) {
+                                    currentIndex = i
+                                    return
+                                }
                             }
                         }
                     }
-                }
 
-                Controls.TextField {
-                    id: languageField
-                    Kirigami.FormData.label: "Idioma do YouTube Music:"
-                    text: backend.language
-                    placeholderText: "pt-BR"
-                    selectByMouse: true
-                }
+                    RowLayout {
+                        Kirigami.FormData.label: "Localização:"
 
-                Controls.TextField {
-                    id: regionField
-                    Kirigami.FormData.label: "Região:"
-                    text: backend.region
-                    placeholderText: "BR"
-                    maximumLength: 4
-                    selectByMouse: true
-                }
+                        Controls.TextField {
+                            id: languageField
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                            text: backend.language
+                            placeholderText: "pt-BR"
+                            selectByMouse: true
+                        }
 
-                Controls.Button {
-                    text: "Salvar idioma e região"
-                    icon.name: "document-save"
-                    onClicked: backend.setLocale(languageField.text, regionField.text)
-                }
+                        Controls.TextField {
+                            id: regionField
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+                            text: backend.region
+                            placeholderText: "BR"
+                            maximumLength: 4
+                            selectByMouse: true
+                        }
 
-                Controls.TextField {
-                    id: proxyField
-                    Kirigami.FormData.label: "Proxy HTTP(S):"
-                    text: backend.proxy
-                    placeholderText: "Sem proxy"
-                    selectByMouse: true
-                    onEditingFinished: backend.setProxy(text)
-                }
-
-                RowLayout {
-                    Kirigami.FormData.label: "Cache de capas:"
-
-                    Controls.Label { text: backend.artworkCacheLabel }
-
-                    Controls.Button {
-                        text: "Limpar"
-                        icon.name: "edit-clear-history"
-                        onClicked: backend.clearArtworkCache()
+                        Controls.Button {
+                            text: "Salvar"
+                            icon.name: "document-save"
+                            onClicked: backend.setLocale(languageField.text, regionField.text)
+                        }
                     }
-                }
-            }
 
-            Kirigami.Separator { width: parent.width }
-            Kirigami.Heading { text: "Áudio"; level: 2 }
+                    Controls.TextField {
+                        id: proxyField
+                        Kirigami.FormData.label: "Proxy HTTP(S):"
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 18
+                        text: backend.proxy
+                        placeholderText: "Sem proxy"
+                        selectByMouse: true
+                        onEditingFinished: backend.setProxy(text)
+                    }
 
-            Kirigami.FormLayout {
-                width: parent.width
+                    RowLayout {
+                        Kirigami.FormData.label: "Cache de capas:"
 
-                Controls.ComboBox {
-                    id: equalizerBox
-                    Kirigami.FormData.label: "Equalizador:"
-                    model: [
-                        { "text": "Plano", "value": "flat" },
-                        { "text": "Graves", "value": "bass" },
-                        { "text": "Voz", "value": "vocal" },
-                        { "text": "Agudos", "value": "treble" }
-                    ]
-                    textRole: "text"
-                    Component.onCompleted: syncValue()
-                    onActivated: backend.setEqualizer(model[currentIndex].value)
+                        Controls.Label {
+                            text: backend.artworkCacheLabel
+                            opacity: 0.72
+                        }
 
-                    function syncValue() {
-                        for (let i = 0; i < model.length; ++i) {
-                            if (model[i].value === backend.equalizer) {
-                                currentIndex = i
-                                return
-                            }
+                        Controls.Button {
+                            text: "Limpar cache"
+                            icon.name: "edit-clear-history"
+                            onClicked: backend.clearArtworkCache()
                         }
                     }
                 }
+            }
 
-                Controls.Switch {
-                    Kirigami.FormData.label: "Normalização de volume:"
-                    checked: backend.normalization
-                    onToggled: backend.setNormalization(checked)
-                }
+            SettingsSection {
+                width: parent.width
+                title: "Áudio"
+                subtitle: "Ajustes processados pelo mesmo NativePlayer/GStreamer usado no frontend GTK."
+                iconName: "audio-volume-high"
 
-                Controls.Switch {
-                    Kirigami.FormData.label: "Pular silêncio:"
-                    checked: backend.skipSilence
-                    onToggled: backend.setSkipSilence(checked)
-                }
+                Kirigami.FormLayout {
+                    Layout.fillWidth: true
 
-                RowLayout {
-                    Kirigami.FormData.label: "Velocidade:"
+                    Controls.ComboBox {
+                        id: equalizerBox
+                        Kirigami.FormData.label: "Equalizador:"
+                        model: [
+                            { "text": "Plano", "value": "flat" },
+                            { "text": "Graves", "value": "bass" },
+                            { "text": "Voz", "value": "vocal" },
+                            { "text": "Agudos", "value": "treble" }
+                        ]
+                        textRole: "text"
+                        Component.onCompleted: syncValue()
+                        onActivated: backend.setEqualizer(model[currentIndex].value)
 
-                    Controls.Slider {
-                        id: speedSlider
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 16
-                        from: 0.5
-                        to: 2.0
-                        stepSize: 0.05
-                        value: backend.playbackSpeed
-                        onMoved: backend.setPlaybackSpeed(value)
+                        function syncValue() {
+                            for (let i = 0; i < model.length; ++i) {
+                                if (model[i].value === backend.equalizer) {
+                                    currentIndex = i
+                                    return
+                                }
+                            }
+                        }
                     }
 
-                    Controls.Label { text: speedSlider.value.toFixed(2) + "×" }
-                }
-
-                RowLayout {
-                    Kirigami.FormData.label: "Tom:"
-
-                    Controls.Slider {
-                        id: pitchSlider
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 16
-                        from: -12
-                        to: 12
-                        stepSize: 1
-                        value: backend.pitch
-                        onMoved: backend.setPitch(value)
+                    Controls.Switch {
+                        Kirigami.FormData.label: "Normalização de volume:"
+                        checked: backend.normalization
+                        onToggled: backend.setNormalization(checked)
                     }
 
-                    Controls.Label {
-                        text: (pitchSlider.value > 0 ? "+" : "") + Math.round(pitchSlider.value) + " st"
+                    Controls.Switch {
+                        Kirigami.FormData.label: "Pular silêncio:"
+                        checked: backend.skipSilence
+                        onToggled: backend.setSkipSilence(checked)
                     }
-                }
 
-                Controls.ComboBox {
-                    Kirigami.FormData.label: "Temporizador:"
-                    model: [
-                        { "text": "Desligado", "value": 0 },
-                        { "text": "15 minutos", "value": 15 },
-                        { "text": "30 minutos", "value": 30 },
-                        { "text": "1 hora", "value": 60 },
-                        { "text": "1 hora e 30", "value": 90 }
-                    ]
-                    textRole: "text"
-                    onActivated: backend.setSleepTimer(model[currentIndex].value)
+                    RowLayout {
+                        Kirigami.FormData.label: "Velocidade:"
+
+                        Controls.Slider {
+                            id: speedSlider
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 16
+                            from: 0.5
+                            to: 2.0
+                            stepSize: 0.05
+                            value: backend.playbackSpeed
+                            onMoved: backend.setPlaybackSpeed(value)
+                        }
+
+                        Controls.Label {
+                            text: speedSlider.value.toFixed(2) + "×"
+                            font.features: { "tnum": 1 }
+                        }
+                    }
+
+                    RowLayout {
+                        Kirigami.FormData.label: "Tom:"
+
+                        Controls.Slider {
+                            id: pitchSlider
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 16
+                            from: -12
+                            to: 12
+                            stepSize: 1
+                            value: backend.pitch
+                            onMoved: backend.setPitch(value)
+                        }
+
+                        Controls.Label {
+                            text: (pitchSlider.value > 0 ? "+" : "") + Math.round(pitchSlider.value) + " st"
+                            font.features: { "tnum": 1 }
+                        }
+                    }
+
+                    Controls.ComboBox {
+                        Kirigami.FormData.label: "Temporizador:"
+                        model: [
+                            { "text": "Desligado", "value": 0 },
+                            { "text": "15 minutos", "value": 15 },
+                            { "text": "30 minutos", "value": 30 },
+                            { "text": "1 hora", "value": 60 },
+                            { "text": "1 hora e 30", "value": 90 }
+                        ]
+                        textRole: "text"
+                        onActivated: backend.setSleepTimer(model[currentIndex].value)
+                    }
                 }
             }
 
-            Kirigami.InlineMessage {
+            SettingsSection {
                 width: parent.width
-                type: Kirigami.MessageType.Information
-                text: "O frontend KDE usa o mesmo NativePlayer/GStreamer do GTK. Equalizador, normalização, velocidade, tom e remoção de silêncio são aplicados pelo mesmo backend de áudio."
-            }
-
-            Kirigami.Separator { width: parent.width }
-            Kirigami.Heading { text: "Dados e backup"; level: 2 }
-
-            Kirigami.FormLayout {
-                width: parent.width
+                title: "Dados e backup"
+                subtitle: "Exporte ou restaure um pacote portátil com os dados do Harmonia."
+                iconName: "document-save"
 
                 RowLayout {
-                    Kirigami.FormData.label: "Backup portátil:"
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.largeSpacing
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: "Backup portátil"
+                            font.weight: Font.DemiBold
+                        }
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: "Use o mesmo arquivo para migrar dados entre instalações e frontends."
+                            opacity: 0.62
+                            wrapMode: Text.WordWrap
+                        }
+                    }
 
                     Controls.Button {
                         text: "Exportar"
@@ -280,12 +367,6 @@ Item {
                         onClicked: restoreDialog.open()
                     }
                 }
-            }
-
-            Kirigami.InlineMessage {
-                width: parent.width
-                type: Kirigami.MessageType.Information
-                text: "No Plasma, cores e ícones seguem automaticamente o tema KDE. A opção de pacote de ícones GTK não é duplicada aqui porque é específica daquele toolkit."
             }
         }
     }
