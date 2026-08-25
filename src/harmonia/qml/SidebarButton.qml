@@ -37,8 +37,8 @@ Controls.AbstractButton {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.Icon {
-            Layout.preferredWidth: Kirigami.Units.iconSizes.small
-            Layout.preferredHeight: width
+            Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+            Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
             source: root.iconName
             fallback: root.fallbackIcon
             isMask: true
