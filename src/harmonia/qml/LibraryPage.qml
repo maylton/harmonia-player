@@ -12,24 +12,11 @@ Item {
         anchors.fill: parent
         spacing: Kirigami.Units.smallSpacing
 
-        RowLayout {
+        PageHeader {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.gridUnit * 1.5
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Kirigami.Units.smallSpacing
-
-                Kirigami.Heading {
-                    text: "Biblioteca"
-                    level: 1
-                }
-
-                Controls.Label {
-                    text: "Seu conteúdo salvo no YouTube Music"
-                    opacity: 0.7
-                }
-            }
+            title: "Biblioteca"
+            subtitle: "Seu conteúdo salvo no YouTube Music"
 
             Controls.ComboBox {
                 id: categoryBox
