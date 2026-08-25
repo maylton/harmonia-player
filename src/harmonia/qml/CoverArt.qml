@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import org.kde.kirigami as Kirigami
+import "Artwork.js" as Artwork
 
 Item {
     id: root
@@ -15,7 +16,9 @@ Item {
                                    || kind === "artist"
                                    || kind === "uploaded-artists"
     readonly property real maskRadius: artist ? Math.min(width, height) / 2 : cornerRadius
-    readonly property int decodeSize: Math.max(256, Math.ceil(Math.max(width, height) * 2))
+    readonly property int decodeSize: emphasized
+                                      ? Math.max(768, Math.ceil(Math.max(width, height) * 2.5))
+                                      : Math.max(256, Math.ceil(Math.max(width, height) * 2))
     readonly property string placeholderIcon: {
         if (artist)
             return "avatar-default"
@@ -35,6 +38,7 @@ Item {
         radius: root.maskRadius
         color: "black"
         opacity: root.emphasized ? 0.28 : 0.12
+        antialiasing: true
         visible: root.width > 0 && root.height > 0
     }
 
@@ -43,6 +47,7 @@ Item {
         anchors.fill: parent
         radius: root.maskRadius
         color: Kirigami.Theme.alternateBackgroundColor
+        antialiasing: true
         border.width: 1
         border.color: Qt.rgba(
             Kirigami.Theme.textColor.r,
@@ -56,6 +61,8 @@ Item {
             width: Math.min(parent.width * 0.34, Kirigami.Units.iconSizes.huge)
             height: width
             source: root.placeholderIcon
+            isMask: true
+            color: Kirigami.Theme.disabledTextColor
             opacity: artwork.status === Image.Error ? 0.72 : 0.46
             visible: artwork.status !== Image.Ready
         }
@@ -75,23 +82,42 @@ Item {
     Image {
         id: artwork
         anchors.fill: parent
-        source: root.source
+        source: useFallback ? root.source : Artwork.highResolutionSource(root.source, root.decodeSize)
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
+        smooth: true
+        mipmap: true
         sourceSize.width: root.decodeSize
         sourceSize.height: root.decodeSize
-        visible: status === Image.Ready
-        opacity: visible ? 1 : 0
-        layer.enabled: visible
-        layer.smooth: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: false
-            maskEnabled: true
-            maskSource: artworkMask
-            maskThresholdMin: 0.5
-            maskSpreadAtMin: 0.0
+        opacity: 0
+        layer.enabled: true
+
+        property bool useFallback: false
+
+        onStatusChanged: {
+            if (status === Image.Error && source !== root.source && root.source.length > 0)
+                useFallback = true
         }
+
+        Connections {
+            target: root
+            function onSourceChanged() { artwork.useFallback = false }
+        }
+    }
+
+    MultiEffect {
+        id: renderedArtwork
+        anchors.fill: parent
+        source: artwork
+        visible: artwork.status === Image.Ready
+        opacity: visible ? 1 : 0
+        autoPaddingEnabled: false
+        maskEnabled: true
+        maskSource: artworkMask
+        maskThresholdMin: 0.0
+        maskSpreadAtMin: 0.16
+        antialiasing: true
 
         Behavior on opacity {
             NumberAnimation { duration: 130 }
