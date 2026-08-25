@@ -16,6 +16,11 @@ Kirigami.ApplicationWindow {
     property int currentView: 0
     property int previousView: 0
     readonly property bool wideLayout: width >= 900
+    readonly property bool statusIsError: backend.statusText.indexOf("Não foi possível") >= 0
+                                          || backend.statusText.indexOf("Erro") >= 0
+                                          || backend.statusText.indexOf("Falha") >= 0
+
+    pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.None
 
     function showDetail(fromView) {
         previousView = fromView
@@ -43,6 +48,7 @@ Kirigami.ApplicationWindow {
         title: "Harmonia"
         titleIcon: "audio-headphones"
         isMenu: true
+        handleVisible: false
         actions: [
             Kirigami.Action {
                 text: "Início"
@@ -96,6 +102,7 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: Kirigami.Page {
         padding: 0
+        globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
 
         ColumnLayout {
             anchors.fill: parent
@@ -108,7 +115,7 @@ Kirigami.ApplicationWindow {
 
                 Rectangle {
                     id: sidebar
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 13.2
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 12.8
                     Layout.fillHeight: true
                     visible: root.wideLayout
                     color: Kirigami.Theme.backgroundColor
@@ -247,33 +254,55 @@ Kirigami.ApplicationWindow {
                     Controls.ToolBar {
                         Layout.fillWidth: true
 
-                        contentItem: RowLayout {
-                            spacing: Kirigami.Units.smallSpacing
+                        contentItem: Item {
+                            implicitHeight: Math.max(
+                                searchField.implicitHeight,
+                                leftHeaderActions.implicitHeight,
+                                rightHeaderActions.implicitHeight
+                            ) + Kirigami.Units.smallSpacing * 2
 
-                            Controls.ToolButton {
-                                visible: !root.wideLayout
-                                text: "Navegação"
-                                icon.name: "sidebar-show"
-                                display: Controls.AbstractButton.IconOnly
-                                onClicked: root.globalDrawer.open()
-                                Controls.ToolTip.visible: hovered
-                                Controls.ToolTip.text: text
-                            }
+                            RowLayout {
+                                id: leftHeaderActions
+                                anchors.left: parent.left
+                                anchors.leftMargin: Kirigami.Units.smallSpacing
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Kirigami.Units.smallSpacing
 
-                            Controls.ToolButton {
-                                visible: root.currentView === 4
-                                text: "Voltar"
-                                icon.name: "go-previous"
-                                display: Controls.AbstractButton.IconOnly
-                                onClicked: root.goBack()
-                                Controls.ToolTip.visible: hovered
-                                Controls.ToolTip.text: text
+                                Controls.ToolButton {
+                                    visible: !root.wideLayout
+                                    text: "Navegação"
+                                    icon.name: "sidebar-show"
+                                    display: Controls.AbstractButton.IconOnly
+                                    onClicked: root.globalDrawer.open()
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: text
+                                }
+
+                                Controls.ToolButton {
+                                    visible: root.currentView === 4
+                                    text: "Voltar"
+                                    icon.name: "go-previous"
+                                    display: Controls.AbstractButton.IconOnly
+                                    onClicked: root.goBack()
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: text
+                                }
                             }
 
                             Controls.TextField {
                                 id: searchField
-                                Layout.fillWidth: true
-                                Layout.maximumWidth: Kirigami.Units.gridUnit * 31
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.max(
+                                    Kirigami.Units.gridUnit * 12,
+                                    Math.min(
+                                        Kirigami.Units.gridUnit * 22,
+                                        parent.width
+                                            - leftHeaderActions.implicitWidth
+                                            - rightHeaderActions.implicitWidth
+                                            - Kirigami.Units.gridUnit * 4
+                                    )
+                                )
                                 placeholderText: "Pesquisar músicas, álbuns, artistas…"
                                 selectByMouse: true
 
@@ -283,34 +312,40 @@ Kirigami.ApplicationWindow {
                                 }
                             }
 
-                            Item { Layout.fillWidth: true }
+                            RowLayout {
+                                id: rightHeaderActions
+                                anchors.right: parent.right
+                                anchors.rightMargin: Kirigami.Units.smallSpacing
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Kirigami.Units.smallSpacing
 
-                            Controls.ToolButton {
-                                text: "Sincronizar"
-                                icon.name: "view-refresh"
-                                display: Controls.AbstractButton.IconOnly
-                                enabled: backend.loggedIn && !backend.busy
-                                onClicked: backend.syncAll()
-                                Controls.ToolTip.visible: hovered
-                                Controls.ToolTip.text: text
-                            }
+                                Controls.ToolButton {
+                                    text: "Sincronizar"
+                                    icon.name: "view-refresh"
+                                    display: Controls.AbstractButton.IconOnly
+                                    enabled: backend.loggedIn && !backend.busy
+                                    onClicked: backend.syncAll()
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: text
+                                }
 
-                            Controls.ToolButton {
-                                text: backend.loggedIn ? "Conta conectada" : "Conectar conta"
-                                icon.name: backend.loggedIn ? "user-available" : "user-offline"
-                                display: Controls.AbstractButton.IconOnly
-                                onClicked: backend.loggedIn ? accountMenu.open() : cookieDialog.open()
-                                Controls.ToolTip.visible: hovered
-                                Controls.ToolTip.text: text
+                                Controls.ToolButton {
+                                    text: backend.loggedIn ? "Conta conectada" : "Conectar conta"
+                                    icon.name: backend.loggedIn ? "user-available" : "user-offline"
+                                    display: Controls.AbstractButton.IconOnly
+                                    onClicked: backend.loggedIn ? accountMenu.open() : cookieDialog.open()
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.text: text
 
-                                Controls.Menu {
-                                    id: accountMenu
-                                    y: parent.height
+                                    Controls.Menu {
+                                        id: accountMenu
+                                        y: parent.height
 
-                                    Controls.MenuItem {
-                                        text: "Desconectar conta"
-                                        icon.name: "system-log-out"
-                                        onTriggered: backend.disconnectAccount()
+                                        Controls.MenuItem {
+                                            text: "Desconectar conta"
+                                            icon.name: "system-log-out"
+                                            onTriggered: backend.disconnectAccount()
+                                        }
                                     }
                                 }
                             }
@@ -322,13 +357,11 @@ Kirigami.ApplicationWindow {
                         Layout.leftMargin: Kirigami.Units.largeSpacing
                         Layout.rightMargin: Kirigami.Units.largeSpacing
                         Layout.topMargin: visible ? Kirigami.Units.smallSpacing : 0
-                        visible: backend.statusText.length > 0 || !backend.loggedIn
-                        text: backend.statusText.length > 0
-                              ? backend.statusText
-                              : "Conecte sua conta do YouTube Music para sincronizar."
-                        type: backend.statusText.indexOf("Não foi possível") >= 0
-                              || backend.statusText.indexOf("Erro") >= 0
-                              || backend.statusText.indexOf("Falha") >= 0
+                        visible: !backend.loggedIn || root.statusIsError
+                        text: !backend.loggedIn
+                              ? "Conecte sua conta do YouTube Music para sincronizar."
+                              : backend.statusText
+                        type: root.statusIsError
                               ? Kirigami.MessageType.Error
                               : Kirigami.MessageType.Information
                         actions: !backend.loggedIn ? [connectAction] : []
