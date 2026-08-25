@@ -58,7 +58,7 @@ Kirigami.ApplicationWindow {
             },
             Kirigami.Action {
                 text: "Explorar"
-                icon.name: "applications-multimedia"
+                icon.name: "find-location"
                 onTriggered: root.currentView = 1
             },
             Kirigami.Action {
@@ -68,22 +68,22 @@ Kirigami.ApplicationWindow {
             },
             Kirigami.Action {
                 text: "Músicas curtidas"
-                icon.name: "favorite"
+                icon.name: "starred"
                 onTriggered: root.showLibraryCategory("songs")
             },
             Kirigami.Action {
                 text: "Playlists"
-                icon.name: "view-media-playlist"
+                icon.name: "view-list"
                 onTriggered: root.showLibraryCategory("playlists")
             },
             Kirigami.Action {
                 text: "Artistas"
-                icon.name: "avatar-default"
+                icon.name: "user-identity"
                 onTriggered: root.showLibraryCategory("artists")
             },
             Kirigami.Action {
                 text: "Histórico"
-                icon.name: "edit-clear-history"
+                icon.name: "document-open-recent"
                 onTriggered: root.currentView = 7
             },
             Kirigami.Action {
@@ -93,12 +93,12 @@ Kirigami.ApplicationWindow {
             },
             Kirigami.Action {
                 text: "Downloads"
-                icon.name: "download"
+                icon.name: "folder-download"
                 onTriggered: root.currentView = 5
             },
             Kirigami.Action {
                 text: "Preferências"
-                icon.name: "settings-configure"
+                icon.name: "preferences-system"
                 onTriggered: root.currentView = 6
             },
             Kirigami.Action {
@@ -120,6 +120,22 @@ Kirigami.ApplicationWindow {
         padding: 0
         globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
 
+        background: Rectangle {
+            color: Kirigami.Theme.backgroundColor
+        }
+
+        AmbientBackdrop {
+            anchors.fill: parent
+            source: backend.currentArtwork
+            active: preferences.backgroundBlur
+            artworkOpacity: 0.30
+            shadeOpacity: 0.68
+            saturation: -0.12
+            blurMax: 64
+            blurMultiplier: 0.75
+            requestedSize: 1280
+        }
+
         ColumnLayout {
             anchors.fill: parent
             spacing: 0
@@ -133,6 +149,7 @@ Kirigami.ApplicationWindow {
                     Layout.preferredWidth: implicitWidth
                     Layout.fillHeight: true
                     visible: root.wideLayout
+                    ambientMode: preferences.backgroundBlur
                     currentView: root.currentView
                     currentCategory: backend.currentLibraryCategory
                     onViewRequested: function(view) { root.currentView = view }
@@ -149,6 +166,7 @@ Kirigami.ApplicationWindow {
                         Layout.fillWidth: true
                         wideLayout: root.wideLayout
                         currentView: root.currentView
+                        ambientMode: preferences.backgroundBlur
                         onNavigationRequested: root.globalDrawer.open()
                         onBackRequested: root.goBack()
                         onConnectRequested: cookieDialog.open()
@@ -218,6 +236,7 @@ Kirigami.ApplicationWindow {
 
             PlayerBar {
                 Layout.fillWidth: true
+                ambientMode: preferences.backgroundBlur
                 onLyricsRequested: lyricsPanel.open()
                 onQueueRequested: queuePanel.open()
                 onExpandedRequested: expandedPlayer.open()
