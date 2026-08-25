@@ -27,9 +27,7 @@ def _drain_glib_context() -> None:
 def _application_icon() -> QIcon:
     """Resolve the installed Harmonia icon before falling back to the theme."""
     data_dirs: list[Path] = []
-    for value in os.environ.get(
-        "XDG_DATA_DIRS", "/usr/local/share:/usr/share"
-    ).split(":"):
+    for value in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":"):
         value = value.strip()
         if value:
             data_dirs.append(Path(value))
@@ -54,29 +52,14 @@ def _application_icon() -> QIcon:
     sizes = ("256x256", "128x128", "64x64", "48x48", "32x32", "16x16")
     for data_dir in data_dirs:
         for size in sizes:
-            candidate = (
-                data_dir
-                / "icons"
-                / "hicolor"
-                / size
-                / "apps"
-                / f"{APP_ID}.png"
-            )
+            candidate = data_dir / "icons" / "hicolor" / size / "apps" / f"{APP_ID}.png"
             if candidate.is_file():
                 return QIcon(str(candidate))
 
     # Source-tree fallback for local development outside Meson/Flatpak.
     repository_root = Path(__file__).resolve().parents[2]
     for size in sizes:
-        candidate = (
-            repository_root
-            / "data"
-            / "icons"
-            / "hicolor"
-            / size
-            / "apps"
-            / f"{APP_ID}.png"
-        )
+        candidate = repository_root / "data" / "icons" / "hicolor" / size / "apps" / f"{APP_ID}.png"
         if candidate.is_file():
             return QIcon(str(candidate))
 
