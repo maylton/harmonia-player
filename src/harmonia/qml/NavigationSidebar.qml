@@ -10,6 +10,7 @@ Rectangle {
     property string currentCategory: "songs"
     signal viewRequested(int view)
     signal categoryRequested(string category)
+    signal createPlaylistRequested()
 
     implicitWidth: Kirigami.Units.gridUnit * 12.8
     color: Kirigami.Theme.backgroundColor
@@ -157,6 +158,14 @@ Rectangle {
             checkable: true
             checked: root.currentView === 6
             onClicked: root.viewRequested(6)
+        }
+
+        Controls.Button {
+            Layout.fillWidth: true
+            Layout.topMargin: Kirigami.Units.smallSpacing
+            text: "Nova playlist"
+            icon.name: "list-add"
+            onClicked: root.createPlaylistRequested()
         }
     }
 
