@@ -81,6 +81,16 @@ Kirigami.ApplicationWindow {
                 onTriggered: root.showLibraryCategory("artists")
             },
             Kirigami.Action {
+                text: "Histórico"
+                icon.name: "edit-clear-history"
+                onTriggered: root.currentView = 7
+            },
+            Kirigami.Action {
+                text: "Estatísticas"
+                icon.name: "office-chart-line"
+                onTriggered: root.currentView = 8
+            },
+            Kirigami.Action {
                 text: "Downloads"
                 icon.name: "download"
                 onTriggered: root.currentView = 5
@@ -212,6 +222,35 @@ Kirigami.ApplicationWindow {
                             checkable: true
                             checked: root.currentView === 2 && backend.currentLibraryCategory === "artists"
                             onClicked: root.showLibraryCategory("artists")
+                        }
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            Layout.topMargin: Kirigami.Units.largeSpacing
+                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                            text: "ATIVIDADE"
+                            opacity: 0.58
+                            font.weight: Font.DemiBold
+                        }
+
+                        Controls.Button {
+                            Layout.fillWidth: true
+                            text: "Histórico"
+                            icon.name: "edit-clear-history"
+                            flat: true
+                            checkable: true
+                            checked: root.currentView === 7
+                            onClicked: root.currentView = 7
+                        }
+
+                        Controls.Button {
+                            Layout.fillWidth: true
+                            text: "Estatísticas"
+                            icon.name: "office-chart-line"
+                            flat: true
+                            checkable: true
+                            checked: root.currentView === 8
+                            onClicked: root.currentView = 8
                         }
 
                         Item { Layout.fillHeight: true }
@@ -481,14 +520,30 @@ Kirigami.ApplicationWindow {
                         DownloadsPage {}
 
                         SettingsPage {}
+
+                        HistoryPage {}
+
+                        InsightsPage {}
                     }
                 }
             }
 
             PlayerBar {
                 Layout.fillWidth: true
+                onLyricsRequested: lyricsPanel.open()
+                onQueueRequested: queuePanel.open()
             }
         }
+    }
+
+    QueuePanel {
+        id: queuePanel
+        parent: root.contentItem
+    }
+
+    LyricsPanel {
+        id: lyricsPanel
+        parent: root.contentItem
     }
 
     Controls.Dialog {
