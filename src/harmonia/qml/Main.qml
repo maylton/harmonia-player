@@ -403,7 +403,7 @@ Kirigami.ApplicationWindow {
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 6
                 color: Kirigami.Theme.backgroundColor
                 border.width: 1
-                border.color: Kirigami.Theme.separatorColor
+                border.color: Kirigami.Theme.disabledTextColor
 
                 RowLayout {
                     anchors.fill: parent
