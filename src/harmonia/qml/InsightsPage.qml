@@ -26,21 +26,10 @@ Item {
             width: Math.max(0, flick.width - Kirigami.Units.gridUnit * 3)
             spacing: Kirigami.Units.gridUnit * 1.4
 
-            Column {
+            PageHeader {
                 width: parent.width
-                spacing: Kirigami.Units.smallSpacing
-
-                Kirigami.Heading {
-                    text: "Sua retrospectiva de " + backend.insights.year
-                    level: 1
-                }
-
-                Controls.Label {
-                    width: parent.width
-                    text: "Estatísticas privadas calculadas somente neste dispositivo"
-                    opacity: 0.68
-                    wrapMode: Text.WordWrap
-                }
+                title: "Sua retrospectiva de " + backend.insights.year
+                subtitle: "Estatísticas privadas calculadas somente neste dispositivo"
             }
 
             RowLayout {
@@ -108,6 +97,7 @@ Item {
                         id: trackDelegate
                         required property int index
                         required property var modelData
+
                         width: parent.width
                         height: Kirigami.Units.gridUnit * 4
                         onClicked: backend.playInsightTrack(index)
@@ -123,19 +113,11 @@ Item {
                                 opacity: 0.7
                             }
 
-                            Rectangle {
+                            CoverArt {
                                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                                 Layout.preferredHeight: width
-                                radius: Kirigami.Units.cornerRadius
-                                clip: true
-                                color: Kirigami.Theme.alternateBackgroundColor
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: modelData.thumbnail
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                }
+                                source: modelData.thumbnail
+                                kind: modelData.kind
                             }
 
                             ColumnLayout {
