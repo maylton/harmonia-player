@@ -18,6 +18,13 @@ def test_qt_app_resolves_installed_application_icon() -> None:
     assert "QIcon.setThemeSearchPaths" in source
 
 
+def test_qt_app_requests_multisampling_without_touching_cover_mask() -> None:
+    source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
+    assert "QSurfaceFormat" in source
+    assert "surface_format.setSamples(4)" in source
+    assert "QSurfaceFormat.setDefaultFormat(surface_format)" in source
+
+
 def test_qt_app_exposes_shared_preferences_controller() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert 'setContextProperty("preferences", backend.settings)' in source
@@ -74,16 +81,16 @@ def test_cover_art_is_the_only_shared_artwork_loader() -> None:
         assert "Image {" not in source, filename
 
 
-def test_loaded_cover_art_keeps_working_mask_with_soft_edges() -> None:
+def test_loaded_cover_art_keeps_the_known_good_mask_pipeline() -> None:
     source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
     assert "import QtQuick.Effects" in source
     assert 'import "Artwork.js" as Artwork' in source
     assert "layer.effect: MultiEffect" in source
     assert "maskEnabled: true" in source
     assert "maskSource: artworkMask" in source
-    assert "maskThresholdMin: 0.0" in source
-    assert "maskSpreadAtMin: 0.12" in source
-    assert "layer.samples: 4" in source
+    assert "maskThresholdMin: 0.5" in source
+    assert "maskSpreadAtMin: 0.0" in source
+    assert "layer.samples:" not in source
     assert "mipmap: true" in source
     assert "layer.smooth: true" in source
     assert 'kind === "artist"' in source
