@@ -1,13 +1,14 @@
 # Harmonia
 
-A native GTK 4 and libadwaita client for accessing your YouTube Music library on Linux. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. The interface and playback engine are native; WebKitGTK is used only for the integrated sign-in flow.
+A native Linux client for accessing your YouTube Music library. Harmonia uses GTK 4/libadwaita on GNOME and other desktops, and can automatically select a native Qt 6/PySide6/Kirigami frontend on KDE Plasma. Both frontends share the same InnerTube, storage, GStreamer playback, downloads, lyrics, and MPRIS core. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. WebKitGTK is used only by the GTK integrated sign-in flow; the KDE frontend reuses the same stored Secret Service session and also supports manual cookie authentication.
 
 > **Beta 0.1:** This is a testing release. InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
 
 ## Features
 
-- adaptive GTK 4 and libadwaita interface;
-- automatic sign-in through an embedded WebKitGTK browser with secure session capture;
+- adaptive GTK 4/libadwaita interface plus a native Qt 6/Kirigami frontend for KDE Plasma;
+- automatic Plasma detection with GTK fallback and `--gtk` / `--qt` overrides;
+- automatic sign-in through an embedded WebKitGTK browser with secure session capture in the GTK frontend;
 - manual cookie authentication as a fallback, using `SAPISIDHASH`;
 - native synchronization of playlists, songs, albums, and artists;
 - pagination through continuation tokens;
@@ -34,7 +35,7 @@ A native GTK 4 and libadwaita client for accessing your YouTube Music library on
 - credentials protected by the desktop Secret Service, including safe migration from legacy storage;
 - preferences for quality, language, region, proxy, cache, and audio processing;
 - equalizer, normalization, speed, pitch, silence removal, and sleep timer;
-- optional ambient background and GTK or Material Expressive icon themes;
+- optional ambient background and GTK or Material Expressive icon themes in the GTK frontend, while KDE follows the Plasma theme;
 - Brazilian Portuguese and English interface translations;
 - private annual listening statistics and on-device recap;
 - portable backup and validated restore without account credentials or audio files;
@@ -46,17 +47,26 @@ A native GTK 4 and libadwaita client for accessing your YouTube Music library on
   using a temporary microphone sample that is deleted immediately;
 - UPnP/DLNA renderer discovery, playback handoff, remote transport controls, and
   LAN streaming for downloaded or local tracks;
-- Flatpak manifest, application icon, gettext catalogs, and AppStream metadata.
+- Flatpak manifests for the GTK and KDE variants, application icon, gettext catalogs, and AppStream metadata.
 
 ## Running from source
 
-Harmonia requires Python 3.11 or later, PyGObject, GTK 4, libadwaita, WebKitGTK 6, GStreamer 1.0 with audio plugins, and libsecret.
+Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita, and WebKitGTK 6. The KDE frontend requires PySide6 and Kirigami from a compatible Qt/KDE stack.
 
 ```bash
 PYTHONPATH=src python3 -m harmonia
 ```
 
-When the application opens, select **Connect to YouTube Music** to authenticate through the embedded browser. Manual entry of the `Cookie` header remains available for environments without WebKitGTK.
+On KDE Plasma, Harmonia selects Qt/Kirigami automatically when PySide6 is available. GNOME and other desktops continue to use GTK. For debugging, either frontend can be forced:
+
+```bash
+PYTHONPATH=src python3 -m harmonia --qt
+PYTHONPATH=src python3 -m harmonia --gtk
+```
+
+The GTK frontend provides the integrated browser sign-in flow. The KDE frontend reuses an existing Harmonia Secret Service session when available and provides manual cookie connection for a fresh installation.
+
+For the KDE Flatpak development build and the current smoke-test checklist, see [`docs/KDE_FRONTEND.md`](docs/KDE_FRONTEND.md).
 
 ## Installing with Meson
 
@@ -121,17 +131,21 @@ appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainf
 ## Project structure
 
 - `src/harmonia/innertube.py`: authentication, requests, pagination, and API parsing;
-- `src/harmonia/app.py`: window composition and libadwaita interface coordination;
-- `src/harmonia/window_*.py`: domain-specific window behavior for Home, library,
+- `src/harmonia/app.py`: GTK window composition and libadwaita interface coordination;
+- `src/harmonia/window_*.py`: domain-specific GTK window behavior for Home, library,
   details, search, playback, lyrics, account, history, and preferences;
+- `src/harmonia/qt_app.py`: Qt/Kirigami application bootstrap and shared GLib event-loop bridge;
+- `src/harmonia/qt_backend.py`: small QML-facing facade for the modular Qt controllers;
+- `src/harmonia/qt_*.py`: KDE catalog, library, playback, activity, preferences, mutations, and presenters;
+- `src/harmonia/qml/`: native Kirigami presentation components;
 - `src/harmonia/services.py`: YouTube Music service orchestration;
-- `src/harmonia/ui.py`: shared interaction components and visual primitives;
-- `src/harmonia/player.py`: native GStreamer playback;
+- `src/harmonia/ui.py`: shared GTK interaction components and visual primitives;
+- `src/harmonia/player.py`: native GStreamer playback shared by both frontends;
 - `src/harmonia/together.py`: authenticated local-network playback sessions;
 - `src/harmonia/recognition.py`: temporary audio capture and recognition providers;
 - `src/harmonia/cast.py`: UPnP/DLNA discovery, transport, and local media relay;
 - `src/harmonia/storage.py`: session and local cache persistence;
-- `tests/`: protocol, parser, interface, playback, and integration tests.
+- `tests/`: protocol, parser, interface, playback, frontend-selection, and integration tests.
 
 ## License
 
