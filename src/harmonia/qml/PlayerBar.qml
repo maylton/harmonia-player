@@ -6,6 +6,9 @@ import org.kde.kirigami as Kirigami
 Rectangle {
     id: root
 
+    signal lyricsRequested()
+    signal queueRequested()
+
     implicitHeight: Kirigami.Units.gridUnit * 4
     color: Kirigami.Theme.backgroundColor
     border.width: 0
@@ -154,16 +157,38 @@ Rectangle {
         }
 
         RowLayout {
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 11
-            visible: root.width >= 880
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 15
+            visible: root.width >= 820
             spacing: Kirigami.Units.smallSpacing
 
+            Controls.ToolButton {
+                text: "Letras"
+                icon.name: "view-media-lyrics"
+                display: Controls.AbstractButton.IconOnly
+                enabled: backend.currentId.length > 0
+                onClicked: root.lyricsRequested()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+
+            Controls.ToolButton {
+                text: "Fila de reprodução"
+                icon.name: "view-media-playlist"
+                display: Controls.AbstractButton.IconOnly
+                enabled: backend.queueItems.length > 0
+                onClicked: root.queueRequested()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+
             Kirigami.Icon {
+                visible: root.width >= 980
                 source: backend.volume === 0 ? "audio-volume-muted" : "audio-volume-high"
             }
 
             Controls.Slider {
                 Layout.fillWidth: true
+                visible: root.width >= 980
                 from: 0
                 to: 100
                 value: backend.volume
