@@ -74,6 +74,7 @@ Column {
             height: ListView.view.height
             padding: 0
             hoverEnabled: true
+            background: null
             onClicked: root.itemActivated(modelData.index, modelData.kind)
 
             contentItem: Column {
@@ -88,13 +89,16 @@ Column {
                         anchors.fill: parent
                         source: modelData.thumbnail
                         kind: modelData.kind
+                        z: 0
                     }
 
                     Rectangle {
                         anchors.fill: parent
                         radius: cover.maskRadius
                         color: Qt.rgba(0, 0, 0, 0.38)
+                        antialiasing: true
                         visible: cardDelegate.hovered
+                        z: 1
                     }
 
                     Rectangle {
@@ -105,7 +109,9 @@ Column {
                         color: Qt.rgba(0.05, 0.05, 0.05, 0.78)
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.12)
+                        antialiasing: true
                         visible: cardDelegate.hovered
+                        z: 2
 
                         Kirigami.Icon {
                             anchors.centerIn: parent
