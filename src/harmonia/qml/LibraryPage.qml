@@ -86,44 +86,39 @@ Item {
                         width: parent.width
                         height: width
 
+                        CoverArt {
+                            id: cover
+                            anchors.fill: parent
+                            source: modelData.thumbnail
+                            kind: modelData.kind
+                        }
+
                         Rectangle {
                             anchors.fill: parent
-                            radius: modelData.kind === "artists" ? width / 2 : Kirigami.Units.cornerRadius
-                            clip: true
-                            color: Kirigami.Theme.alternateBackgroundColor
+                            radius: cover.maskRadius
+                            color: Qt.rgba(0, 0, 0, 0.36)
+                            visible: cardDelegate.hovered
+                        }
 
-                            Image {
-                                anchors.fill: parent
-                                source: modelData.thumbnail
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                            }
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Kirigami.Units.gridUnit * 3
+                            height: width
+                            radius: width / 2
+                            color: Qt.rgba(0.05, 0.05, 0.05, 0.78)
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.12)
+                            visible: cardDelegate.hovered
 
                             Kirigami.Icon {
                                 anchors.centerIn: parent
                                 width: Kirigami.Units.iconSizes.large
                                 height: width
-                                source: modelData.kind === "artists" ? "avatar-default" : "audio-x-generic"
-                                visible: !modelData.thumbnail
+                                source: modelData.kind === "songs" || modelData.kind === "videos"
+                                      ? "media-playback-start"
+                                      : "go-next"
+                                color: "white"
                             }
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: modelData.kind === "artists" ? width / 2 : Kirigami.Units.cornerRadius
-                            color: Qt.rgba(0, 0, 0, 0.36)
-                            visible: cardDelegate.hovered
-                        }
-
-                        Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: Kirigami.Units.iconSizes.large
-                            height: width
-                            source: modelData.kind === "songs" || modelData.kind === "videos"
-                                  ? "media-playback-start"
-                                  : "go-next"
-                            color: "white"
-                            visible: cardDelegate.hovered
                         }
                     }
 
