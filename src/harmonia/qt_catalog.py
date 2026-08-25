@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, Signal
 
-from .models import ArtistPage, ExploreData, LibraryItem, SearchResults
+from .models import ArtistPage, ExploreData, LibraryItem, LocalPlaylist, SearchResults
 from .qt_presenters import section_map, unique_items
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -15,7 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class QtCatalogController(QObject):
-    """Home, Explore, Search and remote-detail state for the Qt frontend."""
+    """Home, Explore, Search and detail state for the Qt frontend."""
 
     homeChanged = Signal()
     libraryChanged = Signal()
@@ -211,8 +211,16 @@ class QtCatalogController(QObject):
 
         self.executor.submit(worker)
 
-    def _apply_search_more(self, request_id: int, group_index: int, incoming, error: str) -> None:
-        if request_id != self._search_request or not 0 <= group_index < len(self.search_results.groups):
+    def _apply_search_more(
+        self,
+        request_id: int,
+        group_index: int,
+        incoming,
+        error: str,
+    ) -> None:
+        if request_id != self._search_request or not 0 <= group_index < len(
+            self.search_results.groups
+        ):
             return
         if error or incoming is None:
             self.set_status(f"Não foi possível carregar mais resultados: {error}")
@@ -250,6 +258,36 @@ class QtCatalogController(QObject):
         else:
             self.open_detail(selected)
 
+    def clear_detail(self) -> None:
+        self._detail_request += 1
+        self.detail_item = None
+        self.detail_tracks = []
+        self.detail_sections = []
+        self.detail_section_items = []
+        self.detail_artist_sections = []
+        self.detail_description = ""
+        self.detail_subscribers = ""
+        self.detail_is_artist = False
+        self.detailChanged.emit()
+
+    def show_local_playlist(self, playlist: LocalPlaylist) -> None:
+        self._detail_request += 1
+        self.detail_item = LibraryItem(
+            f"local-playlist:{playlist.id}",
+            playlist.title,
+            f"{len(playlist.items)} faixas · playlist local",
+            kind="local-playlists",
+        )
+        self.detail_tracks = list(playlist.items)
+        self.detail_sections = []
+        self.detail_section_items = []
+        self.detail_artist_sections = []
+        self.detail_description = "Playlist armazenada somente neste computador."
+        self.detail_subscribers = ""
+        self.detail_is_artist = False
+        self.detailChanged.emit()
+        self.set_status("")
+
     def open_detail(self, item: LibraryItem) -> None:
         self._detail_request += 1
         request_id = self._detail_request
@@ -267,7 +305,11 @@ class QtCatalogController(QObject):
 
         def worker() -> None:
             try:
-                payload = self.youtube.artist(item.id) if item.kind == "artists" else self.youtube.browse(item)
+                payload = (
+                    self.youtube.artist(item.id)
+                    if item.kind == "artists"
+                    else self.youtube.browse(item)
+                )
                 self._detailReady.emit(request_id, item, payload, "")
             except Exception as exc:
                 LOGGER.exception("Qt detail failed")
@@ -297,8 +339,12 @@ class QtCatalogController(QObject):
             self.detail_description = artist.description
             self.detail_subscribers = artist.subscribers
             self.detail_is_artist = True
-            self.detail_artist_sections = [section for section in (artist.sections or []) if section.items]
-            self.detail_section_items = [list(section.items) for section in self.detail_artist_sections]
+            self.detail_artist_sections = [
+                section for section in (artist.sections or []) if section.items
+            ]
+            self.detail_section_items = [
+                list(section.items) for section in self.detail_artist_sections
+            ]
             self.detail_sections = []
             for section in self.detail_artist_sections:
                 mapped = self.section(section.title, section.items)
@@ -337,7 +383,11 @@ class QtCatalogController(QObject):
     def play_detail_section(self, section_index: int) -> None:
         if not 0 <= section_index < len(self.detail_section_items):
             return
-        items = [item for item in self.detail_section_items[section_index] if item.kind in {"songs", "videos"}]
+        items = [
+            item
+            for item in self.detail_section_items[section_index]
+            if item.kind in {"songs", "videos"}
+        ]
         if items:
             self.play_queue(items, 0)
 
@@ -361,8 +411,16 @@ class QtCatalogController(QObject):
 
         self.executor.submit(worker)
 
-    def _apply_detail_section(self, request_id: int, section_index: int, items, error: str) -> None:
-        if request_id != self._detail_section_request or not 0 <= section_index < len(self.detail_sections):
+    def _apply_detail_section(
+        self,
+        request_id: int,
+        section_index: int,
+        items,
+        error: str,
+    ) -> None:
+        if request_id != self._detail_section_request or not 0 <= section_index < len(
+            self.detail_sections
+        ):
             return
         if error or items is None:
             self.set_status(f"Não foi possível carregar a seção: {error}")
@@ -377,7 +435,11 @@ class QtCatalogController(QObject):
         self.set_status("")
 
     def open_explore_destination(self, group: str, index: int) -> None:
-        values = self.explore_display.shortcuts if group == "shortcuts" else self.explore_display.genres
+        values = (
+            self.explore_display.shortcuts
+            if group == "shortcuts"
+            else self.explore_display.genres
+        )
         if not 0 <= index < len(values):
             return
         destination = values[index]
@@ -428,7 +490,11 @@ class QtCatalogController(QObject):
     def play_explore_section(self, section_index: int) -> None:
         if not 0 <= section_index < len(self.explore_display.sections):
             return
-        items = [item for item in self.explore_display.sections[section_index].items if item.kind == "songs"]
+        items = [
+            item
+            for item in self.explore_display.sections[section_index].items
+            if item.kind == "songs"
+        ]
         if items:
             self.play_queue(items, 0)
 
