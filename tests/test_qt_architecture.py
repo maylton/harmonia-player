@@ -74,18 +74,32 @@ def test_cover_art_is_the_only_shared_artwork_loader() -> None:
         assert "Image {" not in source, filename
 
 
-def test_loaded_cover_art_keeps_the_working_layer_mask_pipeline() -> None:
+def test_loaded_cover_art_keeps_working_mask_with_soft_edges() -> None:
     source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
     assert "import QtQuick.Effects" in source
     assert 'import "Artwork.js" as Artwork' in source
     assert "layer.effect: MultiEffect" in source
     assert "maskEnabled: true" in source
     assert "maskSource: artworkMask" in source
-    assert "maskThresholdMin: 0.5" in source
-    assert "maskSpreadAtMin: 0.0" in source
+    assert "maskThresholdMin: 0.0" in source
+    assert "maskSpreadAtMin: 0.12" in source
+    assert "layer.samples: 4" in source
     assert "mipmap: true" in source
     assert "layer.smooth: true" in source
     assert 'kind === "artist"' in source
+
+
+def test_home_cover_hover_is_explicitly_above_layered_artwork() -> None:
+    media = (QML / "MediaShelf.qml").read_text(encoding="utf-8")
+    songs = (QML / "SongShelf.qml").read_text(encoding="utf-8")
+    assert "background: null" in media
+    assert "z: 0" in media
+    assert "z: 1" in media
+    assert "z: 2" in media
+    assert "antialiasing: true" in media
+    assert "z: 0" in songs
+    assert "z: 1" in songs
+    assert "z: 2" in songs
 
 
 def test_ambient_backdrops_share_one_component_and_setting() -> None:
