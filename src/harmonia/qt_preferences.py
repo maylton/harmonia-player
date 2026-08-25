@@ -94,6 +94,18 @@ class QtPreferencesController(QObject):
         self.save()
         self.set_status("Proxy salvo. A próxima conexão usará esta configuração.")
 
+    def set_background_blur(self, enabled: bool) -> None:
+        enabled = bool(enabled)
+        if enabled == self.values.background_blur:
+            return
+        self.values.background_blur = enabled
+        self.save()
+        self.set_status(
+            "Fundo ambiente desfocado ativado."
+            if enabled
+            else "Fundo ambiente desfocado desativado."
+        )
+
     def set_audio_value(self, name: str, value) -> None:
         if name == "normalization":
             self.values.normalization = bool(value)
