@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import random
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
@@ -148,7 +147,12 @@ class HarmoniaQtBridge(QObject):
     def _liked_ids(self) -> set[str]:
         return {item.id for item in self._library.get("songs", [])}
 
-    def _section_map(self, title: str, items: list[LibraryItem], limit: int = 12) -> dict[str, Any]:
+    def _section_map(
+        self,
+        title: str,
+        items: list[LibraryItem],
+        limit: int = 12,
+    ) -> dict[str, Any]:
         unique: list[LibraryItem] = []
         seen: set[str] = set()
         for item in items:
@@ -173,7 +177,11 @@ class HarmoniaQtBridge(QObject):
 
     @Property("QVariantList", notify=homeChanged)
     def homeSections(self) -> list[dict[str, Any]]:
-        return [self._section_map(section.title, section.items) for section in self._home if section.items]
+        return [
+            self._section_map(section.title, section.items)
+            for section in self._home
+            if section.items
+        ]
 
     @Property("QVariantList", notify=libraryChanged)
     def libraryCategories(self) -> list[dict[str, str]]:
@@ -267,7 +275,11 @@ class HarmoniaQtBridge(QObject):
         for index, record in enumerate(self._downloads):
             result.append(
                 {
-                    **_item_map(record.item, index=index, liked=record.item.id in self._liked_ids()),
+                    **_item_map(
+                        record.item,
+                        index=index,
+                        liked=record.item.id in self._liked_ids(),
+                    ),
                     "status": record.status,
                     "progress": record.progress,
                     "downloadedBytes": record.downloaded_bytes,
@@ -517,7 +529,11 @@ class HarmoniaQtBridge(QObject):
 
         def worker() -> None:
             try:
-                payload = self.youtube.artist(item.id) if item.kind == "artists" else self.youtube.browse(item)
+                payload = (
+                    self.youtube.artist(item.id)
+                    if item.kind == "artists"
+                    else self.youtube.browse(item)
+                )
                 self._detailReady.emit(request_id, item, payload, "")
             except Exception as exc:
                 LOGGER.exception("Qt detail failed")
@@ -600,7 +616,11 @@ class HarmoniaQtBridge(QObject):
 
     @Slot(str, int)
     def openExploreDestination(self, group: str, index: int) -> None:
-        values = self._explore_display.shortcuts if group == "shortcuts" else self._explore_display.genres
+        values = (
+            self._explore_display.shortcuts
+            if group == "shortcuts"
+            else self._explore_display.genres
+        )
         if not 0 <= index < len(values):
             return
         destination = values[index]
