@@ -227,17 +227,17 @@ Kirigami.ApplicationWindow {
 
     QueuePanel {
         id: queuePanel
-        parent: root.contentItem
+        parent: Controls.Overlay.overlay
     }
 
     LyricsPanel {
         id: lyricsPanel
-        parent: root.contentItem
+        parent: Controls.Overlay.overlay
     }
 
     ExpandedPlayer {
         id: expandedPlayer
-        parent: root.contentItem
+        parent: Controls.Overlay.overlay
     }
 
     Controls.Dialog {
