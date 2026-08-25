@@ -8,12 +8,20 @@ Rectangle {
 
     property int currentView: 0
     property string currentCategory: "songs"
+    property bool ambientMode: false
     signal viewRequested(int view)
     signal categoryRequested(string category)
     signal createPlaylistRequested()
 
     implicitWidth: Kirigami.Units.gridUnit * 12.8
-    color: Kirigami.Theme.backgroundColor
+    color: ambientMode
+           ? Qt.rgba(
+                 Kirigami.Theme.backgroundColor.r,
+                 Kirigami.Theme.backgroundColor.g,
+                 Kirigami.Theme.backgroundColor.b,
+                 0.86
+             )
+           : Kirigami.Theme.backgroundColor
     border.width: 0
 
     ColumnLayout {
@@ -31,6 +39,8 @@ Rectangle {
                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                 Layout.preferredHeight: width
                 source: "audio-headphones"
+                isMask: true
+                color: Kirigami.Theme.textColor
             }
 
             Kirigami.Heading {
@@ -40,32 +50,28 @@ Rectangle {
             }
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Início"
-            icon.name: "go-home"
-            flat: true
-            checkable: true
+            iconName: "go-home"
             checked: root.currentView === 0
             onClicked: root.viewRequested(0)
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Explorar"
-            icon.name: "applications-multimedia"
-            flat: true
-            checkable: true
+            iconName: "find-location"
+            fallbackIcon: "edit-find"
             checked: root.currentView === 1
             onClicked: root.viewRequested(1)
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Biblioteca"
-            icon.name: "folder-music"
-            flat: true
-            checkable: true
+            iconName: "folder-music"
+            fallbackIcon: "folder"
             checked: root.currentView === 2
             onClicked: root.viewRequested(2)
         }
@@ -79,32 +85,29 @@ Rectangle {
             font.weight: Font.DemiBold
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Músicas curtidas"
-            icon.name: "favorite"
-            flat: true
-            checkable: true
+            iconName: "starred"
+            fallbackIcon: "rating"
             checked: root.currentView === 2 && root.currentCategory === "songs"
             onClicked: root.categoryRequested("songs")
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Playlists"
-            icon.name: "view-media-playlist"
-            flat: true
-            checkable: true
+            iconName: "view-list"
+            fallbackIcon: "view-media-playlist"
             checked: root.currentView === 2 && root.currentCategory === "playlists"
             onClicked: root.categoryRequested("playlists")
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Artistas"
-            icon.name: "avatar-default"
-            flat: true
-            checkable: true
+            iconName: "user-identity"
+            fallbackIcon: "avatar-default"
             checked: root.currentView === 2 && root.currentCategory === "artists"
             onClicked: root.categoryRequested("artists")
         }
@@ -118,53 +121,50 @@ Rectangle {
             font.weight: Font.DemiBold
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Histórico"
-            icon.name: "edit-clear-history"
-            flat: true
-            checkable: true
+            iconName: "document-open-recent"
+            fallbackIcon: "view-history"
             checked: root.currentView === 7
             onClicked: root.viewRequested(7)
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Estatísticas"
-            icon.name: "office-chart-line"
-            flat: true
-            checkable: true
+            iconName: "office-chart-line"
+            fallbackIcon: "view-statistics"
             checked: root.currentView === 8
             onClicked: root.viewRequested(8)
         }
 
         Item { Layout.fillHeight: true }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Downloads"
-            icon.name: "download"
-            flat: true
-            checkable: true
+            iconName: "folder-download"
+            fallbackIcon: "download"
             checked: root.currentView === 5
             onClicked: root.viewRequested(5)
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             text: "Preferências"
-            icon.name: "settings-configure"
-            flat: true
-            checkable: true
+            iconName: "preferences-system"
+            fallbackIcon: "configure"
             checked: root.currentView === 6
             onClicked: root.viewRequested(6)
         }
 
-        Controls.Button {
+        SidebarButton {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
             text: "Nova playlist"
-            icon.name: "list-add"
+            iconName: "list-add"
+            checkable: false
             onClicked: root.createPlaylistRequested()
         }
     }
