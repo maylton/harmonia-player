@@ -9,10 +9,14 @@ Controls.Dialog {
     title: "Fila de reprodução"
     modal: false
     standardButtons: Controls.Dialog.Close
-    width: Math.min(parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
-                    Kirigami.Units.gridUnit * 34)
-    height: Math.min(parent ? parent.height - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 36,
-                     Kirigami.Units.gridUnit * 36)
+    width: Math.min(
+        parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
+        Kirigami.Units.gridUnit * 34
+    )
+    height: Math.min(
+        parent ? parent.height - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 36,
+        Kirigami.Units.gridUnit * 36
+    )
     x: parent ? parent.width - width - Kirigami.Units.gridUnit * 1.2 : 0
     y: parent ? (parent.height - height) / 2 : 0
 
@@ -37,9 +41,7 @@ Controls.Dialog {
                 }
             }
 
-            Controls.Label {
-                text: "Autoplay"
-            }
+            Controls.Label { text: "Autoplay" }
 
             Controls.Switch {
                 checked: backend.autoplay
@@ -80,6 +82,7 @@ Controls.Dialog {
                         id: queueDelegate
                         required property int index
                         required property var modelData
+
                         width: queueList.width
                         height: Kirigami.Units.gridUnit * 4
                         highlighted: modelData.current
@@ -88,18 +91,21 @@ Controls.Dialog {
                         contentItem: RowLayout {
                             spacing: Kirigami.Units.smallSpacing
 
-                            Rectangle {
+                            Item {
                                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                                 Layout.preferredHeight: width
-                                radius: Kirigami.Units.cornerRadius
-                                clip: true
-                                color: Kirigami.Theme.alternateBackgroundColor
 
-                                Image {
+                                CoverArt {
                                     anchors.fill: parent
                                     source: modelData.thumbnail
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
+                                    kind: modelData.kind
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: Kirigami.Units.cornerRadius
+                                    color: Qt.rgba(0, 0, 0, 0.34)
+                                    visible: modelData.current
                                 }
 
                                 Kirigami.Icon {
@@ -107,6 +113,7 @@ Controls.Dialog {
                                     width: Kirigami.Units.iconSizes.medium
                                     height: width
                                     source: "audio-volume-high"
+                                    color: "white"
                                     visible: modelData.current
                                 }
                             }
@@ -119,7 +126,9 @@ Controls.Dialog {
                                     Layout.fillWidth: true
                                     text: modelData.title
                                     font.weight: modelData.current ? Font.Bold : Font.DemiBold
-                                    color: modelData.current ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                                    color: modelData.current
+                                         ? Kirigami.Theme.highlightColor
+                                         : Kirigami.Theme.textColor
                                     elide: Text.ElideRight
                                 }
 
@@ -185,25 +194,18 @@ Controls.Dialog {
                         id: relatedDelegate
                         required property int index
                         required property var modelData
+
                         width: relatedList.width
                         height: Kirigami.Units.gridUnit * 4
 
                         contentItem: RowLayout {
                             spacing: Kirigami.Units.smallSpacing
 
-                            Rectangle {
+                            CoverArt {
                                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                                 Layout.preferredHeight: width
-                                radius: Kirigami.Units.cornerRadius
-                                clip: true
-                                color: Kirigami.Theme.alternateBackgroundColor
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: modelData.thumbnail
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                }
+                                source: modelData.thumbnail
+                                kind: modelData.kind
                             }
 
                             ColumnLayout {
