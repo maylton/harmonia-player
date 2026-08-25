@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls as Controls
-import QtQuick.Effects
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -30,29 +29,16 @@ Controls.Dialog {
     }
 
     contentItem: Item {
-        Image {
-            id: backgroundArtwork
+        AmbientBackdrop {
             anchors.fill: parent
             source: backend.currentArtwork
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: true
-            opacity: status === Image.Ready ? 0.14 : 0
-            layer.enabled: status === Image.Ready
-            layer.smooth: true
-            layer.effect: MultiEffect {
-                autoPaddingEnabled: false
-                blurEnabled: true
-                blur: 1.0
-                blurMax: 32
-                saturation: -0.28
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: Kirigami.Theme.backgroundColor
-            opacity: 0.88
+            active: backend.currentId.length > 0
+            artworkOpacity: preferences.backgroundBlur ? 0.56 : 0.48
+            shadeOpacity: preferences.backgroundBlur ? 0.54 : 0.66
+            saturation: -0.12
+            blurMax: 64
+            blurMultiplier: 1.0
+            requestedSize: 1600
         }
 
         ColumnLayout {
@@ -252,6 +238,8 @@ Controls.Dialog {
                                     source: backend.volume === 0
                                             ? "audio-volume-muted"
                                             : "audio-volume-high"
+                                    isMask: true
+                                    color: Kirigami.Theme.textColor
                                 }
 
                                 Controls.Slider {
