@@ -18,13 +18,6 @@ def test_qt_app_resolves_installed_application_icon() -> None:
     assert "QIcon.setThemeSearchPaths" in source
 
 
-def test_qt_app_requests_multisampling_without_touching_cover_mask() -> None:
-    source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
-    assert "QSurfaceFormat" in source
-    assert "surface_format.setSamples(4)" in source
-    assert "QSurfaceFormat.setDefaultFormat(surface_format)" in source
-
-
 def test_qt_app_exposes_shared_preferences_controller() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert 'setContextProperty("preferences", backend.settings)' in source
@@ -81,28 +74,24 @@ def test_cover_art_is_the_only_shared_artwork_loader() -> None:
         assert "Image {" not in source, filename
 
 
-def test_loaded_cover_art_keeps_the_known_good_mask_pipeline() -> None:
+def test_loaded_cover_art_uses_curve_renderer_for_native_antialiasing() -> None:
     source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
-    assert "import QtQuick.Effects" in source
+    assert "import QtQuick.Shapes" in source
     assert 'import "Artwork.js" as Artwork' in source
-    assert "layer.effect: MultiEffect" in source
-    assert "maskEnabled: true" in source
-    assert "maskSource: artworkMask" in source
-    assert "maskThresholdMin: 0.5" in source
-    assert "maskSpreadAtMin: 0.0" in source
-    assert "layer.samples:" not in source
+    assert "preferredRendererType: Shape.CurveRenderer" in source
+    assert "fillItem: artwork" in source
+    assert source.count("PathArc {") == 4
+    assert "layer.effect: MultiEffect" not in source
+    assert "maskThresholdMin" not in source
+    assert "layer.textureSize" not in source
     assert "mipmap: true" in source
-    assert "layer.smooth: true" in source
     assert 'kind === "artist"' in source
 
 
-def test_cover_mask_uses_supersampled_texture_without_changing_thresholds() -> None:
-    source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
-    assert "layer.textureSize: Qt.size(" in source
-    assert "Math.ceil(root.width * 2)" in source
-    assert "Math.ceil(root.height * 2)" in source
-    assert "maskThresholdMin: 0.5" in source
-    assert "maskSpreadAtMin: 0.0" in source
+def test_qt_app_does_not_force_global_msaa_for_curve_covers() -> None:
+    source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
+    assert "QSurfaceFormat" not in source
+    assert "setSamples(" not in source
 
 
 def test_home_cover_hover_is_explicitly_above_layered_artwork() -> None:
