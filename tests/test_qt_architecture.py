@@ -18,6 +18,17 @@ def test_qt_app_resolves_installed_application_icon() -> None:
     assert "QIcon.setThemeSearchPaths" in source
 
 
+def test_qt_app_exposes_shared_preferences_controller() -> None:
+    source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
+    assert 'setContextProperty("preferences", backend.settings)' in source
+    preferences = (ROOT / "src" / "harmonia" / "qt_preferences.py").read_text(
+        encoding="utf-8"
+    )
+    assert "def backgroundBlur" in preferences
+    assert "self.values.background_blur" in preferences
+    assert "def setBackgroundBlur" in preferences
+
+
 def test_main_qml_keeps_major_regions_componentized() -> None:
     source = (QML / "Main.qml").read_text(encoding="utf-8")
     assert "NavigationSidebar {" in source
@@ -65,12 +76,46 @@ def test_cover_art_is_the_only_shared_artwork_loader() -> None:
         assert "Image {" not in source, filename
 
 
-def test_loaded_cover_art_uses_a_real_qt_quick_mask() -> None:
+def test_loaded_cover_art_uses_a_soft_real_qt_quick_mask() -> None:
     source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
     assert "import QtQuick.Effects" in source
+    assert 'import "Artwork.js" as Artwork' in source
     assert "maskEnabled: true" in source
     assert "maskSource: artworkMask" in source
+    assert "maskThresholdMin: 0.0" in source
+    assert "maskSpreadAtMin:" in source
+    assert "mipmap: true" in source
     assert 'kind === "artist"' in source
+
+
+def test_ambient_backdrops_share_one_component_and_setting() -> None:
+    backdrop = (QML / "AmbientBackdrop.qml").read_text(encoding="utf-8")
+    assert "MultiEffect {" in backdrop
+    assert 'import "Artwork.js" as Artwork' in backdrop
+    assert "blurEnabled: true" in backdrop
+
+    main = (QML / "Main.qml").read_text(encoding="utf-8")
+    detail = (QML / "DetailPage.qml").read_text(encoding="utf-8")
+    expanded = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
+    settings = (QML / "SettingsPage.qml").read_text(encoding="utf-8")
+
+    assert "AmbientBackdrop {" in main
+    assert "active: preferences.backgroundBlur" in main
+    assert "AmbientBackdrop {" in detail
+    assert "preferences.backgroundBlur" in detail
+    assert "AmbientBackdrop {" in expanded
+    assert "preferences.backgroundBlur" in expanded
+    assert "checked: preferences.backgroundBlur" in settings
+    assert "preferences.setBackgroundBlur(checked)" in settings
+
+
+def test_sidebar_uses_one_masked_icon_component() -> None:
+    sidebar = (QML / "NavigationSidebar.qml").read_text(encoding="utf-8")
+    button = (QML / "SidebarButton.qml").read_text(encoding="utf-8")
+    assert sidebar.count("SidebarButton {") >= 10
+    assert 'iconName: "applications-multimedia"' not in sidebar
+    assert "isMask: true" in button
+    assert "fallback:" in button
 
 
 def test_visible_player_controls_do_not_use_missing_autoplay_icon() -> None:
