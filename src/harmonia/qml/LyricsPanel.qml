@@ -9,10 +9,14 @@ Controls.Dialog {
     title: "Letras"
     modal: false
     standardButtons: Controls.Dialog.Close
-    width: Math.min(parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
-                    Kirigami.Units.gridUnit * 34)
-    height: Math.min(parent ? parent.height - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 38,
-                     Kirigami.Units.gridUnit * 38)
+    width: Math.min(
+        parent ? parent.width - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 34,
+        Kirigami.Units.gridUnit * 34
+    )
+    height: Math.min(
+        parent ? parent.height - Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 38,
+        Kirigami.Units.gridUnit * 38
+    )
     x: parent ? parent.width - width - Kirigami.Units.gridUnit * 1.2 : 0
     y: parent ? (parent.height - height) / 2 : 0
 
@@ -69,6 +73,66 @@ Controls.Dialog {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.smallSpacing
+
+            Controls.Button {
+                text: backend.selectedLyricsProvider === "lrclib"
+                      ? "Fonte: LRCLIB"
+                      : backend.selectedLyricsProvider === "youtube"
+                        ? "Fonte: YouTube"
+                        : "Fonte: Automática"
+                icon.name: "view-refresh"
+                flat: true
+                onClicked: backend.cycleLyricsProvider()
+            }
+
+            Controls.ToolButton {
+                text: "Traduzir para português"
+                icon.name: "accessories-dictionary"
+                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
+                onClicked: backend.translateLyrics()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+
+            Controls.ToolButton {
+                text: "Copiar letra"
+                icon.name: "edit-copy"
+                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
+                onClicked: backend.copyLyrics()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Controls.ToolButton {
+                text: "Adiantar 250 ms"
+                icon.name: "list-remove"
+                onClicked: backend.changeLyricsOffset(-250)
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+
+            Controls.Button {
+                text: backend.lyricsOffset === 0
+                      ? "Sincronia 0 ms"
+                      : (backend.lyricsOffset > 0 ? "+" : "") + backend.lyricsOffset + " ms"
+                flat: true
+                onClicked: backend.setLyricsOffset(0)
+            }
+
+            Controls.ToolButton {
+                text: "Atrasar 250 ms"
+                icon.name: "list-add"
+                onClicked: backend.changeLyricsOffset(250)
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+        }
+
         Controls.BusyIndicator {
             Layout.alignment: Qt.AlignHCenter
             running: backend.lyricsLoading
@@ -87,13 +151,12 @@ Controls.Dialog {
                 model: backend.lyricLines
 
                 delegate: Controls.ItemDelegate {
-                    id: lyricDelegate
                     required property int index
                     required property var modelData
                     width: syncedList.width
                     highlighted: index === backend.activeLyricIndex
                     hoverEnabled: true
-                    onClicked: backend.seek(modelData.startMs)
+                    onClicked: backend.seekLyric(modelData.startMs)
 
                     contentItem: ColumnLayout {
                         spacing: 2
@@ -122,12 +185,28 @@ Controls.Dialog {
             Controls.ScrollView {
                 clip: true
 
-                Controls.Label {
+                Column {
                     width: parent.width
+                    spacing: Kirigami.Units.largeSpacing
                     padding: Kirigami.Units.largeSpacing
-                    text: backend.lyricsPlain
-                    wrapMode: Text.WordWrap
-                    lineHeight: 1.35
+
+                    Controls.Label {
+                        width: parent.width - Kirigami.Units.largeSpacing * 2
+                        text: backend.lyricsPlain
+                        wrapMode: Text.WordWrap
+                        lineHeight: 1.35
+                        textFormat: Text.PlainText
+                    }
+
+                    Controls.Label {
+                        width: parent.width - Kirigami.Units.largeSpacing * 2
+                        visible: backend.lyricsTranslation.length > 0
+                        text: backend.lyricsTranslation
+                        wrapMode: Text.WordWrap
+                        lineHeight: 1.35
+                        opacity: 0.62
+                        textFormat: Text.PlainText
+                    }
                 }
             }
         }
@@ -140,7 +219,7 @@ Controls.Dialog {
                      && backend.lyricsPlain.length === 0
             text: backend.currentId.length > 0 ? "Letra não encontrada" : "Nenhuma música reproduzindo"
             explanation: backend.currentId.length > 0
-                         ? "Tente recarregar ou altere o provedor de letras nas preferências."
+                         ? "Tente recarregar ou altere o provedor de letras."
                          : "Escolha uma faixa para ver a letra."
             icon.name: "view-media-lyrics"
         }
