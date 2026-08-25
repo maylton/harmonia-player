@@ -66,6 +66,32 @@ Item {
             }
 
             Kirigami.Separator { width: parent.width }
+            Kirigami.Heading { text: "Aparência"; level: 2 }
+
+            Kirigami.FormLayout {
+                width: parent.width
+
+                Controls.Switch {
+                    Kirigami.FormData.label: "Fundo ambiente desfocado:"
+                    checked: preferences.backgroundBlur
+                    onToggled: preferences.setBackgroundBlur(checked)
+                }
+
+                Controls.Label {
+                    Kirigami.FormData.label: "Integração com o Plasma:"
+                    text: "Cores e ícones seguem o tema KDE automaticamente."
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Controls.Label {
+                width: parent.width
+                text: "Esta é a mesma preferência usada no frontend GTK: a capa atual colore o fundo desfocado e as superfícies ficam mais translúcidas."
+                opacity: 0.68
+                wrapMode: Text.WordWrap
+            }
+
+            Kirigami.Separator { width: parent.width }
             Kirigami.Heading { text: "Streaming"; level: 2 }
 
             Kirigami.FormLayout {
