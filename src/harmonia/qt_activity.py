@@ -5,8 +5,8 @@ from bisect import bisect_right
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtCore import QObject, Signal
+from PySide6.QtGui import QGuiApplication
 
 from .lyrics import GoogleTranslationClient, LyricsResolver
 from .models import HistoryEntry, LibraryItem, LyricLine
