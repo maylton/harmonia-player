@@ -2,14 +2,25 @@ from __future__ import annotations
 
 import logging
 import random
+import time
+from bisect import bisect_right
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 
 from .downloads import DownloadManager
-from .models import ArtistPage, ExploreData, ExploreDestination, LibraryItem
+from .lyrics import LyricsResolver
+from .models import (
+    ArtistPage,
+    ExploreData,
+    ExploreDestination,
+    HistoryEntry,
+    LibraryItem,
+    PlaybackState,
+)
 from .preferences import Preferences
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -26,6 +37,7 @@ CATEGORY_LABELS = {
     "podcasts": "Podcasts",
     "podcast-episodes": "Episódios",
 }
+MONTH_NAMES = ("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
 
 
 def _item_map(item: LibraryItem, *, index: int = -1, liked: bool = False) -> dict[str, Any]:
@@ -68,6 +80,12 @@ class HarmoniaQtBridge(QObject):
     durationChanged = Signal()
     volumeChanged = Signal()
     currentLikeChanged = Signal()
+    queueChanged = Signal()
+    historyChanged = Signal()
+    insightsChanged = Signal()
+    lyricsChanged = Signal()
+    lyricPositionChanged = Signal()
+    autoplayLoadingChanged = Signal()
 
     _syncReady = Signal(object, object, object, str)
     _searchReady = Signal(int, object, str)
@@ -77,12 +95,16 @@ class HarmoniaQtBridge(QObject):
     _discoveryReady = Signal(int, object, object, str)
     _downloadsUpdated = Signal()
     _mutationReady = Signal(str, bool, str)
+    _historyReady = Signal(int, object, str)
+    _lyricsReady = Signal(int, object, str)
+    _radioReady = Signal(int, object, str)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.storage = Storage()
         self.youtube = YouTubeMusicService(self.storage)
         self.preferences = Preferences.load(self.storage)
+        self.lyrics_resolver = LyricsResolver(self.youtube.lyrics)
         self._executor = ThreadPoolExecutor(max_workers=6, thread_name_prefix="harmonia-qt")
 
         self._home = self.storage.load_home()
@@ -107,12 +129,42 @@ class HarmoniaQtBridge(QObject):
         self._discovery_request = 0
 
         self._queue: list[LibraryItem] = []
+        self._related_items: list[LibraryItem] = []
         self._queue_index = -1
         self._current_item: LibraryItem | None = None
         self._stream_request = 0
         self._search_request = 0
         self._shuffle = False
         self._repeat = False
+        self._autoplay = True
+        self._autoplay_loading = False
+        self._waiting_for_autoplay = False
+        self._radio_request = 0
+        self._last_state_save = time.monotonic()
+        self._play_generation = 0
+        self._history_recorded_generation = -1
+        self._pending_tracking_url = ""
+
+        restored = self.storage.load_playback_state()
+        if restored and restored.queue:
+            self._queue = list(restored.queue)
+            self._related_items = list(restored.related)
+            self._queue_index = restored.index
+            self._current_item = self._queue[self._queue_index]
+            self._shuffle = restored.shuffle
+            self._repeat = restored.repeat
+            self._autoplay = restored.autoplay
+            self._play_generation = 1
+
+        self._history_entries: list[HistoryEntry] = self.storage.load_history()
+        self._history_loading = False
+        self._history_request = 0
+        self._insights_data = self.storage.playback_insights()
+
+        self._lyrics_document = None
+        self._lyrics_loading = False
+        self._lyrics_request = 0
+        self._active_lyric_index = -1
 
         self.downloads = DownloadManager(
             self.storage,
@@ -126,12 +178,12 @@ class HarmoniaQtBridge(QObject):
         self._audio.setVolume(0.85)
         self._player = QMediaPlayer(self)
         self._player.setAudioOutput(self._audio)
-        self._player.positionChanged.connect(self.positionChanged)
-        self._player.durationChanged.connect(self.durationChanged)
+        self._player.positionChanged.connect(self._on_position_changed)
+        self._player.durationChanged.connect(lambda *_: self.durationChanged.emit())
         self._player.playbackStateChanged.connect(lambda *_: self.playbackChanged.emit())
         self._player.mediaStatusChanged.connect(self._media_status_changed)
         self._player.errorOccurred.connect(self._player_error)
-        self._audio.volumeChanged.connect(self.volumeChanged)
+        self._audio.volumeChanged.connect(lambda *_: self.volumeChanged.emit())
 
         self._syncReady.connect(self._apply_sync)
         self._searchReady.connect(self._apply_search)
@@ -140,6 +192,9 @@ class HarmoniaQtBridge(QObject):
         self._detailReady.connect(self._apply_detail)
         self._discoveryReady.connect(self._apply_discovery)
         self._mutationReady.connect(self._apply_mutation)
+        self._historyReady.connect(self._apply_history)
+        self._lyricsReady.connect(self._apply_lyrics)
+        self._radioReady.connect(self._apply_radio)
 
         if self._logged_in:
             QTimer.singleShot(120, self.syncAll)
@@ -290,6 +345,133 @@ class HarmoniaQtBridge(QObject):
             )
         return result
 
+    @Property("QVariantList", notify=queueChanged)
+    def queueItems(self) -> list[dict[str, Any]]:
+        liked_ids = self._liked_ids()
+        return [
+            {
+                **_item_map(item, index=index, liked=item.id in liked_ids),
+                "current": index == self._queue_index,
+            }
+            for index, item in enumerate(self._queue)
+        ]
+
+    @Property("QVariantList", notify=queueChanged)
+    def relatedItems(self) -> list[dict[str, Any]]:
+        liked_ids = self._liked_ids()
+        return [
+            _item_map(item, index=index, liked=item.id in liked_ids)
+            for index, item in enumerate(self._related_items)
+        ]
+
+    @Property(bool, notify=playbackChanged)
+    def autoplay(self) -> bool:
+        return self._autoplay
+
+    @Property(bool, notify=autoplayLoadingChanged)
+    def autoplayLoading(self) -> bool:
+        return self._autoplay_loading
+
+    @Property("QVariantList", notify=historyChanged)
+    def historyItems(self) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        liked_ids = self._liked_ids()
+        for index, entry in enumerate(self._history_entries):
+            if entry.source == "local" and entry.played_at:
+                played = datetime.fromtimestamp(entry.played_at)
+                group = played.strftime("%d/%m/%Y")
+                played_label = played.strftime("%H:%M")
+            else:
+                group = entry.group or "YouTube Music"
+                played_label = "YouTube Music" if entry.source == "remote" else ""
+            result.append(
+                {
+                    **_item_map(entry.item, index=index, liked=entry.item.id in liked_ids),
+                    "entryId": entry.id if entry.id is not None else -1,
+                    "source": entry.source,
+                    "group": group,
+                    "playedLabel": played_label,
+                    "canRemove": entry.source == "local" or bool(entry.feedback_token),
+                }
+            )
+        return result
+
+    @Property(bool, notify=historyChanged)
+    def historyEnabled(self) -> bool:
+        return self.storage.history_enabled()
+
+    @Property(bool, notify=historyChanged)
+    def historyLoading(self) -> bool:
+        return self._history_loading
+
+    @Property(bool, notify=historyChanged)
+    def hasLocalHistory(self) -> bool:
+        return any(entry.source == "local" for entry in self._history_entries)
+
+    @Property("QVariantMap", notify=insightsChanged)
+    def insights(self) -> dict[str, Any]:
+        data = self._insights_data
+        minutes = data.listened_minutes
+        if minutes >= 60:
+            hours, remainder = divmod(minutes, 60)
+            listened_label = f"{hours} h {remainder} min" if remainder else f"{hours} h"
+        else:
+            listened_label = f"{minutes} min"
+        maximum = max(data.monthly_plays) or 1
+        liked_ids = self._liked_ids()
+        return {
+            "year": data.year,
+            "totalPlays": data.total_plays,
+            "uniqueTracks": data.unique_tracks,
+            "listenedMinutes": minutes,
+            "listenedLabel": listened_label,
+            "topTracks": [
+                {
+                    **_item_map(ranked.item, index=index, liked=ranked.item.id in liked_ids),
+                    "plays": ranked.plays,
+                    "listenedMs": ranked.listened_ms,
+                }
+                for index, ranked in enumerate(data.top_tracks)
+            ],
+            "topArtists": [
+                {"name": ranked.name, "plays": ranked.plays}
+                for ranked in data.top_artists
+            ],
+            "months": [
+                {"label": label, "plays": plays, "ratio": plays / maximum}
+                for label, plays in zip(MONTH_NAMES, data.monthly_plays, strict=True)
+            ],
+        }
+
+    @Property("QVariantList", notify=lyricsChanged)
+    def lyricLines(self) -> list[dict[str, Any]]:
+        if self._lyrics_document is None:
+            return []
+        return [
+            {
+                "startMs": line.start_ms,
+                "text": line.text,
+                "translation": line.translation,
+            }
+            for line in self._lyrics_document.synced
+        ]
+
+    @Property(str, notify=lyricsChanged)
+    def lyricsPlain(self) -> str:
+        return self._lyrics_document.display_text if self._lyrics_document else ""
+
+    @Property(str, notify=lyricsChanged)
+    def lyricsProvider(self) -> str:
+        return self._lyrics_document.provider if self._lyrics_document else ""
+
+    @Property(bool, notify=lyricsChanged)
+    def lyricsLoading(self) -> bool:
+        return self._lyrics_loading
+
+    @Property(int, notify=lyricPositionChanged)
+    def activeLyricIndex(self) -> int:
+        return self._active_lyric_index
+
     @Property(str, notify=preferencesChanged)
     def quality(self) -> str:
         return self.preferences.quality
@@ -367,7 +549,9 @@ class HarmoniaQtBridge(QObject):
     @Property(bool, notify=nowPlayingChanged)
     def canNext(self) -> bool:
         return self._queue_index >= 0 and (
-            self._queue_index + 1 < len(self._queue) or (self._repeat and bool(self._queue))
+            self._queue_index + 1 < len(self._queue)
+            or (self._repeat and bool(self._queue))
+            or self._autoplay
         )
 
     def _set_busy(self, value: bool) -> None:
@@ -379,6 +563,87 @@ class HarmoniaQtBridge(QObject):
         if self._status != value:
             self._status = value
             self.statusChanged.emit()
+
+    def _set_autoplay_loading(self, value: bool) -> None:
+        if self._autoplay_loading != value:
+            self._autoplay_loading = value
+            self.autoplayLoadingChanged.emit()
+
+    def _save_playback_state(self, position_ms: int | None = None) -> None:
+        if not self._queue:
+            return
+        self.storage.save_playback_state(
+            PlaybackState(
+                list(self._queue),
+                list(self._related_items),
+                max(0, self._queue_index),
+                self.position if position_ms is None else max(0, position_ms),
+                self._shuffle,
+                self._repeat,
+                self._autoplay,
+            )
+        )
+        self._last_state_save = time.monotonic()
+
+    def _on_position_changed(self, value: int) -> None:
+        self.positionChanged.emit()
+        self._update_active_lyric(value)
+        self._maybe_record_history(value)
+        if self._queue and time.monotonic() - self._last_state_save >= 5:
+            self._save_playback_state(value)
+
+    def _maybe_record_history(self, position_ms: int) -> None:
+        if (
+            self._current_item is None
+            or position_ms < 30_000
+            or self._history_recorded_generation == self._play_generation
+            or not self.storage.history_enabled()
+        ):
+            return
+        entry_id = self.storage.record_history(self._current_item, position_ms)
+        self._history_recorded_generation = self._play_generation
+        if entry_id is not None:
+            self._history_entries.insert(
+                0,
+                HistoryEntry(
+                    entry_id,
+                    self._current_item,
+                    int(time.time()),
+                    position_ms,
+                    "local",
+                ),
+            )
+            self.historyChanged.emit()
+            self.refreshInsights()
+        if self._pending_tracking_url:
+            tracking_url = self._pending_tracking_url
+            playlist_id = self._current_item.playlist_id
+            self._pending_tracking_url = ""
+            self._executor.submit(self.youtube.register_playback, tracking_url, playlist_id)
+
+    def _reset_lyrics(self) -> None:
+        self._lyrics_request += 1
+        self._lyrics_document = None
+        self._lyrics_loading = False
+        self._active_lyric_index = -1
+        self.lyricsChanged.emit()
+        self.lyricPositionChanged.emit()
+
+    def _set_current_from_queue(self, index: int, *, resolve: bool = True) -> None:
+        if not 0 <= index < len(self._queue):
+            return
+        self._queue_index = index
+        self._current_item = self._queue[index]
+        self._play_generation += 1
+        self._history_recorded_generation = -1
+        self._pending_tracking_url = ""
+        self._reset_lyrics()
+        self.nowPlayingChanged.emit()
+        self.currentLikeChanged.emit()
+        self.queueChanged.emit()
+        self._save_playback_state(0)
+        if resolve:
+            self._resolve_current()
 
     @Slot()
     def syncAll(self) -> None:
@@ -418,6 +683,7 @@ class HarmoniaQtBridge(QObject):
         self.exploreChanged.emit()
         self.detailChanged.emit()
         self.currentLikeChanged.emit()
+        self.queueChanged.emit()
         self._reload_downloads()
         self._set_status("")
 
@@ -694,26 +960,29 @@ class HarmoniaQtBridge(QObject):
         if selected.kind not in {"songs", "videos"}:
             self._open_detail(selected)
             return
+        self._related_items = []
+        self._waiting_for_autoplay = False
+        self._radio_request += 1
+        self._set_autoplay_loading(False)
         self._queue = list(items)
-        self._queue_index = index
-        self._current_item = selected
-        self.nowPlayingChanged.emit()
-        self.currentLikeChanged.emit()
-        self._resolve_current()
+        self._set_current_from_queue(index)
+        self._ensure_autoplay()
 
     def _resolve_current(self) -> None:
         item = self._current_item
         if item is None:
             return
+        self._stream_request += 1
+        request_id = self._stream_request
+        self._pending_tracking_url = ""
         offline = self.downloads.offline_path(item.id)
         if offline:
             self._player.setSource(QUrl.fromLocalFile(str(offline)))
             self._player.play()
             self._set_status("")
+            self._ensure_autoplay()
             return
 
-        self._stream_request += 1
-        request_id = self._stream_request
         self._set_busy(True)
         self._set_status(f"Preparando {item.title}…")
 
@@ -735,21 +1004,19 @@ class HarmoniaQtBridge(QObject):
         if error or stream is None:
             self._set_status(f"Não foi possível reproduzir a faixa: {error}")
             return
+        self._pending_tracking_url = stream.playback_tracking_url or ""
         self._player.setSource(QUrl(stream.url))
         self._player.play()
         self._set_status("")
-        if stream.playback_tracking_url:
-            self._executor.submit(
-                self.youtube.register_playback,
-                stream.playback_tracking_url,
-                self._current_item.playlist_id if self._current_item else None,
-            )
+        self._ensure_autoplay()
 
     @Slot()
     def togglePlayback(self) -> None:
         if self._current_item is None:
             return
-        if self.playing:
+        if self._player.source().isEmpty():
+            self._resolve_current()
+        elif self.playing:
             self._player.pause()
         else:
             self._player.play()
@@ -760,17 +1027,24 @@ class HarmoniaQtBridge(QObject):
             return
         if self._shuffle and len(self._queue) > 1:
             choices = [index for index in range(len(self._queue)) if index != self._queue_index]
-            self._queue_index = random.choice(choices)
-        elif self._queue_index + 1 < len(self._queue):
-            self._queue_index += 1
-        elif self._repeat:
-            self._queue_index = 0
-        else:
+            self._set_current_from_queue(random.choice(choices))
+            self._ensure_autoplay()
             return
-        self._current_item = self._queue[self._queue_index]
-        self.nowPlayingChanged.emit()
-        self.currentLikeChanged.emit()
-        self._resolve_current()
+        if self._queue_index + 1 < len(self._queue):
+            self._set_current_from_queue(self._queue_index + 1)
+            self._ensure_autoplay()
+            return
+        if self._repeat:
+            self._set_current_from_queue(0)
+            self._ensure_autoplay()
+            return
+        if self._autoplay:
+            if self._related_items:
+                self._promote_related_index(0, True)
+                self._set_current_from_queue(self._queue_index + 1)
+            else:
+                self._waiting_for_autoplay = True
+                self._ensure_autoplay(force=True)
 
     @Slot()
     def previous(self) -> None:
@@ -778,40 +1052,316 @@ class HarmoniaQtBridge(QObject):
             self._player.setPosition(0)
             return
         if self._queue_index > 0:
-            self._queue_index -= 1
+            self._set_current_from_queue(self._queue_index - 1)
         elif self._repeat and self._queue:
-            self._queue_index = len(self._queue) - 1
-        else:
-            return
-        self._current_item = self._queue[self._queue_index]
-        self.nowPlayingChanged.emit()
-        self.currentLikeChanged.emit()
-        self._resolve_current()
+            self._set_current_from_queue(len(self._queue) - 1)
 
     @Slot()
     def toggleShuffle(self) -> None:
         self._shuffle = not self._shuffle
         self.playbackChanged.emit()
+        self._save_playback_state()
 
     @Slot()
     def toggleRepeat(self) -> None:
         self._repeat = not self._repeat
         self.playbackChanged.emit()
         self.nowPlayingChanged.emit()
+        self._save_playback_state()
+
+    @Slot()
+    def toggleAutoplay(self) -> None:
+        self._autoplay = not self._autoplay
+        self._waiting_for_autoplay = False
+        if not self._autoplay:
+            self._radio_request += 1
+            self._set_autoplay_loading(False)
+        self.playbackChanged.emit()
+        self.nowPlayingChanged.emit()
+        self._save_playback_state()
+        if self._autoplay:
+            self._ensure_autoplay(force=True)
+
+    def _ensure_autoplay(self, force: bool = False) -> None:
+        if not self._autoplay or not self._queue or self._autoplay_loading:
+            return
+        if self._related_items:
+            if self._waiting_for_autoplay:
+                self._waiting_for_autoplay = False
+                self._promote_related_index(0, True)
+                self._set_current_from_queue(self._queue_index + 1)
+            return
+        remaining = len(self._queue) - self._queue_index - 1
+        if not force and remaining > 5:
+            return
+        seed = self._queue[-1]
+        self._radio_request += 1
+        request_id = self._radio_request
+        self._set_autoplay_loading(True)
+
+        def worker() -> None:
+            try:
+                recommendations = self.youtube.radio(seed.id)
+                self._radioReady.emit(request_id, recommendations, "")
+            except Exception as exc:
+                LOGGER.exception("Qt autoplay radio failed")
+                self._radioReady.emit(request_id, [], str(exc))
+
+        self._executor.submit(worker)
+
+    @Slot(int, object, str)
+    def _apply_radio(self, request_id: int, recommendations, error: str) -> None:
+        if request_id != self._radio_request:
+            return
+        self._set_autoplay_loading(False)
+        if error:
+            if self._waiting_for_autoplay:
+                self._waiting_for_autoplay = False
+                self._set_status(f"Não foi possível continuar a rádio: {error}")
+            return
+        existing = {item.id for item in self._queue}
+        self._related_items = [
+            item for item in list(recommendations or []) if item.id not in existing
+        ]
+        self.queueChanged.emit()
+        self._save_playback_state()
+        if self._waiting_for_autoplay and self._related_items:
+            self._waiting_for_autoplay = False
+            self._promote_related_index(0, True)
+            self._set_current_from_queue(self._queue_index + 1)
+        elif self._waiting_for_autoplay:
+            self._waiting_for_autoplay = False
+            self._set_status("A rádio não encontrou novas músicas.")
+
+    def _promote_related_index(self, index: int, play_next: bool) -> None:
+        if not 0 <= index < len(self._related_items):
+            return
+        item = self._related_items.pop(index)
+        position = min(len(self._queue), self._queue_index + 1) if play_next else len(self._queue)
+        self._queue.insert(position, item)
+        self.queueChanged.emit()
+        self.nowPlayingChanged.emit()
+        self._save_playback_state()
+
+    @Slot(int, bool)
+    def promoteRelated(self, index: int, play_next: bool) -> None:
+        self._promote_related_index(index, play_next)
+
+    @Slot(int)
+    def selectQueueItem(self, index: int) -> None:
+        if 0 <= index < len(self._queue):
+            self._set_current_from_queue(index)
+            self._ensure_autoplay()
+
+    @Slot(int, int)
+    def moveQueueItem(self, index: int, direction: int) -> None:
+        target = index + direction
+        if not (0 <= index < len(self._queue) and 0 <= target < len(self._queue)):
+            return
+        self._queue[index], self._queue[target] = self._queue[target], self._queue[index]
+        if self._queue_index == index:
+            self._queue_index = target
+        elif self._queue_index == target:
+            self._queue_index = index
+        self.queueChanged.emit()
+        self.nowPlayingChanged.emit()
+        self._save_playback_state()
+
+    @Slot(int)
+    def removeQueueItem(self, index: int) -> None:
+        if not 0 <= index < len(self._queue):
+            return
+        removing_current = index == self._queue_index
+        self._queue.pop(index)
+        if not self._queue:
+            self._player.stop()
+            self._player.setSource(QUrl())
+            self._current_item = None
+            self._queue_index = -1
+            self._related_items = []
+            self.storage.clear_playback_state()
+            self._reset_lyrics()
+            self.nowPlayingChanged.emit()
+            self.currentLikeChanged.emit()
+            self.queueChanged.emit()
+            return
+        if index < self._queue_index:
+            self._queue_index -= 1
+        elif self._queue_index >= len(self._queue):
+            self._queue_index = len(self._queue) - 1
+        if removing_current:
+            self._set_current_from_queue(self._queue_index)
+        else:
+            self.queueChanged.emit()
+            self.nowPlayingChanged.emit()
+            self._save_playback_state()
 
     @Slot(int)
     def seek(self, position_ms: int) -> None:
         self._player.setPosition(max(0, min(position_ms, self.duration)))
+        self._save_playback_state(position_ms)
 
     @Slot(int)
     def setVolume(self, value: int) -> None:
         self._audio.setVolume(max(0.0, min(1.0, value / 100.0)))
+
+    @Slot()
+    def refreshHistory(self) -> None:
+        self._history_request += 1
+        request_id = self._history_request
+        local = self.storage.load_history()
+        if not self._logged_in:
+            self._history_entries = local
+            self._history_loading = False
+            self.historyChanged.emit()
+            return
+        self._history_loading = True
+        self.historyChanged.emit()
+
+        def worker() -> None:
+            try:
+                remote = self.youtube.history()
+                self._historyReady.emit(request_id, remote, "")
+            except Exception as exc:
+                LOGGER.exception("Qt history sync failed")
+                self._historyReady.emit(request_id, [], str(exc))
+
+        self._executor.submit(worker)
+
+    @Slot(int, object, str)
+    def _apply_history(self, request_id: int, remote, error: str) -> None:
+        if request_id != self._history_request:
+            return
+        self._history_loading = False
+        local = self.storage.load_history()
+        self._history_entries = [*list(remote or []), *local]
+        self.historyChanged.emit()
+        if error:
+            self._set_status(f"O histórico local foi preservado; o remoto falhou: {error}")
+
+    @Slot(bool)
+    def setHistoryEnabled(self, enabled: bool) -> None:
+        self.storage.set_history_enabled(enabled)
+        self.historyChanged.emit()
+
+    @Slot()
+    def clearLocalHistory(self) -> None:
+        self.storage.clear_history()
+        self._history_entries = [entry for entry in self._history_entries if entry.source != "local"]
+        self.historyChanged.emit()
+        self.refreshInsights()
+
+    @Slot(int)
+    def removeHistoryItem(self, index: int) -> None:
+        if not 0 <= index < len(self._history_entries):
+            return
+        entry = self._history_entries[index]
+        if entry.source == "local" and entry.id is not None:
+            self.storage.remove_history(entry.id)
+            self._history_entries.pop(index)
+            self.historyChanged.emit()
+            self.refreshInsights()
+            return
+        if not entry.feedback_token:
+            return
+
+        def worker() -> None:
+            try:
+                self.youtube.remove_history_item(entry.feedback_token or "")
+                self._mutationReady.emit("history", True, "")
+            except Exception as exc:
+                LOGGER.exception("Qt remote history removal failed")
+                self._mutationReady.emit("history", False, str(exc))
+
+        self._executor.submit(worker)
+
+    @Slot(int)
+    def playHistoryItem(self, index: int) -> None:
+        if 0 <= index < len(self._history_entries):
+            item = self._history_entries[index].item
+            self._play_queue([item], 0)
+
+    @Slot()
+    def refreshInsights(self) -> None:
+        self._insights_data = self.storage.playback_insights()
+        self.insightsChanged.emit()
+
+    @Slot(int)
+    def playInsightTrack(self, index: int) -> None:
+        if 0 <= index < len(self._insights_data.top_tracks):
+            self._play_queue([self._insights_data.top_tracks[index].item], 0)
+
+    @Slot()
+    def loadLyrics(self) -> None:
+        self._load_lyrics(force=False)
+
+    @Slot()
+    def reloadLyrics(self) -> None:
+        self._load_lyrics(force=True)
+
+    def _load_lyrics(self, force: bool) -> None:
+        item = self._current_item
+        if item is None:
+            self._reset_lyrics()
+            return
+        provider = self.storage.get_setting("lyrics_provider", "auto")
+        if provider not in {"auto", "lrclib", "youtube"}:
+            provider = "auto"
+        if not force:
+            cached = self.storage.load_lyrics_document(item.id, provider)
+            if cached:
+                self._lyrics_document = cached
+                self._lyrics_loading = False
+                self.lyricsChanged.emit()
+                self._update_active_lyric(self.position)
+                return
+        self._lyrics_request += 1
+        request_id = self._lyrics_request
+        self._lyrics_loading = True
+        self._lyrics_document = None
+        self._active_lyric_index = -1
+        self.lyricsChanged.emit()
+        self.lyricPositionChanged.emit()
+
+        def worker() -> None:
+            try:
+                document = self.lyrics_resolver.fetch(item, self.duration, provider)
+                self._lyricsReady.emit(request_id, document, "")
+            except Exception as exc:
+                LOGGER.exception("Qt lyrics fetch failed")
+                self._lyricsReady.emit(request_id, None, str(exc))
+
+        self._executor.submit(worker)
+
+    @Slot(int, object, str)
+    def _apply_lyrics(self, request_id: int, document, error: str) -> None:
+        if request_id != self._lyrics_request:
+            return
+        self._lyrics_loading = False
+        self._lyrics_document = document
+        if document and self._current_item:
+            self.storage.save_lyrics_document(self._current_item.id, document)
+        self.lyricsChanged.emit()
+        self._update_active_lyric(self.position)
+        if error:
+            self._set_status(f"Não foi possível carregar a letra: {error}")
+
+    def _update_active_lyric(self, position_ms: int) -> None:
+        lines = self._lyrics_document.synced if self._lyrics_document else []
+        if not lines:
+            index = -1
+        else:
+            index = bisect_right([line.start_ms for line in lines], position_ms) - 1
+        if index != self._active_lyric_index:
+            self._active_lyric_index = index
+            self.lyricPositionChanged.emit()
 
     def _find_item(self, item_id: str) -> LibraryItem | None:
         groups: list[list[LibraryItem]] = [
             self._search_items,
             self._detail_tracks,
             self._queue,
+            self._related_items,
             *self._library.values(),
         ]
         groups.extend(section.items for section in self._home)
@@ -885,6 +1435,9 @@ class HarmoniaQtBridge(QObject):
         if kind == "like":
             self._set_status("")
             self.syncAll()
+        elif kind == "history":
+            self._set_status("")
+            self.refreshHistory()
 
     @Slot(str)
     def setQuality(self, value: str) -> None:
@@ -950,5 +1503,7 @@ class HarmoniaQtBridge(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        if self._queue:
+            self._save_playback_state()
         self._player.stop()
         self._executor.shutdown(wait=False, cancel_futures=True)
