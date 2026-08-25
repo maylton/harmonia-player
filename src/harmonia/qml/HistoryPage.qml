@@ -23,23 +23,10 @@ Item {
             width: historyList.width
             spacing: Kirigami.Units.largeSpacing
 
-            RowLayout {
+            PageHeader {
                 Layout.fillWidth: true
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Kirigami.Heading {
-                        text: "Histórico"
-                        level: 1
-                    }
-
-                    Controls.Label {
-                        text: "Reproduções da conta e deste dispositivo"
-                        opacity: 0.68
-                    }
-                }
+                title: "Histórico"
+                subtitle: "Reproduções da conta e deste dispositivo"
 
                 Controls.ToolButton {
                     text: "Atualizar"
@@ -129,27 +116,12 @@ Item {
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.largeSpacing
 
-                    Rectangle {
+                    CoverArt {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                         Layout.preferredHeight: width
-                        radius: Kirigami.Units.cornerRadius
-                        clip: true
-                        color: Kirigami.Theme.alternateBackgroundColor
-
-                        Image {
-                            anchors.fill: parent
-                            source: modelData.thumbnail
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                        }
-
-                        Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: Kirigami.Units.iconSizes.medium
-                            height: width
-                            source: "audio-x-generic"
-                            visible: !modelData.thumbnail
-                        }
+                        source: modelData.thumbnail
+                        kind: modelData.kind
+                        cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
                     }
 
                     ColumnLayout {
