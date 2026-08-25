@@ -6,12 +6,20 @@ import org.kde.kirigami as Kirigami
 Rectangle {
     id: root
 
+    property bool ambientMode: false
     signal lyricsRequested()
     signal queueRequested()
     signal expandedRequested()
 
     implicitHeight: Kirigami.Units.gridUnit * 4
-    color: Kirigami.Theme.backgroundColor
+    color: ambientMode
+           ? Qt.rgba(
+                 Kirigami.Theme.backgroundColor.r,
+                 Kirigami.Theme.backgroundColor.g,
+                 Kirigami.Theme.backgroundColor.b,
+                 0.88
+             )
+           : Kirigami.Theme.backgroundColor
     border.width: 0
 
     Rectangle {
@@ -205,6 +213,8 @@ Rectangle {
             Kirigami.Icon {
                 visible: root.width >= 980
                 source: backend.volume === 0 ? "audio-volume-muted" : "audio-volume-high"
+                isMask: true
+                color: Kirigami.Theme.textColor
             }
 
             Controls.Slider {
