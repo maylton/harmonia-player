@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -23,21 +22,9 @@ Item {
             width: Math.max(0, homeFlick.width - Kirigami.Units.gridUnit * 3)
             spacing: Kirigami.Units.gridUnit * 1.65
 
-            Column {
-                width: parent.width
-                spacing: Kirigami.Units.smallSpacing
-
-                Kirigami.Heading {
-                    text: "Início"
-                    level: 1
-                }
-
-                Controls.Label {
-                    width: parent.width
-                    text: "Escolhas feitas para você pelo YouTube Music"
-                    opacity: 0.7
-                    wrapMode: Text.WordWrap
-                }
+            PageHeader {
+                title: "Início"
+                subtitle: "Escolhas feitas para você pelo YouTube Music"
             }
 
             Repeater {
