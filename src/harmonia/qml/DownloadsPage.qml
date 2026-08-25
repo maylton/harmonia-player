@@ -14,7 +14,14 @@ Item {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.gridUnit * 1.5
             title: "Downloads"
-            subtitle: "Músicas disponíveis para ouvir offline neste dispositivo"
+            subtitle: backend.downloadItems.length + " itens · " + backend.downloadStorageLabel + " utilizados"
+
+            Controls.Button {
+                text: "Validar conta"
+                icon.name: "emblem-ok"
+                enabled: backend.loggedIn
+                onClicked: backend.validateDownloads()
+            }
         }
 
         ListView {
@@ -35,6 +42,7 @@ Item {
                 width: downloadList.width
                 height: Kirigami.Units.gridUnit * 5.2
                 enabled: true
+                onClicked: if (modelData.status === "completed") backend.playDownload(index)
 
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.largeSpacing
@@ -94,6 +102,14 @@ Item {
                     }
 
                     Controls.ToolButton {
+                        visible: modelData.status === "completed"
+                        icon.name: "media-playback-start"
+                        onClicked: backend.playDownload(index)
+                        Controls.ToolTip.visible: hovered
+                        Controls.ToolTip.text: "Reproduzir offline"
+                    }
+
+                    Controls.ToolButton {
                         visible: modelData.status === "downloading" || modelData.status === "queued"
                         icon.name: "media-playback-pause"
                         onClicked: backend.pauseDownload(modelData.id)
@@ -121,8 +137,8 @@ Item {
             Kirigami.PlaceholderMessage {
                 anchors.centerIn: parent
                 visible: backend.downloadItems.length === 0
-                text: "Nenhum download ainda"
-                explanation: "Use o menu de uma música ou o botão Baixar em um álbum."
+                text: "Nenhum download"
+                explanation: "Use o botão de download em um álbum ou playlist para ouvir offline."
                 icon.name: "download"
             }
         }
