@@ -171,16 +171,51 @@ Controls.ToolBar {
             }
 
             Controls.ToolButton {
-                text: backend.loggedIn ? "Conta conectada" : "Conectar conta"
-                icon.name: backend.loggedIn ? "user-available" : "user-offline"
+                id: accountButton
+                text: backend.loggedIn
+                      ? (backend.accountName.length > 0
+                         ? "Conta — " + backend.accountName
+                         : "Conta conectada")
+                      : "Conectar conta"
                 display: Controls.AbstractButton.IconOnly
+                padding: Kirigami.Units.smallSpacing
                 onClicked: backend.loggedIn ? accountMenu.open() : root.connectRequested()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: text
 
+                contentItem: Item {
+                    implicitWidth: Kirigami.Units.iconSizes.medium
+                    implicitHeight: implicitWidth
+
+                    CoverArt {
+                        anchors.fill: parent
+                        source: backend.loggedIn ? backend.accountAvatarUrl : ""
+                        kind: "artist"
+                        cornerRadius: width / 2
+                    }
+
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: Kirigami.Units.iconSizes.smallMedium
+                        height: width
+                        source: backend.loggedIn ? "user-available" : "user-offline"
+                        isMask: true
+                        color: Kirigami.Theme.textColor
+                        visible: !backend.loggedIn || backend.accountAvatarUrl.length === 0
+                    }
+                }
+
                 Controls.Menu {
                     id: accountMenu
                     y: parent.height
+
+                    Controls.MenuItem {
+                        enabled: backend.accountName.length > 0
+                        text: backend.accountName.length > 0 ? backend.accountName : "Conta conectada"
+                        icon.name: "user-identity"
+                    }
+
+                    Controls.MenuSeparator {}
 
                     Controls.MenuItem {
                         text: "Validar conta"
