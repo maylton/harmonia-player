@@ -1,0 +1,77 @@
+app-id: io.github.harmonia.Harmonia
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+base: io.qt.PySide.BaseApp
+base-version: '6.11'
+command: harmonia
+separate-locales: false
+
+build-options:
+  env:
+    - BASEAPP_DISABLE_NUMPY=1
+
+cleanup-commands:
+  - /app/cleanup-BaseApp.sh
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  - --talk-name=org.freedesktop.secrets
+  - --own-name=org.mpris.MediaPlayer2.Harmonia
+  - --filesystem=xdg-run/discord-ipc-0
+  - --filesystem=xdg-run/app/com.discordapp.Discord:ro
+
+modules:
+  # Keep the same Secret Service session used by the GTK build.  The KDE
+  # runtime is intentionally kept Qt-native; only the small GI/libsecret
+  # bridge is bundled so Storage can read the existing Harmonia credential.
+  - name: libsecret
+    buildsystem: meson
+    config-opts:
+      - -Dgtk_doc=false
+      - -Dmanpage=false
+      - -Dvapi=false
+      - -Dintrospection=true
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /share/man
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/libsecret/0.21/libsecret-0.21.7.tar.xz
+        sha256: 6b452e4750590a2b5617adc40026f28d2f4903de15f1250e1d1c40bfd68ed55e
+
+  - name: pycairo
+    buildsystem: meson
+    sources:
+      - type: archive
+        url: https://files.pythonhosted.org/packages/source/p/pycairo/pycairo-1.29.0.tar.gz
+        sha256: f3f7fde97325cae80224c09f12564ef58d0d0f655da0e3b040f5807bd5bd3142
+
+  - name: pygobject
+    buildsystem: meson
+    config-opts:
+      - -Dtests=false
+    sources:
+      - type: archive
+        url: https://files.pythonhosted.org/packages/source/p/pygobject/pygobject-3.56.3.tar.gz
+        sha256: 12760e4a0e3d04b6eb95e06f7a27e362c826d567ea613373a92c003b6c70d2d6
+
+  - name: harmonia
+    buildsystem: meson
+    sources:
+      - type: dir
+        path: .
+        skip:
+          - .venv
+          - build
+          - build-*
+          - .pytest_cache
+          - .ruff_cache
+          - __pycache__
