@@ -54,7 +54,7 @@ Rectangle {
             Layout.fillWidth: true
             text: "Início"
             iconName: "go-home"
-            checked: root.currentView === 0
+            selected: root.currentView === 0
             onClicked: root.viewRequested(0)
         }
 
@@ -63,7 +63,7 @@ Rectangle {
             text: "Explorar"
             iconName: "find-location"
             fallbackIcon: "edit-find"
-            checked: root.currentView === 1
+            selected: root.currentView === 1
             onClicked: root.viewRequested(1)
         }
 
@@ -72,7 +72,7 @@ Rectangle {
             text: "Biblioteca"
             iconName: "folder-music"
             fallbackIcon: "folder"
-            checked: root.currentView === 2
+            selected: root.currentView === 2
             onClicked: root.viewRequested(2)
         }
 
@@ -90,7 +90,7 @@ Rectangle {
             text: "Músicas curtidas"
             iconName: "starred"
             fallbackIcon: "rating"
-            checked: root.currentView === 2 && root.currentCategory === "songs"
+            selected: root.currentView === 2 && root.currentCategory === "songs"
             onClicked: root.categoryRequested("songs")
         }
 
@@ -99,7 +99,7 @@ Rectangle {
             text: "Playlists"
             iconName: "view-list"
             fallbackIcon: "view-media-playlist"
-            checked: root.currentView === 2 && root.currentCategory === "playlists"
+            selected: root.currentView === 2 && root.currentCategory === "playlists"
             onClicked: root.categoryRequested("playlists")
         }
 
@@ -108,7 +108,7 @@ Rectangle {
             text: "Artistas"
             iconName: "user-identity"
             fallbackIcon: "avatar-default"
-            checked: root.currentView === 2 && root.currentCategory === "artists"
+            selected: root.currentView === 2 && root.currentCategory === "artists"
             onClicked: root.categoryRequested("artists")
         }
 
@@ -126,7 +126,7 @@ Rectangle {
             text: "Histórico"
             iconName: "document-open-recent"
             fallbackIcon: "view-history"
-            checked: root.currentView === 7
+            selected: root.currentView === 7
             onClicked: root.viewRequested(7)
         }
 
@@ -135,7 +135,7 @@ Rectangle {
             text: "Estatísticas"
             iconName: "office-chart-line"
             fallbackIcon: "view-statistics"
-            checked: root.currentView === 8
+            selected: root.currentView === 8
             onClicked: root.viewRequested(8)
         }
 
@@ -146,7 +146,7 @@ Rectangle {
             text: "Downloads"
             iconName: "folder-download"
             fallbackIcon: "download"
-            checked: root.currentView === 5
+            selected: root.currentView === 5
             onClicked: root.viewRequested(5)
         }
 
@@ -155,7 +155,7 @@ Rectangle {
             text: "Preferências"
             iconName: "preferences-system"
             fallbackIcon: "configure"
-            checked: root.currentView === 6
+            selected: root.currentView === 6
             onClicked: root.viewRequested(6)
         }
 
@@ -164,7 +164,6 @@ Rectangle {
             Layout.topMargin: Kirigami.Units.smallSpacing
             text: "Nova playlist"
             iconName: "list-add"
-            checkable: false
             onClicked: root.createPlaylistRequested()
         }
     }
