@@ -5,7 +5,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from .backup import BackupManager
 from .downloads import DownloadManager
@@ -49,6 +49,14 @@ class QtPreferencesController(QObject):
         self._sleep_timer.timeout.connect(self._sleep_elapsed)
         self._operationReady.connect(self._operation_finished)
         self.apply_audio()
+
+    @Property(bool, notify=changed)
+    def backgroundBlur(self) -> bool:
+        return self.values.background_blur
+
+    @Slot(bool)
+    def setBackgroundBlur(self, enabled: bool) -> None:
+        self.set_background_blur(enabled)
 
     def reload(self) -> None:
         self.values = Preferences.load(self.storage)
