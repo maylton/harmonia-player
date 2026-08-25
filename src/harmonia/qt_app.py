@@ -4,7 +4,8 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, QUrl
+from gi.repository import GLib
+from PySide6.QtCore import QCoreApplication, QTimer, QUrl
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
@@ -12,6 +13,15 @@ from PySide6.QtWidgets import QApplication
 from .qt_backend import HarmoniaQtBackend
 
 APP_ID = "io.github.harmonia.Harmonia"
+
+
+def _drain_glib_context() -> None:
+    """Let shared Gio/GStreamer helpers progress without a second main loop."""
+    context = GLib.MainContext.default()
+    for _ in range(64):
+        if not context.pending():
+            break
+        context.iteration(False)
 
 
 def main() -> int:
@@ -25,6 +35,14 @@ def main() -> int:
 
     fallback = QIcon.fromTheme("audio-headphones")
     app.setWindowIcon(QIcon.fromTheme(APP_ID, fallback))
+
+    # The shared player, Secret Service and MPRIS implementation use GLib/Gio.
+    # Pumping the default context from Qt keeps one event loop and lets both
+    # frontends reuse the same non-visual helpers.
+    glib_timer = QTimer()
+    glib_timer.setInterval(10)
+    glib_timer.timeout.connect(_drain_glib_context)
+    glib_timer.start()
 
     engine = QQmlApplicationEngine()
     backend = HarmoniaQtBackend(engine)
