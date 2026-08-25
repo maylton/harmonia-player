@@ -8,6 +8,7 @@ Rectangle {
 
     signal lyricsRequested()
     signal queueRequested()
+    signal expandedRequested()
 
     implicitHeight: Kirigami.Units.gridUnit * 4
     color: Kirigami.Theme.backgroundColor
@@ -32,30 +33,43 @@ Rectangle {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             spacing: Kirigami.Units.largeSpacing
 
-            CoverArt {
+            Controls.AbstractButton {
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3.1
                 Layout.preferredHeight: width
-                source: backend.currentArtwork
-                kind: "songs"
-                cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
+                enabled: backend.currentId.length > 0
+                onClicked: root.expandedRequested()
+                background: Item {}
+                contentItem: CoverArt {
+                    source: backend.currentArtwork
+                    kind: "songs"
+                    cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
+                }
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: "Expandir player"
             }
 
-            ColumnLayout {
+            Controls.AbstractButton {
                 Layout.fillWidth: true
-                spacing: 0
+                enabled: backend.currentId.length > 0
+                onClicked: root.expandedRequested()
+                background: Item {}
 
-                Controls.Label {
-                    Layout.fillWidth: true
-                    text: backend.currentTitle
-                    font.weight: Font.DemiBold
-                    elide: Text.ElideRight
-                }
+                contentItem: ColumnLayout {
+                    spacing: 0
 
-                Controls.Label {
-                    Layout.fillWidth: true
-                    text: backend.currentArtist
-                    opacity: 0.68
-                    elide: Text.ElideRight
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: backend.currentTitle
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: backend.currentArtist
+                        opacity: 0.68
+                        elide: Text.ElideRight
+                    }
                 }
             }
 
@@ -90,18 +104,24 @@ Rectangle {
                     icon.name: "media-skip-backward"
                     enabled: backend.currentId.length > 0 && (backend.canPrevious || backend.position > 5000)
                     onClicked: backend.previous()
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "Anterior"
                 }
 
                 Controls.ToolButton {
                     icon.name: backend.playing ? "media-playback-pause" : "media-playback-start"
                     enabled: backend.currentId.length > 0
                     onClicked: backend.togglePlayback()
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: backend.playing ? "Pausar" : "Reproduzir"
                 }
 
                 Controls.ToolButton {
                     icon.name: "media-skip-forward"
                     enabled: backend.canNext
                     onClicked: backend.next()
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "Próxima"
                 }
 
                 Controls.ToolButton {
@@ -112,6 +132,20 @@ Rectangle {
                     onClicked: backend.toggleRepeat()
                     Controls.ToolTip.visible: hovered
                     Controls.ToolTip.text: "Repetir fila"
+                }
+
+                Controls.ToolButton {
+                    icon.name: "media-playlist-consecutive"
+                    checked: backend.autoplay
+                    checkable: true
+                    enabled: backend.currentId.length > 0
+                    onClicked: backend.toggleAutoplay()
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: backend.autoplayLoading
+                                           ? "Carregando reprodução automática…"
+                                           : backend.autoplay
+                                             ? "Reprodução automática ativada"
+                                             : "Reprodução automática desativada"
                 }
             }
 
@@ -125,7 +159,6 @@ Rectangle {
                 }
 
                 Controls.Slider {
-                    id: positionSlider
                     Layout.fillWidth: true
                     from: 0
                     to: Math.max(1, backend.duration)
@@ -178,6 +211,15 @@ Rectangle {
                 to: 100
                 value: backend.volume
                 onMoved: backend.setVolume(Math.round(value))
+            }
+
+            Controls.ToolButton {
+                text: "Parar"
+                icon.name: "window-close"
+                enabled: backend.currentId.length > 0
+                onClicked: backend.stopPlayback()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
             }
         }
     }
