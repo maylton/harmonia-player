@@ -21,9 +21,7 @@ def test_qt_app_resolves_installed_application_icon() -> None:
 def test_qt_app_exposes_shared_preferences_controller() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert 'setContextProperty("preferences", backend.settings)' in source
-    preferences = (ROOT / "src" / "harmonia" / "qt_preferences.py").read_text(
-        encoding="utf-8"
-    )
+    preferences = (ROOT / "src" / "harmonia" / "qt_preferences.py").read_text(encoding="utf-8")
     assert "def backgroundBlur" in preferences
     assert "self.values.background_blur" in preferences
     assert "def setBackgroundBlur" in preferences
