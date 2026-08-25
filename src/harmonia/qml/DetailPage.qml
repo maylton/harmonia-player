@@ -15,6 +15,18 @@ Item {
         addToPlaylistDialog.open()
     }
 
+    AmbientBackdrop {
+        anchors.fill: parent
+        source: backend.detailItem.thumbnail || ""
+        active: source.length > 0
+        artworkOpacity: preferences.backgroundBlur ? 0.46 : 0.31
+        shadeOpacity: preferences.backgroundBlur ? 0.56 : 0.80
+        saturation: backend.detailIsArtist ? -0.08 : -0.16
+        blurMax: backend.detailIsArtist ? 28 : 38
+        blurMultiplier: 0.45
+        requestedSize: 1400
+    }
+
     Flickable {
         id: detailFlick
         anchors.fill: parent
@@ -253,6 +265,7 @@ Item {
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: width
                                 source: "favorite"
+                                isMask: true
                                 color: Kirigami.Theme.highlightColor
                                 visible: modelData.liked
                             }
