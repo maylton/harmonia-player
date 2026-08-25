@@ -64,7 +64,72 @@ Controls.ToolBar {
             )
             placeholderText: "Pesquisar músicas, álbuns, artistas…"
             selectByMouse: true
-            onAccepted: root.searchRequested(text)
+
+            onAccepted: {
+                suggestionTimer.stop()
+                backend.clearSearchSuggestions()
+                root.searchRequested(text)
+            }
+
+            onTextEdited: {
+                suggestionTimer.stop()
+                if (text.trim().length < 2) {
+                    backend.clearSearchSuggestions()
+                    return
+                }
+                suggestionTimer.restart()
+            }
+
+            onActiveFocusChanged: {
+                if (!activeFocus)
+                    closeSuggestionsTimer.restart()
+            }
+        }
+
+        Timer {
+            id: suggestionTimer
+            interval: 280
+            repeat: false
+            onTriggered: backend.requestSearchSuggestions(searchField.text)
+        }
+
+        Timer {
+            id: closeSuggestionsTimer
+            interval: 120
+            repeat: false
+            onTriggered: if (!searchField.activeFocus) backend.clearSearchSuggestions()
+        }
+
+        Controls.Popup {
+            id: suggestionsPopup
+            parent: root
+            x: searchField.mapToItem(root, 0, 0).x
+            y: searchField.mapToItem(root, 0, searchField.height).y + Kirigami.Units.smallSpacing
+            width: searchField.width
+            padding: Kirigami.Units.smallSpacing
+            closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
+            visible: backend.searchSuggestions.length > 0 && searchField.activeFocus
+
+            contentItem: Column {
+                width: suggestionsPopup.availableWidth
+
+                Repeater {
+                    model: backend.searchSuggestions
+
+                    delegate: Controls.ItemDelegate {
+                        required property string modelData
+                        width: parent.width
+                        text: modelData
+                        icon.name: "edit-find"
+
+                        onClicked: {
+                            searchField.text = modelData
+                            backend.clearSearchSuggestions()
+                            root.searchRequested(modelData)
+                        }
+                    }
+                }
+            }
         }
 
         RowLayout {
@@ -95,6 +160,12 @@ Controls.ToolBar {
                 Controls.Menu {
                     id: accountMenu
                     y: parent.height
+
+                    Controls.MenuItem {
+                        text: "Validar conta"
+                        icon.name: "emblem-ok"
+                        onTriggered: backend.validateAccount()
+                    }
 
                     Controls.MenuItem {
                         text: "Desconectar conta"
