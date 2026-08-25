@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -7,13 +8,17 @@ Controls.Dialog {
     id: root
 
     modal: true
+    focus: true
+    popupType: Controls.Popup.Item
     closePolicy: Controls.Popup.CloseOnEscape
     standardButtons: Controls.Dialog.NoButton
     padding: 0
+    margins: 0
     width: parent ? parent.width : Kirigami.Units.gridUnit * 58
     height: parent ? parent.height : Kirigami.Units.gridUnit * 40
     x: 0
     y: 0
+    z: 1000
 
     onOpened: {
         if (viewTabs.currentIndex === 1)
@@ -26,18 +31,28 @@ Controls.Dialog {
 
     contentItem: Item {
         Image {
+            id: backgroundArtwork
             anchors.fill: parent
             source: backend.currentArtwork
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
             opacity: status === Image.Ready ? 0.14 : 0
+            layer.enabled: status === Image.Ready
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                autoPaddingEnabled: false
+                blurEnabled: true
+                blur: 1.0
+                blurMax: 32
+                saturation: -0.28
+            }
         }
 
         Rectangle {
             anchors.fill: parent
             color: Kirigami.Theme.backgroundColor
-            opacity: 0.82
+            opacity: 0.88
         }
 
         ColumnLayout {
@@ -61,7 +76,10 @@ Controls.Dialog {
 
                 Controls.TabBar {
                     id: viewTabs
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 25
+                    Layout.preferredWidth: Math.min(
+                        Kirigami.Units.gridUnit * 25,
+                        root.width - Kirigami.Units.gridUnit * 10
+                    )
 
                     Controls.TabButton {
                         text: "Música"
@@ -75,7 +93,7 @@ Controls.Dialog {
 
                     Controls.TabButton {
                         text: "Relacionadas"
-                        icon.name: "media-playlist-consecutive"
+                        icon.name: "view-media-playlist"
                     }
 
                     onCurrentIndexChanged: {
@@ -100,7 +118,10 @@ Controls.Dialog {
                         spacing: Kirigami.Units.gridUnit * 3
 
                         CoverArt {
-                            Layout.preferredWidth: Math.min(Kirigami.Units.gridUnit * 21, parent.width * 0.42)
+                            Layout.preferredWidth: Math.min(
+                                Kirigami.Units.gridUnit * 21,
+                                parent.width * 0.42
+                            )
                             Layout.preferredHeight: width
                             source: backend.currentArtwork
                             kind: "songs"
@@ -154,7 +175,9 @@ Controls.Dialog {
                                 Controls.RoundButton {
                                     Layout.preferredWidth: Kirigami.Units.gridUnit * 4
                                     Layout.preferredHeight: width
-                                    icon.name: backend.playing ? "media-playback-pause" : "media-playback-start"
+                                    icon.name: backend.playing
+                                               ? "media-playback-pause"
+                                               : "media-playback-start"
                                     enabled: backend.currentId.length > 0
                                     onClicked: backend.togglePlayback()
                                 }
@@ -177,7 +200,10 @@ Controls.Dialog {
                                 }
 
                                 Controls.ToolButton {
-                                    icon.name: "media-playlist-consecutive"
+                                    text: "∞"
+                                    display: Controls.AbstractButton.TextOnly
+                                    font.weight: Font.DemiBold
+                                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.15
                                     checkable: true
                                     checked: backend.autoplay
                                     onClicked: backend.toggleAutoplay()
@@ -189,7 +215,10 @@ Controls.Dialog {
                             RowLayout {
                                 Layout.fillWidth: true
 
-                                Controls.Label { text: root.formatTime(backend.position); opacity: 0.7 }
+                                Controls.Label {
+                                    text: root.formatTime(backend.position)
+                                    opacity: 0.7
+                                }
 
                                 Controls.Slider {
                                     Layout.fillWidth: true
@@ -200,7 +229,10 @@ Controls.Dialog {
                                     onPressedChanged: if (!pressed) backend.seek(Math.round(value))
                                 }
 
-                                Controls.Label { text: root.formatTime(backend.duration); opacity: 0.7 }
+                                Controls.Label {
+                                    text: root.formatTime(backend.duration)
+                                    opacity: 0.7
+                                }
                             }
 
                             RowLayout {
@@ -211,11 +243,15 @@ Controls.Dialog {
                                     enabled: backend.currentId.length > 0
                                     onClicked: backend.toggleLike(backend.currentId)
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: backend.currentLiked ? "Remover das curtidas" : "Curtir"
+                                    Controls.ToolTip.text: backend.currentLiked
+                                                           ? "Remover das curtidas"
+                                                           : "Curtir"
                                 }
 
                                 Kirigami.Icon {
-                                    source: backend.volume === 0 ? "audio-volume-muted" : "audio-volume-high"
+                                    source: backend.volume === 0
+                                            ? "audio-volume-muted"
+                                            : "audio-volume-high"
                                 }
 
                                 Controls.Slider {
@@ -227,7 +263,7 @@ Controls.Dialog {
                                 }
 
                                 Controls.ToolButton {
-                                    icon.name: "window-close"
+                                    icon.name: "media-playback-stop"
                                     enabled: backend.currentId.length > 0
                                     onClicked: {
                                         backend.stopPlayback()
@@ -320,7 +356,7 @@ Controls.Dialog {
                                     }
 
                                     Controls.ToolButton {
-                                        icon.name: "media-playlist-consecutive"
+                                        icon.name: "go-next"
                                         onClicked: backend.promoteRelated(index, true)
                                         Controls.ToolTip.visible: hovered
                                         Controls.ToolTip.text: "Tocar em seguida"
@@ -339,7 +375,7 @@ Controls.Dialog {
                                 anchors.centerIn: parent
                                 visible: backend.relatedItems.length === 0 && !backend.autoplayLoading
                                 text: "As recomendações aparecem conforme a fila avança."
-                                icon.name: "media-playlist-consecutive"
+                                icon.name: "view-media-playlist"
                             }
                         }
                     }
