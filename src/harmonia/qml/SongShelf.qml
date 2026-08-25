@@ -118,31 +118,17 @@ Column {
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 2.65
                             Layout.preferredHeight: width
 
-                            Rectangle {
+                            CoverArt {
+                                id: cover
                                 anchors.fill: parent
-                                radius: Kirigami.Units.cornerRadius
-                                clip: true
-                                color: Kirigami.Theme.alternateBackgroundColor
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: modelData.thumbnail
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                }
-
-                                Kirigami.Icon {
-                                    anchors.centerIn: parent
-                                    width: Kirigami.Units.iconSizes.smallMedium
-                                    height: width
-                                    source: "audio-x-generic"
-                                    visible: !modelData.thumbnail
-                                }
+                                source: modelData.thumbnail
+                                kind: modelData.kind
+                                cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
                             }
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: Kirigami.Units.cornerRadius
+                                radius: cover.maskRadius
                                 color: Qt.rgba(0, 0, 0, 0.42)
                                 visible: songRow.hovered || backend.currentId === modelData.id
                             }
