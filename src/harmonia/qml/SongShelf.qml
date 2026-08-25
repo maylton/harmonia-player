@@ -124,13 +124,16 @@ Column {
                                 source: modelData.thumbnail
                                 kind: modelData.kind
                                 cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
+                                z: 0
                             }
 
                             Rectangle {
                                 anchors.fill: parent
                                 radius: cover.maskRadius
                                 color: Qt.rgba(0, 0, 0, 0.42)
+                                antialiasing: true
                                 visible: songRow.hovered || backend.currentId === modelData.id
+                                z: 1
                             }
 
                             Kirigami.Icon {
@@ -142,6 +145,7 @@ Column {
                                       : "media-playback-start"
                                 color: "white"
                                 visible: songRow.hovered || backend.currentId === modelData.id
+                                z: 2
                             }
                         }
 
