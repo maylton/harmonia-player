@@ -38,9 +38,8 @@ Rectangle {
             Kirigami.Icon {
                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                 Layout.preferredHeight: width
-                source: "audio-headphones"
-                isMask: true
-                color: Kirigami.Theme.textColor
+                source: "io.github.harmonia.Harmonia"
+                isMask: false
             }
 
             Kirigami.Heading {
