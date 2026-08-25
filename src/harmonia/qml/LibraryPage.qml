@@ -79,7 +79,7 @@ Item {
                     text: modelData.label
                     checkable: true
                     checked: modelData.key === backend.currentLibraryCategory
-                    ButtonGroup.group: categoryGroup
+                    Controls.ButtonGroup.group: categoryGroup
                     onClicked: backend.setLibraryCategory(modelData.key)
                 }
             }
