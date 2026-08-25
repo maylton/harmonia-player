@@ -480,7 +480,7 @@ class HarmoniaQtBridge(QObject):
                 seen.add(item.id)
                 unique.append(item)
         song_section = bool(unique) and all(item.kind == "songs" for item in unique)
-        return unique[:24 if song_section else 12]
+        return unique[: 24 if song_section else 12]
 
     @Slot(int, int)
     def openHomeItem(self, section_index: int, item_index: int) -> None:
@@ -672,7 +672,7 @@ class HarmoniaQtBridge(QObject):
                 seen.add(item.id)
                 unique.append(item)
         song_section = bool(unique) and all(item.kind == "songs" for item in unique)
-        selected = unique[:24 if song_section else 12]
+        selected = unique[: 24 if song_section else 12]
         self._open_or_play(selected, item_index)
 
     @Slot(int)
