@@ -14,6 +14,7 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: Kirigami.Units.largeSpacing
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -23,7 +24,9 @@ Item {
                     Layout.fillWidth: true
                     text: backend.currentTitle
                     font.weight: Font.DemiBold
-                    font.pointSize: root.expanded ? Kirigami.Theme.defaultFont.pointSize * 1.2 : Kirigami.Theme.defaultFont.pointSize
+                    font.pointSize: root.expanded
+                                    ? Kirigami.Theme.defaultFont.pointSize * 1.2
+                                    : Kirigami.Theme.defaultFont.pointSize
                     elide: Text.ElideRight
                 }
 
@@ -52,63 +55,71 @@ Item {
             }
         }
 
-        RowLayout {
+        Flow {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
 
             Controls.Button {
                 text: backend.selectedLyricsProvider === "lrclib"
-                      ? "Fonte: LRCLIB"
+                      ? "LRCLIB"
                       : backend.selectedLyricsProvider === "youtube"
-                        ? "Fonte: YouTube"
-                        : "Fonte: Automática"
+                        ? "YouTube"
+                        : "Automática"
                 icon.name: "view-refresh"
                 flat: true
                 onClicked: backend.cycleLyricsProvider()
-            }
-
-            Controls.ToolButton {
-                text: "Traduzir para português"
-                icon.name: "accessories-dictionary"
-                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
-                onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: text
-            }
-
-            Controls.ToolButton {
-                text: "Copiar letra"
-                icon.name: "edit-copy"
-                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
-                onClicked: backend.copyLyrics()
-                Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: text
-            }
-
-            Item { Layout.fillWidth: true }
-
-            Controls.ToolButton {
-                text: "Adiantar 250 ms"
-                icon.name: "list-remove"
-                onClicked: backend.changeLyricsOffset(-250)
-                Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: text
+                Controls.ToolTip.text: "Alterar fonte da letra"
             }
 
             Controls.Button {
-                text: backend.lyricsOffset === 0
-                      ? "Sincronia 0 ms"
-                      : (backend.lyricsOffset > 0 ? "+" : "") + backend.lyricsOffset + " ms"
+                text: "Traduzir"
+                icon.name: "accessories-dictionary"
                 flat: true
-                onClicked: backend.setLyricsOffset(0)
+                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
+                onClicked: backend.translateLyrics()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: "Traduzir para português"
             }
 
-            Controls.ToolButton {
-                text: "Atrasar 250 ms"
-                icon.name: "list-add"
-                onClicked: backend.changeLyricsOffset(250)
+            Controls.Button {
+                text: "Copiar"
+                icon.name: "edit-copy"
+                flat: true
+                enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
+                onClicked: backend.copyLyrics()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: text
+                Controls.ToolTip.text: "Copiar letra"
+            }
+
+            Row {
+                spacing: 0
+
+                Controls.ToolButton {
+                    text: "−250 ms"
+                    display: Controls.AbstractButton.TextOnly
+                    onClicked: backend.changeLyricsOffset(-250)
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "Adiantar letra em 250 ms"
+                }
+
+                Controls.ToolButton {
+                    text: backend.lyricsOffset === 0
+                          ? "0 ms"
+                          : (backend.lyricsOffset > 0 ? "+" : "") + backend.lyricsOffset + " ms"
+                    display: Controls.AbstractButton.TextOnly
+                    onClicked: backend.setLyricsOffset(0)
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "Zerar ajuste de sincronia"
+                }
+
+                Controls.ToolButton {
+                    text: "+250 ms"
+                    display: Controls.AbstractButton.TextOnly
+                    onClicked: backend.changeLyricsOffset(250)
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "Atrasar letra em 250 ms"
+                }
             }
         }
 
@@ -139,12 +150,36 @@ Item {
                 }
 
                 delegate: Controls.ItemDelegate {
+                    id: lyricDelegate
                     required property int index
                     required property var modelData
                     width: syncedList.width
-                    highlighted: index === backend.activeLyricIndex
                     hoverEnabled: true
+                    highlighted: false
+                    leftPadding: Kirigami.Units.largeSpacing
+                    rightPadding: Kirigami.Units.largeSpacing
+                    topPadding: Kirigami.Units.smallSpacing
+                    bottomPadding: Kirigami.Units.smallSpacing
                     onClicked: backend.seekLyric(modelData.startMs)
+
+                    background: Rectangle {
+                        radius: Math.max(8, Kirigami.Units.cornerRadius * 1.4)
+                        color: lyricDelegate.index === backend.activeLyricIndex
+                               ? Qt.rgba(
+                                   Kirigami.Theme.highlightColor.r,
+                                   Kirigami.Theme.highlightColor.g,
+                                   Kirigami.Theme.highlightColor.b,
+                                   0.16
+                               )
+                               : lyricDelegate.hovered
+                                 ? Qt.rgba(
+                                     Kirigami.Theme.textColor.r,
+                                     Kirigami.Theme.textColor.g,
+                                     Kirigami.Theme.textColor.b,
+                                     0.055
+                                 )
+                                 : "transparent"
+                    }
 
                     contentItem: ColumnLayout {
                         spacing: 2
@@ -153,11 +188,13 @@ Item {
                             Layout.fillWidth: true
                             text: modelData.text
                             wrapMode: Text.WordWrap
-                            font.weight: index === backend.activeLyricIndex ? Font.Bold : Font.Normal
-                            font.pointSize: root.expanded ? Kirigami.Theme.defaultFont.pointSize * 1.15 : Kirigami.Theme.defaultFont.pointSize
-                            color: index === backend.activeLyricIndex
-                                   ? Kirigami.Theme.highlightColor
-                                   : Kirigami.Theme.textColor
+                            font.weight: lyricDelegate.index === backend.activeLyricIndex
+                                         ? Font.Bold
+                                         : Font.Normal
+                            font.pointSize: root.expanded
+                                            ? Kirigami.Theme.defaultFont.pointSize * 1.15
+                                            : Kirigami.Theme.defaultFont.pointSize
+                            color: Kirigami.Theme.textColor
                         }
 
                         Controls.Label {
@@ -185,7 +222,9 @@ Item {
                         wrapMode: Text.WordWrap
                         lineHeight: 1.35
                         textFormat: Text.PlainText
-                        font.pointSize: root.expanded ? Kirigami.Theme.defaultFont.pointSize * 1.1 : Kirigami.Theme.defaultFont.pointSize
+                        font.pointSize: root.expanded
+                                        ? Kirigami.Theme.defaultFont.pointSize * 1.1
+                                        : Kirigami.Theme.defaultFont.pointSize
                     }
 
                     Controls.Label {
