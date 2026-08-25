@@ -123,166 +123,14 @@ Kirigami.ApplicationWindow {
                 Layout.fillHeight: true
                 spacing: 0
 
-                Rectangle {
-                    id: sidebar
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 12.8
+                NavigationSidebar {
+                    Layout.preferredWidth: implicitWidth
                     Layout.fillHeight: true
                     visible: root.wideLayout
-                    color: Kirigami.Theme.backgroundColor
-                    border.width: 0
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: Kirigami.Units.largeSpacing
-                        spacing: Kirigami.Units.smallSpacing
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                            Layout.bottomMargin: Kirigami.Units.largeSpacing
-                            spacing: Kirigami.Units.largeSpacing
-
-                            Kirigami.Icon {
-                                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                                Layout.preferredHeight: width
-                                source: "audio-headphones"
-                            }
-
-                            Kirigami.Heading {
-                                Layout.fillWidth: true
-                                text: "Harmonia"
-                                level: 2
-                            }
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Início"
-                            icon.name: "go-home"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 0
-                            onClicked: root.currentView = 0
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Explorar"
-                            icon.name: "applications-multimedia"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 1
-                            onClicked: root.currentView = 1
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Biblioteca"
-                            icon.name: "folder-music"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 2
-                            onClicked: root.currentView = 2
-                        }
-
-                        Controls.Label {
-                            Layout.fillWidth: true
-                            Layout.topMargin: Kirigami.Units.largeSpacing
-                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                            text: "SUAS MÚSICAS"
-                            opacity: 0.58
-                            font.weight: Font.DemiBold
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Músicas curtidas"
-                            icon.name: "favorite"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 2 && backend.currentLibraryCategory === "songs"
-                            onClicked: root.showLibraryCategory("songs")
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Playlists"
-                            icon.name: "view-media-playlist"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 2 && backend.currentLibraryCategory === "playlists"
-                            onClicked: root.showLibraryCategory("playlists")
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Artistas"
-                            icon.name: "avatar-default"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 2 && backend.currentLibraryCategory === "artists"
-                            onClicked: root.showLibraryCategory("artists")
-                        }
-
-                        Controls.Label {
-                            Layout.fillWidth: true
-                            Layout.topMargin: Kirigami.Units.largeSpacing
-                            Layout.leftMargin: Kirigami.Units.smallSpacing
-                            text: "ATIVIDADE"
-                            opacity: 0.58
-                            font.weight: Font.DemiBold
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Histórico"
-                            icon.name: "edit-clear-history"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 7
-                            onClicked: root.currentView = 7
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Estatísticas"
-                            icon.name: "office-chart-line"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 8
-                            onClicked: root.currentView = 8
-                        }
-
-                        Item { Layout.fillHeight: true }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Downloads"
-                            icon.name: "download"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 5
-                            onClicked: root.currentView = 5
-                        }
-
-                        Controls.Button {
-                            Layout.fillWidth: true
-                            text: "Preferências"
-                            icon.name: "settings-configure"
-                            flat: true
-                            checkable: true
-                            checked: root.currentView === 6
-                            onClicked: root.currentView = 6
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.right: parent.right
-                        width: 1
-                        height: parent.height
-                        color: Kirigami.Theme.disabledTextColor
-                        opacity: 0.22
-                    }
+                    currentView: root.currentView
+                    currentCategory: backend.currentLibraryCategory
+                    onViewRequested: function(view) { root.currentView = view }
+                    onCategoryRequested: function(category) { root.showLibraryCategory(category) }
                 }
 
                 ColumnLayout {
@@ -290,104 +138,16 @@ Kirigami.ApplicationWindow {
                     Layout.fillHeight: true
                     spacing: 0
 
-                    Controls.ToolBar {
+                    AppTopBar {
                         Layout.fillWidth: true
-
-                        contentItem: Item {
-                            implicitHeight: Math.max(
-                                searchField.implicitHeight,
-                                leftHeaderActions.implicitHeight,
-                                rightHeaderActions.implicitHeight
-                            ) + Kirigami.Units.smallSpacing * 2
-
-                            RowLayout {
-                                id: leftHeaderActions
-                                anchors.left: parent.left
-                                anchors.leftMargin: Kirigami.Units.smallSpacing
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: Kirigami.Units.smallSpacing
-
-                                Controls.ToolButton {
-                                    visible: !root.wideLayout
-                                    text: "Navegação"
-                                    icon.name: "sidebar-show"
-                                    display: Controls.AbstractButton.IconOnly
-                                    onClicked: root.globalDrawer.open()
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: text
-                                }
-
-                                Controls.ToolButton {
-                                    visible: root.currentView === 4
-                                    text: "Voltar"
-                                    icon.name: "go-previous"
-                                    display: Controls.AbstractButton.IconOnly
-                                    onClicked: root.goBack()
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: text
-                                }
-                            }
-
-                            Controls.TextField {
-                                id: searchField
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.max(
-                                    Kirigami.Units.gridUnit * 12,
-                                    Math.min(
-                                        Kirigami.Units.gridUnit * 22,
-                                        parent.width
-                                            - leftHeaderActions.implicitWidth
-                                            - rightHeaderActions.implicitWidth
-                                            - Kirigami.Units.gridUnit * 4
-                                    )
-                                )
-                                placeholderText: "Pesquisar músicas, álbuns, artistas…"
-                                selectByMouse: true
-
-                                onAccepted: {
-                                    root.currentView = 3
-                                    backend.search(text)
-                                }
-                            }
-
-                            RowLayout {
-                                id: rightHeaderActions
-                                anchors.right: parent.right
-                                anchors.rightMargin: Kirigami.Units.smallSpacing
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: Kirigami.Units.smallSpacing
-
-                                Controls.ToolButton {
-                                    text: "Sincronizar"
-                                    icon.name: "view-refresh"
-                                    display: Controls.AbstractButton.IconOnly
-                                    enabled: backend.loggedIn && !backend.busy
-                                    onClicked: backend.syncAll()
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: text
-                                }
-
-                                Controls.ToolButton {
-                                    text: backend.loggedIn ? "Conta conectada" : "Conectar conta"
-                                    icon.name: backend.loggedIn ? "user-available" : "user-offline"
-                                    display: Controls.AbstractButton.IconOnly
-                                    onClicked: backend.loggedIn ? accountMenu.open() : cookieDialog.open()
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: text
-
-                                    Controls.Menu {
-                                        id: accountMenu
-                                        y: parent.height
-
-                                        Controls.MenuItem {
-                                            text: "Desconectar conta"
-                                            icon.name: "system-log-out"
-                                            onTriggered: backend.disconnectAccount()
-                                        }
-                                    }
-                                }
-                            }
+                        wideLayout: root.wideLayout
+                        currentView: root.currentView
+                        onNavigationRequested: root.globalDrawer.open()
+                        onBackRequested: root.goBack()
+                        onConnectRequested: cookieDialog.open()
+                        onSearchRequested: function(query) {
+                            root.currentView = 3
+                            backend.search(query)
                         }
                     }
 
@@ -429,88 +189,8 @@ Kirigami.ApplicationWindow {
                             onDetailRequested: root.showDetail(2)
                         }
 
-                        Item {
-                            ListView {
-                                id: searchList
-                                anchors.fill: parent
-                                anchors.margins: Kirigami.Units.gridUnit * 1.2
-                                clip: true
-                                spacing: Kirigami.Units.smallSpacing
-                                model: backend.searchItems
-
-                                delegate: Controls.ItemDelegate {
-                                    required property int index
-                                    required property var modelData
-
-                                    width: searchList.width
-                                    height: Kirigami.Units.gridUnit * 4
-
-                                    onClicked: {
-                                        backend.openSearchItem(index)
-                                        if (modelData.kind !== "songs" && modelData.kind !== "videos")
-                                            root.showDetail(3)
-                                    }
-
-                                    contentItem: RowLayout {
-                                        spacing: Kirigami.Units.largeSpacing
-
-                                        Rectangle {
-                                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                                            Layout.preferredHeight: width
-                                            radius: modelData.kind === "artists"
-                                                  ? width / 2
-                                                  : Kirigami.Units.cornerRadius
-                                            clip: true
-                                            color: Kirigami.Theme.alternateBackgroundColor
-
-                                            Image {
-                                                anchors.fill: parent
-                                                source: modelData.thumbnail
-                                                fillMode: Image.PreserveAspectCrop
-                                                asynchronous: true
-                                            }
-                                        }
-
-                                        ColumnLayout {
-                                            Layout.fillWidth: true
-                                            spacing: 0
-
-                                            Controls.Label {
-                                                Layout.fillWidth: true
-                                                text: modelData.title
-                                                font.weight: Font.DemiBold
-                                                elide: Text.ElideRight
-                                            }
-
-                                            Controls.Label {
-                                                Layout.fillWidth: true
-                                                text: modelData.subtitle
-                                                opacity: 0.68
-                                                elide: Text.ElideRight
-                                            }
-                                        }
-
-                                        Controls.Label {
-                                            text: modelData.kind
-                                            opacity: 0.55
-                                        }
-
-                                        Kirigami.Icon {
-                                            source: modelData.kind === "songs" || modelData.kind === "videos"
-                                                  ? "media-playback-start"
-                                                  : "go-next"
-                                        }
-                                    }
-                                }
-
-                                Kirigami.PlaceholderMessage {
-                                    anchors.centerIn: parent
-                                    width: Math.min(parent.width, Kirigami.Units.gridUnit * 28)
-                                    visible: backend.searchItems.length === 0 && !backend.busy
-                                    text: "Pesquise músicas, vídeos, álbuns, artistas e playlists"
-                                    icon.name: "edit-find"
-                                }
-                            }
+                        SearchPage {
+                            onDetailRequested: root.showDetail(3)
                         }
 
                         DetailPage {
@@ -518,11 +198,8 @@ Kirigami.ApplicationWindow {
                         }
 
                         DownloadsPage {}
-
                         SettingsPage {}
-
                         HistoryPage {}
-
                         InsightsPage {}
                     }
                 }
