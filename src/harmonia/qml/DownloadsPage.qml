@@ -10,20 +10,11 @@ Item {
         anchors.fill: parent
         spacing: Kirigami.Units.smallSpacing
 
-        ColumnLayout {
+        PageHeader {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.gridUnit * 1.5
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Heading {
-                text: "Downloads"
-                level: 1
-            }
-
-            Controls.Label {
-                text: "Músicas disponíveis para ouvir offline neste dispositivo"
-                opacity: 0.7
-            }
+            title: "Downloads"
+            subtitle: "Músicas disponíveis para ouvir offline neste dispositivo"
         }
 
         ListView {
@@ -48,27 +39,12 @@ Item {
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.largeSpacing
 
-                    Rectangle {
+                    CoverArt {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
                         Layout.preferredHeight: width
-                        radius: Kirigami.Units.cornerRadius
-                        clip: true
-                        color: Kirigami.Theme.alternateBackgroundColor
-
-                        Image {
-                            anchors.fill: parent
-                            source: modelData.thumbnail
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                        }
-
-                        Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: Kirigami.Units.iconSizes.medium
-                            height: width
-                            source: "audio-x-generic"
-                            visible: !modelData.thumbnail
-                        }
+                        source: modelData.thumbnail
+                        kind: modelData.kind
+                        cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
                     }
 
                     ColumnLayout {
