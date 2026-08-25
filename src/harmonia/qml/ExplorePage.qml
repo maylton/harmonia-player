@@ -23,27 +23,11 @@ Item {
             width: Math.max(0, exploreFlick.width - Kirigami.Units.gridUnit * 3)
             spacing: Kirigami.Units.gridUnit * 1.5
 
-            RowLayout {
-                width: parent.width
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Kirigami.Heading {
-                        text: backend.exploreTitle
-                        level: 1
-                    }
-
-                    Controls.Label {
-                        Layout.fillWidth: true
-                        text: backend.exploreCanGoBack
-                              ? "Seleção atualizada pelo YouTube Music."
-                              : "Lançamentos, paradas e sons para cada momento."
-                        opacity: 0.7
-                        wrapMode: Text.WordWrap
-                    }
-                }
+            PageHeader {
+                title: backend.exploreTitle
+                subtitle: backend.exploreCanGoBack
+                          ? "Seleção atualizada pelo YouTube Music."
+                          : "Lançamentos, paradas e sons para cada momento."
 
                 Controls.Button {
                     visible: backend.exploreCanGoBack
