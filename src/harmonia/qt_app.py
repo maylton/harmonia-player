@@ -9,7 +9,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
-from .qt_bridge import HarmoniaQtBridge
+from .qt_backend import HarmoniaQtBackend
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -27,7 +27,7 @@ def main() -> int:
     app.setWindowIcon(QIcon.fromTheme(APP_ID, fallback))
 
     engine = QQmlApplicationEngine()
-    backend = HarmoniaQtBridge(engine)
+    backend = HarmoniaQtBackend(engine)
     engine.rootContext().setContextProperty("backend", backend)
 
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
