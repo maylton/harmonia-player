@@ -60,36 +60,89 @@ Item {
             spacing: Kirigami.Units.smallSpacing
 
             Controls.Button {
+                id: providerButton
                 text: backend.selectedLyricsProvider === "lrclib"
                       ? "LRCLIB"
                       : backend.selectedLyricsProvider === "youtube"
                         ? "YouTube"
                         : "Automática"
-                icon.name: "view-refresh"
                 flat: true
                 onClicked: backend.cycleLyricsProvider()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Alterar fonte da letra"
+
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+
+                    Kirigami.Icon {
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                        Layout.preferredHeight: width
+                        source: "view-refresh"
+                        isMask: true
+                        color: Kirigami.Theme.textColor
+                    }
+
+                    Controls.Label {
+                        text: providerButton.text
+                        color: Kirigami.Theme.textColor
+                    }
+                }
             }
 
             Controls.Button {
+                id: translateButton
                 text: "Traduzir"
-                icon.name: "accessories-dictionary"
                 flat: true
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Traduzir para português"
+
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    opacity: translateButton.enabled ? 1 : 0.45
+
+                    Kirigami.Icon {
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                        Layout.preferredHeight: width
+                        source: "accessories-dictionary"
+                        isMask: true
+                        color: Kirigami.Theme.textColor
+                    }
+
+                    Controls.Label {
+                        text: translateButton.text
+                        color: Kirigami.Theme.textColor
+                    }
+                }
             }
 
             Controls.Button {
+                id: copyButton
                 text: "Copiar"
-                icon.name: "edit-copy"
                 flat: true
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.copyLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Copiar letra"
+
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    opacity: copyButton.enabled ? 1 : 0.45
+
+                    Kirigami.Icon {
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                        Layout.preferredHeight: width
+                        source: "edit-copy"
+                        isMask: true
+                        color: Kirigami.Theme.textColor
+                    }
+
+                    Controls.Label {
+                        text: copyButton.text
+                        color: Kirigami.Theme.textColor
+                    }
+                }
             }
 
             Row {
