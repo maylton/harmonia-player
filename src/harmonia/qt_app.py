@@ -87,6 +87,9 @@ def main() -> int:
     engine = QQmlApplicationEngine()
     backend = HarmoniaQtBackend(engine)
     engine.rootContext().setContextProperty("backend", backend)
+    # Appearance belongs to the existing preference controller rather than the
+    # broad QML facade. Both GTK and Qt therefore read/write the same settings.
+    engine.rootContext().setContextProperty("preferences", backend.settings)
 
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
