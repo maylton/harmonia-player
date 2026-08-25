@@ -135,7 +135,9 @@ class HarmoniaQtBridge(QObject):
 
     @Property(str, notify=nowPlayingChanged)
     def currentArtist(self) -> str:
-        return self._current_item.subtitle if self._current_item else "Escolha uma faixa para começar"
+        return (
+            self._current_item.subtitle if self._current_item else "Escolha uma faixa para começar"
+        )
 
     @Property(str, notify=nowPlayingChanged)
     def currentArtwork(self) -> str:
@@ -278,7 +280,9 @@ class HarmoniaQtBridge(QObject):
     def _play_queue(self, items: list[LibraryItem], index: int) -> None:
         selected = items[index]
         if selected.kind not in {"songs", "videos"}:
-            self._set_status("Abra álbuns, artistas e playlists pelo frontend GTK enquanto esta tela é portada.")
+            self._set_status(
+                "Abra álbuns, artistas e playlists pelo frontend GTK enquanto esta tela é portada."
+            )
             return
         self._queue = list(items)
         self._queue_index = index
