@@ -96,6 +96,15 @@ def test_loaded_cover_art_keeps_the_known_good_mask_pipeline() -> None:
     assert 'kind === "artist"' in source
 
 
+def test_cover_mask_uses_supersampled_texture_without_changing_thresholds() -> None:
+    source = (QML / "CoverArt.qml").read_text(encoding="utf-8")
+    assert "layer.textureSize: Qt.size(" in source
+    assert "Math.ceil(root.width * 2)" in source
+    assert "Math.ceil(root.height * 2)" in source
+    assert "maskThresholdMin: 0.5" in source
+    assert "maskSpreadAtMin: 0.0" in source
+
+
 def test_home_cover_hover_is_explicitly_above_layered_artwork() -> None:
     media = (QML / "MediaShelf.qml").read_text(encoding="utf-8")
     songs = (QML / "SongShelf.qml").read_text(encoding="utf-8")
