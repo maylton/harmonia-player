@@ -13,7 +13,6 @@ Column {
 
     width: parent ? parent.width : implicitWidth
     spacing: Kirigami.Units.smallSpacing
-    implicitHeight: (showHeader ? header.implicitHeight + Kirigami.Units.smallSpacing : 0) + shelf.height
 
     function scrollBy(direction) {
         const step = Math.max(Kirigami.Units.gridUnit * 20, shelf.width * 0.82)
