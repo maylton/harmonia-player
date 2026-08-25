@@ -6,7 +6,7 @@ from pathlib import Path
 
 from gi.repository import GLib
 from PySide6.QtCore import QCoreApplication, QTimer, QUrl
-from PySide6.QtGui import QIcon, QSurfaceFormat
+from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
@@ -68,13 +68,6 @@ def _application_icon() -> QIcon:
 
 def main() -> int:
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "org.kde.desktop")
-
-    # Keep the known-good CoverArt mask untouched. Request multisampling at
-    # the Qt render-surface level instead, so rounded edges can benefit from
-    # antialiasing without changing the mask alpha thresholds.
-    surface_format = QSurfaceFormat.defaultFormat()
-    surface_format.setSamples(4)
-    QSurfaceFormat.setDefaultFormat(surface_format)
 
     app = QApplication(sys.argv)
     QCoreApplication.setApplicationName("Harmonia")
