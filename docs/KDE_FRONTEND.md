@@ -6,8 +6,8 @@ The goal is desktop-native presentation with one shared Harmonia core:
 
 - KDE Plasma: Qt/Kirigami is selected automatically when PySide6 is available.
 - GNOME and other desktops: GTK4/libadwaita remains the default frontend.
-- If Plasma is detected but the Qt frontend cannot be loaded, Harmonia falls back to GTK unless Qt was explicitly forced.
-- `--gtk`, `--qt`, and `HARMONIA_FRONTEND=gtk|qt` can always override automatic selection.
+- In a native/source installation where both toolkit stacks are available, a Plasma Qt startup failure falls back to GTK unless Qt was explicitly forced.
+- `--gtk`, `--qt`, and `HARMONIA_FRONTEND=gtk|qt` can override automatic selection when the requested toolkit is installed.
 
 ## Shared architecture
 
@@ -36,6 +36,17 @@ The Qt presentation layer is split into small controllers rather than a second m
 - `qt_presenters.py`: conversion of core models to QML-friendly data
 
 The GTK frontend remains intact and continues using its GTK-specific presentation modules.
+
+## Flatpak packaging model
+
+The repository currently keeps two development manifests because Flatpak runtimes are toolkit-specific:
+
+- `io.github.harmonia.Harmonia.yml` uses the GNOME/GTK runtime.
+- `io.github.harmonia.Harmonia.KDE.yml` uses `org.kde.Platform` plus the PySide BaseApp.
+
+They contain the same Harmonia source/core but provide different UI runtime dependencies. Therefore, **do not use `--gtk` as a regression test inside the KDE Flatpak** and do not expect `--qt` inside the GTK Flatpak. Test the other frontend from source/native packaging with its dependencies installed, or build the corresponding manifest.
+
+The automatic selector is still useful: the normal executable chooses Qt on Plasma when PySide6 exists and otherwise chooses GTK. The KDE development Flatpak guarantees the Qt dependencies; the GTK Flatpak guarantees the GTK dependencies.
 
 ## Current Qt/Kirigami test scope
 
@@ -91,18 +102,24 @@ Run normally from Plasma:
 flatpak run io.github.harmonia.Harmonia
 ```
 
-It should select the Qt/Kirigami frontend automatically.
-
-For frontend-selection checks:
+It should select the Qt/Kirigami frontend automatically. To make Qt startup errors explicit while debugging, force the same frontend:
 
 ```bash
 flatpak run io.github.harmonia.Harmonia --qt
-flatpak run io.github.harmonia.Harmonia --gtk
 ```
 
-The second command is an important regression check: the GTK application must continue to launch normally.
+## Testing both selectors from source
 
-## Suggested smoke test
+If your host has both GTK and Qt/Kirigami dependencies installed, the same checkout can verify both frontends without changing the source tree:
+
+```bash
+PYTHONPATH=src python3 -m harmonia --qt
+PYTHONPATH=src python3 -m harmonia --gtk
+```
+
+That is the appropriate regression check for confirming that the original GTK frontend is still healthy after the Qt work.
+
+## Suggested KDE smoke test
 
 After the first launch, check these paths before treating the KDE frontend as stable:
 
@@ -115,7 +132,7 @@ After the first launch, check these paths before treating the KDE frontend as st
 7. Change an audio preference such as EQ or playback speed and confirm playback keeps working.
 8. Check Plasma's media controls/MPRIS while Harmonia is playing.
 9. Close and reopen Harmonia to verify queue/playback state persistence.
-10. Launch once with `--gtk` to verify the original GTK frontend is still healthy.
+10. If both native toolkit stacks are installed, run the source checkout once with `--gtk` as the GTK regression check.
 
 When reporting a Qt runtime problem, run the forced frontend from a terminal so the QML/Python error is visible:
 
