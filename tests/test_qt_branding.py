@@ -16,7 +16,7 @@ def test_qt_backend_reuses_shared_account_profile_and_cache_keys() -> None:
 
 def test_qt_top_bar_renders_real_avatar_with_symbolic_fallback() -> None:
     source = (QML / "AppTopBar.qml").read_text(encoding="utf-8")
-    assert "source: backend.loggedIn ? backend.accountAvatarUrl : \"\"" in source
+    assert 'source: backend.loggedIn ? backend.accountAvatarUrl : ""' in source
     assert 'kind: "artist"' in source
     assert 'source: backend.loggedIn ? "user-available" : "user-offline"' in source
     assert "visible: !backend.loggedIn || backend.accountAvatarUrl.length === 0" in source

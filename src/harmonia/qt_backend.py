@@ -73,7 +73,9 @@ class HarmoniaQtBackend(QObject):
         self._account_avatar_url = (
             self.storage.get_setting("account_avatar_url", "") if self._logged_in else ""
         )
-        self._account_email = self.storage.get_setting("account_email", "") if self._logged_in else ""
+        self._account_email = (
+            self.storage.get_setting("account_email", "") if self._logged_in else ""
+        )
         self._busy = False
         self._status = ""
 
