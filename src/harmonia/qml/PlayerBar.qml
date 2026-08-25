@@ -6,10 +6,18 @@ import org.kde.kirigami as Kirigami
 Rectangle {
     id: root
 
-    implicitHeight: Kirigami.Units.gridUnit * 5.8
+    implicitHeight: Kirigami.Units.gridUnit * 4
     color: Kirigami.Theme.backgroundColor
-    border.width: 1
-    border.color: Kirigami.Theme.disabledTextColor
+    border.width: 0
+
+    Rectangle {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 1
+        color: Kirigami.Theme.disabledTextColor
+        opacity: 0.28
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -22,7 +30,7 @@ Rectangle {
             spacing: Kirigami.Units.largeSpacing
 
             Rectangle {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 3.6
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 3.1
                 Layout.preferredHeight: width
                 radius: Kirigami.Units.cornerRadius
                 clip: true
