@@ -74,6 +74,6 @@ def test_loaded_cover_art_uses_a_real_qt_quick_mask() -> None:
 
 
 def test_visible_player_controls_do_not_use_missing_autoplay_icon() -> None:
-    for filename in ("PlayerBar.qml", "ExpandedPlayer.qml"):
+    for filename in ("PlayerBar.qml", "ExpandedPlayer.qml", "QueuePanel.qml"):
         source = (QML / filename).read_text(encoding="utf-8")
         assert "media-playlist-consecutive" not in source, filename
