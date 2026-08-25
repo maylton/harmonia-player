@@ -77,7 +77,6 @@ Item {
         visible: false
         layer.enabled: true
         layer.smooth: true
-        layer.samples: 4
     }
 
     Image {
@@ -95,13 +94,12 @@ Item {
         opacity: visible ? 1 : 0
         layer.enabled: visible
         layer.smooth: true
-        layer.mipmap: true
         layer.effect: MultiEffect {
             autoPaddingEnabled: false
             maskEnabled: true
             maskSource: artworkMask
-            maskThresholdMin: 0.0
-            maskSpreadAtMin: 0.12
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.0
         }
 
         property bool useFallback: false
