@@ -60,6 +60,7 @@ class HarmoniaQtBackend(QObject):
 
     _downloadsUpdated = Signal()
     _sessionReady = Signal(bool, str)
+    _accountProfileReady = Signal(str, str, str)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -68,6 +69,11 @@ class HarmoniaQtBackend(QObject):
         self.youtube = YouTubeMusicService(self.storage)
         self._executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="harmonia-qt")
         self._logged_in = bool(self.storage.load_cookie())
+        self._account_name = self.storage.get_setting("account_name", "") if self._logged_in else ""
+        self._account_avatar_url = (
+            self.storage.get_setting("account_avatar_url", "") if self._logged_in else ""
+        )
+        self._account_email = self.storage.get_setting("account_email", "") if self._logged_in else ""
         self._busy = False
         self._status = ""
 
@@ -162,10 +168,12 @@ class HarmoniaQtBackend(QObject):
         self._wire_controllers()
         self._downloadsUpdated.connect(self._reload_downloads)
         self._sessionReady.connect(self._apply_session)
+        self._accountProfileReady.connect(self._apply_account_profile)
 
         if self.playback.current_item:
             self.mpris.update(self.playback.current_item, self.playback.duration * 1000)
         if self._logged_in:
+            self._refresh_account_profile()
             self.syncAll()
         self.downloads.resume_pending()
 
@@ -253,6 +261,38 @@ class HarmoniaQtBackend(QObject):
             return
         self._status = value
         self.statusChanged.emit()
+
+    def _refresh_account_profile(self) -> None:
+        if not self._logged_in:
+            return
+
+        def worker() -> None:
+            try:
+                profile = self.youtube.account_profile()
+                self._accountProfileReady.emit(
+                    profile.name or "",
+                    profile.thumbnail or "",
+                    profile.email or "",
+                )
+            except Exception:
+                LOGGER.debug(
+                    "Não foi possível atualizar o perfil; mantendo o avatar em cache",
+                    exc_info=True,
+                )
+
+        self._executor.submit(worker)
+
+    @Slot(str, str, str)
+    def _apply_account_profile(self, name: str, avatar_url: str, email: str) -> None:
+        if not self._logged_in:
+            return
+        self._account_name = name
+        self._account_avatar_url = avatar_url
+        self._account_email = email
+        self.storage.set_setting("account_name", name)
+        self.storage.set_setting("account_avatar_url", avatar_url)
+        self.storage.set_setting("account_email", email)
+        self.sessionChanged.emit()
 
     def _reload_after_restore(self) -> None:
         self.catalog.library = self.storage.load_library()
@@ -616,6 +656,18 @@ class HarmoniaQtBackend(QObject):
     @Property(bool, notify=sessionChanged)
     def loggedIn(self) -> bool:
         return self._logged_in
+
+    @Property(str, notify=sessionChanged)
+    def accountName(self) -> str:
+        return self._account_name
+
+    @Property(str, notify=sessionChanged)
+    def accountAvatarUrl(self) -> str:
+        return self._account_avatar_url
+
+    @Property(str, notify=sessionChanged)
+    def accountEmail(self) -> str:
+        return self._account_email
 
     @Property(bool, notify=busyChanged)
     def busy(self) -> bool:
@@ -1165,12 +1217,19 @@ class HarmoniaQtBackend(QObject):
         self._logged_in = True
         self.sessionChanged.emit()
         self._set_status("")
+        self._refresh_account_profile()
         self.syncAll()
 
     @Slot()
     def disconnectAccount(self) -> None:
         self.youtube.disconnect()
         self._logged_in = False
+        self._account_name = ""
+        self._account_avatar_url = ""
+        self._account_email = ""
+        self.storage.set_setting("account_name", "")
+        self.storage.set_setting("account_avatar_url", "")
+        self.storage.set_setting("account_email", "")
         self.sessionChanged.emit()
         self.catalog.library = {}
         self.catalog.home = []
