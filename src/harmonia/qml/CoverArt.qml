@@ -90,8 +90,17 @@ Item {
         mipmap: true
         sourceSize.width: root.decodeSize
         sourceSize.height: root.decodeSize
-        opacity: 0
-        layer.enabled: true
+        visible: status === Image.Ready
+        opacity: visible ? 1 : 0
+        layer.enabled: visible
+        layer.smooth: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            maskEnabled: true
+            maskSource: artworkMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.0
+        }
 
         property bool useFallback: false
 
@@ -104,20 +113,6 @@ Item {
             target: root
             function onSourceChanged() { artwork.useFallback = false }
         }
-    }
-
-    MultiEffect {
-        id: renderedArtwork
-        anchors.fill: parent
-        source: artwork
-        visible: artwork.status === Image.Ready
-        opacity: visible ? 1 : 0
-        autoPaddingEnabled: false
-        maskEnabled: true
-        maskSource: artworkMask
-        maskThresholdMin: 0.0
-        maskSpreadAtMin: 0.16
-        antialiasing: true
 
         Behavior on opacity {
             NumberAnimation { duration: 130 }
