@@ -9,7 +9,7 @@ separate-locales: false
 
 build-options:
   env:
-    - BASEAPP_DISABLE_NUMPY=1
+    BASEAPP_DISABLE_NUMPY: 'true'
 
 cleanup-commands:
   - /app/cleanup-BaseApp.sh
@@ -27,9 +27,9 @@ finish-args:
   - --filesystem=xdg-run/app/com.discordapp.Discord:ro
 
 modules:
-  # Keep the same Secret Service session used by the GTK build.  The KDE
-  # runtime is intentionally kept Qt-native; only the small GI/libsecret
-  # bridge is bundled so Storage can read the existing Harmonia credential.
+  # Keep the same Secret Service session used by the GTK build. The KDE
+  # runtime stays Qt-native at the UI layer; this small GI/libsecret bridge
+  # lets Storage read the existing Harmonia credential without duplicating it.
   - name: libsecret
     buildsystem: meson
     config-opts:
