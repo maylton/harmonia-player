@@ -121,10 +121,7 @@ def insights_map(data: PlaybackInsights, liked_ids: set[str]) -> dict[str, Any]:
             }
             for index, ranked in enumerate(data.top_tracks)
         ],
-        "topArtists": [
-            {"name": ranked.name, "plays": ranked.plays}
-            for ranked in data.top_artists
-        ],
+        "topArtists": [{"name": ranked.name, "plays": ranked.plays} for ranked in data.top_artists],
         "months": [
             {"label": label, "plays": plays, "ratio": plays / maximum}
             for label, plays in zip(MONTH_NAMES, data.monthly_plays, strict=True)

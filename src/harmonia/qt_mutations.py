@@ -112,9 +112,7 @@ class QtMutationController(QObject):
         self._run(
             "like-collection" if saved else "unlike-collection",
             playlist_id,
-            lambda: self.youtube.mutate(
-                lambda client: client.like_playlist(playlist_id, saved)
-            ),
+            lambda: self.youtube.mutate(lambda client: client.like_playlist(playlist_id, saved)),
             "Adicionado à biblioteca" if saved else "Removido da biblioteca",
             self.sync_library,
         )

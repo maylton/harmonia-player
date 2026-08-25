@@ -116,9 +116,7 @@ class QtPreferencesController(QObject):
     def cache_bytes(self) -> int:
         try:
             return sum(
-                path.stat().st_size
-                for path in self.storage.artwork_dir.iterdir()
-                if path.is_file()
+                path.stat().st_size for path in self.storage.artwork_dir.iterdir() if path.is_file()
             )
         except OSError:
             return 0
@@ -128,11 +126,7 @@ class QtPreferencesController(QObject):
         size = float(max(0, value))
         for unit in ("B", "KB", "MB", "GB"):
             if size < 1024 or unit == "GB":
-                return (
-                    f"{size:.0f} {unit}"
-                    if unit in {"B", "KB"}
-                    else f"{size:.1f} {unit}"
-                )
+                return f"{size:.0f} {unit}" if unit in {"B", "KB"} else f"{size:.1f} {unit}"
             size /= 1024
         return "0 B"
 

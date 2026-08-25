@@ -430,10 +430,7 @@ class HarmoniaQtBackend(QObject):
 
     @Property(bool, notify=detailChanged)
     def detailIsLocalPlaylist(self) -> bool:
-        return bool(
-            self.catalog.detail_item
-            and self.catalog.detail_item.kind == "local-playlists"
-        )
+        return bool(self.catalog.detail_item and self.catalog.detail_item.kind == "local-playlists")
 
     @Property(bool, notify=detailChanged)
     def detailSaved(self) -> bool:
@@ -650,17 +647,12 @@ class HarmoniaQtBackend(QObject):
 
     @Property(str, notify=nowPlayingChanged)
     def currentArtwork(self) -> str:
-        return (
-            (self.playback.current_item.thumbnail or "")
-            if self.playback.current_item
-            else ""
-        )
+        return (self.playback.current_item.thumbnail or "") if self.playback.current_item else ""
 
     @Property(bool, notify=currentLikeChanged)
     def currentLiked(self) -> bool:
         return bool(
-            self.playback.current_item
-            and self.playback.current_item.id in self._liked_ids()
+            self.playback.current_item and self.playback.current_item.id in self._liked_ids()
         )
 
     @Property(bool, notify=playbackChanged)
