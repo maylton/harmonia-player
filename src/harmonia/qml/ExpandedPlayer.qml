@@ -160,9 +160,16 @@ Controls.Dialog {
 
                                 Controls.RoundButton {
                                     id: primaryPlayButton
-                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3.6
+                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                                     Layout.preferredHeight: width
                                     enabled: backend.currentId.length > 0
+                                    display: Controls.AbstractButton.IconOnly
+                                    icon.name: backend.playing
+                                               ? "media-playback-pause"
+                                               : "media-playback-start"
+                                    icon.width: Kirigami.Units.iconSizes.medium
+                                    icon.height: Kirigami.Units.iconSizes.medium
+                                    icon.color: Kirigami.Theme.textColor
                                     padding: 0
                                     onClicked: backend.togglePlayback()
                                     Controls.ToolTip.visible: hovered
@@ -170,31 +177,25 @@ Controls.Dialog {
 
                                     background: Rectangle {
                                         radius: width / 2
-                                        color: primaryPlayButton.down
-                                               ? Qt.darker(Kirigami.Theme.highlightColor, 1.14)
-                                               : primaryPlayButton.hovered
-                                                 ? Qt.lighter(Kirigami.Theme.highlightColor, 1.08)
-                                                 : Kirigami.Theme.highlightColor
-                                        opacity: primaryPlayButton.enabled ? 0.94 : 0.45
+                                        color: Qt.rgba(
+                                            Kirigami.Theme.textColor.r,
+                                            Kirigami.Theme.textColor.g,
+                                            Kirigami.Theme.textColor.b,
+                                            primaryPlayButton.down
+                                                ? 0.18
+                                                : primaryPlayButton.hovered
+                                                  ? 0.14
+                                                  : 0.10
+                                        )
                                         border.width: 1
                                         border.color: Qt.rgba(
-                                            Kirigami.Theme.highlightedTextColor.r,
-                                            Kirigami.Theme.highlightedTextColor.g,
-                                            Kirigami.Theme.highlightedTextColor.b,
-                                            0.20
+                                            Kirigami.Theme.textColor.r,
+                                            Kirigami.Theme.textColor.g,
+                                            Kirigami.Theme.textColor.b,
+                                            0.16
                                         )
+                                        opacity: primaryPlayButton.enabled ? 1.0 : 0.45
                                         antialiasing: true
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        anchors.centerIn: parent
-                                        width: Math.round(primaryPlayButton.width * 0.42)
-                                        height: width
-                                        source: backend.playing
-                                                ? "media-playback-pause"
-                                                : "media-playback-start"
-                                        isMask: true
-                                        color: Kirigami.Theme.highlightedTextColor
                                     }
                                 }
 
