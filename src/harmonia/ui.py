@@ -28,9 +28,9 @@ def _install_view_stack_transition_compatibility() -> None:
         return None
 
     if not hasattr(Adw.ViewStack, "set_enable_transitions"):
-        setattr(Adw.ViewStack, "set_enable_transitions", set_enable_transitions)
+        Adw.ViewStack.set_enable_transitions = set_enable_transitions
     if not hasattr(Adw.ViewStack, "set_transition_duration"):
-        setattr(Adw.ViewStack, "set_transition_duration", set_transition_duration)
+        Adw.ViewStack.set_transition_duration = set_transition_duration
 
 
 _install_view_stack_transition_compatibility()
