@@ -12,9 +12,10 @@ def test_expanded_player_primary_control_uses_native_centered_icon() -> None:
     assert "icon.width: Kirigami.Units.iconSizes.medium" in source
     assert "icon.height: Kirigami.Units.iconSizes.medium" in source
     assert "icon.color: Kirigami.Theme.textColor" in source
-    assert "contentItem: Kirigami.Icon" not in source.split("id: primaryPlayButton", 1)[1].split(
-        "Controls.ToolButton {", 1
-    )[0]
+    assert (
+        "contentItem: Kirigami.Icon"
+        not in source.split("id: primaryPlayButton", 1)[1].split("Controls.ToolButton {", 1)[0]
+    )
 
 
 def test_lyrics_toolbar_forces_action_icons_to_monochrome_masks() -> None:
