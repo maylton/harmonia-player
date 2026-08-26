@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import random
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -10,6 +9,12 @@ from PySide6.QtCore import QObject, QTimer, Signal
 
 from .downloads import DownloadManager
 from .models import HistoryEntry, LibraryItem, PlaybackState
+from .playback_state import (
+    filter_new_recommendations,
+    move_queue_item,
+    remove_queue_item,
+    shuffled_queue_keep_current,
+)
 from .player import NativePlayer
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -383,11 +388,9 @@ class QtPlaybackController(QObject):
             return
         self.shuffle = enabled
         if enabled and self.queue:
-            current = self.queue[self.queue_index]
-            remainder = [item for index, item in enumerate(self.queue) if index != self.queue_index]
-            random.shuffle(remainder)
-            self.queue = [current, *remainder]
-            self.queue_index = 0
+            self.queue, self.queue_index = shuffled_queue_keep_current(
+                self.queue, self.queue_index
+            )
             self.queueChanged.emit()
             self.nowPlayingChanged.emit()
         self.playbackChanged.emit()
@@ -455,10 +458,7 @@ class QtPlaybackController(QObject):
                 self.waiting_for_autoplay = False
                 self.set_status(f"Não foi possível continuar a rádio: {error}")
             return
-        existing = {item.id for item in self.queue}
-        self.related_items = [
-            item for item in list(recommendations or []) if item.id not in existing
-        ]
+        self.related_items = filter_new_recommendations(self.queue, recommendations)
         self.queueChanged.emit()
         self._save_state()
         if self.waiting_for_autoplay and self.related_items:
@@ -488,31 +488,27 @@ class QtPlaybackController(QObject):
             self.ensure_autoplay()
 
     def move_queue_item(self, index: int, direction: int) -> None:
-        target = index + direction
-        if not (0 <= index < len(self.queue) and 0 <= target < len(self.queue)):
+        self.queue_index, changed = move_queue_item(
+            self.queue,
+            self.queue_index,
+            index,
+            direction,
+        )
+        if not changed:
             return
-        self.queue[index], self.queue[target] = self.queue[target], self.queue[index]
-        if self.queue_index == index:
-            self.queue_index = target
-        elif self.queue_index == target:
-            self.queue_index = index
         self.queueChanged.emit()
         self.nowPlayingChanged.emit()
         self._save_state()
 
     def remove_queue_item(self, index: int) -> None:
-        if not 0 <= index < len(self.queue):
+        result = remove_queue_item(self.queue, self.queue_index, index)
+        if result is None:
             return
-        removing_current = index == self.queue_index
-        self.queue.pop(index)
-        if not self.queue:
+        self.queue_index = result.index
+        if result.empty:
             self.stop()
             return
-        if index < self.queue_index:
-            self.queue_index -= 1
-        elif self.queue_index >= len(self.queue):
-            self.queue_index = len(self.queue) - 1
-        if removing_current:
+        if result.removed_current:
             self.set_current(self.queue_index)
         else:
             self.queueChanged.emit()
