@@ -95,7 +95,7 @@ def main() -> int:
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
         backend.shutdown()
-        return 1
+        raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
 
     app.aboutToQuit.connect(backend.shutdown)
     return app.exec()
