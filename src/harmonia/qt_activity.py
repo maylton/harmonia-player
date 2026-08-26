@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from bisect import bisect_right
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
@@ -9,6 +8,13 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QGuiApplication
 
 from .lyrics import GoogleTranslationClient, LyricsResolver
+from .lyrics_state import (
+    active_lyric_index,
+    clamp_lyrics_offset,
+    lyric_seek_target,
+    lyrics_copy_text,
+    next_lyrics_provider,
+)
 from .models import HistoryEntry, LibraryItem, LyricLine
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -252,11 +258,10 @@ class QtLyricsController(QObject):
         self.load(force=False)
 
     def cycle_provider(self) -> None:
-        providers = ("auto", "lrclib", "youtube")
-        self.set_provider(providers[(providers.index(self.provider) + 1) % len(providers)])
+        self.set_provider(next_lyrics_provider(self.provider))
 
     def set_offset(self, value: int) -> None:
-        value = max(-5000, min(5000, int(value)))
+        value = clamp_lyrics_offset(value)
         if value == self.offset_ms:
             return
         self.offset_ms = value
@@ -268,20 +273,13 @@ class QtLyricsController(QObject):
         self.set_offset(self.offset_ms + delta)
 
     def seek_target(self, start_ms: int) -> int:
-        return max(0, int(start_ms) - self.offset_ms)
+        return lyric_seek_target(start_ms, self.offset_ms)
 
     def copy(self) -> None:
         document = self.document
         if not document:
             return
-        value = document.display_text
-        if document.translation:
-            value += "\n\n" + document.translation
-        if document.synced and any(line.translation for line in document.synced):
-            value = "\n".join(
-                f"{line.text}\n{line.translation}" if line.translation else line.text
-                for line in document.synced
-            )
+        value = lyrics_copy_text(document)
         clipboard = QGuiApplication.clipboard()
         if clipboard:
             clipboard.setText(value)
@@ -348,8 +346,7 @@ class QtLyricsController(QObject):
 
     def update_position(self, position_ms: int, *, force: bool = False) -> None:
         lines = self.document.synced if self.document else []
-        adjusted = max(0, int(position_ms) + self.offset_ms)
-        index = bisect_right([line.start_ms for line in lines], adjusted) - 1 if lines else -1
+        index = active_lyric_index(lines, position_ms, self.offset_ms)
         if index == self.active_index and not force:
             return
         self.active_index = index
