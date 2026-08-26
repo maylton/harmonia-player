@@ -87,8 +87,8 @@ Rectangle {
         SidebarButton {
             Layout.fillWidth: true
             text: "Músicas curtidas"
-            iconName: "starred"
-            fallbackIcon: "rating"
+            iconName: "love-symbolic"
+            fallbackIcon: "emblem-favorite-symbolic"
             selected: root.currentView === 2 && root.currentCategory === "songs"
             onClicked: root.categoryRequested("songs")
         }
@@ -152,8 +152,8 @@ Rectangle {
         SidebarButton {
             Layout.fillWidth: true
             text: "Preferências"
-            iconName: "preferences-system"
-            fallbackIcon: "configure"
+            iconName: "settings-configure"
+            fallbackIcon: "configure-symbolic"
             selected: root.currentView === 6
             onClicked: root.viewRequested(6)
         }
