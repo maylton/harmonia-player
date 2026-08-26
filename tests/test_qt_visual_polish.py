@@ -53,12 +53,26 @@ def test_sidebar_uses_recognizable_breeze_like_and_settings_icons() -> None:
     assert 'fallbackIcon: "configure-symbolic"' in source
 
 
-def test_player_uses_supported_qt_sliders_and_theme_driven_like_icon() -> None:
+def test_player_uses_clickable_shared_seek_slider_and_theme_driven_like_icon() -> None:
     compact = (QML / "PlayerBar.qml").read_text(encoding="utf-8")
     expanded = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
+    seek = (QML / "SeekSlider.qml").read_text(encoding="utf-8")
+
+    assert "Controls.Slider {" in seek
+    assert "MouseArea {" in seek
+    assert "root.setValueFromX(mouse.x)" in seek
+    assert "root.seekRequested(Math.round(root.value))" in seek
+    assert "if (!mouseSeeking)" in seek
+    assert "preventStealing: true" in seek
+
     for source in (compact, expanded):
         assert "import org.kde.plasma.components" not in source
-        assert source.count("Controls.Slider {") >= 2
+        assert "SeekSlider {" in source
+        assert "playbackPosition: backend.position" in source
+        assert "playbackDuration: backend.duration" in source
+        assert "backend.seek(positionMs)" in source
+        assert source.count("Controls.Slider {") >= 1
+        assert "onPressedChanged: if (!pressed) backend.seek" not in source
         assert 'source: "love-symbolic"' in source
         assert "Kirigami.Theme.highlightColor" in source
         assert "palette.highlight:" not in source

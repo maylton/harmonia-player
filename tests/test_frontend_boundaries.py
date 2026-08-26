@@ -79,3 +79,21 @@ def test_qt_backend_stays_a_facade_instead_of_absorbing_domain_implementations()
     assert "from .lyrics import LyricsResolver" not in source
     assert "from .backup import BackupManager" not in source
     assert len(source.splitlines()) <= 1300
+
+
+def test_both_frontends_use_shared_playback_state_rules() -> None:
+    helpers = (
+        "shuffled_queue_keep_current",
+        "move_queue_item",
+        "remove_queue_item",
+        "filter_new_recommendations",
+        "radio_seed_for_autoplay",
+        "playback_state_snapshot",
+    )
+    for filename in ("qt_playback.py", "window_playback.py"):
+        source = _source(PACKAGE / filename)
+        assert "from .playback_state import (" in source
+        for helper in helpers:
+            assert helper in source, f"{filename}: {helper}"
+        assert "playback_state_snapshot(" in source, filename
+        assert "PlaybackState(" not in source, filename

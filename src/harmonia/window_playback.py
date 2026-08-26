@@ -18,6 +18,7 @@ from .models import (
 from .playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    playback_state_snapshot,
     radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
@@ -37,14 +38,14 @@ class WindowPlaybackMixin:
                 if self._stream_ready
                 else self._restored_position_ms
             )
-        return PlaybackState(
-            list(self.queue),
-            list(self.related_items),
-            max(0, self.queue_index),
-            max(0, position_ms),
-            self.shuffle_enabled,
-            self.repeat_enabled,
-            self.autoplay_enabled,
+        return playback_state_snapshot(
+            self.queue,
+            self.related_items,
+            self.queue_index,
+            position_ms,
+            shuffle=self.shuffle_enabled,
+            repeat=self.repeat_enabled,
+            autoplay=self.autoplay_enabled,
         )
 
     def _save_playback_state(self, position_ms: int | None = None) -> None:

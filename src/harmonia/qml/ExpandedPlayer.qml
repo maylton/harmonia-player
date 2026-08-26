@@ -237,13 +237,13 @@ Controls.Dialog {
                                     opacity: 0.7
                                 }
 
-                                Controls.Slider {
+                                SeekSlider {
                                     Layout.fillWidth: true
-                                    from: 0
-                                    to: Math.max(1, backend.duration)
-                                    value: backend.position
-                                    enabled: backend.duration > 0
-                                    onPressedChanged: if (!pressed) backend.seek(Math.round(value))
+                                    playbackPosition: backend.position
+                                    playbackDuration: backend.duration
+                                    onSeekRequested: function(positionMs) {
+                                        backend.seek(positionMs)
+                                    }
                                 }
 
                                 Controls.Label {
