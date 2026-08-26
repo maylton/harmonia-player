@@ -18,6 +18,24 @@ ICON_SIZES = {"sm", "md", "lg"}
 PAGE_WIDTHS = {"content": 1280, "reading": 980}
 
 
+def _install_view_stack_transition_compatibility() -> None:
+    """Keep newer ViewStack transition calls harmless on libadwaita 1.5."""
+
+    def set_enable_transitions(_stack, _enabled: bool) -> None:
+        return None
+
+    def set_transition_duration(_stack, _duration: int) -> None:
+        return None
+
+    if not hasattr(Adw.ViewStack, "set_enable_transitions"):
+        setattr(Adw.ViewStack, "set_enable_transitions", set_enable_transitions)
+    if not hasattr(Adw.ViewStack, "set_transition_duration"):
+        setattr(Adw.ViewStack, "set_transition_duration", set_transition_duration)
+
+
+_install_view_stack_transition_compatibility()
+
+
 def set_action_role(widget: Gtk.Widget, role: str) -> Gtk.Widget:
     if role not in ACTION_ROLES:
         raise ValueError(f"Unknown action role: {role}")
