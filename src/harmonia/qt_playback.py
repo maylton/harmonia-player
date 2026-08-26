@@ -8,10 +8,11 @@ from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from .downloads import DownloadManager
-from .models import HistoryEntry, LibraryItem, PlaybackState
+from .models import HistoryEntry, LibraryItem
 from .playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    playback_state_snapshot,
     radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
@@ -179,15 +180,16 @@ class QtPlaybackController(QObject):
     def _save_state(self, position_ms: int | None = None) -> None:
         if not self.queue:
             return
+        position = self.position if position_ms is None else position_ms
         self.storage.save_playback_state(
-            PlaybackState(
-                list(self.queue),
-                list(self.related_items),
-                max(0, self.queue_index),
-                self.position if position_ms is None else max(0, position_ms),
-                self.shuffle,
-                self.repeat,
-                self.autoplay,
+            playback_state_snapshot(
+                self.queue,
+                self.related_items,
+                self.queue_index,
+                position,
+                shuffle=self.shuffle,
+                repeat=self.repeat,
+                autoplay=self.autoplay,
             )
         )
         self._last_state_save = time.monotonic()
