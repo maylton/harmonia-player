@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.plasma.components as PlasmaComponents
 
 Rectangle {
     id: root
@@ -181,7 +180,7 @@ Rectangle {
                     opacity: 0.7
                 }
 
-                PlasmaComponents.Slider {
+                Controls.Slider {
                     Layout.fillWidth: true
                     from: 0
                     to: Math.max(1, backend.duration)
@@ -229,7 +228,7 @@ Rectangle {
                 color: Kirigami.Theme.textColor
             }
 
-            PlasmaComponents.Slider {
+            Controls.Slider {
                 Layout.fillWidth: true
                 visible: root.width >= 980
                 from: 0
