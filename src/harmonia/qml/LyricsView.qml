@@ -61,14 +61,14 @@ Item {
             Layout.preferredHeight: childrenRect.height
             spacing: Kirigami.Units.smallSpacing
 
-            Controls.Button {
+            Controls.AbstractButton {
                 id: providerButton
-                text: backend.selectedLyricsProvider === "lrclib"
-                      ? "LRCLIB"
-                      : backend.selectedLyricsProvider === "youtube"
-                        ? "YouTube"
-                        : "Automática"
-                flat: true
+                property string actionText: backend.selectedLyricsProvider === "lrclib"
+                                            ? "LRCLIB"
+                                            : backend.selectedLyricsProvider === "youtube"
+                                              ? "YouTube"
+                                              : "Automática"
+                hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
                 topPadding: Kirigami.Units.smallSpacing
@@ -81,6 +81,15 @@ Item {
                 onClicked: backend.cycleLyricsProvider()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Alterar fonte da letra"
+
+                background: Rectangle {
+                    radius: Math.max(5, Kirigami.Units.cornerRadius)
+                    color: providerButton.down
+                           ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.11)
+                           : providerButton.hovered
+                             ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.065)
+                             : "transparent"
+                }
 
                 contentItem: RowLayout {
                     id: providerContent
@@ -95,16 +104,16 @@ Item {
                     }
 
                     Controls.Label {
-                        text: providerButton.text
+                        text: providerButton.actionText
                         color: Kirigami.Theme.textColor
                     }
                 }
             }
 
-            Controls.Button {
+            Controls.AbstractButton {
                 id: translateButton
-                text: "Traduzir"
-                flat: true
+                property string actionText: "Traduzir"
+                hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
                 topPadding: Kirigami.Units.smallSpacing
@@ -118,6 +127,15 @@ Item {
                 onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Traduzir para português"
+
+                background: Rectangle {
+                    radius: Math.max(5, Kirigami.Units.cornerRadius)
+                    color: translateButton.down
+                           ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.11)
+                           : translateButton.hovered
+                             ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.065)
+                             : "transparent"
+                }
 
                 contentItem: RowLayout {
                     id: translateContent
@@ -133,16 +151,16 @@ Item {
                     }
 
                     Controls.Label {
-                        text: translateButton.text
+                        text: translateButton.actionText
                         color: Kirigami.Theme.textColor
                     }
                 }
             }
 
-            Controls.Button {
+            Controls.AbstractButton {
                 id: copyButton
-                text: "Copiar"
-                flat: true
+                property string actionText: "Copiar"
+                hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
                 topPadding: Kirigami.Units.smallSpacing
@@ -156,6 +174,15 @@ Item {
                 onClicked: backend.copyLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Copiar letra"
+
+                background: Rectangle {
+                    radius: Math.max(5, Kirigami.Units.cornerRadius)
+                    color: copyButton.down
+                           ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.11)
+                           : copyButton.hovered
+                             ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.065)
+                             : "transparent"
+                }
 
                 contentItem: RowLayout {
                     id: copyContent
@@ -171,7 +198,7 @@ Item {
                     }
 
                     Controls.Label {
-                        text: copyButton.text
+                        text: copyButton.actionText
                         color: Kirigami.Theme.textColor
                     }
                 }
