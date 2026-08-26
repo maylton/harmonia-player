@@ -18,6 +18,7 @@ from .models import (
 from .playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
 )
@@ -171,10 +172,9 @@ class WindowPlaybackMixin:
                 self._promote_related(self.related_items[0], play_next=False)
                 self._play_next()
             return
-        remaining = len(self.queue) - self.queue_index - 1
-        if not force and remaining > 5:
+        seed = radio_seed_for_autoplay(self.queue, self.queue_index, force=force)
+        if seed is None:
             return
-        seed = self.queue[-1]
         self._autoplay_request += 1
         request_id = self._autoplay_request
         self._autoplay_loading = True
