@@ -34,7 +34,7 @@ def _source(path: Path) -> str:
 def test_qt_controllers_do_not_depend_on_gtk_or_adwaita() -> None:
     for filename in QT_MODULES:
         source = _source(PACKAGE / filename)
-        assert "gi.require_version(\"Gtk\"" not in source, filename
+        assert 'gi.require_version("Gtk"' not in source, filename
         assert "from gi.repository import Adw" not in source, filename
         assert "from gi.repository import Gtk" not in source, filename
 
@@ -51,7 +51,7 @@ def test_gtk_presentation_does_not_depend_on_pyside_or_qt_controllers() -> None:
 def test_shared_domain_modules_remain_toolkit_free() -> None:
     forbidden = (
         "PySide6",
-        "gi.require_version(\"Gtk\"",
+        'gi.require_version("Gtk"',
         "from gi.repository import Adw",
         "from gi.repository import Gtk",
     )
