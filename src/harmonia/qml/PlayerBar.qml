@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PlasmaComponents
 
 Rectangle {
     id: root
@@ -180,13 +181,12 @@ Rectangle {
                     opacity: 0.7
                 }
 
-                Controls.Slider {
+                PlasmaComponents.Slider {
                     Layout.fillWidth: true
                     from: 0
                     to: Math.max(1, backend.duration)
                     value: backend.position
                     enabled: backend.duration > 0
-                    palette.highlight: Kirigami.Theme.highlightColor
                     onPressedChanged: if (!pressed) backend.seek(Math.round(value))
                 }
 
@@ -229,13 +229,12 @@ Rectangle {
                 color: Kirigami.Theme.textColor
             }
 
-            Controls.Slider {
+            PlasmaComponents.Slider {
                 Layout.fillWidth: true
                 visible: root.width >= 980
                 from: 0
                 to: 100
                 value: backend.volume
-                palette.highlight: Kirigami.Theme.highlightColor
                 onMoved: backend.setVolume(Math.round(value))
             }
 
