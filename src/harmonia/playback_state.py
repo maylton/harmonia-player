@@ -8,6 +8,8 @@ from dataclasses import dataclass
 
 from .models import LibraryItem
 
+AUTOPLAY_PREFETCH_REMAINING = 5
+
 
 @dataclass(frozen=True, slots=True)
 class QueueRemoval:
@@ -87,6 +89,6 @@ def radio_seed_for_autoplay(
     if not queue:
         return None
     remaining = len(queue) - current_index - 1
-    if not force and remaining > 5:
+    if not force and remaining > AUTOPLAY_PREFETCH_REMAINING:
         return None
     return queue[-1]
