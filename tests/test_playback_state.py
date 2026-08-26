@@ -2,6 +2,7 @@ from harmonia.models import LibraryItem
 from harmonia.playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    playback_state_snapshot,
     radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
@@ -117,3 +118,47 @@ def test_autoplay_radio_seed_force_bypasses_prefetch_boundary() -> None:
 
 def test_autoplay_radio_seed_ignores_empty_queue() -> None:
     assert radio_seed_for_autoplay([], -1) is None
+
+
+def test_playback_state_snapshot_preserves_values_and_copies_lists() -> None:
+    queue = [item("a"), item("b")]
+    related = [item("c")]
+
+    snapshot = playback_state_snapshot(
+        queue,
+        related,
+        1,
+        12_345,
+        shuffle=True,
+        repeat=False,
+        autoplay=True,
+    )
+
+    queue.append(item("d"))
+    related.clear()
+
+    assert [entry.id for entry in snapshot.queue] == ["a", "b"]
+    assert [entry.id for entry in snapshot.related] == ["c"]
+    assert snapshot.index == 1
+    assert snapshot.position_ms == 12_345
+    assert snapshot.shuffle is True
+    assert snapshot.repeat is False
+    assert snapshot.autoplay is True
+
+
+def test_playback_state_snapshot_normalizes_negative_numbers() -> None:
+    snapshot = playback_state_snapshot(
+        [item("a")],
+        [],
+        -1,
+        -500,
+        shuffle=False,
+        repeat=True,
+        autoplay=False,
+    )
+
+    assert snapshot.index == 0
+    assert snapshot.position_ms == 0
+    assert snapshot.shuffle is False
+    assert snapshot.repeat is True
+    assert snapshot.autoplay is False
