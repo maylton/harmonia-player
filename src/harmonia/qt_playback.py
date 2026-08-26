@@ -12,6 +12,7 @@ from .models import HistoryEntry, LibraryItem, PlaybackState
 from .playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
 )
@@ -429,10 +430,9 @@ class QtPlaybackController(QObject):
                 self._promote_related_index(0, False)
                 self.set_current(self.queue_index + 1)
             return
-        remaining = len(self.queue) - self.queue_index - 1
-        if not force and remaining > 5:
+        seed = radio_seed_for_autoplay(self.queue, self.queue_index, force=force)
+        if seed is None:
             return
-        seed = self.queue[-1]
         self._radio_request += 1
         request_id = self._radio_request
         self._set_autoplay_loading(True)
