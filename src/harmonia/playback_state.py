@@ -75,3 +75,18 @@ def filter_new_recommendations(
     """Keep radio recommendations whose IDs are not already in the queue."""
     existing = {item.id for item in queue}
     return [item for item in recommendations or [] if item.id not in existing]
+
+
+def radio_seed_for_autoplay(
+    queue: list[LibraryItem],
+    current_index: int,
+    *,
+    force: bool = False,
+) -> LibraryItem | None:
+    """Return the radio seed when autoplay should prefetch more queue entries."""
+    if not queue:
+        return None
+    remaining = len(queue) - current_index - 1
+    if not force and remaining > 5:
+        return None
+    return queue[-1]
