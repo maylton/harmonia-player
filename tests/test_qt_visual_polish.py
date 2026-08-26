@@ -57,7 +57,7 @@ def test_player_uses_plasma_native_sliders_and_theme_driven_like_icon() -> None:
     compact = (QML / "PlayerBar.qml").read_text(encoding="utf-8")
     expanded = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
     for source in (compact, expanded):
-        assert 'import org.kde.plasma.components as PlasmaComponents' in source
+        assert "import org.kde.plasma.components as PlasmaComponents" in source
         assert source.count("PlasmaComponents.Slider {") >= 2
         assert 'source: "love-symbolic"' in source
         assert "Kirigami.Theme.highlightColor" in source
