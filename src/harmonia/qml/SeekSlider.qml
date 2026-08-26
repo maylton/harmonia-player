@@ -30,6 +30,8 @@ Controls.Slider {
             seekRequested(Math.round(value))
     }
 
+    // The KDE desktop style does not guarantee groove clicks move the native handle,
+    // so this overlay maps both direct track clicks and drags to a playback position.
     MouseArea {
         anchors.fill: parent
         z: 100
