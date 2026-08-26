@@ -33,10 +33,14 @@ def active_lyric_index(
     lines: list[LyricLine],
     position_ms: int,
     offset_ms: int = 0,
+    *,
+    floor_at_zero: bool = True,
 ) -> int:
     if not lines:
         return -1
-    adjusted = max(0, int(position_ms) + int(offset_ms))
+    adjusted = int(position_ms) + int(offset_ms)
+    if floor_at_zero:
+        adjusted = max(0, adjusted)
     return bisect_right([line.start_ms for line in lines], adjusted) - 1
 
 
