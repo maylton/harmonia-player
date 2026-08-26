@@ -2,6 +2,7 @@ from harmonia.models import LibraryItem
 from harmonia.playback_state import (
     filter_new_recommendations,
     move_queue_item,
+    radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
 )
@@ -88,3 +89,31 @@ def test_filter_new_recommendations_excludes_ids_already_in_queue() -> None:
     filtered = filter_new_recommendations(queue, recommendations)
 
     assert [entry.id for entry in filtered] == ["c", "d"]
+
+
+def test_autoplay_radio_seed_waits_while_more_than_five_items_remain() -> None:
+    queue = [item(letter) for letter in "abcdefg"]
+
+    seed = radio_seed_for_autoplay(queue, 0)
+
+    assert seed is None
+
+
+def test_autoplay_radio_seed_uses_queue_tail_at_prefetch_boundary() -> None:
+    queue = [item(letter) for letter in "abcdefg"]
+
+    seed = radio_seed_for_autoplay(queue, 1)
+
+    assert seed is queue[-1]
+
+
+def test_autoplay_radio_seed_force_bypasses_prefetch_boundary() -> None:
+    queue = [item(letter) for letter in "abcdefg"]
+
+    seed = radio_seed_for_autoplay(queue, 0, force=True)
+
+    assert seed is queue[-1]
+
+
+def test_autoplay_radio_seed_ignores_empty_queue() -> None:
+    assert radio_seed_for_autoplay([], -1) is None
