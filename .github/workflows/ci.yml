@@ -38,10 +38,11 @@ jobs:
       - name: Smoke do frontend GTK
         env:
           GSETTINGS_BACKEND: memory
+          GTK_A11Y: none
           PYTHONPATH: src
         run: |
           set +e
-          output=$(dbus-run-session -- xvfb-run -a timeout 8 \
+          output=$(xvfb-run -a dbus-run-session -- timeout 8 \
             .venv/bin/python -m harmonia --gtk 2>&1)
           status=$?
           set -e
