@@ -6,7 +6,7 @@ import random
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from .models import LibraryItem
+from .models import LibraryItem, PlaybackState
 
 AUTOPLAY_PREFETCH_REMAINING = 5
 
@@ -92,3 +92,25 @@ def radio_seed_for_autoplay(
     if not force and remaining > AUTOPLAY_PREFETCH_REMAINING:
         return None
     return queue[-1]
+
+
+def playback_state_snapshot(
+    queue: Iterable[LibraryItem],
+    related: Iterable[LibraryItem],
+    current_index: int,
+    position_ms: int,
+    *,
+    shuffle: bool,
+    repeat: bool,
+    autoplay: bool,
+) -> PlaybackState:
+    """Build a normalized persistence snapshot without sharing mutable lists."""
+    return PlaybackState(
+        list(queue),
+        list(related),
+        max(0, current_index),
+        max(0, position_ms),
+        shuffle,
+        repeat,
+        autoplay,
+    )
