@@ -388,9 +388,7 @@ class QtPlaybackController(QObject):
             return
         self.shuffle = enabled
         if enabled and self.queue:
-            self.queue, self.queue_index = shuffled_queue_keep_current(
-                self.queue, self.queue_index
-            )
+            self.queue, self.queue_index = shuffled_queue_keep_current(self.queue, self.queue_index)
             self.queueChanged.emit()
             self.nowPlayingChanged.emit()
         self.playbackChanged.emit()
