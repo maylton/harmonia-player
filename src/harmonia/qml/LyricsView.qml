@@ -56,7 +56,9 @@ Item {
         }
 
         Flow {
+            id: actionFlow
             Layout.fillWidth: true
+            Layout.preferredHeight: childrenRect.height
             spacing: Kirigami.Units.smallSpacing
 
             Controls.Button {
@@ -67,11 +69,21 @@ Item {
                         ? "YouTube"
                         : "Automática"
                 flat: true
+                leftPadding: Kirigami.Units.largeSpacing
+                rightPadding: Kirigami.Units.largeSpacing
+                topPadding: Kirigami.Units.smallSpacing
+                bottomPadding: Kirigami.Units.smallSpacing
+                implicitWidth: providerContent.implicitWidth + leftPadding + rightPadding
+                implicitHeight: Math.max(
+                    Kirigami.Units.gridUnit * 2,
+                    providerContent.implicitHeight + topPadding + bottomPadding
+                )
                 onClicked: backend.cycleLyricsProvider()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Alterar fonte da letra"
 
                 contentItem: RowLayout {
+                    id: providerContent
                     spacing: Kirigami.Units.smallSpacing
 
                     Kirigami.Icon {
@@ -93,12 +105,22 @@ Item {
                 id: translateButton
                 text: "Traduzir"
                 flat: true
+                leftPadding: Kirigami.Units.largeSpacing
+                rightPadding: Kirigami.Units.largeSpacing
+                topPadding: Kirigami.Units.smallSpacing
+                bottomPadding: Kirigami.Units.smallSpacing
+                implicitWidth: translateContent.implicitWidth + leftPadding + rightPadding
+                implicitHeight: Math.max(
+                    Kirigami.Units.gridUnit * 2,
+                    translateContent.implicitHeight + topPadding + bottomPadding
+                )
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Traduzir para português"
 
                 contentItem: RowLayout {
+                    id: translateContent
                     spacing: Kirigami.Units.smallSpacing
                     opacity: translateButton.enabled ? 1 : 0.45
 
@@ -121,12 +143,22 @@ Item {
                 id: copyButton
                 text: "Copiar"
                 flat: true
+                leftPadding: Kirigami.Units.largeSpacing
+                rightPadding: Kirigami.Units.largeSpacing
+                topPadding: Kirigami.Units.smallSpacing
+                bottomPadding: Kirigami.Units.smallSpacing
+                implicitWidth: copyContent.implicitWidth + leftPadding + rightPadding
+                implicitHeight: Math.max(
+                    Kirigami.Units.gridUnit * 2,
+                    copyContent.implicitHeight + topPadding + bottomPadding
+                )
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.copyLyrics()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: "Copiar letra"
 
                 contentItem: RowLayout {
+                    id: copyContent
                     spacing: Kirigami.Units.smallSpacing
                     opacity: copyButton.enabled ? 1 : 0.45
 
@@ -146,7 +178,7 @@ Item {
             }
 
             Row {
-                spacing: 0
+                spacing: Math.max(2, Kirigami.Units.smallSpacing / 2)
 
                 Controls.ToolButton {
                     text: "−250 ms"
