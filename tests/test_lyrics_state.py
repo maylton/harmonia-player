@@ -39,6 +39,12 @@ def test_active_lyric_index_uses_position_and_offset() -> None:
     assert active_lyric_index(lines, 4200, -300) == 1
 
 
+def test_active_lyric_index_can_preserve_negative_adjusted_position() -> None:
+    lines = [LyricLine(0, "zero"), LyricLine(1000, "one")]
+    assert active_lyric_index(lines, 0, -250) == 0
+    assert active_lyric_index(lines, 0, -250, floor_at_zero=False) == -1
+
+
 def test_lyrics_copy_text_prefers_timestamp_aligned_translations() -> None:
     document = LyricsDocument(
         "One\nTwo",
