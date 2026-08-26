@@ -38,6 +38,7 @@ jobs:
       - name: Smoke do frontend GTK
         env:
           GSETTINGS_BACKEND: memory
+          PYTHONPATH: src
         run: |
           set +e
           output=$(dbus-run-session -- xvfb-run -a timeout 8 \
