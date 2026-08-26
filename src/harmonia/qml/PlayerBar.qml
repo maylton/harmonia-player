@@ -82,11 +82,22 @@ Rectangle {
             }
 
             Controls.ToolButton {
-                icon.name: backend.currentLiked ? "favorite" : "non-starred"
+                id: footerLikeButton
                 enabled: backend.currentId.length > 0
                 onClicked: backend.toggleLike(backend.currentId)
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: backend.currentLiked ? "Remover das curtidas" : "Curtir"
+
+                contentItem: Kirigami.Icon {
+                    source: "love-symbolic"
+                    isMask: true
+                    color: backend.currentLiked
+                           ? Kirigami.Theme.highlightColor
+                           : Kirigami.Theme.textColor
+                    opacity: footerLikeButton.enabled
+                             ? (backend.currentLiked ? 1.0 : 0.78)
+                             : 0.38
+                }
             }
         }
 
@@ -175,6 +186,7 @@ Rectangle {
                     to: Math.max(1, backend.duration)
                     value: backend.position
                     enabled: backend.duration > 0
+                    palette.highlight: Kirigami.Theme.highlightColor
                     onPressedChanged: if (!pressed) backend.seek(Math.round(value))
                 }
 
@@ -223,6 +235,7 @@ Rectangle {
                 from: 0
                 to: 100
                 value: backend.volume
+                palette.highlight: Kirigami.Theme.highlightColor
                 onMoved: backend.setVolume(Math.round(value))
             }
 
