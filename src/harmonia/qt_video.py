@@ -82,7 +82,9 @@ class QtVideoController(QObject):
         self._surface = None
         self._sink = sink
         self._sink_prepared = False
-        self._sink_error = "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
+        self._sink_error = (
+            "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
+        )
 
         self._video_player = Gst.ElementFactory.make("playbin", "harmonia-video-layer")
         self._fake_audio_sink = Gst.ElementFactory.make("fakesink", "harmonia-video-muted-audio")
@@ -220,7 +222,9 @@ class QtVideoController(QObject):
         if self._mode == "video" and not force:
             return
         if not self.available:
-            self.backend._set_status("O vídeo não está disponível para esta faixa neste dispositivo.")
+            self.backend._set_status(
+                "O vídeo não está disponível para esta faixa neste dispositivo."
+            )
             self.availabilityChanged.emit()
             return
         if not self._sink_prepared:
