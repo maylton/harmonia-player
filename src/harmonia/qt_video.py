@@ -35,8 +35,8 @@ def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> 
     """Set a G_TYPE_POINTER property that PyGObject cannot marshal itself.
 
     qml6glsink's ``widget`` property is a raw QQuickItem* (gpointer), not a
-    GObject.  PyGObject intentionally cannot convert a PySide QObject wrapper
-    or an integer address into that foreign pointer.  Use the native GObject
+    GObject. PyGObject intentionally cannot convert a PySide QObject wrapper
+    or an integer address into that foreign pointer. Use the native GObject
     setter only for this boundary while retaining ownership in the Python/Qt
     wrappers on both sides.
     """
@@ -49,7 +49,7 @@ def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> 
     gobject_library = ctypes.CDLL(library_name)
     g_object_set = gobject_library.g_object_set
     g_object_set.restype = None
-    # g_object_set() is variadic.  Declare only its fixed arguments and pass
+    # g_object_set() is variadic. Declare only its fixed arguments and pass
     # explicitly typed pointer arguments for the varargs below.
     g_object_set.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
     g_object_set(
@@ -161,8 +161,10 @@ class QtVideoController(QObject):
             if not pointer:
                 raise RuntimeError("A superfície QQuickItem não possui ponteiro nativo")
             _set_foreign_pointer_property(sink, "widget", pointer)
-            # qml6glsink should establish Qt's GstGLDisplay before the rest of
-            # the GL pipeline reaches READY/PAUSED.
+            # The audio-only pipeline has no GL elements, so it is safe to
+            # establish Qt's GstGLDisplay here, immediately before switching
+            # to the video stream. Avoid touching the Qt scene graph while the
+            # expanded player is merely being constructed in Music mode.
             result = sink.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("qml6glsink recusou o estado READY")
@@ -183,22 +185,22 @@ class QtVideoController(QObject):
 
     @Slot(QObject)
     def registerSurface(self, surface: QObject) -> None:
-        """Remember the QQuickItem and prepare qml6glsink when possible."""
+        """Remember the QQuickItem without touching GStreamer yet.
+
+        qml6glsink is prepared lazily on the first Video request. This keeps
+        normal Music-mode rendering independent from the optional video path.
+        """
         if self._surface is surface:
-            self._ensure_sink()
             return
         self._discard_sink()
         self._surface = surface
         self._sink_error = ""
-        self._ensure_sink()
         self.availabilityChanged.emit()
 
     @Slot()
     def refreshAvailability(self) -> None:
-        # The expanded player can be created before the QML video item becomes
-        # usable. Retry sink setup whenever that surface/dialog becomes visible.
-        if self._surface is not None and self._sink is None:
-            self._ensure_sink()
+        # Availability describes whether the current track can be looked up.
+        # Do not initialize qml6glsink just because the dialog became visible.
         self.availabilityChanged.emit()
 
     @Slot(str)
