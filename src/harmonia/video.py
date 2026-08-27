@@ -14,7 +14,14 @@ from difflib import SequenceMatcher
 from typing import Any
 
 from .i18n import _
-from .innertube import API_URL, ORIGIN, PLAYER_CLIENTS, InnerTubeClient, InnerTubeError, sapisid_hash
+from .innertube import (
+    API_URL,
+    ORIGIN,
+    PLAYER_CLIENTS,
+    InnerTubeClient,
+    InnerTubeError,
+    sapisid_hash,
+)
 from .models import LibraryItem
 
 
@@ -132,7 +139,9 @@ def _stream_expiration(url: str) -> int | None:
         return None
 
 
-def _player_payload(client: InnerTubeClient, video_id: str, profile: dict[str, Any]) -> dict[str, Any] | None:
+def _player_payload(
+    client: InnerTubeClient, video_id: str, profile: dict[str, Any]
+) -> dict[str, Any] | None:
     version = client.client_version if profile.get("live_version") else profile["version"]
     yt_client = {
         "clientName": profile["name"],
@@ -236,7 +245,9 @@ def resolve_video_stream(
             )
             continue
 
-        within_quality = [fmt for fmt in progressive if int(fmt.get("height", 0) or 0) <= max_height]
+        within_quality = [
+            fmt for fmt in progressive if int(fmt.get("height", 0) or 0) <= max_height
+        ]
         if within_quality:
             selected = max(
                 within_quality,
