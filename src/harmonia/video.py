@@ -256,9 +256,7 @@ def resolve_video_stream(
             and fmt.get("url")
             and int(fmt.get("height", 0) or 0) > 0
         ]
-        candidates: list[tuple[dict[str, Any], bool]] = [
-            (fmt, True) for fmt in progressive
-        ]
+        candidates: list[tuple[dict[str, Any], bool]] = [(fmt, True) for fmt in progressive]
         if allow_video_only:
             candidates.extend((fmt, False) for fmt in adaptive)
 
