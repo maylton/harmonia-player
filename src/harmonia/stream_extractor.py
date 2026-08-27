@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 import threading
 import time
 import urllib.error
@@ -10,12 +11,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .cipher import YouTubeCipherService
+from .client_health import CLIENT_HEALTH
 from .player_config import PlayerConfigResolver
 from .player_director import PlayerClientDirector
-from .stream_transport import (
-    register_stream_transport,
-    stream_transport_blocked,
-)
+from .stream_transport import register_stream_transport, stream_transport_blocked
 
 LOGGER = logging.getLogger(__name__)
 WEB_USER_AGENT = (
@@ -45,16 +44,12 @@ class PlayerClientProfile:
     context: tuple[tuple[str, Any], ...] = ()
 
     def context_values(self) -> dict[str, Any]:
-        values = dict(self.context)
-        if self.is_embedded:
-            values.setdefault("thirdPartyEmbedUrl", "https://www.reddit.com/")
-        return values
+        return dict(self.context)
 
 
-# Current playback identities mirrored from InnerTubeX's 2026 client inventory.
-# SABR-only identities are deliberately omitted: Metrolist's own playback entry
-# point currently requests allowSabr=false, and Harmonia/GStreamer consumes the
-# same direct/bounded-range transports used by that path.
+# Direct/bounded-range identities mirrored from InnerTubeX's current catalog.
+# SABR is intentionally not selected because Metrolist's own Android playback
+# entry point currently disables SABR/HLS and consumes the same direct streams.
 PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
     PlayerClientProfile(
         id="101",
@@ -90,6 +85,9 @@ PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
             ("platform", "MOBILE"),
         ),
     ),
+    # InnerTubeX retains 1.43.32 specifically because it avoids AV1 and has
+    # stable non-ABR media behavior. Keep it ahead of newer VR identities for
+    # desktop video playback.
     PlayerClientProfile(
         id="28",
         name="ANDROID_VR_1_43_32",
@@ -282,6 +280,11 @@ class StreamExtractionError(RuntimeError):
         self.diagnostics = diagnostics
 
 
+def generate_client_playback_nonce() -> str:
+    """Return the 16-character CPN attached to media and tracking requests."""
+    return secrets.token_urlsafe(12)[:16]
+
+
 def _stream_expiration(url: str) -> int | None:
     values = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("expire")
     try:
@@ -292,10 +295,20 @@ def _stream_expiration(url: str) -> int | None:
 
 def _set_query_parameter(url: str, key: str, value: str) -> str:
     parsed = urllib.parse.urlsplit(url)
-    query = [(name, current) for name, current in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True) if name != key]
+    query = [
+        (name, current)
+        for name, current in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        if name != key
+    ]
     query.append((key, value))
     return urllib.parse.urlunsplit(
-        (parsed.scheme, parsed.netloc, parsed.path, urllib.parse.urlencode(query), parsed.fragment)
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urllib.parse.urlencode(query),
+            parsed.fragment,
+        )
     )
 
 
@@ -319,9 +332,7 @@ def _cipher_url(fmt: dict[str, Any]) -> str | None:
 
 
 def _video_codec_rank(mime_type: str) -> int:
-    # H.264 is deliberately preferred on desktop: it has the broadest software
-    # and hardware decoder coverage across the GNOME/KDE Flatpak runtimes and
-    # avoids the GL negotiation failures observed with some VP9/AV1 paths.
+    # H.264 has the broadest decoder/GL coverage in both Flatpak runtimes.
     mime = mime_type.lower()
     if "avc1" in mime or "h264" in mime:
         return 4
@@ -342,28 +353,26 @@ def _audio_codec_rank(mime_type: str) -> int:
 
 
 class InnerTubeStreamExtractor:
-    """Shared resilient stream resolver for Harmonia audio and video.
-
-    The extractor owns the same responsibilities InnerTubeX centralizes for
-    Metrolist playback: client fallback/health, live player configuration,
-    signature+n transforms, BotGuard PoTokens, format scoring, URL probing,
-    bounded-range transport metadata, caching and diagnostics.
-    """
+    """Shared resilient stream resolver for Harmonia audio and video."""
 
     def __init__(self, client):
         self.client = client
         self.config_resolver = PlayerConfigResolver(client)
-        self.cipher_service = YouTubeCipherService(client, config_resolver=self.config_resolver)
+        self.cipher_service = YouTubeCipherService(
+            client,
+            config_resolver=self.config_resolver,
+        )
         self.director = PlayerClientDirector(client, self.config_resolver)
 
     @staticmethod
-    def _tracking_url(payload: dict[str, Any]) -> str | None:
-        return (
+    def _tracking_url(payload: dict[str, Any], cpn: str) -> str | None:
+        base = (
             ((payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}).get(
                 "baseUrl"
             )
             or None
         )
+        return _set_query_parameter(str(base), "cpn", cpn) if base else None
 
     def _authenticated(self) -> bool:
         try:
@@ -376,6 +385,7 @@ class InnerTubeStreamExtractor:
         payload: dict[str, Any],
         profile: PlayerClientProfile,
         video_id: str,
+        cpn: str,
     ) -> list[StreamCandidate]:
         streaming = payload.get("streamingData") or {}
         progressive_ids = {
@@ -383,11 +393,16 @@ class InnerTubeStreamExtractor:
             for fmt in (streaming.get("formats") or [])
             if fmt.get("itag") is not None
         }
-        formats = [*(streaming.get("formats") or []), *(streaming.get("adaptiveFormats") or [])]
+        formats = [
+            *(streaming.get("formats") or []),
+            *(streaming.get("adaptiveFormats") or []),
+        ]
         result: list[StreamCandidate] = []
-        tracking = self._tracking_url(payload)
+        tracking = self._tracking_url(payload, cpn)
         authenticated = profile.login_supported and self._authenticated()
         streaming_pot = str(payload.get("_harmoniaStreamingPoToken") or "")
+        origin = str(payload.get("_harmoniaRequestOrigin") or "https://www.youtube.com")
+        referer = str(payload.get("_harmoniaRequestReferer") or f"{origin}/")
 
         for fmt in formats:
             mime_type = str(fmt.get("mimeType") or "")
@@ -400,7 +415,7 @@ class InnerTubeStreamExtractor:
             )
             if resolved is None:
                 continue
-            url = resolved.url
+            url = _set_query_parameter(resolved.url, "cpn", cpn)
             if streaming_pot:
                 url = _set_query_parameter(url, "pot", streaming_pot)
             duration = fmt.get("approxDurationMs")
@@ -408,8 +423,8 @@ class InnerTubeStreamExtractor:
             itag = int(fmt["itag"]) if fmt.get("itag") is not None else None
             headers = [
                 ("User-Agent", profile.user_agent),
-                ("Origin", "https://www.youtube.com"),
-                ("Referer", "https://www.youtube.com/"),
+                ("Origin", origin),
+                ("Referer", referer),
             ]
             if authenticated and getattr(self.client, "cookie", ""):
                 headers.append(("Cookie", self.client.cookie))
@@ -447,9 +462,12 @@ class InnerTubeStreamExtractor:
             with self.client._open(request, timeout=15) as response:
                 status = getattr(response, "status", None) or response.getcode()
                 content_type = str(response.headers.get("Content-Type", "")).lower()
+                content_range = str(response.headers.get("Content-Range", ""))
                 if status not in (200, 206):
                     return False
                 if content_type.startswith(("text/", "application/json")):
+                    return False
+                if status == 206 and content_range and not content_range.startswith("bytes "):
                     return False
                 response.read(2)
                 return True
@@ -502,25 +520,17 @@ class InnerTubeStreamExtractor:
             _STREAM_CACHE[cache_key] = candidate
         return candidate
 
-    def extract_audio(
+    def _audio_pass(
         self,
         video_id: str,
-        *,
-        max_bitrate: int = 10_000_000,
-        force: bool = False,
-    ) -> StreamCandidate:
-        if not video_id:
-            raise StreamExtractionError("A faixa não contém um identificador reproduzível.")
-        cache_key = f"audio:{getattr(self.client, 'gl', 'US')}:{max_bitrate}:{video_id}"
-        cached = self._cached(cache_key, force=force)
-        if cached:
-            return cached
-
-        diagnostics = ExtractionDiagnostics(video_id)
+        max_bitrate: int,
+        diagnostics: ExtractionDiagnostics,
+        cpn: str,
+    ) -> StreamCandidate | None:
         for profile, payload in self._payloads(video_id, diagnostics, want_video=False):
             candidates = [
                 candidate
-                for candidate in self._format_candidates(payload, profile, video_id)
+                for candidate in self._format_candidates(payload, profile, video_id, cpn)
                 if candidate.is_audio
             ]
             if not candidates:
@@ -536,9 +546,12 @@ class InnerTubeStreamExtractor:
                 ),
                 reverse=True,
             )
+            failed = False
             for candidate in ordered:
                 if self._probe(candidate):
-                    return self._store(cache_key, candidate)
+                    CLIENT_HEALTH.success(profile.name)
+                    return candidate
+                failed = True
                 reason = (
                     "falhou anteriormente no player"
                     if stream_transport_blocked(candidate.url)
@@ -547,10 +560,115 @@ class InnerTubeStreamExtractor:
                 diagnostics.rejected.append(
                     f"{profile.name}: itag {candidate.itag or '?'} {reason}"
                 )
+            if failed:
+                CLIENT_HEALTH.failure(profile.name, transient=True)
+        return None
+
+    def extract_audio(
+        self,
+        video_id: str,
+        *,
+        max_bitrate: int = 10_000_000,
+        force: bool = False,
+    ) -> StreamCandidate:
+        if not video_id:
+            raise StreamExtractionError("A faixa não contém um identificador reproduzível.")
+        cache_key = f"audio:{getattr(self.client, 'gl', 'US')}:{max_bitrate}:{video_id}"
+        cached = self._cached(cache_key, force=force)
+        if cached:
+            return cached
+
+        diagnostics = ExtractionDiagnostics(video_id)
+        cpn = generate_client_playback_nonce()
+        candidate = self._audio_pass(video_id, max_bitrate, diagnostics, cpn)
+        if candidate is not None:
+            return self._store(cache_key, candidate)
+
+        # A stale remote cipher mapping can produce a syntactically valid URL
+        # that the CDN rejects. Refresh once and repeat the complete client pass.
+        try:
+            refreshed = self.cipher_service.refresh_after_stream_rejection()
+        except Exception as exc:
+            LOGGER.debug("Cipher refresh after audio rejection failed: %s", exc)
+            refreshed = False
+        if refreshed:
+            self.director.invalidate_player_config()
+            retry = self._audio_pass(
+                video_id,
+                max_bitrate,
+                diagnostics,
+                generate_client_playback_nonce(),
+            )
+            if retry is not None:
+                return self._store(cache_key, retry)
+
         raise StreamExtractionError(
             f"Não foi possível obter um stream de áudio reproduzível. {diagnostics.details()}",
             diagnostics,
         )
+
+    @staticmethod
+    def _video_pool(
+        candidates: list[StreamCandidate],
+        max_height: int,
+    ) -> list[StreamCandidate]:
+        within = [candidate for candidate in candidates if 0 < candidate.height <= max_height]
+        if within:
+            return within
+        above = [candidate for candidate in candidates if candidate.height > max_height]
+        if not above:
+            return []
+        nearest = min(candidate.height for candidate in above)
+        return [candidate for candidate in above if candidate.height == nearest]
+
+    def _video_pass(
+        self,
+        video_id: str,
+        max_height: int,
+        progressive_only: bool,
+        diagnostics: ExtractionDiagnostics,
+        cpn: str,
+    ) -> StreamCandidate | None:
+        for profile, payload in self._payloads(video_id, diagnostics, want_video=True):
+            candidates = [
+                candidate
+                for candidate in self._format_candidates(payload, profile, video_id, cpn)
+                if candidate.is_video and (candidate.muxed or not progressive_only)
+            ]
+            if not candidates:
+                diagnostics.rejected.append(f"{profile.name}: sem URL de vídeo resolvida")
+                continue
+            pool = self._video_pool(candidates, max_height)
+            if not pool:
+                diagnostics.rejected.append(f"{profile.name}: formatos de vídeo sem resolução")
+                continue
+            ordered = sorted(
+                pool,
+                key=lambda candidate: (
+                    min(candidate.height, max_height),
+                    _video_codec_rank(candidate.mime_type),
+                    candidate.fps,
+                    candidate.bitrate,
+                ),
+                reverse=True,
+            )
+            failed = False
+            for candidate in ordered:
+                if self._probe(candidate):
+                    CLIENT_HEALTH.success(profile.name)
+                    return candidate
+                failed = True
+                reason = (
+                    "falhou anteriormente no player"
+                    if stream_transport_blocked(candidate.url)
+                    else "rejeitado pelo CDN"
+                )
+                diagnostics.rejected.append(
+                    f"{profile.name}: itag {candidate.itag or '?'} {reason}"
+                )
+            if failed:
+                CLIENT_HEALTH.failure(profile.name, transient=True)
+        return None
 
     def extract_video(
         self,
@@ -570,41 +688,34 @@ class InnerTubeStreamExtractor:
             return cached
 
         diagnostics = ExtractionDiagnostics(video_id)
-        for profile, payload in self._payloads(video_id, diagnostics, want_video=True):
-            candidates = [
-                candidate
-                for candidate in self._format_candidates(payload, profile, video_id)
-                if candidate.is_video and (candidate.muxed or not progressive_only)
-            ]
-            if not candidates:
-                diagnostics.rejected.append(f"{profile.name}: sem URL de vídeo resolvida")
-                continue
-            within = [candidate for candidate in candidates if 0 < candidate.height <= max_height]
-            pool = within or [candidate for candidate in candidates if candidate.height > 0]
-            if not pool:
-                diagnostics.rejected.append(f"{profile.name}: formatos de vídeo sem resolução")
-                continue
-            ordered = sorted(
-                pool,
-                key=lambda candidate: (
-                    min(candidate.height, max_height),
-                    _video_codec_rank(candidate.mime_type),
-                    candidate.fps,
-                    candidate.bitrate,
-                ),
-                reverse=True,
+        cpn = generate_client_playback_nonce()
+        candidate = self._video_pass(
+            video_id,
+            max_height,
+            progressive_only,
+            diagnostics,
+            cpn,
+        )
+        if candidate is not None:
+            return self._store(cache_key, candidate)
+
+        try:
+            refreshed = self.cipher_service.refresh_after_stream_rejection()
+        except Exception as exc:
+            LOGGER.debug("Cipher refresh after video rejection failed: %s", exc)
+            refreshed = False
+        if refreshed:
+            self.director.invalidate_player_config()
+            retry = self._video_pass(
+                video_id,
+                max_height,
+                progressive_only,
+                diagnostics,
+                generate_client_playback_nonce(),
             )
-            for candidate in ordered:
-                if self._probe(candidate):
-                    return self._store(cache_key, candidate)
-                reason = (
-                    "falhou anteriormente no player"
-                    if stream_transport_blocked(candidate.url)
-                    else "rejeitado pelo CDN"
-                )
-                diagnostics.rejected.append(
-                    f"{profile.name}: itag {candidate.itag or '?'} {reason}"
-                )
+            if retry is not None:
+                return self._store(cache_key, retry)
+
         raise StreamExtractionError(
             f"Não foi possível obter um stream de vídeo reproduzível. {diagnostics.details()}",
             diagnostics,
