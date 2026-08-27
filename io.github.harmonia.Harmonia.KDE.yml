@@ -22,7 +22,7 @@ finish-args:
   - --socket=pulseaudio
   - --device=dri
   - --env=QTWEBENGINEPROCESS_PATH=/app/bin/QtWebEngineProcess
-  - --env=GST_PLUGIN_SYSTEM_PATH=/app/lib/gstreamer-1.0/:/usr/lib/gstreamer-1.0/
+  - --env=GST_PLUGIN_PATH=/app/lib/gstreamer-1.0
   - --talk-name=org.freedesktop.secrets
   - --own-name=org.mpris.MediaPlayer2.Harmonia
   - --filesystem=xdg-run/discord-ipc-0
@@ -31,8 +31,9 @@ finish-args:
 modules:
   # org.kde.Platform does not ship the Qt 6 GStreamer video sink. Build only
   # the qml6 plugin against the same GStreamer release used by the KDE 6.11
-  # runtime, following KDE Kamoso's Flatpak recipe. The rest of GStreamer keeps
-  # coming from /usr so we do not duplicate the multimedia stack in /app.
+  # runtime, following KDE Kamoso's Flatpak recipe. GST_PLUGIN_PATH adds this
+  # app-local plugin without replacing the runtime's normal GStreamer search
+  # path, which still provides playbin and the rest of the multimedia stack.
   - name: qml6glsink
     buildsystem: meson
     builddir: true
