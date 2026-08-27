@@ -87,7 +87,8 @@ class _StreamRelay:
                         )
                         self.send_response(206 if partial else 200)
                         self.send_header(
-                            "Content-Type", first.headers.get("Content-Type", "application/octet-stream")
+                            "Content-Type",
+                            first.headers.get("Content-Type", "application/octet-stream"),
                         )
                         self.send_header("Content-Length", str(end - start + 1))
                         self.send_header("Accept-Ranges", "bytes")
