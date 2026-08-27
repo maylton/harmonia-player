@@ -11,8 +11,11 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
+from . import qt_backend as qt_backend_module
 from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
+from .qt_integrated_playback import QtIntegratedPlaybackController
+from .qt_integrations import QtIntegrationsController
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -91,13 +94,19 @@ def main() -> int:
     glib_timer.start()
 
     engine = QQmlApplicationEngine()
+
+    # Keep HarmoniaQtBackend as the stable facade while selecting the Qt-only
+    # playback specialization before the facade constructs its controllers.
+    qt_backend_module.QtPlaybackController = QtIntegratedPlaybackController
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
+    integrations = QtIntegrationsController(backend, backend._executor, engine)
     auth.cookieReady.connect(backend.connectCookie)
 
     context = engine.rootContext()
     context.setContextProperty("backend", backend)
     context.setContextProperty("auth", auth)
+    context.setContextProperty("integrations", integrations)
     # Appearance belongs to the existing preference controller rather than the
     # broad QML facade. Both GTK and Qt therefore read/write the same settings.
     context.setContextProperty("preferences", backend.settings)
@@ -105,8 +114,12 @@ def main() -> int:
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
+        integrations.shutdown()
         backend.shutdown()
         raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
 
+    # Integrations still use the backend executor, so close their timers and
+    # transports before HarmoniaQtBackend shuts that executor down.
+    app.aboutToQuit.connect(integrations.shutdown)
     app.aboutToQuit.connect(backend.shutdown)
     return app.exec()
