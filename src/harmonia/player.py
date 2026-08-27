@@ -15,6 +15,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
 from .i18n import _
+from .stream_transport import mark_stream_transport_failure, stream_transport_headers
 
 
 class _StreamRelay:
@@ -23,19 +24,19 @@ class _StreamRelay:
     Googlevideo currently rejects the open-ended Range requests emitted by
     GStreamer's souphttpsrc. urllib works correctly with bounded ranges, so the
     relay translates those requests in 1 MiB chunks while remaining localhost-only.
-    The relay is media-agnostic and is shared by audio and progressive video.
+    The relay also preserves the HTTP headers selected by the stream extractor.
     """
 
     CHUNK_SIZE = 1024 * 1024
 
     def __init__(self):
-        self.streams: dict[int, str] = {}
+        self.streams: dict[int, tuple[str, tuple[tuple[str, str], ...]]] = {}
         relay = self
 
         class Handler(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"
 
-            def _remote(self) -> str | None:
+            def _remote(self) -> tuple[str, tuple[tuple[str, str], ...]] | None:
                 try:
                     generation = int(self.path.rstrip("/").rsplit("/", 1)[-1])
                 except ValueError:
@@ -52,24 +53,30 @@ class _StreamRelay:
                 return int(match.group(1)), int(match.group(2)) if match.group(2) else None, True
 
             @staticmethod
-            def _upstream(remote: str, start: int, end: int):
-                request = urllib.request.Request(
-                    remote, headers={"Range": f"bytes={start}-{end}"}, method="GET"
-                )
+            def _upstream(
+                remote: str,
+                headers: tuple[tuple[str, str], ...],
+                start: int,
+                end: int,
+            ):
+                request_headers = dict(headers)
+                request_headers["Range"] = f"bytes={start}-{end}"
+                request = urllib.request.Request(remote, headers=request_headers, method="GET")
                 return urllib.request.urlopen(request, timeout=30)
 
             def _serve(self, send_body: bool):
-                remote = self._remote()
-                if not remote:
+                source = self._remote()
+                if not source:
                     self.send_error(404)
                     return
+                remote, upstream_headers = source
                 headers_sent = False
                 try:
                     start, requested_end, partial = self._range(self.headers.get("Range"))
                     first_end = start + relay.CHUNK_SIZE - 1
                     if requested_end is not None:
                         first_end = min(first_end, requested_end)
-                    with self._upstream(remote, start, first_end) as first:
+                    with self._upstream(remote, upstream_headers, start, first_end) as first:
                         content_range = first.headers.get("Content-Range", "")
                         match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", content_range)
                         if not match:
@@ -105,7 +112,12 @@ class _StreamRelay:
                             cursor += len(chunk)
                         while cursor <= end:
                             chunk_end = min(cursor + relay.CHUNK_SIZE - 1, end)
-                            with self._upstream(remote, cursor, chunk_end) as response:
+                            with self._upstream(
+                                remote,
+                                upstream_headers,
+                                cursor,
+                                chunk_end,
+                            ) as response:
                                 while chunk := response.read(64 * 1024):
                                     self.wfile.write(chunk)
                                     cursor += len(chunk)
@@ -135,7 +147,7 @@ class _StreamRelay:
 
     def uri_for(self, remote_url: str) -> str:
         self.generation += 1
-        self.streams[self.generation] = remote_url
+        self.streams[self.generation] = (remote_url, stream_transport_headers(remote_url))
         for generation in list(self.streams):
             if generation < self.generation - 3:
                 self.streams.pop(generation, None)
@@ -165,6 +177,7 @@ class NativePlayer:
         self._audio_elements: dict[str, Gst.Element] = {}
         self._video_sink: Gst.Element | None = None
         self._replace_generation = 0
+        self._active_remote_uri: str | None = None
         self._install_audio_filter()
         self.on_state = on_state
         self.on_error = on_error
@@ -243,10 +256,19 @@ class NativePlayer:
     def video_sink(self) -> Gst.Element | None:
         return self._video_sink
 
+    @staticmethod
+    def _remote_googlevideo_uri(uri: str) -> str | None:
+        parsed = urllib.parse.urlsplit(uri)
+        host = parsed.hostname or ""
+        if parsed.scheme in {"http", "https"} and "googlevideo.com" in host:
+            return uri
+        return None
+
     def play(self, uri: str) -> None:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._active_remote_uri = self._remote_googlevideo_uri(uri)
         self._playbin.set_property("uri", self._source_uri(uri))
         self._playbin.set_state(Gst.State.PLAYING)
 
@@ -263,6 +285,7 @@ class NativePlayer:
         generation = self._replace_generation
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = target
+        self._active_remote_uri = self._remote_googlevideo_uri(uri)
         self._playbin.set_property("uri", self._source_uri(uri))
         # Preroll paused first; seeking before preroll is unreliable for remote
         # MP4 streams and can briefly play from 0 before the requested position.
@@ -289,8 +312,7 @@ class NativePlayer:
         return GLib.SOURCE_REMOVE
 
     def _source_uri(self, uri: str) -> str:
-        scheme = urllib.parse.urlsplit(uri).scheme
-        if scheme == "file" or (scheme == "http" and "googlevideo.com" not in uri):
+        if self._remote_googlevideo_uri(uri) is None:
             return uri
         return self._relay.uri_for(uri)
 
@@ -304,6 +326,7 @@ class NativePlayer:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._active_remote_uri = None
 
     def close(self) -> None:
         self.stop()
@@ -349,6 +372,8 @@ class NativePlayer:
     def _on_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, _debug = message.parse_error()
+            if self._active_remote_uri:
+                mark_stream_transport_failure(self._active_remote_uri)
             if self.on_error:
                 GLib.idle_add(self.on_error, str(error))
         elif message.type == Gst.MessageType.EOS:
