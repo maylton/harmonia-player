@@ -135,8 +135,10 @@ Controls.Popup {
             }
         }
 
-        Kirigami.Separator {
+        Rectangle {
             Layout.fillWidth: true
+            implicitHeight: 1
+            color: Kirigami.Theme.separatorColor
         }
 
         Kirigami.InlineMessage {
