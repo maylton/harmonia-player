@@ -9,10 +9,9 @@ gi.require_version("Adw", "1")
 gi.require_version("WebKit", "6.0")
 from gi.repository import Adw, Gtk, WebKit
 
+from .auth_state import LOGIN_URL, has_session_cookie
 from .i18n import _
 from .innertube import parse_cookie
-
-LOGIN_URL = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
 
 
 class LoginWindow(Adw.Window):
@@ -68,7 +67,7 @@ class LoginWindow(Adw.Window):
         except Exception:
             return
         parsed = parse_cookie(raw)
-        if "SAPISID" not in parsed and "__Secure-3PAPISID" not in parsed:
+        if not has_session_cookie(parsed):
             return
         self.completing = True
         self.on_success(raw)
