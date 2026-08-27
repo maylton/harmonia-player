@@ -15,6 +15,17 @@ from PySide6.QtCore import Property, QObject, Signal, Slot  # noqa: E402
 LOGGER = logging.getLogger(__name__)
 
 
+def create_qml6_video_sink():
+    """Load qml6 before QML so it can register GstGLQt6VideoItem.
+
+    GStreamer's Qt6 example requires the qml6 plugin to be loaded before the
+    QML engine parses the module import.  The sink is kept in NULL until the
+    QML video item has been created and can be attached safely.
+    """
+    Gst.init(None)
+    return Gst.ElementFactory.make("qml6glsink", "harmonia-qt-video")
+
+
 def _capsule_pointer(capsule) -> int:
     """Return the native pointer stored in a CPython capsule."""
     get_name = ctypes.pythonapi.PyCapsule_GetName
@@ -73,7 +84,7 @@ class QtVideoController(QObject):
     availabilityChanged = Signal()
     _resolved = Signal(int, object, str)
 
-    def __init__(self, backend, parent: QObject | None = None) -> None:
+    def __init__(self, backend, sink=None, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.backend = backend
         self.playback = backend.playback
@@ -82,8 +93,9 @@ class QtVideoController(QObject):
         self._request = 0
         self._pending: dict[int, tuple[str, str, int, bool, str]] = {}
         self._surface = None
-        self._sink = None
-        self._sink_error = ""
+        self._sink = sink
+        self._sink_prepared = False
+        self._sink_error = "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
         self._original_player_error = self.playback.player.on_error
         self.playback.player.on_error = self._on_player_error
 
@@ -109,17 +121,12 @@ class QtVideoController(QObject):
 
     @Property(bool, notify=availabilityChanged)
     def available(self) -> bool:
-        """Whether the current track is eligible for a video lookup.
-
-        This deliberately does not depend on qml6glsink already being attached.
-        A music video can only be confirmed after the user requests Video, and
-        the QML surface may be initialized later than the transport state.
-        """
+        """Whether the current track is eligible for a video lookup."""
         return self._track_eligible()
 
     @Property(bool, notify=availabilityChanged)
     def outputReady(self) -> bool:
-        return self._sink is not None
+        return self._sink_prepared
 
     @Property(str, notify=availabilityChanged)
     def outputError(self) -> str:
@@ -140,67 +147,63 @@ class QtVideoController(QObject):
             self.playback.player.set_video_sink(None)
         with suppress(Exception):
             self._sink.set_state(Gst.State.NULL)
-        self._sink = None
+        self._sink_prepared = False
 
-    def _ensure_sink(self) -> bool:
-        if self._sink is not None:
+    def _prepare_sink(self) -> bool:
+        """Attach the startup-created qml6 sink while the player is idle.
+
+        The qml6 plugin is loaded before the QML engine and the Qt scene graph
+        is forced to OpenGL by qt_app.py. This method therefore only connects
+        the native GstGLQt6VideoItem pointer and moves the sink to READY once,
+        during QML construction rather than during active playback.
+        """
+        if self._sink_prepared:
             return True
-        if self._surface is None:
-            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
+        if self._sink is None:
+            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
             self.availabilityChanged.emit()
             return False
-
-        sink = Gst.ElementFactory.make("qml6glsink", "harmonia-qt-video")
-        if sink is None:
-            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
+        if self._surface is None:
+            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
             self.availabilityChanged.emit()
             return False
 
         try:
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
             if not pointer:
-                raise RuntimeError("A superfície QQuickItem não possui ponteiro nativo")
-            _set_foreign_pointer_property(sink, "widget", pointer)
-            # The audio-only pipeline has no GL elements, so it is safe to
-            # establish Qt's GstGLDisplay here, immediately before switching
-            # to the video stream. Avoid touching the Qt scene graph while the
-            # expanded player is merely being constructed in Music mode.
-            result = sink.set_state(Gst.State.READY)
+                raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
+            _set_foreign_pointer_property(self._sink, "widget", pointer)
+            result = self._sink.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("qml6glsink recusou o estado READY")
-            self.playback.player.set_video_sink(sink)
+            # Set playbin's video-sink while playbin is still idle. Switching
+            # Music <-> Video later only replaces the media URI and never
+            # mutates the active Qt/OpenGL sink graph.
+            self.playback.player.set_video_sink(self._sink)
         except Exception as exc:
-            LOGGER.exception("Could not attach qml6glsink to QQuickItem")
+            LOGGER.exception("Could not prepare qml6glsink")
             with suppress(Exception):
-                sink.set_state(Gst.State.NULL)
+                self._sink.set_state(Gst.State.NULL)
             self._sink_error = str(exc)
-            self._sink = None
+            self._sink_prepared = False
             self.availabilityChanged.emit()
             return False
 
-        self._sink = sink
+        self._sink_prepared = True
         self._sink_error = ""
         self.availabilityChanged.emit()
         return True
 
     @Slot(QObject)
     def registerSurface(self, surface: QObject) -> None:
-        """Remember the QQuickItem without touching GStreamer yet.
-
-        qml6glsink is prepared lazily on the first Video request. This keeps
-        normal Music-mode rendering independent from the optional video path.
-        """
-        if self._surface is surface:
-            return
-        self._discard_sink()
-        self._surface = surface
-        self._sink_error = ""
-        self.availabilityChanged.emit()
+        """Bind the GStreamer-provided GstGLQt6VideoItem during QML startup."""
+        if self._surface is not surface:
+            self._surface = surface
+            self._sink_error = ""
+        self._prepare_sink()
 
     @Slot()
     def refreshAvailability(self) -> None:
-        # Availability describes whether the current track can be looked up.
-        # Do not initialize qml6glsink just because the dialog became visible.
         self.availabilityChanged.emit()
 
     @Slot(str)
@@ -221,7 +224,7 @@ class QtVideoController(QObject):
                 )
                 self.availabilityChanged.emit()
                 return
-            if not self._ensure_sink():
+            if not self._sink_prepared:
                 detail = self._sink_error or "saída de vídeo indisponível"
                 self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
                 return
@@ -275,13 +278,6 @@ class QtVideoController(QObject):
                 self.backend._set_status(f"Não foi possível voltar para a música: {error}")
             return
 
-        if mode == "video" and not self._ensure_sink():
-            self._mode = previous_mode
-            self.modeChanged.emit()
-            detail = self._sink_error or "saída de vídeo indisponível"
-            self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
-            return
-
         self._mode = mode
         if getattr(stream, "duration_ms", None):
             self.playback._duration_ms = max(0, int(stream.duration_ms))
@@ -318,3 +314,4 @@ class QtVideoController(QObject):
         self._pending.clear()
         self.playback.player.on_error = self._original_player_error
         self._discard_sink()
+        self._sink = None
