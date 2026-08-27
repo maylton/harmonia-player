@@ -42,7 +42,8 @@ jobs:
         run: |
           .venv/bin/ruff check src tests tools
           .venv/bin/ruff format --check src tests tools
-          xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -q
+          PYTHONUNBUFFERED=1 timeout 120 \
+            xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -vv --durations=20
 
       - name: Construir variante GTK no runtime oficial
         run: |
