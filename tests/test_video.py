@@ -95,3 +95,53 @@ def test_progressive_video_prefers_highest_format_within_limit(monkeypatch):
     stream = resolve_video_stream(PlayerClient(), item, max_height=720, force=True)
     assert stream.height == 720
     assert stream.url.endswith("720.mp4")
+    assert stream.muxed is True
+
+
+def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
+    item = LibraryItem("video-adaptive", "Song", "Artist", kind="videos")
+
+    class PlayerClient:
+        gl = "BR"
+
+        def _bootstrap(self):
+            return None
+
+    payload = {
+        "playabilityStatus": {"status": "OK"},
+        "streamingData": {
+            "formats": [],
+            "adaptiveFormats": [
+                {
+                    "url": "https://example.test/480.mp4",
+                    "mimeType": 'video/mp4; codecs="avc1.4d401f"',
+                    "height": 480,
+                    "width": 854,
+                    "fps": 30,
+                    "bitrate": 900_000,
+                    "itag": 135,
+                },
+                {
+                    "url": "https://example.test/720.mp4",
+                    "mimeType": 'video/mp4; codecs="avc1.64001f"',
+                    "height": 720,
+                    "width": 1280,
+                    "fps": 30,
+                    "bitrate": 1_500_000,
+                    "itag": 136,
+                },
+            ],
+        },
+    }
+
+    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    stream = resolve_video_stream(
+        PlayerClient(),
+        item,
+        max_height=720,
+        force=True,
+        allow_video_only=True,
+    )
+    assert stream.height == 720
+    assert stream.itag == 136
+    assert stream.muxed is False
