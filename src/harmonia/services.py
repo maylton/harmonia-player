@@ -26,7 +26,7 @@ from .models import (
 )
 from .preferences import Preferences
 from .storage import Storage
-from .stream_extractor import InnerTubeStreamExtractor, StreamExtractionError
+from .stream_extractor import InnerTubeStreamExtractor
 from .video import VideoStreamInfo, resolve_video_stream
 
 SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
@@ -180,23 +180,19 @@ class YouTubeMusicService:
         return self.client().search_suggestions(query)
 
     def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
-        """Resolve audio through the shared extractor, retaining legacy fallback during migration."""
+        """Resolve audio through Harmonia's single shared extraction layer."""
         client = self.client()
+        # Preserve compatibility with intentionally tiny test doubles and
+        # external embedders. Real InnerTubeClient instances always take the
+        # shared extractor path below; there is no legacy production fallback.
         if not (hasattr(client, "_open") and hasattr(client, "_bootstrap")):
             return client.resolve_stream(video_id, force=force)
 
-        try:
-            candidate = InnerTubeStreamExtractor(client).extract_audio(
-                video_id,
-                max_bitrate=getattr(client, "max_bitrate", 10_000_000),
-                force=force,
-            )
-        except (StreamExtractionError, AttributeError, TypeError):
-            # Until cipher/PoToken support is fully ported, the mature legacy
-            # resolver remains a safety net for profiles whose direct URL cannot
-            # yet be reconstructed by the new extraction layer.
-            return client.resolve_stream(video_id, force=force)
-
+        candidate = InnerTubeStreamExtractor(client).extract_audio(
+            video_id,
+            max_bitrate=getattr(client, "max_bitrate", 10_000_000),
+            force=force,
+        )
         return StreamInfo(
             url=candidate.url,
             duration_ms=candidate.duration_ms,
