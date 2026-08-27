@@ -24,12 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class QtIntegrationsController(QObject):
-    """Qt/Kirigami bridge for the shared social and optional services.
-
-    The implementations remain toolkit-independent in social.py, together.py,
-    recognition.py and cast.py.  This object only adapts them to Qt signals,
-    timers and the QML settings page.
-    """
+    """Qt bridge for the shared social, LAN and recognition services."""
 
     changed = Signal()
     togetherChanged = Signal()
@@ -55,15 +50,16 @@ class QtIntegrationsController(QObject):
         self._social_item = None
         self._lastfm_scrobbled = False
         self.discord_presence: DiscordPresence | None = None
+        self._discord_config: tuple[bool, str] | None = None
 
         self.recognition_tokens = RecognitionTokenStore(self.storage)
 
         self.together_host: TogetherHost | None = None
         self.together_client: TogetherClient | None = None
-        self._pending_together_client: TogetherClient | None = None
         self._together_share_url = ""
         self._together_revision = -1
         self._together_fetching = False
+        self._together_generation = 0
         self._pending_together_playing: bool | None = None
 
         self.cast_renderer: UpnpRenderer | None = None
@@ -82,9 +78,6 @@ class QtIntegrationsController(QObject):
         self.playback.nowPlayingChanged.connect(self._now_playing_changed)
         self.backend.preferencesChanged.connect(self.reload)
         self.backend.sessionChanged.connect(self._session_changed)
-
-        # QtPlaybackController delegates remote transport to this controller
-        # while a UPnP renderer is connected.
         self.playback.set_remote_transport(self)
 
         self._together_timer = QTimer(self)
@@ -101,8 +94,7 @@ class QtIntegrationsController(QObject):
 
         self._configure_discord_presence()
 
-    # ------------------------------------------------------------------
-    # Shared preference helpers
+    # Preferences -----------------------------------------------------
 
     def _save_preferences(self) -> None:
         self.settings.save()
@@ -110,14 +102,10 @@ class QtIntegrationsController(QObject):
 
     @Slot()
     def reload(self) -> None:
-        # QtPreferencesController owns the canonical Preferences instance.
-        # Reconfigure integrations after backup restore or a change made by
-        # the GTK frontend in the same data store.
         self._configure_discord_presence()
         self.changed.emit()
 
-    # ------------------------------------------------------------------
-    # Last.fm
+    # Last.fm ---------------------------------------------------------
 
     @Property(bool, notify=changed)
     def lastFmConnected(self) -> bool:
@@ -217,8 +205,7 @@ class QtIntegrationsController(QObject):
         self._save_preferences()
         self.backend._set_status("Last.fm desconectado.")
 
-    # ------------------------------------------------------------------
-    # Discord Rich Presence
+    # Discord ---------------------------------------------------------
 
     @Property(bool, notify=changed)
     def discordEnabled(self) -> bool:
@@ -249,6 +236,11 @@ class QtIntegrationsController(QObject):
         self._update_discord_presence()
 
     def _configure_discord_presence(self) -> None:
+        values = self.settings.values
+        config = (bool(values.discord_enabled), values.discord_client_id.strip())
+        if config == self._discord_config:
+            return
+        self._discord_config = config
         old = self.discord_presence
         if old is not None:
             try:
@@ -256,11 +248,8 @@ class QtIntegrationsController(QObject):
                 old.close()
             except OSError:
                 LOGGER.debug("Não foi possível limpar o Rich Presence anterior", exc_info=True)
-        values = self.settings.values
         self.discord_presence = (
-            DiscordPresence(values.discord_client_id)
-            if values.discord_enabled and values.discord_client_id
-            else None
+            DiscordPresence(config[1]) if config[0] and config[1] else None
         )
 
     def _update_discord_presence(self) -> None:
@@ -268,16 +257,13 @@ class QtIntegrationsController(QObject):
         item = self._social_item or self.playback.current_item
         if presence is None or item is None:
             return
-        playing = self.playback.playing
-        started_at = self._social_started_at
         self._run(
             "discord-presence",
-            lambda: presence.update(item, playing, started_at),
+            lambda: presence.update(item, self.playback.playing, self._social_started_at),
             report_error=False,
         )
 
-    # ------------------------------------------------------------------
-    # Playback hooks for Last.fm / Discord / Listen Together
+    # Playback hooks --------------------------------------------------
 
     @Slot(object, int)
     def _track_started(self, item, duration_ms: int) -> None:
@@ -336,8 +322,7 @@ class QtIntegrationsController(QObject):
         if presence is not None:
             self._run("discord-clear", presence.clear, report_error=False)
 
-    # ------------------------------------------------------------------
-    # Listen Together
+    # Listen Together -------------------------------------------------
 
     @Property(str, notify=togetherChanged)
     def togetherStatus(self) -> str:
@@ -355,9 +340,22 @@ class QtIntegrationsController(QObject):
     def togetherActive(self) -> bool:
         return bool(self.together_host or self.together_client)
 
+    def _leave_together(self, *, invalidate: bool = True) -> None:
+        if invalidate:
+            self._together_generation += 1
+        if self.together_host:
+            self.together_host.close()
+        self.together_host = None
+        self.together_client = None
+        self._together_share_url = ""
+        self._together_revision = -1
+        self._together_fetching = False
+        self._pending_together_playing = None
+        self.togetherChanged.emit()
+
     @Slot()
     def createTogetherSession(self) -> None:
-        self.leaveTogetherSession()
+        self._leave_together()
         try:
             self.together_host = TogetherHost()
             self._together_share_url = self.together_host.share_url()
@@ -374,21 +372,18 @@ class QtIntegrationsController(QObject):
         except ValueError as exc:
             self.backend._set_status(str(exc))
             return
-        self._pending_together_client = client
+        self._leave_together()
+        generation = self._together_generation
         self.backend._set_status("Entrando na sessão Listen Together…")
-        self._run("together-join", client.fetch)
+        self._run(
+            "together-join",
+            lambda: (generation, client, client.fetch()),
+        )
 
     @Slot()
     def leaveTogetherSession(self) -> None:
-        if self.together_host:
-            self.together_host.close()
-        self.together_host = None
-        self.together_client = None
-        self._pending_together_client = None
-        self._together_share_url = ""
-        self._together_revision = -1
-        self._together_fetching = False
-        self.togetherChanged.emit()
+        self._leave_together()
+        self.backend._set_status("Sessão Listen Together encerrada.")
 
     def _together_tick(self) -> None:
         if self.together_host:
@@ -403,7 +398,12 @@ class QtIntegrationsController(QObject):
             return
         if self.together_client and not self._together_fetching:
             self._together_fetching = True
-            self._run("together-sync", self.together_client.fetch, report_error=False)
+            client = self.together_client
+            self._run(
+                "together-sync",
+                lambda: (client, client.fetch()),
+                report_error=False,
+            )
 
     def _apply_together_state(self, state: TogetherState) -> None:
         if state.revision <= self._together_revision:
@@ -427,8 +427,7 @@ class QtIntegrationsController(QObject):
         if state.playing != self.playback.playing:
             self.playback.toggle_playback()
 
-    # ------------------------------------------------------------------
-    # Recognition / AudD
+    # Recognition -----------------------------------------------------
 
     @Property(str, notify=changed)
     def recognitionProvider(self) -> str:
@@ -482,12 +481,14 @@ class QtIntegrationsController(QObject):
         self.backend._set_status("Ouvindo por 12 segundos…")
         self._run("recognition", recognizer.recognize)
 
-    # ------------------------------------------------------------------
-    # UPnP / DLNA remote transport
+    # UPnP / DLNA -----------------------------------------------------
 
     @Property("QVariantList", notify=castChanged)
     def castDevices(self) -> list[dict[str, object]]:
-        return [{"name": device.name, "index": index} for index, device in enumerate(self._cast_devices)]
+        return [
+            {"name": device.name, "index": index}
+            for index, device in enumerate(self._cast_devices)
+        ]
 
     @Property(bool, notify=castChanged)
     def castConnected(self) -> bool:
@@ -509,31 +510,36 @@ class QtIntegrationsController(QObject):
         if self.playback.current_item is None or not self.playback.current_stream_uri:
             self.backend._set_status("Comece a reproduzir uma faixa antes de transmitir.")
             return
+
         device = self._cast_devices[index]
         renderer = UpnpRenderer(device)
         position_ms = self.playback.position
+        was_playing = self.playback.playing
         uri = self.playback.current_stream_uri
+        title = self.playback.current_item.title
         try:
             cast_uri = self._castable_uri(uri)
         except (OSError, ValueError) as exc:
             self.backend._set_status(f"Não foi possível transmitir: {exc}")
             return
 
+        # Stop GStreamer before making the remote transport active, otherwise
+        # the Qt playback facade would already report the renderer's state.
+        self.playback.player.stop()
         self.cast_device = device
         self.cast_renderer = renderer
         self._cast_stream_uri = uri
         self._cast_position_ms = position_ms
         self._cast_started = time.monotonic() - position_ms / 1000
-        self._cast_playing = self.playback.playing
-        self.playback.player.stop()
+        self._cast_playing = was_playing
         self.castChanged.emit()
         self.playback.playbackChanged.emit()
 
         def operation():
-            renderer.play_uri(cast_uri, self.playback.current_item.title)
+            renderer.play_uri(cast_uri, title)
             if position_ms > 1000:
                 renderer.seek(position_ms)
-            if not self._cast_playing:
+            if not was_playing:
                 renderer.pause()
             return device
 
@@ -563,11 +569,13 @@ class QtIntegrationsController(QObject):
     def start_stream(self, uri: str, item) -> bool:
         if not self.active:
             return False
+        renderer = self.cast_renderer
+        if renderer is None:
+            return False
         self._cast_stream_uri = uri
         self._cast_position_ms = 0
         self._cast_started = time.monotonic()
         self._cast_playing = True
-        renderer = self.cast_renderer
         try:
             cast_uri = self._castable_uri(uri)
         except (OSError, ValueError) as exc:
@@ -579,9 +587,9 @@ class QtIntegrationsController(QObject):
         return True
 
     def toggle(self) -> bool:
-        if not self.active:
-            return False
         renderer = self.cast_renderer
+        if renderer is None:
+            return False
         if self._cast_playing:
             self._cast_position_ms = self.position_ms
             self._cast_playing = False
@@ -594,13 +602,17 @@ class QtIntegrationsController(QObject):
         return True
 
     def seek(self, position_ms: int) -> bool:
-        if not self.active:
+        renderer = self.cast_renderer
+        if renderer is None:
             return False
         self._cast_position_ms = max(0, int(position_ms))
         if self._cast_playing:
             self._cast_started = time.monotonic() - self._cast_position_ms / 1000
-        renderer = self.cast_renderer
-        self._run("cast-seek", lambda: renderer.seek(self._cast_position_ms), report_error=False)
+        self._run(
+            "cast-seek",
+            lambda: renderer.seek(self._cast_position_ms),
+            report_error=False,
+        )
         return True
 
     def stop(self) -> bool:
@@ -640,8 +652,7 @@ class QtIntegrationsController(QObject):
             self._cast_media_server.close()
             self._cast_media_server = None
 
-    # ------------------------------------------------------------------
-    # Worker result handling / lifecycle
+    # Workers / lifecycle --------------------------------------------
 
     def _run(self, name: str, operation, *, report_error: bool = True) -> None:
         def worker() -> None:
@@ -650,8 +661,6 @@ class QtIntegrationsController(QObject):
             except Exception as exc:
                 LOGGER.debug("Falha na integração Qt %s", name, exc_info=True)
                 result, error = None, str(exc)
-            # Prefixing silent operations avoids noisy UI messages while still
-            # routing all completion work back through the Qt main thread.
             operation_name = name if report_error else f"silent:{name}"
             self._operationReady.emit(operation_name, result, error)
 
@@ -665,7 +674,7 @@ class QtIntegrationsController(QObject):
         silent = operation.startswith("silent:")
         name = operation.removeprefix("silent:")
         if error:
-            if name in {"together-sync"}:
+            if name == "together-sync":
                 self._together_fetching = False
             if name in {"cast-connect", "cast-track"}:
                 self._disconnect_cast(resume=True)
@@ -694,21 +703,19 @@ class QtIntegrationsController(QObject):
             self._save_preferences()
             self.backend._set_status(f"Last.fm conectado como {result.username}.")
         elif name == "together-join":
-            self.leaveTogetherSession()
-            self.together_client = self._pending_together_client
-            # leaveTogetherSession clears the pending object; restore the
-            # client from the operation source by rebuilding it is unnecessary,
-            # so keep it before calling leave in future runs.
-            if self.together_client is None:
-                self.backend._set_status("A sessão Listen Together foi cancelada.")
+            generation, client, state = result
+            if generation != self._together_generation:
                 return
+            self.together_client = client
             self._together_revision = -1
-            self._apply_together_state(result)
+            self._apply_together_state(state)
             self.togetherChanged.emit()
             self.backend._set_status("Listen Together conectado.")
         elif name == "together-sync":
             self._together_fetching = False
-            self._apply_together_state(result)
+            client, state = result
+            if client is self.together_client:
+                self._apply_together_state(state)
         elif name == "recognition":
             if result is None:
                 self.backend._set_status("Nenhuma música reconhecida.")
@@ -743,10 +750,7 @@ class QtIntegrationsController(QObject):
     def shutdown(self) -> None:
         self._together_timer.stop()
         self._download_validation_timer.stop()
-        if self.together_host:
-            self.together_host.close()
-        self.together_host = None
-        self.together_client = None
+        self._leave_together()
         if self.cast_renderer:
             renderer = self.cast_renderer
             self.cast_renderer = None
