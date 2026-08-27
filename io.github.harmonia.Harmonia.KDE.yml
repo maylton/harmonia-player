@@ -22,12 +22,41 @@ finish-args:
   - --socket=pulseaudio
   - --device=dri
   - --env=QTWEBENGINEPROCESS_PATH=/app/bin/QtWebEngineProcess
+  - --env=GST_PLUGIN_SYSTEM_PATH=/app/lib/gstreamer-1.0/:/usr/lib/gstreamer-1.0/
   - --talk-name=org.freedesktop.secrets
   - --own-name=org.mpris.MediaPlayer2.Harmonia
   - --filesystem=xdg-run/discord-ipc-0
   - --filesystem=xdg-run/app/com.discordapp.Discord:ro
 
 modules:
+  # org.kde.Platform does not ship the Qt 6 GStreamer video sink. Build only
+  # the qml6 plugin against the same GStreamer release used by the KDE 6.11
+  # runtime, following KDE Kamoso's Flatpak recipe. The rest of GStreamer keeps
+  # coming from /usr so we do not duplicate the multimedia stack in /app.
+  - name: qml6glsink
+    buildsystem: meson
+    builddir: true
+    config-opts:
+      - -Dauto_features=disabled
+      - -Dugly=disabled
+      - -Dbad=disabled
+      - -Dgood=enabled
+      - -Dbase=enabled
+      - -Dqt6=enabled
+      - -Dgst-plugins-good:qt-wayland=enabled
+      - -Dgst-plugins-good:qt-x11=enabled
+      - -Dgst-plugins-base:gl=enabled
+      - -Dgst-plugins-base:x11=enabled
+      - --buildtype=release
+    sources:
+      - type: git
+        url: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+        tag: 1.24.7
+        disable-submodules: true
+    no-make-install: true
+    post-install:
+      - install -Dt /app/lib/gstreamer-1.0/ subprojects/gst-plugins-good/ext/qt6/libgstqml6.so
+
   # Keep the same Secret Service session used by the GTK build. The KDE
   # runtime stays Qt-native at the UI layer; this small GI/libsecret bridge
   # lets Storage read the existing Harmonia credential without duplicating it.
