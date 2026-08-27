@@ -248,9 +248,7 @@ class QtIntegrationsController(QObject):
                 old.close()
             except OSError:
                 LOGGER.debug("Não foi possível limpar o Rich Presence anterior", exc_info=True)
-        self.discord_presence = (
-            DiscordPresence(config[1]) if config[0] and config[1] else None
-        )
+        self.discord_presence = DiscordPresence(config[1]) if config[0] and config[1] else None
 
     def _update_discord_presence(self) -> None:
         presence = self.discord_presence
@@ -486,8 +484,7 @@ class QtIntegrationsController(QObject):
     @Property("QVariantList", notify=castChanged)
     def castDevices(self) -> list[dict[str, object]]:
         return [
-            {"name": device.name, "index": index}
-            for index, device in enumerate(self._cast_devices)
+            {"name": device.name, "index": index} for index, device in enumerate(self._cast_devices)
         ]
 
     @Property(bool, notify=castChanged)
@@ -726,9 +723,7 @@ class QtIntegrationsController(QObject):
             self._cast_devices = list(result or [])
             self.castChanged.emit()
             if self._cast_devices:
-                self.backend._set_status(
-                    f"{len(self._cast_devices)} dispositivo(s) encontrado(s)."
-                )
+                self.backend._set_status(f"{len(self._cast_devices)} dispositivo(s) encontrado(s).")
             else:
                 self.backend._set_status("Nenhum dispositivo UPnP/DLNA encontrado.")
         elif name in {"cast-connect", "cast-track"}:
