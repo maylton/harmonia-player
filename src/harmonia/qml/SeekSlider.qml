@@ -7,6 +7,7 @@ Controls.Slider {
     property real playbackPosition: 0
     property real playbackDuration: 0
     property bool mouseSeeking: false
+    property int pendingSeek: -1
     signal seekRequested(int positionMs)
 
     from: 0
@@ -16,7 +17,7 @@ Controls.Slider {
     Component.onCompleted: syncFromPlayback()
 
     onPlaybackPositionChanged: {
-        if (!mouseSeeking)
+        if (!mouseSeeking && !seekDebounce.running)
             syncFromPlayback()
     }
 
@@ -25,13 +26,26 @@ Controls.Slider {
             syncFromPlayback()
     }
 
-    onMoved: {
-        if (!mouseSeeking)
-            seekRequested(Math.round(value))
+    // Keyboard and accessibility-driven slider movement still reaches the
+    // backend even though pointer interaction is handled by the overlay below.
+    onMoved: queueSeek(Math.round(value), false)
+
+    Timer {
+        id: seekDebounce
+        interval: 90
+        repeat: false
+        onTriggered: {
+            if (root.pendingSeek >= 0) {
+                root.seekRequested(root.pendingSeek)
+                root.pendingSeek = -1
+            }
+        }
     }
 
-    // The KDE desktop style does not guarantee groove clicks move the native handle,
-    // so this overlay maps both direct track clicks and drags to a playback position.
+    // KDE styles do not consistently move a Slider handle when the groove is
+    // clicked.  Map the whole groove ourselves and emit seeks while dragging,
+    // not only on release.  This also prevents a 250 ms playback refresh from
+    // snapping the handle back before GStreamer accepts the new position.
     MouseArea {
         anchors.fill: parent
         z: 100
@@ -45,23 +59,45 @@ Controls.Slider {
             root.forceActiveFocus()
             root.mouseSeeking = true
             root.setValueFromX(mouse.x)
+            root.queueSeek(Math.round(root.value), true)
         }
 
         onPositionChanged: function(mouse) {
-            if (pressed)
-                root.setValueFromX(mouse.x)
+            if (!pressed)
+                return
+            root.setValueFromX(mouse.x)
+            root.queueSeek(Math.round(root.value), false)
         }
 
         onReleased: function(mouse) {
             root.setValueFromX(mouse.x)
-            root.mouseSeeking = false
+            seekDebounce.stop()
+            root.pendingSeek = -1
             root.seekRequested(Math.round(root.value))
+            // Keep playback updates blocked until the event loop has delivered
+            // the final seek to Python/GStreamer.
+            Qt.callLater(function() {
+                root.mouseSeeking = false
+            })
         }
 
         onCanceled: {
+            seekDebounce.stop()
+            root.pendingSeek = -1
             root.mouseSeeking = false
             root.syncFromPlayback()
         }
+    }
+
+    function queueSeek(positionMs, immediate) {
+        pendingSeek = positionMs
+        if (immediate) {
+            seekDebounce.stop()
+            seekRequested(pendingSeek)
+            pendingSeek = -1
+            return
+        }
+        seekDebounce.restart()
     }
 
     function syncFromPlayback() {
