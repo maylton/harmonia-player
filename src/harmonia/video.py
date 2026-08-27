@@ -129,10 +129,9 @@ def resolve_video_stream(
     """Resolve a validated direct stream for the matching music video.
 
     All player-response/client fallback logic now lives in
-    :mod:`harmonia.stream_extractor`, shared with the future audio migration.
-    GTK currently asks for progressive/muxed media; Qt can accept a separate
-    video-only adaptive stream because its visual layer remains muted and
-    synchronized to the main audio transport.
+    :mod:`harmonia.stream_extractor`, shared with audio extraction. GTK asks for
+    progressive/muxed media; Qt can accept a separate video-only adaptive stream
+    because its visual layer remains muted and synchronized to the main audio transport.
     """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
@@ -152,6 +151,7 @@ def resolve_video_stream(
             video_id,
             max_height=max_height,
             progressive_only=not allow_video_only,
+            force=force,
         )
     except StreamExtractionError as exc:
         raise InnerTubeError(str(exc)) from exc
