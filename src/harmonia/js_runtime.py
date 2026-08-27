@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
+from contextlib import suppress
 
 
 class JavaScriptRuntimeError(RuntimeError):
@@ -84,14 +85,12 @@ class JavaScriptCoreRuntime(JavaScriptRuntime):
 
 def create_javascript_runtime() -> JavaScriptRuntime:
     """Choose a JS engine already shipped by the active Harmonia frontend runtime."""
-    try:
+    with suppress(ImportError, JavaScriptRuntimeError):
         return QtJavaScriptRuntime()
-    except (ImportError, JavaScriptRuntimeError):
-        pass
 
     try:
         return JavaScriptCoreRuntime()
-    except (ImportError, ValueError) as exc:
+    except (ImportError, ValueError, JavaScriptRuntimeError) as exc:
         raise JavaScriptRuntimeError(
             "Nenhum runtime JavaScript compatível está disponível para resolver o stream."
         ) from exc
