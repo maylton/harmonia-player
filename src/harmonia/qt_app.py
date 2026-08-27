@@ -16,6 +16,7 @@ from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
+from .qt_video import QtVideoController
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -101,12 +102,14 @@ def main() -> int:
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
     integrations = QtIntegrationsController(backend, backend._executor, engine)
+    video = QtVideoController(backend, engine)
     auth.cookieReady.connect(backend.connectCookie)
 
     context = engine.rootContext()
     context.setContextProperty("backend", backend)
     context.setContextProperty("auth", auth)
     context.setContextProperty("integrations", integrations)
+    context.setContextProperty("videoBackend", video)
     # Appearance belongs to the existing preference controller rather than the
     # broad QML facade. Both GTK and Qt therefore read/write the same settings.
     context.setContextProperty("preferences", backend.settings)
@@ -114,12 +117,14 @@ def main() -> int:
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
+        video.shutdown()
         integrations.shutdown()
         backend.shutdown()
         raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
 
-    # Integrations still use the backend executor, so close their timers and
-    # transports before HarmoniaQtBackend shuts that executor down.
+    # Integrations/video still use the backend player/executor, so close them
+    # before HarmoniaQtBackend shuts those shared resources down.
+    app.aboutToQuit.connect(video.shutdown)
     app.aboutToQuit.connect(integrations.shutdown)
     app.aboutToQuit.connect(backend.shutdown)
     return app.exec()
