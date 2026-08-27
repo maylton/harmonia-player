@@ -1,6 +1,6 @@
 # Harmonia
 
-A native Linux client for accessing your YouTube Music library. Harmonia uses GTK 4/libadwaita on GNOME and other desktops, and can automatically select a native Qt 6/PySide6/Kirigami frontend on KDE Plasma. Both frontends share the same InnerTube, storage, GStreamer playback, downloads, lyrics, and MPRIS core. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. WebKitGTK is used only by the GTK integrated sign-in flow; the KDE frontend reuses the same stored Secret Service session and also supports manual cookie authentication.
+A native Linux client for accessing your YouTube Music library. Harmonia uses GTK 4/libadwaita on GNOME and other desktops, and can automatically select a native Qt 6/PySide6/Kirigami frontend on KDE Plasma. Both frontends share the same InnerTube, storage, GStreamer playback, downloads, lyrics, and MPRIS core. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. Integrated Google sign-in is rendered by WebKitGTK on the GTK frontend and Qt WebEngine on the KDE frontend, while both hand the resulting YouTube Music session to the same Secret Service-backed core.
 
 > **Beta 0.1:** This is a testing release. InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
 
@@ -8,7 +8,7 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 
 - adaptive GTK 4/libadwaita interface plus a native Qt 6/Kirigami frontend for KDE Plasma;
 - automatic Plasma detection with GTK fallback and `--gtk` / `--qt` overrides;
-- automatic sign-in through an embedded WebKitGTK browser with secure session capture in the GTK frontend;
+- automatic sign-in through an embedded WebKitGTK browser on GTK or Qt WebEngine on KDE, with secure YouTube session capture;
 - manual cookie authentication as a fallback, using `SAPISIDHASH`;
 - native synchronization of playlists, songs, albums, and artists;
 - pagination through continuation tokens;
@@ -51,7 +51,7 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 
 ## Running from source
 
-Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita, and WebKitGTK 6. The KDE frontend requires PySide6 and Kirigami from a compatible Qt/KDE stack.
+Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita, and WebKitGTK 6. The KDE frontend requires PySide6, Kirigami, and Qt WebEngine from a compatible Qt/KDE stack.
 
 ```bash
 PYTHONPATH=src python3 -m harmonia
@@ -64,7 +64,7 @@ PYTHONPATH=src python3 -m harmonia --qt
 PYTHONPATH=src python3 -m harmonia --gtk
 ```
 
-The GTK frontend provides the integrated browser sign-in flow. The KDE frontend reuses an existing Harmonia Secret Service session when available and provides manual cookie connection for a fresh installation.
+Both frontends provide an integrated browser sign-in flow and reuse the same stored Harmonia Secret Service session when available. Manual cookie connection remains available as a fallback.
 
 For the KDE Flatpak development build and the current smoke-test checklist, see [`docs/KDE_FRONTEND.md`](docs/KDE_FRONTEND.md).
 
@@ -135,6 +135,7 @@ appstreamcli validate --no-net --strict data/io.github.harmonia.Harmonia.metainf
 - `src/harmonia/window_*.py`: domain-specific GTK window behavior for Home, library,
   details, search, playback, lyrics, account, history, and preferences;
 - `src/harmonia/qt_app.py`: Qt/Kirigami application bootstrap and shared GLib event-loop bridge;
+- `src/harmonia/qt_auth.py`: Qt WebEngine login-session capture and handoff to the shared backend;
 - `src/harmonia/qt_backend.py`: small QML-facing facade for the modular Qt controllers;
 - `src/harmonia/qt_*.py`: KDE catalog, library, playback, activity, preferences, mutations, and presenters;
 - `src/harmonia/qml/`: native Kirigami presentation components;
