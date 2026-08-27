@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 
 import gi
 import shiboken6
 
 gi.require_version("Gst", "1.0")
-from gi.repository import Gst
-from PySide6.QtCore import QObject, Property, Signal, Slot
+from gi.repository import Gst  # noqa: E402
+from PySide6.QtCore import Property, QObject, Signal, Slot  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,10 +75,8 @@ class QtVideoController(QObject):
         if self._surface is surface and self._sink is not None:
             return
         if self._sink is not None:
-            try:
+            with suppress(Exception):
                 self._sink.set_state(Gst.State.NULL)
-            except Exception:
-                pass
             self.playback.player.set_video_sink(None)
             self._sink = None
 
@@ -99,10 +98,8 @@ class QtVideoController(QObject):
             self.playback.player.set_video_sink(sink)
         except Exception as exc:
             LOGGER.exception("Could not attach qml6glsink to QQuickItem")
-            try:
+            with suppress(Exception):
                 sink.set_state(Gst.State.NULL)
-            except Exception:
-                pass
             self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {exc}")
             self._surface = surface
             self._sink = None
@@ -217,8 +214,6 @@ class QtVideoController(QObject):
         self._pending.clear()
         self.playback.player.on_error = self._original_player_error
         if self._sink is not None:
-            try:
+            with suppress(Exception):
                 self._sink.set_state(Gst.State.NULL)
-            except Exception:
-                pass
             self._sink = None
