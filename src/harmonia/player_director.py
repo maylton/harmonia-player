@@ -170,8 +170,15 @@ class PlayerClientDirector:
         if authenticated and data_sync_id:
             user_context["onBehalfOfUser"] = data_sync_id
 
+        request_context: dict[str, Any] = {
+            "client": client_context,
+            "user": user_context,
+        }
+        if profile.is_embedded:
+            request_context["thirdParty"] = {"embedUrl": "https://www.reddit.com/"}
+
         body: dict[str, Any] = {
-            "context": {"client": client_context, "user": user_context},
+            "context": request_context,
             "videoId": video_id,
             "contentCheckOk": True,
             "racyCheckOk": True,
