@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import urllib.parse
+
 from harmonia.stream_extractor import (
     InnerTubeStreamExtractor,
     PlayerClientProfile,
@@ -29,13 +31,14 @@ def profile(name="TEST"):
     )
 
 
+def path_of(url: str) -> str:
+    return urllib.parse.urlsplit(url).path
+
+
 def test_cipher_url_accepts_direct_and_clear_signature():
     assert _cipher_url({"url": "https://media.test/direct"}) == "https://media.test/direct"
 
-    cipher = (
-        "url=https%3A%2F%2Fmedia.test%2Fvideo%3Fx%3D1"
-        "&sp=sig&sig=already-clear"
-    )
+    cipher = "url=https%3A%2F%2Fmedia.test%2Fvideo%3Fx%3D1&sp=sig&sig=already-clear"
     assert _cipher_url({"signatureCipher": cipher}) == (
         "https://media.test/video?x=1&sig=already-clear"
     )
@@ -46,7 +49,7 @@ def test_cipher_url_defers_encrypted_signature_to_cipher_provider():
     assert _cipher_url({"signatureCipher": cipher}) is None
 
 
-def test_video_selection_prefers_720p_vp9_over_av1():
+def test_video_selection_prefers_vp9_over_av1_when_h264_is_absent():
     extractor = InnerTubeStreamExtractor(DummyClient())
     payload = {
         "playabilityStatus": {"status": "OK"},
@@ -82,10 +85,44 @@ def test_video_selection_prefers_720p_vp9_over_av1():
             ]
         },
     }
-    extractor._payloads = lambda *_args: iter([(profile(), payload)])
-    selected = extractor.extract_video("video", max_height=720)
-    assert selected.url == "https://media.test/vp9"
+    extractor._payloads = lambda *_args, **_kwargs: iter([(profile(), payload)])
+    selected = extractor.extract_video("video", max_height=720, force=True)
+    assert path_of(selected.url) == "/vp9"
     assert selected.itag == 247
+    assert urllib.parse.parse_qs(urllib.parse.urlsplit(selected.url).query)["cpn"]
+
+
+def test_video_selection_prefers_h264_at_the_same_height():
+    extractor = InnerTubeStreamExtractor(DummyClient())
+    payload = {
+        "playabilityStatus": {"status": "OK"},
+        "streamingData": {
+            "adaptiveFormats": [
+                {
+                    "url": "https://media.test/vp9",
+                    "mimeType": 'video/webm; codecs="vp9"',
+                    "height": 720,
+                    "width": 1280,
+                    "fps": 30,
+                    "bitrate": 2_000_000,
+                    "itag": 247,
+                },
+                {
+                    "url": "https://media.test/h264",
+                    "mimeType": 'video/mp4; codecs="avc1.4d401f"',
+                    "height": 720,
+                    "width": 1280,
+                    "fps": 30,
+                    "bitrate": 1_500_000,
+                    "itag": 136,
+                },
+            ]
+        },
+    }
+    extractor._payloads = lambda *_args, **_kwargs: iter([(profile(), payload)])
+    selected = extractor.extract_video("h264-video", max_height=720, force=True)
+    assert path_of(selected.url) == "/h264"
+    assert selected.itag == 136
 
 
 def test_progressive_only_ignores_adaptive_video():
@@ -117,9 +154,14 @@ def test_progressive_only_ignores_adaptive_video():
             ],
         },
     }
-    extractor._payloads = lambda *_args: iter([(profile(), payload)])
-    selected = extractor.extract_video("video", max_height=720, progressive_only=True)
-    assert selected.url == "https://media.test/muxed"
+    extractor._payloads = lambda *_args, **_kwargs: iter([(profile(), payload)])
+    selected = extractor.extract_video(
+        "progressive-video",
+        max_height=720,
+        progressive_only=True,
+        force=True,
+    )
+    assert path_of(selected.url) == "/muxed"
     assert selected.muxed is True
 
 
@@ -144,7 +186,7 @@ def test_audio_selection_respects_max_bitrate():
             ]
         },
     }
-    extractor._payloads = lambda *_args: iter([(profile(), payload)])
-    selected = extractor.extract_audio("audio", max_bitrate=192_000)
-    assert selected.url == "https://media.test/low"
+    extractor._payloads = lambda *_args, **_kwargs: iter([(profile(), payload)])
+    selected = extractor.extract_audio("audio", max_bitrate=192_000, force=True)
+    assert path_of(selected.url) == "/low"
     assert selected.itag == 251
