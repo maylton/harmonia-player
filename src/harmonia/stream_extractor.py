@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 import threading
 import time
@@ -11,16 +10,14 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .cipher import YouTubeCipherService
-from .player_config import PlayerConfig, PlayerConfigResolver
+from .player_config import PlayerConfigResolver
+from .player_director import PlayerClientDirector
 from .stream_transport import (
     register_stream_transport,
     stream_transport_blocked,
 )
 
 LOGGER = logging.getLogger(__name__)
-
-ORIGIN = "https://music.youtube.com"
-API_URL = f"{ORIGIN}/youtubei/v1"
 WEB_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) "
     "Gecko/20100101 Firefox/140.0"
@@ -44,17 +41,37 @@ class PlayerClientProfile:
     include_user_agent_in_context: bool = False
     use_music_player_endpoint: bool = False
     skip_response_validation: bool = False
+    is_embedded: bool = False
     context: tuple[tuple[str, Any], ...] = ()
 
     def context_values(self) -> dict[str, Any]:
-        return dict(self.context)
+        values = dict(self.context)
+        if self.is_embedded:
+            values.setdefault("thirdPartyEmbedUrl", "https://www.reddit.com/")
+        return values
 
 
-# Playback profiles mirror the useful non-SABR part of InnerTubeX's current
-# catalog. Token-mandatory profiles will be enabled once the shared PoToken
-# provider is connected; profiles for which PoToken is optional can already
-# benefit from signature timestamp and cipher transforms.
+# Current playback identities mirrored from InnerTubeX's 2026 client inventory.
+# SABR-only identities are deliberately omitted: Metrolist's own playback entry
+# point currently requests allowSabr=false, and Harmonia/GStreamer consumes the
+# same direct/bounded-range transports used by that path.
 PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
+    PlayerClientProfile(
+        id="101",
+        name="VISIONOS",
+        version="1.02",
+        user_agent=(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+        ),
+        use_music_player_endpoint=True,
+        context=(
+            ("osName", "visionOS"),
+            ("osVersion", "26.5.23O471"),
+            ("deviceMake", "Apple"),
+            ("deviceModel", "RealityDevice17,1"),
+        ),
+    ),
     PlayerClientProfile(
         id="101",
         name="VISIONOS_0_1",
@@ -74,6 +91,62 @@ PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
         ),
     ),
     PlayerClientProfile(
+        id="28",
+        name="ANDROID_VR_1_43_32",
+        version="1.43.32",
+        user_agent=(
+            "com.google.android.apps.youtube.vr.oculus/1.43.32 "
+            "(Linux; U; Android 12; en_US; Quest 3; Build/SQ3A.220605.009.A1; "
+            "Cronet/107.0.5284.2)"
+        ),
+        include_user_agent_in_context=True,
+        use_music_player_endpoint=True,
+        context=(
+            ("osName", "Android"),
+            ("osVersion", "12"),
+            ("deviceMake", "Oculus"),
+            ("deviceModel", "Quest 3"),
+            ("androidSdkVersion", "32"),
+        ),
+    ),
+    PlayerClientProfile(
+        id="28",
+        name="ANDROID_VR_1_61_48",
+        version="1.61.48",
+        user_agent=(
+            "com.google.android.apps.youtube.vr.oculus/1.61.48 "
+            "(Linux; U; Android 12; en_US; Quest 3; Build/SQ3A.220605.009.A1; "
+            "Cronet/132.0.6808.3)"
+        ),
+        include_user_agent_in_context=True,
+        use_music_player_endpoint=True,
+        context=(
+            ("osName", "Android"),
+            ("osVersion", "12"),
+            ("deviceMake", "Oculus"),
+            ("deviceModel", "Quest 3"),
+            ("androidSdkVersion", "32"),
+        ),
+    ),
+    PlayerClientProfile(
+        id="28",
+        name="ANDROID_VR_1_65_10",
+        version="1.65.10",
+        user_agent=(
+            "com.google.android.apps.youtube.vr.oculus/1.65.10 "
+            "(Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
+        ),
+        include_user_agent_in_context=True,
+        use_music_player_endpoint=True,
+        context=(
+            ("osName", "Android"),
+            ("osVersion", "12L"),
+            ("deviceMake", "Oculus"),
+            ("deviceModel", "Quest 3"),
+            ("androidSdkVersion", "32"),
+        ),
+    ),
+    PlayerClientProfile(
         id="67",
         name="WEB_REMIX",
         version="1.20260707.12.00",
@@ -82,6 +155,19 @@ PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
         use_live_version=True,
         use_signature_timestamp=True,
         use_web_potoken=True,
+    ),
+    PlayerClientProfile(
+        id="7",
+        name="TVHTML5",
+        version="7.20260707.07.00",
+        user_agent=(
+            "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+            "(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)"
+        ),
+        login_supported=True,
+        use_signature_timestamp=True,
+        use_web_potoken=True,
+        include_user_agent_in_context=True,
     ),
     PlayerClientProfile(
         id="62",
@@ -94,32 +180,45 @@ PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
         use_web_potoken=True,
     ),
     PlayerClientProfile(
-        id="5",
-        name="IOS",
-        version="21.03.1",
+        id="75",
+        name="TVHTML5_SIMPLY",
+        version="1.0",
         user_agent=(
-            "com.google.ios.youtube/21.03.1 "
-            "(iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)"
+            "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+            "(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)"
         ),
-        context=(("osName", "iOS"), ("osVersion", "18.2")),
+        use_signature_timestamp=True,
+        use_web_potoken=True,
+        require_potoken=True,
+        use_music_player_endpoint=True,
     ),
     PlayerClientProfile(
-        id="28",
-        name="ANDROID_VR_1_43_32",
-        version="1.43.32",
+        id="85",
+        name="TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+        version="2.0",
         user_agent=(
-            "com.google.android.apps.youtube.vr.oculus/1.43.32 "
-            "(Linux; U; Android 12; en_US; Quest 3; "
-            "Build/SQ3A.220605.009.A1; Cronet/107.0.5284.2)"
+            "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+            "(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)"
+        ),
+        use_signature_timestamp=True,
+        use_web_potoken=True,
+        require_potoken=True,
+        is_embedded=True,
+    ),
+    PlayerClientProfile(
+        id="5",
+        name="IOS",
+        version="21.26.4",
+        user_agent=(
+            "com.google.ios.youtube/21.26.4 "
+            "(iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)"
         ),
         include_user_agent_in_context=True,
-        use_music_player_endpoint=True,
         context=(
-            ("osName", "Android"),
-            ("osVersion", "12"),
-            ("deviceMake", "Oculus"),
-            ("deviceModel", "Quest 3"),
-            ("androidSdkVersion", "32"),
+            ("osName", "iPhone"),
+            ("osVersion", "18.3.2.22D82"),
+            ("deviceMake", "Apple"),
+            ("deviceModel", "iPhone16,2"),
         ),
     ),
 )
@@ -140,6 +239,7 @@ class StreamCandidate:
     headers: tuple[tuple[str, str], ...] = ()
     expires_at: int | None = None
     playback_tracking_url: str | None = None
+    content_length: int | None = None
 
     @property
     def codecs(self) -> str:
@@ -148,12 +248,11 @@ class StreamCandidate:
         if marker not in mime:
             return ""
         codecs = mime.split(marker, 1)[1].strip()
-        codecs = (
+        return (
             codecs[1:].split('"', 1)[0]
             if codecs.startswith('"')
             else codecs.split(";", 1)[0]
         )
-        return codecs
 
     @property
     def is_audio(self) -> bool:
@@ -191,6 +290,15 @@ def _stream_expiration(url: str) -> int | None:
         return None
 
 
+def _set_query_parameter(url: str, key: str, value: str) -> str:
+    parsed = urllib.parse.urlsplit(url)
+    query = [(name, current) for name, current in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True) if name != key]
+    query.append((key, value))
+    return urllib.parse.urlunsplit(
+        (parsed.scheme, parsed.netloc, parsed.path, urllib.parse.urlencode(query), parsed.fragment)
+    )
+
+
 def _cipher_url(fmt: dict[str, Any]) -> str | None:
     """Compatibility helper for formats that need no JavaScript deciphering."""
     if fmt.get("url"):
@@ -206,27 +314,19 @@ def _cipher_url(fmt: dict[str, Any]) -> str | None:
     signature = (values.get("sig") or values.get("signature") or [None])[0]
     if signature:
         parameter = (values.get("sp") or ["signature"])[0]
-        parsed = urllib.parse.urlsplit(url)
-        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-        query.append((parameter, signature))
-        return urllib.parse.urlunsplit(
-            (
-                parsed.scheme,
-                parsed.netloc,
-                parsed.path,
-                urllib.parse.urlencode(query),
-                parsed.fragment,
-            )
-        )
+        return _set_query_parameter(url, parameter, signature)
     return None if values.get("s") else url
 
 
 def _video_codec_rank(mime_type: str) -> int:
+    # H.264 is deliberately preferred on desktop: it has the broadest software
+    # and hardware decoder coverage across the GNOME/KDE Flatpak runtimes and
+    # avoids the GL negotiation failures observed with some VP9/AV1 paths.
     mime = mime_type.lower()
+    if "avc1" in mime or "h264" in mime:
+        return 4
     if "vp9" in mime or "vp09" in mime:
         return 3
-    if "avc1" in mime or "h264" in mime:
-        return 2
     if "av01" in mime or "av1" in mime:
         return 1
     return 0
@@ -244,147 +344,17 @@ def _audio_codec_rank(mime_type: str) -> int:
 class InnerTubeStreamExtractor:
     """Shared resilient stream resolver for Harmonia audio and video.
 
-    Player configuration, signature deciphering, n-throttling transforms,
-    fallback clients, format scoring, CDN probing and diagnostics live here so
-    GTK and Qt consume the same extraction contract.
+    The extractor owns the same responsibilities InnerTubeX centralizes for
+    Metrolist playback: client fallback/health, live player configuration,
+    signature+n transforms, BotGuard PoTokens, format scoring, URL probing,
+    bounded-range transport metadata, caching and diagnostics.
     """
 
     def __init__(self, client):
         self.client = client
         self.config_resolver = PlayerConfigResolver(client)
-        self.cipher_service = YouTubeCipherService(
-            client,
-            config_resolver=self.config_resolver,
-        )
-        self._player_configs: dict[bool, PlayerConfig] = {}
-
-    def _player_config(self, video_id: str, *, authenticated: bool) -> PlayerConfig | None:
-        cached = self._player_configs.get(authenticated)
-        if cached is not None:
-            return cached
-        try:
-            config = self.config_resolver.fetch(
-                video_id,
-                use_login_cookies=authenticated,
-            )
-        except Exception as exc:
-            LOGGER.debug("YouTube player config unavailable: %s", exc)
-            return None
-        self._player_configs[authenticated] = config
-        return config
-
-    def _authenticated(self) -> bool:
-        try:
-            return bool(self.client.authenticated)
-        except Exception:
-            return False
-
-    def _profile_version(self, profile: PlayerClientProfile) -> str:
-        if profile.use_live_version and getattr(self.client, "client_version", None):
-            return str(self.client.client_version)
-        return profile.version
-
-    def _request_player(
-        self,
-        video_id: str,
-        profile: PlayerClientProfile,
-        diagnostics: ExtractionDiagnostics,
-    ) -> dict[str, Any] | None:
-        if profile.login_required and not self._authenticated():
-            diagnostics.attempts.append(f"{profile.name}: login necessário")
-            return None
-        if profile.require_potoken:
-            diagnostics.attempts.append(f"{profile.name}: PoToken obrigatório ainda indisponível")
-            return None
-
-        authenticated = profile.login_supported and self._authenticated()
-        config = (
-            self._player_config(video_id, authenticated=authenticated)
-            if profile.use_signature_timestamp
-            else None
-        )
-        version = (
-            config.client_version
-            if profile.use_live_version and config and config.client_version
-            else self._profile_version(profile)
-        )
-        client_name = profile.name.split("_0_1", 1)[0].split("_1_", 1)[0]
-        client_context: dict[str, Any] = {
-            "clientName": client_name,
-            "clientVersion": version,
-            "hl": getattr(self.client, "hl", "pt-BR"),
-            "gl": getattr(self.client, "gl", "BR"),
-            **profile.context_values(),
-        }
-        if profile.include_user_agent_in_context:
-            client_context["userAgent"] = profile.user_agent
-        visitor_data = getattr(self.client, "visitor_data", None) or (
-            config.visitor_data if config else None
-        )
-        if visitor_data:
-            client_context["visitorData"] = visitor_data
-
-        user_context: dict[str, Any] = {}
-        data_sync_id = getattr(self.client, "data_sync_id", None)
-        if authenticated and data_sync_id:
-            user_context["onBehalfOfUser"] = data_sync_id
-
-        body: dict[str, Any] = {
-            "context": {"client": client_context, "user": user_context},
-            "videoId": video_id,
-            "contentCheckOk": True,
-            "racyCheckOk": True,
-        }
-        if config and config.signature_timestamp is not None:
-            body["playbackContext"] = {
-                "contentPlaybackContext": {"signatureTimestamp": config.signature_timestamp}
-            }
-
-        request = urllib.request.Request(
-            f"{API_URL}/player?prettyPrint=false",
-            data=json.dumps(body).encode(),
-            method="POST",
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "User-Agent": profile.user_agent,
-                "Origin": ORIGIN,
-                "Referer": f"{ORIGIN}/",
-                "X-YouTube-Client-Name": profile.id,
-                "X-YouTube-Client-Version": version,
-                **({"X-Goog-Visitor-Id": visitor_data} if visitor_data else {}),
-            },
-        )
-
-        if authenticated:
-            from .innertube import sapisid_hash
-
-            request.add_header("Cookie", self.client.cookie)
-            request.add_header("Authorization", sapisid_hash(self.client.cookie))
-            request.add_header("X-Origin", ORIGIN)
-
-        for attempt in range(2):
-            try:
-                with self.client._open(request, timeout=30) as response:
-                    payload = json.load(response)
-                status = payload.get("playabilityStatus") or {}
-                if status.get("status") == "OK":
-                    return payload
-                diagnostics.attempts.append(
-                    f"{profile.name}: "
-                    f"{status.get('reason') or status.get('status') or 'não reproduzível'}"
-                )
-                return payload
-            except urllib.error.HTTPError as exc:
-                if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 1:
-                    diagnostics.attempts.append(f"{profile.name}: HTTP {exc.code}")
-                    return None
-            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-                if attempt == 1:
-                    diagnostics.attempts.append(f"{profile.name}: {exc}")
-                    return None
-            time.sleep(0.2 * (2**attempt))
-        return None
+        self.cipher_service = YouTubeCipherService(client, config_resolver=self.config_resolver)
+        self.director = PlayerClientDirector(client, self.config_resolver)
 
     @staticmethod
     def _tracking_url(payload: dict[str, Any]) -> str | None:
@@ -394,6 +364,12 @@ class InnerTubeStreamExtractor:
             )
             or None
         )
+
+    def _authenticated(self) -> bool:
+        try:
+            return bool(self.client.authenticated)
+        except Exception:
+            return False
 
     def _format_candidates(
         self,
@@ -411,6 +387,7 @@ class InnerTubeStreamExtractor:
         result: list[StreamCandidate] = []
         tracking = self._tracking_url(payload)
         authenticated = profile.login_supported and self._authenticated()
+        streaming_pot = str(payload.get("_harmoniaStreamingPoToken") or "")
 
         for fmt in formats:
             mime_type = str(fmt.get("mimeType") or "")
@@ -424,7 +401,10 @@ class InnerTubeStreamExtractor:
             if resolved is None:
                 continue
             url = resolved.url
+            if streaming_pot:
+                url = _set_query_parameter(url, "pot", streaming_pot)
             duration = fmt.get("approxDurationMs")
+            content_length = fmt.get("contentLength")
             itag = int(fmt["itag"]) if fmt.get("itag") is not None else None
             headers = [
                 ("User-Agent", profile.user_agent),
@@ -448,6 +428,7 @@ class InnerTubeStreamExtractor:
                     headers=tuple(headers),
                     expires_at=_stream_expiration(url),
                     playback_tracking_url=tracking,
+                    content_length=int(content_length) if content_length else None,
                 )
             )
         return result
@@ -475,19 +456,19 @@ class InnerTubeStreamExtractor:
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError):
             return False
 
-    def _payloads(self, video_id: str, diagnostics: ExtractionDiagnostics):
-        try:
-            self.client._bootstrap()
-        except Exception as exc:
-            LOGGER.debug("InnerTube bootstrap failed before extraction: %s", exc)
-
-        for profile in PLAYER_CLIENTS:
-            payload = self._request_player(video_id, profile, diagnostics)
-            if not payload:
-                continue
-            status = payload.get("playabilityStatus") or {}
-            if status.get("status") == "OK":
-                yield profile, payload
+    def _payloads(
+        self,
+        video_id: str,
+        diagnostics: ExtractionDiagnostics,
+        *,
+        want_video: bool,
+    ):
+        yield from self.director.payloads(
+            video_id,
+            PLAYER_CLIENTS,
+            diagnostics,
+            want_video=want_video,
+        )
 
     @staticmethod
     def _cached(cache_key: str, *, force: bool) -> StreamCandidate | None:
@@ -497,7 +478,11 @@ class InnerTubeStreamExtractor:
             return None
         with _CACHE_LOCK:
             candidate = _STREAM_CACHE.get(cache_key)
-        if candidate and candidate.valid_at(int(time.time())):
+        if (
+            candidate
+            and candidate.valid_at(int(time.time()))
+            and not stream_transport_blocked(candidate.url)
+        ):
             register_stream_transport(
                 candidate.url,
                 candidate.headers,
@@ -524,13 +509,15 @@ class InnerTubeStreamExtractor:
         max_bitrate: int = 10_000_000,
         force: bool = False,
     ) -> StreamCandidate:
+        if not video_id:
+            raise StreamExtractionError("A faixa não contém um identificador reproduzível.")
         cache_key = f"audio:{getattr(self.client, 'gl', 'US')}:{max_bitrate}:{video_id}"
         cached = self._cached(cache_key, force=force)
         if cached:
             return cached
 
         diagnostics = ExtractionDiagnostics(video_id)
-        for profile, payload in self._payloads(video_id, diagnostics):
+        for profile, payload in self._payloads(video_id, diagnostics, want_video=False):
             candidates = [
                 candidate
                 for candidate in self._format_candidates(payload, profile, video_id)
@@ -573,6 +560,8 @@ class InnerTubeStreamExtractor:
         progressive_only: bool = False,
         force: bool = False,
     ) -> StreamCandidate:
+        if not video_id:
+            raise StreamExtractionError("O vídeo não contém um identificador reproduzível.")
         max_height = max(144, int(max_height or 720))
         mode = "muxed" if progressive_only else "adaptive"
         cache_key = f"video:{getattr(self.client, 'gl', 'US')}:{max_height}:{mode}:{video_id}"
@@ -581,7 +570,7 @@ class InnerTubeStreamExtractor:
             return cached
 
         diagnostics = ExtractionDiagnostics(video_id)
-        for profile, payload in self._payloads(video_id, diagnostics):
+        for profile, payload in self._payloads(video_id, diagnostics, want_video=True):
             candidates = [
                 candidate
                 for candidate in self._format_candidates(payload, profile, video_id)
@@ -593,6 +582,7 @@ class InnerTubeStreamExtractor:
             within = [candidate for candidate in candidates if 0 < candidate.height <= max_height]
             pool = within or [candidate for candidate in candidates if candidate.height > 0]
             if not pool:
+                diagnostics.rejected.append(f"{profile.name}: formatos de vídeo sem resolução")
                 continue
             ordered = sorted(
                 pool,
