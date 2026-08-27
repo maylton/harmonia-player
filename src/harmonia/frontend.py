@@ -10,16 +10,17 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _desktop_tokens() -> set[str]:
-    values = (
-        os.environ.get("XDG_CURRENT_DESKTOP", ""),
-        os.environ.get("XDG_SESSION_DESKTOP", ""),
-        os.environ.get("DESKTOP_SESSION", ""),
-    )
-    tokens: set[str] = set()
-    for value in values:
-        normalized = value.replace(";", ":").replace("-", ":")
-        tokens.update(part.strip().lower() for part in normalized.split(":") if part.strip())
-    return tokens
+    # XDG_CURRENT_DESKTOP describes the desktop currently presenting the
+    # application. Session variables can remain stale when switching shells or
+    # launching nested sessions, so consult them only when the primary value is
+    # unavailable.
+    value = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    if not value:
+        value = os.environ.get("XDG_SESSION_DESKTOP", "").strip()
+    if not value:
+        value = os.environ.get("DESKTOP_SESSION", "").strip()
+    normalized = value.replace(";", ":").replace("-", ":")
+    return {part.strip().lower() for part in normalized.split(":") if part.strip()}
 
 
 def running_on_plasma() -> bool:
