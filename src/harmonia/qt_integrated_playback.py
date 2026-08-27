@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QTimer
-
 from .qt_playback import QtPlaybackController
 
 
@@ -44,39 +42,11 @@ class QtIntegratedPlaybackController(QtPlaybackController):
             return max(0, int(self._remote_transport.position_ms))
         return super().position
 
-    def _start_uri(
-        self,
-        request_id: int,
-        uri: str,
-        duration_ms: int | None,
-        tracking_url: str | None,
-    ) -> None:
-        if request_id != self._stream_request:
-            return
-        self.set_busy(False)
-        self._duration_ms = max(0, int(duration_ms or 0))
-        self._pending_tracking_url = tracking_url or ""
-        self._stream_ready = True
+    def _play_uri(self, uri: str) -> None:
         self._current_stream_uri = uri
-
-        if self.remote_active:
-            handled = self._remote_transport.start_stream(uri, self.current_item)
-            if not handled:
-                self.player.play(uri)
-        else:
-            self.player.play(uri)
-
-        self.playbackChanged.emit()
-        self.durationChanged.emit()
-        self.positionChanged.emit()
-        self.trackStarted.emit(self.current_item, self._duration_ms)
-        self.set_status("")
-        restored = self._restored_position_ms
-        self._restored_position_ms = 0
-        if restored:
-            QTimer.singleShot(700, lambda: self.seek(restored))
-        self._save_state(restored)
-        self.ensure_autoplay()
+        if self.remote_active and self._remote_transport.start_stream(uri, self.current_item):
+            return
+        super()._play_uri(uri)
 
     def toggle_playback(self) -> None:
         if self.current_item is None:
