@@ -113,7 +113,7 @@ Kirigami.ApplicationWindow {
         id: connectAction
         text: "Conectar"
         icon.name: "user-online"
-        onTriggered: cookieDialog.open()
+        onTriggered: loginDialog.openLogin()
     }
 
     pageStack.initialPage: Kirigami.Page {
@@ -169,7 +169,7 @@ Kirigami.ApplicationWindow {
                         ambientMode: preferences.backgroundBlur
                         onNavigationRequested: root.globalDrawer.open()
                         onBackRequested: root.goBack()
-                        onConnectRequested: cookieDialog.open()
+                        onConnectRequested: loginDialog.openLogin()
                         onSearchRequested: function(query) {
                             root.currentView = 3
                             backend.search(query)
@@ -225,7 +225,7 @@ Kirigami.ApplicationWindow {
                         DownloadsPage {}
 
                         SettingsPage {
-                            onConnectRequested: cookieDialog.open()
+                            onConnectRequested: loginDialog.openLogin()
                         }
 
                         HistoryPage {}
@@ -259,38 +259,9 @@ Kirigami.ApplicationWindow {
         parent: Controls.Overlay.overlay
     }
 
-    Controls.Dialog {
-        id: cookieDialog
+    LoginDialog {
+        id: loginDialog
         parent: root.contentItem
-        title: "Conectar ao YouTube Music"
-        modal: true
-        width: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 34)
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
-        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
-
-        onAccepted: {
-            backend.connectCookie(cookieInput.text)
-            cookieInput.clear()
-        }
-
-        contentItem: ColumnLayout {
-            spacing: Kirigami.Units.largeSpacing
-
-            Controls.Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                text: "A sessão existente do Harmonia é reutilizada quando disponível. Para uma instalação nova, você também pode conectar manualmente colando o cookie do music.youtube.com."
-            }
-
-            Controls.TextArea {
-                id: cookieInput
-                Layout.fillWidth: true
-                Layout.preferredHeight: Kirigami.Units.gridUnit * 8
-                placeholderText: "Cookie do music.youtube.com"
-                wrapMode: TextEdit.WrapAnywhere
-            }
-        }
     }
 
     Controls.Dialog {
