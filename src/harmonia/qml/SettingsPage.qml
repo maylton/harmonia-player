@@ -33,7 +33,7 @@ Item {
             PageHeader {
                 width: parent.width
                 title: "Preferências"
-                subtitle: "Conta, aparência, streaming, áudio e dados — compartilhados entre GTK e KDE"
+                subtitle: "Conta, aparência, streaming, áudio, integrações e dados — compartilhados entre GTK e KDE"
             }
 
             SettingsSection {
@@ -141,7 +141,7 @@ Item {
                 Kirigami.InlineMessage {
                     Layout.fillWidth: true
                     type: Kirigami.MessageType.Information
-                    text: "A mesma preferência é usada pelo frontend GTK. No Plasma, cores e ícones seguem automaticamente o tema KDE."
+                    text: "No Plasma, cores e ícones seguem automaticamente o tema KDE."
                 }
             }
 
@@ -325,6 +325,10 @@ Item {
                         onActivated: backend.setSleepTimer(model[currentIndex].value)
                     }
                 }
+            }
+
+            IntegrationsSettings {
+                width: parent.width
             }
 
             SettingsSection {
