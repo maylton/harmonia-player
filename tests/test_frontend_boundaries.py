@@ -25,6 +25,7 @@ SHARED_MODULES = (
     "lyrics.py",
     "lyrics_state.py",
     "playback_state.py",
+    "auth_state.py",
     "backup.py",
     "insights.py",
 )
