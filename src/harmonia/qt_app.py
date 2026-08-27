@@ -8,8 +8,10 @@ from gi.repository import GLib
 from PySide6.QtCore import QCoreApplication, QTimer, QUrl
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
+from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 
 APP_ID = "io.github.harmonia.Harmonia"
@@ -69,10 +71,14 @@ def _application_icon() -> QIcon:
 def main() -> int:
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "org.kde.desktop")
 
-    app = QApplication(sys.argv)
     QCoreApplication.setApplicationName("Harmonia")
     QCoreApplication.setOrganizationName("Harmonia")
     QCoreApplication.setOrganizationDomain("io.github.harmonia")
+    # Qt Quick WebEngine requires initialization before QApplication creates
+    # the graphics context used by Chromium's render process.
+    QtWebEngineQuick.initialize()
+
+    app = QApplication(sys.argv)
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
 
@@ -86,10 +92,15 @@ def main() -> int:
 
     engine = QQmlApplicationEngine()
     backend = HarmoniaQtBackend(engine)
-    engine.rootContext().setContextProperty("backend", backend)
+    auth = QtAuthController(engine)
+    auth.cookieReady.connect(backend.connectCookie)
+
+    context = engine.rootContext()
+    context.setContextProperty("backend", backend)
+    context.setContextProperty("auth", auth)
     # Appearance belongs to the existing preference controller rather than the
     # broad QML facade. Both GTK and Qt therefore read/write the same settings.
-    engine.rootContext().setContextProperty("preferences", backend.settings)
+    context.setContextProperty("preferences", backend.settings)
 
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
