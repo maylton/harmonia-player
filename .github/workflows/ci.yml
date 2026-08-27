@@ -54,6 +54,11 @@ jobs:
             --install \
             io.github.harmonia.Harmonia.yml
 
+      - name: Validar sink de vídeo GTK no Flatpak
+        run: |
+          flatpak run --command=sh io.github.harmonia.Harmonia -c \
+            'gst-inspect-1.0 gtk4paintablesink >/dev/null'
+
       - name: Smoke do frontend GTK no runtime oficial
         run: |
           set +e
@@ -81,6 +86,11 @@ jobs:
             --disable-rofiles-fuse \
             --install \
             io.github.harmonia.Harmonia.KDE.yml
+
+      - name: Validar sink de vídeo Qt no Flatpak
+        run: |
+          flatpak run --command=sh io.github.harmonia.Harmonia -c \
+            'gst-inspect-1.0 qml6glsink >/dev/null'
 
       - name: Smoke do frontend Qt/Kirigami e WebEngine
         run: |
