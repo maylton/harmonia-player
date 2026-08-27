@@ -16,6 +16,7 @@ CONFIG_URL = (
 )
 SUPPORTED_SCHEMA_VERSION = 1
 _CONFIG_TTL = 6 * 60 * 60
+_MIN_FORCE_REFRESH_INTERVAL = 20.0
 _MAX_CONFIG_SIZE = 2 * 1024 * 1024
 _HASH_RE = re.compile(r"^[a-f0-9]{8}$")
 _SIG_RE = re.compile(r"^[A-Za-z0-9$_]{1,8}\(\d+,\d+,INPUT\)$")
@@ -38,6 +39,7 @@ class CipherConfig:
 class _ConfigCache:
     values: dict[str, CipherConfig]
     expires_at: float
+    fetched_at: float
 
 
 _CACHE: _ConfigCache | None = None
@@ -118,10 +120,12 @@ class RemoteCipherConfigStore:
     def load(self, *, force: bool = False) -> dict[str, CipherConfig]:
         global _CACHE
         now = time.time()
-        if not force:
-            with _CACHE_LOCK:
-                cached = _CACHE
-            if cached is not None and cached.expires_at > now:
+        with _CACHE_LOCK:
+            cached = _CACHE
+        if cached is not None:
+            if not force and cached.expires_at > now:
+                return cached.values
+            if force and now - cached.fetched_at < _MIN_FORCE_REFRESH_INTERVAL:
                 return cached.values
 
         try:
@@ -134,11 +138,23 @@ class RemoteCipherConfigStore:
             raise
 
         with _CACHE_LOCK:
-            _CACHE = _ConfigCache(values, now + _CONFIG_TTL)
+            _CACHE = _ConfigCache(values, now + _CONFIG_TTL, now)
         return values
 
     def for_player(self, player_url: str) -> CipherConfig | None:
         player_hash = extract_player_hash(player_url)
         if not player_hash:
             return None
-        return self.load().get(player_hash)
+        values = self.load()
+        config = values.get(player_hash)
+        if config is not None:
+            return config
+        # A rotated player hash should not remain broken for the six-hour cache
+        # lifetime. Refresh once immediately, matching InnerTubeX's unknown-player
+        # recovery path.
+        return self.load(force=True).get(player_hash)
+
+    def refresh_after_stream_rejection(self) -> bool:
+        before = self.load()
+        after = self.load(force=True)
+        return before != after
