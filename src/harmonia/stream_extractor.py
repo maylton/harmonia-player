@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -9,6 +10,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
 
+from .cipher import YouTubeCipherService
 from .player_config import PlayerConfig, PlayerConfigResolver
 
 LOGGER = logging.getLogger(__name__)
@@ -19,6 +21,8 @@ WEB_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) "
     "Gecko/20100101 Firefox/140.0"
 )
+_CACHE_LOCK = threading.Lock()
+_STREAM_CACHE: dict[str, "StreamCandidate"] = {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,10 +46,10 @@ class PlayerClientProfile:
         return dict(self.context)
 
 
-# The catalog deliberately mirrors the capabilities of current InnerTubeX
-# clients without coupling Harmonia to Kotlin/JVM. Profiles that require token
-# minting are present for diagnostics but are not automatic until the Python
-# token provider is implemented.
+# Playback profiles mirror the useful non-SABR part of InnerTubeX's current
+# catalog. Token-mandatory profiles will be enabled once the shared PoToken
+# provider is connected; profiles for which PoToken is optional can already
+# benefit from signature timestamp and cipher transforms.
 PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
     PlayerClientProfile(
         id="101",
@@ -140,10 +144,11 @@ class StreamCandidate:
         if marker not in mime:
             return ""
         codecs = mime.split(marker, 1)[1].strip()
-        if codecs.startswith('"'):
-            codecs = codecs[1:].split('"', 1)[0]
-        else:
-            codecs = codecs.split(";", 1)[0]
+        codecs = (
+            codecs[1:].split('"', 1)[0]
+            if codecs.startswith('"')
+            else codecs.split(";", 1)[0]
+        )
         return codecs
 
     @property
@@ -153,6 +158,9 @@ class StreamCandidate:
     @property
     def is_video(self) -> bool:
         return self.mime_type.lower().startswith("video/")
+
+    def valid_at(self, timestamp: int, margin: int = 90) -> bool:
+        return self.expires_at is None or timestamp + margin < self.expires_at
 
 
 @dataclass(slots=True)
@@ -180,10 +188,9 @@ def _stream_expiration(url: str) -> int | None:
 
 
 def _cipher_url(fmt: dict[str, Any]) -> str | None:
-    """Return a directly usable URL when the response does not require JS deciphering."""
+    """Compatibility helper for formats that need no JavaScript deciphering."""
     if fmt.get("url"):
         return str(fmt["url"])
-
     raw = fmt.get("signatureCipher") or fmt.get("cipher")
     if not raw:
         return None
@@ -192,9 +199,6 @@ def _cipher_url(fmt: dict[str, Any]) -> str | None:
     if not urls:
         return None
     url = urls[0]
-
-    # Some responses carry an already-deciphered signature. If only encrypted
-    # `s` exists, the future cipher provider must transform it using player JS.
     signature = (values.get("sig") or values.get("signature") or [None])[0]
     if signature:
         parameter = (values.get("sp") or ["signature"])[0]
@@ -210,15 +214,11 @@ def _cipher_url(fmt: dict[str, Any]) -> str | None:
                 parsed.fragment,
             )
         )
-    if values.get("s"):
-        return None
-    return url
+    return None if values.get("s") else url
 
 
 def _video_codec_rank(mime_type: str) -> int:
     mime = mime_type.lower()
-    # Open codecs are normally present in the desktop runtimes. H.264 may rely
-    # on an extra codec extension and AV1 remains the most expensive fallback.
     if "vp9" in mime or "vp09" in mime:
         return 3
     if "avc1" in mime or "h264" in mime:
@@ -240,15 +240,18 @@ def _audio_codec_rank(mime_type: str) -> int:
 class InnerTubeStreamExtractor:
     """Shared resilient stream resolver for Harmonia audio and video.
 
-    The architecture follows the same separation used by Metrolist/InnerTubeX:
-    a client catalog, ordered fallback, format scoring, URL probing, diagnostics,
-    and explicit extension points for cipher and PoToken work. It remains native
-    Python so both GTK and Qt frontends share exactly the same extraction layer.
+    Player configuration, signature deciphering, n-throttling transforms,
+    fallback clients, format scoring, CDN probing and diagnostics live here so
+    GTK and Qt consume the same extraction contract.
     """
 
     def __init__(self, client):
         self.client = client
         self.config_resolver = PlayerConfigResolver(client)
+        self.cipher_service = YouTubeCipherService(
+            client,
+            config_resolver=self.config_resolver,
+        )
         self._player_configs: dict[bool, PlayerConfig] = {}
 
     def _player_config(self, video_id: str, *, authenticated: bool) -> PlayerConfig | None:
@@ -286,14 +289,16 @@ class InnerTubeStreamExtractor:
         if profile.login_required and not self._authenticated():
             diagnostics.attempts.append(f"{profile.name}: login necessário")
             return None
+        if profile.require_potoken:
+            diagnostics.attempts.append(f"{profile.name}: PoToken obrigatório ainda indisponível")
+            return None
 
-        config = None
-        if profile.use_signature_timestamp:
-            config = self._player_config(
-                video_id,
-                authenticated=profile.login_supported and self._authenticated(),
-            )
-
+        authenticated = profile.login_supported and self._authenticated()
+        config = (
+            self._player_config(video_id, authenticated=authenticated)
+            if profile.use_signature_timestamp
+            else None
+        )
         version = (
             config.client_version
             if profile.use_live_version and config and config.client_version
@@ -317,7 +322,7 @@ class InnerTubeStreamExtractor:
 
         user_context: dict[str, Any] = {}
         data_sync_id = getattr(self.client, "data_sync_id", None)
-        if profile.login_supported and data_sync_id:
+        if authenticated and data_sync_id:
             user_context["onBehalfOfUser"] = data_sync_id
 
         body: dict[str, Any] = {
@@ -328,9 +333,7 @@ class InnerTubeStreamExtractor:
         }
         if config and config.signature_timestamp is not None:
             body["playbackContext"] = {
-                "contentPlaybackContext": {
-                    "signatureTimestamp": config.signature_timestamp,
-                }
+                "contentPlaybackContext": {"signatureTimestamp": config.signature_timestamp}
             }
 
         request = urllib.request.Request(
@@ -349,9 +352,7 @@ class InnerTubeStreamExtractor:
             },
         )
 
-        if profile.login_supported and self._authenticated():
-            # Import lazily to keep this module independent from innertube.py at
-            # import time and avoid a circular dependency.
+        if authenticated:
             from .innertube import sapisid_hash
 
             request.add_header("Cookie", self.client.cookie)
@@ -384,7 +385,9 @@ class InnerTubeStreamExtractor:
     @staticmethod
     def _tracking_url(payload: dict[str, Any]) -> str | None:
         return (
-            (((payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}).get("baseUrl"))
+            ((payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}).get(
+                "baseUrl"
+            )
             or None
         )
 
@@ -392,6 +395,7 @@ class InnerTubeStreamExtractor:
         self,
         payload: dict[str, Any],
         profile: PlayerClientProfile,
+        video_id: str,
     ) -> list[StreamCandidate]:
         streaming = payload.get("streamingData") or {}
         progressive_ids = {
@@ -402,21 +406,29 @@ class InnerTubeStreamExtractor:
         formats = [*(streaming.get("formats") or []), *(streaming.get("adaptiveFormats") or [])]
         result: list[StreamCandidate] = []
         tracking = self._tracking_url(payload)
+        authenticated = profile.login_supported and self._authenticated()
 
         for fmt in formats:
             mime_type = str(fmt.get("mimeType") or "")
             if not mime_type.startswith(("audio/", "video/")):
                 continue
-            url = _cipher_url(fmt)
-            if not url:
+            resolved = self.cipher_service.resolve_format_url(
+                fmt,
+                video_id,
+                authenticated=authenticated,
+            )
+            if resolved is None:
                 continue
+            url = resolved.url
             duration = fmt.get("approxDurationMs")
             itag = int(fmt["itag"]) if fmt.get("itag") is not None else None
-            headers = (
+            headers = [
                 ("User-Agent", profile.user_agent),
                 ("Origin", "https://www.youtube.com"),
                 ("Referer", "https://www.youtube.com/"),
-            )
+            ]
+            if authenticated and getattr(self.client, "cookie", ""):
+                headers.append(("Cookie", self.client.cookie))
             result.append(
                 StreamCandidate(
                     url=url,
@@ -429,7 +441,7 @@ class InnerTubeStreamExtractor:
                     height=int(fmt.get("height", 0) or 0),
                     fps=int(fmt.get("fps", 0) or 0),
                     muxed=itag in progressive_ids,
-                    headers=headers,
+                    headers=tuple(headers),
                     expires_at=_stream_expiration(url),
                     playback_tracking_url=tracking,
                 )
@@ -438,9 +450,6 @@ class InnerTubeStreamExtractor:
 
     def _probe(self, candidate: StreamCandidate) -> bool:
         host = urllib.parse.urlsplit(candidate.url).hostname or ""
-        # Synthetic/test URLs and non-GVS endpoints are accepted without an
-        # extra round trip. GVS URLs are probed because token/cipher failures
-        # otherwise surface much later inside the media pipeline.
         if "googlevideo.com" not in host:
             return True
 
@@ -471,25 +480,48 @@ class InnerTubeStreamExtractor:
             if not payload:
                 continue
             status = payload.get("playabilityStatus") or {}
-            if status.get("status") != "OK":
-                continue
-            yield profile, payload
+            if status.get("status") == "OK":
+                yield profile, payload
+
+    @staticmethod
+    def _cached(cache_key: str, *, force: bool) -> StreamCandidate | None:
+        if force:
+            with _CACHE_LOCK:
+                _STREAM_CACHE.pop(cache_key, None)
+            return None
+        with _CACHE_LOCK:
+            candidate = _STREAM_CACHE.get(cache_key)
+        if candidate and candidate.valid_at(int(time.time())):
+            return candidate
+        return None
+
+    @staticmethod
+    def _store(cache_key: str, candidate: StreamCandidate) -> StreamCandidate:
+        with _CACHE_LOCK:
+            _STREAM_CACHE[cache_key] = candidate
+        return candidate
 
     def extract_audio(
         self,
         video_id: str,
         *,
         max_bitrate: int = 10_000_000,
+        force: bool = False,
     ) -> StreamCandidate:
+        cache_key = f"audio:{getattr(self.client, 'gl', 'US')}:{max_bitrate}:{video_id}"
+        cached = self._cached(cache_key, force=force)
+        if cached:
+            return cached
+
         diagnostics = ExtractionDiagnostics(video_id)
         for profile, payload in self._payloads(video_id, diagnostics):
             candidates = [
                 candidate
-                for candidate in self._format_candidates(payload, profile)
+                for candidate in self._format_candidates(payload, profile, video_id)
                 if candidate.is_audio
             ]
             if not candidates:
-                diagnostics.rejected.append(f"{profile.name}: sem URL de áudio direta")
+                diagnostics.rejected.append(f"{profile.name}: sem URL de áudio resolvida")
                 continue
             within = [candidate for candidate in candidates if candidate.bitrate <= max_bitrate]
             pool = within or candidates
@@ -503,7 +535,7 @@ class InnerTubeStreamExtractor:
             )
             for candidate in ordered:
                 if self._probe(candidate):
-                    return candidate
+                    return self._store(cache_key, candidate)
                 diagnostics.rejected.append(
                     f"{profile.name}: itag {candidate.itag or '?'} rejeitado pelo CDN"
                 )
@@ -518,17 +550,24 @@ class InnerTubeStreamExtractor:
         *,
         max_height: int = 720,
         progressive_only: bool = False,
+        force: bool = False,
     ) -> StreamCandidate:
-        diagnostics = ExtractionDiagnostics(video_id)
         max_height = max(144, int(max_height or 720))
+        mode = "muxed" if progressive_only else "adaptive"
+        cache_key = f"video:{getattr(self.client, 'gl', 'US')}:{max_height}:{mode}:{video_id}"
+        cached = self._cached(cache_key, force=force)
+        if cached:
+            return cached
+
+        diagnostics = ExtractionDiagnostics(video_id)
         for profile, payload in self._payloads(video_id, diagnostics):
             candidates = [
                 candidate
-                for candidate in self._format_candidates(payload, profile)
+                for candidate in self._format_candidates(payload, profile, video_id)
                 if candidate.is_video and (candidate.muxed or not progressive_only)
             ]
             if not candidates:
-                diagnostics.rejected.append(f"{profile.name}: sem URL de vídeo direta")
+                diagnostics.rejected.append(f"{profile.name}: sem URL de vídeo resolvida")
                 continue
             within = [candidate for candidate in candidates if 0 < candidate.height <= max_height]
             pool = within or [candidate for candidate in candidates if candidate.height > 0]
@@ -546,7 +585,7 @@ class InnerTubeStreamExtractor:
             )
             for candidate in ordered:
                 if self._probe(candidate):
-                    return candidate
+                    return self._store(cache_key, candidate)
                 diagnostics.rejected.append(
                     f"{profile.name}: itag {candidate.itag or '?'} rejeitado pelo CDN"
                 )
