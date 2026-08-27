@@ -27,7 +27,7 @@ from .models import LibraryItem
 
 @dataclass(frozen=True, slots=True)
 class VideoStreamInfo:
-    """One progressive YouTube video stream suitable for a single playbin URI."""
+    """One direct YouTube video stream suitable for GStreamer playback."""
 
     url: str
     video_id: str
@@ -39,6 +39,7 @@ class VideoStreamInfo:
     width: int = 0
     height: int = 0
     fps: int = 0
+    muxed: bool = True
     expires_at: int | None = None
 
     def valid_at(self, timestamp: int, margin: int = 90) -> bool:
@@ -61,8 +62,6 @@ def _normalize(value: str) -> str:
 
 def _artist_hint(subtitle: str) -> str:
     value = _DURATION_SUFFIX.sub("", subtitle or "")
-    # Search results commonly use artist · album · duration. The artist is the
-    # most useful discriminator for selecting the matching official video.
     return re.split(r"\s*[·•]\s*", value, maxsplit=1)[0].strip()
 
 
@@ -86,9 +85,6 @@ def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
         if wanted_artist in candidate_subtitle:
             score += 3.0
 
-    # Prefer likely canonical music videos over lyrics/live/fan uploads when
-    # otherwise similarly ranked. These are soft hints only; the YouTube Music
-    # Videos search ordering remains the primary signal.
     normalized = f"{candidate_title} {candidate_subtitle}"
     if "official video" in normalized or "official music video" in normalized:
         score += 1.5
@@ -124,7 +120,6 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
         candidates, key=lambda candidate: _candidate_score(item, candidate), reverse=True
     )
     selected = ranked[0]
-    # Reject very weak matches instead of silently playing an unrelated video.
     if _candidate_score(item, selected) < 4.0:
         raise InnerTubeError(_("Nenhum vídeo correspondente foi encontrado para esta faixa."))
 
@@ -197,24 +192,36 @@ def _player_payload(
     return None
 
 
+def _video_compatibility(fmt: dict[str, Any]) -> int:
+    """Prefer widely decoded H.264 MP4 when quality is otherwise equal."""
+    mime = str(fmt.get("mimeType") or "").lower()
+    if "video/mp4" in mime and "avc1" in mime:
+        return 2
+    if "video/mp4" in mime:
+        return 1
+    return 0
+
+
 def resolve_video_stream(
     client: InnerTubeClient,
     item: LibraryItem,
     *,
     max_height: int = 720,
     force: bool = False,
+    allow_video_only: bool = False,
 ) -> VideoStreamInfo:
-    """Resolve a progressive (audio+video) stream for the matching music video.
+    """Resolve a direct stream for the matching music video.
 
-    The first implementation intentionally chooses YouTube's progressive
-    ``formats`` rather than adaptive video-only formats. This keeps one URI and
-    one shared GStreamer playbin, so switching modes cannot create a second
-    playback/history/scrobble session. Adaptive 1080p+ can be added later as a
-    separate pipeline without changing this public API.
+    GTK's current single-playbin implementation keeps ``allow_video_only``
+    disabled and therefore receives only muxed audio+video formats. The Qt
+    frontend owns a dedicated muted video layer, so it can also consume
+    ``adaptiveFormats`` video-only streams and keep the main audio transport
+    untouched.
     """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
-    cache_key = f"{client.gl}:{max_height}:{video_id}"
+    mode_key = "adaptive" if allow_video_only else "muxed"
+    cache_key = f"{client.gl}:{max_height}:{mode_key}:{video_id}"
     if not force:
         with _VIDEO_CACHE_LOCK:
             cached = _VIDEO_STREAM_CACHE.get(cache_key)
@@ -234,33 +241,50 @@ def resolve_video_stream(
             failures.append(f"{profile['name']}: sem resposta")
             continue
         status = payload.get("playabilityStatus") or {}
+        streaming = payload.get("streamingData") or {}
         progressive = [
             fmt
-            for fmt in ((payload.get("streamingData") or {}).get("formats") or [])
+            for fmt in (streaming.get("formats") or [])
             if str(fmt.get("mimeType", "")).startswith("video/")
             and fmt.get("url")
             and int(fmt.get("height", 0) or 0) > 0
         ]
-        if status.get("status") != "OK" or not progressive:
+        adaptive = [
+            fmt
+            for fmt in (streaming.get("adaptiveFormats") or [])
+            if str(fmt.get("mimeType", "")).startswith("video/")
+            and fmt.get("url")
+            and int(fmt.get("height", 0) or 0) > 0
+        ]
+        candidates: list[tuple[dict[str, Any], bool]] = [
+            (fmt, True) for fmt in progressive
+        ]
+        if allow_video_only:
+            candidates.extend((fmt, False) for fmt in adaptive)
+
+        if status.get("status") != "OK" or not candidates:
+            missing = "sem stream de vídeo direto" if allow_video_only else "sem vídeo progressivo"
             failures.append(
-                f"{profile['name']}: {status.get('reason') or status.get('status') or 'sem vídeo progressivo'}"
+                f"{profile['name']}: {status.get('reason') or status.get('status') or missing}"
             )
             continue
 
         within_quality = [
-            fmt for fmt in progressive if int(fmt.get("height", 0) or 0) <= max_height
+            pair for pair in candidates if int(pair[0].get("height", 0) or 0) <= max_height
         ]
+        pool = within_quality or candidates
         if within_quality:
-            selected = max(
-                within_quality,
-                key=lambda fmt: (
-                    int(fmt.get("height", 0) or 0),
-                    int(fmt.get("fps", 0) or 0),
-                    int(fmt.get("bitrate", 0) or 0),
+            selected, muxed = max(
+                pool,
+                key=lambda pair: (
+                    int(pair[0].get("height", 0) or 0),
+                    _video_compatibility(pair[0]),
+                    int(pair[0].get("fps", 0) or 0),
+                    int(pair[0].get("bitrate", 0) or 0),
                 ),
             )
         else:
-            selected = min(progressive, key=lambda fmt: int(fmt.get("height", 0) or 0))
+            selected, muxed = min(pool, key=lambda pair: int(pair[0].get("height", 0) or 0))
 
         url = str(selected["url"])
         duration = selected.get("approxDurationMs")
@@ -275,6 +299,7 @@ def resolve_video_stream(
             width=int(selected.get("width", 0) or 0),
             height=int(selected.get("height", 0) or 0),
             fps=int(selected.get("fps", 0) or 0),
+            muxed=muxed,
             expires_at=_stream_expiration(url),
         )
         with _VIDEO_CACHE_LOCK:
