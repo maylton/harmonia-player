@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from harmonia.app import HarmoniaWindow
 from harmonia.models import LyricLine, LyricsDocument
 
@@ -99,3 +101,11 @@ def test_google_artwork_url_requests_context_specific_resolution():
     assert HarmoniaWindow._sized_artwork_url(source) == source
     external = "https://example.com/cover-w120-h120.jpg"
     assert HarmoniaWindow._sized_artwork_url(external, 1024) == external
+
+
+def test_expanded_player_uses_a_supported_gtk_revealer_transition() -> None:
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "src" / "harmonia" / "app.py").read_text(encoding="utf-8")
+
+    assert "Gtk.RevealerTransitionType.FADE_SLIDE_UP" not in source
+    assert "Gtk.RevealerTransitionType.SLIDE_UP" in source

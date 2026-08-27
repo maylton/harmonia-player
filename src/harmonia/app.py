@@ -674,7 +674,7 @@ class HarmoniaWindow(
 
     def _build_expanded_player(self) -> None:
         self.expanded_revealer = Gtk.Revealer(
-            transition_type=Gtk.RevealerTransitionType.FADE_SLIDE_UP,
+            transition_type=Gtk.RevealerTransitionType.SLIDE_UP,
             transition_duration=500,
             hexpand=True,
             vexpand=True,

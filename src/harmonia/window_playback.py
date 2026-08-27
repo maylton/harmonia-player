@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import random
 import threading
 import time
 
@@ -15,6 +14,14 @@ from .i18n import _
 from .models import (
     LibraryItem,
     PlaybackState,
+)
+from .playback_state import (
+    filter_new_recommendations,
+    move_queue_item,
+    playback_state_snapshot,
+    radio_seed_for_autoplay,
+    remove_queue_item,
+    shuffled_queue_keep_current,
 )
 from .ui import (
     set_icon_selected,
@@ -31,14 +38,14 @@ class WindowPlaybackMixin:
                 if self._stream_ready
                 else self._restored_position_ms
             )
-        return PlaybackState(
-            list(self.queue),
-            list(self.related_items),
-            max(0, self.queue_index),
-            max(0, position_ms),
-            self.shuffle_enabled,
-            self.repeat_enabled,
-            self.autoplay_enabled,
+        return playback_state_snapshot(
+            self.queue,
+            self.related_items,
+            self.queue_index,
+            position_ms,
+            shuffle=self.shuffle_enabled,
+            repeat=self.repeat_enabled,
+            autoplay=self.autoplay_enabled,
         )
 
     def _save_playback_state(self, position_ms: int | None = None) -> None:
@@ -123,11 +130,7 @@ class WindowPlaybackMixin:
             return
         self.shuffle_enabled = enabled
         if self.shuffle_enabled and self.queue:
-            current = self.queue[self.queue_index]
-            remainder = [item for i, item in enumerate(self.queue) if i != self.queue_index]
-            random.shuffle(remainder)
-            self.queue = [current, *remainder]
-            self.queue_index = 0
+            self.queue, self.queue_index = shuffled_queue_keep_current(self.queue, self.queue_index)
             self._render_queue()
             self._save_playback_state()
         for control in self.shuffle_buttons:
@@ -170,10 +173,9 @@ class WindowPlaybackMixin:
                 self._promote_related(self.related_items[0], play_next=False)
                 self._play_next()
             return
-        remaining = len(self.queue) - self.queue_index - 1
-        if not force and remaining > 5:
+        seed = radio_seed_for_autoplay(self.queue, self.queue_index, force=force)
+        if seed is None:
             return
-        seed = self.queue[-1]
         self._autoplay_request += 1
         request_id = self._autoplay_request
         self._autoplay_loading = True
@@ -203,8 +205,7 @@ class WindowPlaybackMixin:
                 )
             self._waiting_for_autoplay = False
             return False
-        existing = {item.id for item in self.queue}
-        self.related_items = [item for item in recommendations or [] if item.id not in existing]
+        self.related_items = filter_new_recommendations(self.queue, recommendations)
         self._render_queue()
         self._save_playback_state()
         if self._waiting_for_autoplay and self.related_items:
@@ -316,32 +317,28 @@ class WindowPlaybackMixin:
         self._render_expanded_related()
 
     def _move_queue_item(self, position: int, direction: int) -> None:
-        target = position + direction
-        if position < 0 or target < 0 or position >= len(self.queue) or target >= len(self.queue):
+        self.queue_index, changed = move_queue_item(
+            self.queue,
+            self.queue_index,
+            position,
+            direction,
+        )
+        if not changed:
             return
-        self.queue[position], self.queue[target] = self.queue[target], self.queue[position]
-        if self.queue_index == position:
-            self.queue_index = target
-        elif self.queue_index == target:
-            self.queue_index = position
         self._render_queue()
         self._save_playback_state()
 
     def _remove_queue_item(self, position: int) -> None:
-        if position < 0 or position >= len(self.queue):
+        result = remove_queue_item(self.queue, self.queue_index, position)
+        if result is None:
             return
-        removing_current = position == self.queue_index
-        self.queue.pop(position)
-        if not self.queue:
+        self.queue_index = result.index
+        if result.empty:
             self._stop_player()
             return
-        if position < self.queue_index:
-            self.queue_index -= 1
-        elif self.queue_index >= len(self.queue):
-            self.queue_index = len(self.queue) - 1
         self._render_queue()
         self._save_playback_state()
-        if removing_current:
+        if result.removed_current:
             self.play_item(self.queue[self.queue_index])
 
     def _promote_related(self, item: LibraryItem, play_next: bool) -> None:

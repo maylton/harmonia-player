@@ -1,3 +1,3 @@
-from .app import main
+from .frontend import main
 
 raise SystemExit(main())

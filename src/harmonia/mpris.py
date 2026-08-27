@@ -33,15 +33,22 @@ XML = """<node>
 
 
 class MprisService:
+    """Shared MPRIS service with optional frontend lifecycle callbacks."""
+
     def __init__(
         self,
         app,
         player,
         callbacks: dict[str, Callable[..., object]],
         state: dict[str, Callable[[], object]] | None = None,
+        *,
+        raise_callback: Callable[[], object] | None = None,
+        quit_callback: Callable[[], object] | None = None,
     ):
         self.app, self.player, self.callbacks = app, player, callbacks
         self.state = state or {}
+        self.raise_callback = raise_callback
+        self.quit_callback = quit_callback
         self.item = None
         self.duration_us = 0
         self.connection = None
@@ -68,6 +75,25 @@ class MprisService:
             )
             self.registrations.append(reg)
 
+    def _raise(self) -> None:
+        if self.raise_callback:
+            self.raise_callback()
+            return
+        if self.app is None:
+            return
+        window = self.app.get_active_window()
+        if window:
+            window.present()
+
+    def _quit(self) -> None:
+        if self.quit_callback:
+            self.quit_callback()
+            return
+        if self.app is None:
+            return
+        window = self.app.get_active_window()
+        window.close() if window else self.app.quit()
+
     def _method(self, _conn, _sender, _path, _iface, method, params, invocation):
         actions = {
             "Next": "next",
@@ -78,19 +104,19 @@ class MprisService:
             "Play": "play",
         }
         if method == "Raise":
-            window = self.app.get_active_window()
-            if window:
-                window.present()
+            self._raise()
         elif method == "Quit":
-            window = self.app.get_active_window()
-            window.close() if window else self.app.quit()
+            self._quit()
         elif method in actions and actions[method] in self.callbacks:
             self.callbacks[actions[method]]()
         elif method == "Seek":
             target = int(self._state("position", self.player.position_us)) + params.unpack()[0]
             (self.callbacks.get("seek") or self.player.seek)(target)
+            self._emit_seeked(target)
         elif method == "SetPosition":
-            (self.callbacks.get("seek") or self.player.seek)(params.unpack()[1])
+            target = params.unpack()[1]
+            (self.callbacks.get("seek") or self.player.seek)(target)
+            self._emit_seeked(target)
         invocation.return_value(None)
 
     def _get_property(self, _conn, _sender, _path, interface, prop):
@@ -177,6 +203,17 @@ class MprisService:
             data["mpris:artUrl"] = GLib.Variant("s", self.item.thumbnail)
         return data
 
+    def _emit_seeked(self, position_us: int) -> None:
+        if not self.connection:
+            return
+        self.connection.emit_signal(
+            None,
+            "/org/mpris/MediaPlayer2",
+            "org.mpris.MediaPlayer2.Player",
+            "Seeked",
+            GLib.Variant("(x)", (int(position_us),)),
+        )
+
     def update(self, item=None, duration_us=None):
         if item is not None:
             self.item = item
@@ -187,6 +224,11 @@ class MprisService:
                 "PlaybackStatus": GLib.Variant(
                     "s", "Playing" if self._state("playing", self.player.playing) else "Paused"
                 ),
+                "LoopStatus": GLib.Variant(
+                    "s", "Track" if self._state("repeat", False) else "None"
+                ),
+                "Shuffle": GLib.Variant("b", bool(self._state("shuffle", False))),
+                "Volume": GLib.Variant("d", float(self.player.volume)),
                 "Metadata": GLib.Variant("a{sv}", self._metadata()),
             }
             self.connection.emit_signal(
