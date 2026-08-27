@@ -3,8 +3,8 @@ from __future__ import annotations
 import io
 
 from harmonia.player_config import (
-    PlayerConfigResolver,
     _CACHE,
+    PlayerConfigResolver,
     _extract_player_url,
     _extract_signature_timestamp,
 )
