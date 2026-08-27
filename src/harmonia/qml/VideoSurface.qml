@@ -7,7 +7,10 @@ Item {
     clip: true
 
     Component.onCompleted: videoBackend.registerSurface(root)
-    onVisibleChanged: videoBackend.refreshAvailability()
+    onVisibleChanged: {
+        if (visible)
+            videoBackend.refreshAvailability()
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -26,9 +29,11 @@ Item {
     Kirigami.PlaceholderMessage {
         anchors.centerIn: parent
         width: Math.min(parent.width * 0.8, Kirigami.Units.gridUnit * 18)
-        visible: !videoBackend.available && !videoBackend.loading
-        text: "Vídeo indisponível"
-        explanation: "A saída de vídeo do GStreamer não está disponível para esta faixa."
+        visible: !videoBackend.outputReady && !videoBackend.loading
+        text: "Saída de vídeo indisponível"
+        explanation: videoBackend.outputError.length > 0
+                     ? videoBackend.outputError
+                     : "A superfície de vídeo do GStreamer ainda não está pronta."
         icon.name: "video-x-generic"
         z: 2
     }
