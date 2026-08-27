@@ -3,8 +3,12 @@ from __future__ import annotations
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 from PySide6.QtWebEngineQuick import QQuickWebEngineProfile
 
-LOGIN_URL = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
-_REQUIRED_SESSION_COOKIES = {"SAPISID", "__Secure-3PAPISID"}
+from .auth_state import (
+    LOGIN_URL,
+    SESSION_COOKIE_NAMES,
+    has_session_cookie,
+    is_youtube_music_url,
+)
 
 
 class QtAuthController(QObject):
@@ -64,7 +68,7 @@ class QtAuthController(QObject):
         if not self._active:
             return
         self._current_url = (url or "").strip()
-        if self._is_youtube_music_url(self._current_url):
+        if is_youtube_music_url(self._current_url):
             # loadAllCookies() re-emits the complete cookie jar through
             # cookieAdded. A short single-shot lets the final navigation's
             # cookies arrive before we serialize them for the shared backend.
@@ -79,7 +83,7 @@ class QtAuthController(QObject):
         if not name:
             return
         self._cookies[name] = value
-        if self._is_youtube_music_url(self._current_url) and name in _REQUIRED_SESSION_COOKIES:
+        if is_youtube_music_url(self._current_url) and name in SESSION_COOKIE_NAMES:
             self._schedule_completion(120)
 
     def _cookie_removed(self, cookie) -> None:
@@ -96,9 +100,9 @@ class QtAuthController(QObject):
 
     def _complete_if_ready(self) -> None:
         self._completion_pending = False
-        if not self._active or not self._is_youtube_music_url(self._current_url):
+        if not self._active or not is_youtube_music_url(self._current_url):
             return
-        if not _REQUIRED_SESSION_COOKIES.intersection(self._cookies):
+        if not has_session_cookie(self._cookies):
             return
 
         raw_cookie = "; ".join(
@@ -110,11 +114,6 @@ class QtAuthController(QObject):
         self._active = False
         self.activeChanged.emit()
         self.cookieReady.emit(raw_cookie)
-
-    @staticmethod
-    def _is_youtube_music_url(url: str) -> bool:
-        lowered = url.lower()
-        return lowered.startswith("https://music.youtube.com")
 
     @staticmethod
     def _is_youtube_cookie(cookie) -> bool:
