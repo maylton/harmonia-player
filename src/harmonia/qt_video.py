@@ -36,6 +36,7 @@ class QtVideoController(QObject):
         self._pending: dict[int, tuple[str, str, int, bool, str]] = {}
         self._surface = None
         self._sink = None
+        self._sink_error = ""
         self._original_player_error = self.playback.player.on_error
         self.playback.player.on_error = self._on_player_error
 
@@ -50,16 +51,32 @@ class QtVideoController(QObject):
     def loading(self) -> bool:
         return self._loading
 
-    @Property(bool, notify=availabilityChanged)
-    def available(self) -> bool:
+    def _track_eligible(self) -> bool:
         item = self.playback.current_item
         return bool(
-            self._sink is not None
-            and item is not None
+            item is not None
             and item.id
             and not item.id.startswith("local:")
             and not getattr(self.playback, "remote_active", False)
         )
+
+    @Property(bool, notify=availabilityChanged)
+    def available(self) -> bool:
+        """Whether the current track is eligible for a video lookup.
+
+        This deliberately does not depend on qml6glsink already being attached.
+        A music video can only be confirmed after the user requests Video, and
+        the QML surface may be initialized later than the transport state.
+        """
+        return self._track_eligible()
+
+    @Property(bool, notify=availabilityChanged)
+    def outputReady(self) -> bool:
+        return self._sink is not None
+
+    @Property(str, notify=availabilityChanged)
+    def outputError(self) -> str:
+        return self._sink_error
 
     def _set_loading(self, value: bool) -> None:
         value = bool(value)
@@ -69,49 +86,70 @@ class QtVideoController(QObject):
         self.loadingChanged.emit()
         self.availabilityChanged.emit()
 
-    @Slot(QObject)
-    def registerSurface(self, surface: QObject) -> None:
-        """Bind qml6glsink to the QQuickItem owned by VideoSurface.qml."""
-        if self._surface is surface and self._sink is not None:
+    def _discard_sink(self) -> None:
+        if self._sink is None:
             return
-        if self._sink is not None:
-            with suppress(Exception):
-                self._sink.set_state(Gst.State.NULL)
+        with suppress(Exception):
             self.playback.player.set_video_sink(None)
-            self._sink = None
+        with suppress(Exception):
+            self._sink.set_state(Gst.State.NULL)
+        self._sink = None
+
+    def _ensure_sink(self) -> bool:
+        if self._sink is not None:
+            return True
+        if self._surface is None:
+            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
+            self.availabilityChanged.emit()
+            return False
 
         sink = Gst.ElementFactory.make("qml6glsink", "harmonia-qt-video")
         if sink is None:
-            self.backend._set_status(
-                "O plugin GStreamer qml6glsink não está disponível; o modo de vídeo foi desativado."
-            )
-            self._surface = surface
+            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
             self.availabilityChanged.emit()
-            return
+            return False
 
         try:
-            pointer = int(shiboken6.getCppPointer(surface)[0])
+            pointer = int(shiboken6.getCppPointer(self._surface)[0])
             sink.set_property("widget", pointer)
             # qml6glsink should establish Qt's GstGLDisplay before the rest of
             # the GL pipeline reaches READY/PAUSED.
-            sink.set_state(Gst.State.READY)
+            result = sink.set_state(Gst.State.READY)
+            if result == Gst.StateChangeReturn.FAILURE:
+                raise RuntimeError("qml6glsink recusou o estado READY")
             self.playback.player.set_video_sink(sink)
         except Exception as exc:
             LOGGER.exception("Could not attach qml6glsink to QQuickItem")
             with suppress(Exception):
                 sink.set_state(Gst.State.NULL)
-            self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {exc}")
-            self._surface = surface
+            self._sink_error = str(exc)
             self._sink = None
             self.availabilityChanged.emit()
-            return
+            return False
 
-        self._surface = surface
         self._sink = sink
+        self._sink_error = ""
+        self.availabilityChanged.emit()
+        return True
+
+    @Slot(QObject)
+    def registerSurface(self, surface: QObject) -> None:
+        """Remember the QQuickItem and prepare qml6glsink when possible."""
+        if self._surface is surface:
+            self._ensure_sink()
+            return
+        self._discard_sink()
+        self._surface = surface
+        self._sink_error = ""
+        self._ensure_sink()
         self.availabilityChanged.emit()
 
     @Slot()
     def refreshAvailability(self) -> None:
+        # The expanded player can be created before the QML video item becomes
+        # usable. Retry sink setup whenever that surface/dialog becomes visible.
+        if self._surface is not None and self._sink is None:
+            self._ensure_sink()
         self.availabilityChanged.emit()
 
     @Slot(str)
@@ -125,12 +163,17 @@ class QtVideoController(QObject):
             return
         if mode == self._mode and not force:
             return
-        if mode == "video" and not self.available:
-            self.backend._set_status(
-                "O vídeo não está disponível para esta faixa neste dispositivo."
-            )
-            self.availabilityChanged.emit()
-            return
+        if mode == "video":
+            if not self.available:
+                self.backend._set_status(
+                    "O vídeo não está disponível para esta faixa neste dispositivo."
+                )
+                self.availabilityChanged.emit()
+                return
+            if not self._ensure_sink():
+                detail = self._sink_error or "saída de vídeo indisponível"
+                self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
+                return
 
         self._request += 1
         request_id = self._request
@@ -175,9 +218,17 @@ class QtVideoController(QObject):
             self._mode = previous_mode
             self.modeChanged.emit()
             if mode == "video":
-                self.backend._set_status(f"Não foi possível abrir o vídeo: {error}")
+                detail = error or "nenhum vídeo correspondente foi encontrado"
+                self.backend._set_status(f"Não foi possível abrir o vídeo: {detail}")
             else:
                 self.backend._set_status(f"Não foi possível voltar para a música: {error}")
+            return
+
+        if mode == "video" and not self._ensure_sink():
+            self._mode = previous_mode
+            self.modeChanged.emit()
+            detail = self._sink_error or "saída de vídeo indisponível"
+            self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
             return
 
         self._mode = mode
@@ -215,7 +266,4 @@ class QtVideoController(QObject):
         self._request += 1
         self._pending.clear()
         self.playback.player.on_error = self._original_player_error
-        if self._sink is not None:
-            with suppress(Exception):
-                self._sink.set_state(Gst.State.NULL)
-            self._sink = None
+        self._discard_sink()
