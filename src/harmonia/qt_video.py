@@ -126,7 +126,9 @@ class QtVideoController(QObject):
         if mode == self._mode and not force:
             return
         if mode == "video" and not self.available:
-            self.backend._set_status("O vídeo não está disponível para esta faixa neste dispositivo.")
+            self.backend._set_status(
+                "O vídeo não está disponível para esta faixa neste dispositivo."
+            )
             self.availabilityChanged.emit()
             return
 
