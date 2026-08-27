@@ -56,9 +56,10 @@ def main() -> int:
                 raise
             LOGGER.exception("Qt/Kirigami frontend failed to start; falling back to GTK")
 
-    from .app import HarmoniaWindow
-    from .app import main as gtk_main
+    from . import app as gtk_app
     from .gtk_video import install_gtk_video
 
-    install_gtk_video(HarmoniaWindow)
-    return gtk_main()
+    window_class = getattr(gtk_app, "HarmoniaWindow", None)
+    if window_class is not None:
+        install_gtk_video(window_class)
+    return gtk_app.main()
