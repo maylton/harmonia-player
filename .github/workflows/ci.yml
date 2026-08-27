@@ -72,6 +72,34 @@ jobs:
             exit 1
           fi
 
+      - name: Construir variante KDE no runtime oficial
+        run: |
+          flatpak-builder build-kde \
+            --user \
+            --install-deps-from=flathub \
+            --force-clean \
+            --disable-rofiles-fuse \
+            --install \
+            io.github.harmonia.Harmonia.KDE.yml
+
+      - name: Smoke do frontend Qt/Kirigami e WebEngine
+        run: |
+          set +e
+          output=$(xvfb-run -a dbus-run-session -- timeout 12 \
+            flatpak run \
+              --env=QT_QPA_PLATFORM=xcb \
+              io.github.harmonia.Harmonia --qt 2>&1)
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            exit "$status"
+          fi
+          if printf '%s\n' "$output" | grep -E \
+            'Traceback|ModuleNotFoundError|ImportError|QQmlApplicationEngine failed|module "QtWebEngine" is not installed|QtWebEngineProcess.*(not found|failed)'; then
+            exit 1
+          fi
+
       - name: Validar metadados e traduções
         run: |
           desktop-file-validate data/io.github.harmonia.Harmonia.desktop
