@@ -4,6 +4,7 @@ import pytest
 
 from harmonia.innertube import InnerTubeError
 from harmonia.models import LibraryItem, SearchGroup
+from harmonia.stream_extractor import StreamCandidate
 from harmonia.video import find_video_variant, resolve_video_stream
 
 
@@ -47,51 +48,30 @@ def test_video_variant_rejects_unrelated_results():
         find_video_variant(client, item, force=True)
 
 
-def test_progressive_video_prefers_highest_format_within_limit(monkeypatch):
+def test_progressive_video_uses_shared_extractor(monkeypatch):
     item = LibraryItem("video-quality", "Song", "Artist", kind="videos")
 
     class PlayerClient:
         gl = "BR"
 
-        def _bootstrap(self):
-            return None
+    def extract(_self, video_id, *, max_height, progressive_only):
+        assert video_id == "video-quality"
+        assert max_height == 720
+        assert progressive_only is True
+        return StreamCandidate(
+            url="https://example.test/720.mp4",
+            client="TEST",
+            mime_type='video/mp4; codecs="avc1, mp4a"',
+            bitrate=2_000_000,
+            itag=22,
+            duration_ms=42_000,
+            width=1280,
+            height=720,
+            fps=30,
+            muxed=True,
+        )
 
-    payload = {
-        "playabilityStatus": {"status": "OK"},
-        "streamingData": {
-            "formats": [
-                {
-                    "url": "https://example.test/360.mp4",
-                    "mimeType": 'video/mp4; codecs="avc1, mp4a"',
-                    "height": 360,
-                    "width": 640,
-                    "fps": 30,
-                    "bitrate": 500_000,
-                    "itag": 18,
-                },
-                {
-                    "url": "https://example.test/720.mp4",
-                    "mimeType": 'video/mp4; codecs="avc1, mp4a"',
-                    "height": 720,
-                    "width": 1280,
-                    "fps": 30,
-                    "bitrate": 2_000_000,
-                    "itag": 22,
-                },
-                {
-                    "url": "https://example.test/1080.mp4",
-                    "mimeType": 'video/mp4; codecs="avc1, mp4a"',
-                    "height": 1080,
-                    "width": 1920,
-                    "fps": 30,
-                    "bitrate": 4_000_000,
-                    "itag": 37,
-                },
-            ]
-        },
-    }
-
-    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    monkeypatch.setattr("harmonia.video.InnerTubeStreamExtractor.extract_video", extract)
     stream = resolve_video_stream(PlayerClient(), item, max_height=720, force=True)
     assert stream.height == 720
     assert stream.url.endswith("720.mp4")
@@ -104,37 +84,24 @@ def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
     class PlayerClient:
         gl = "BR"
 
-        def _bootstrap(self):
-            return None
+    def extract(_self, video_id, *, max_height, progressive_only):
+        assert video_id == "video-adaptive"
+        assert max_height == 720
+        assert progressive_only is False
+        return StreamCandidate(
+            url="https://example.test/720.mp4",
+            client="TEST",
+            mime_type='video/mp4; codecs="avc1.64001f"',
+            bitrate=1_500_000,
+            itag=136,
+            duration_ms=42_000,
+            width=1280,
+            height=720,
+            fps=30,
+            muxed=False,
+        )
 
-    payload = {
-        "playabilityStatus": {"status": "OK"},
-        "streamingData": {
-            "formats": [],
-            "adaptiveFormats": [
-                {
-                    "url": "https://example.test/480.mp4",
-                    "mimeType": 'video/mp4; codecs="avc1.4d401f"',
-                    "height": 480,
-                    "width": 854,
-                    "fps": 30,
-                    "bitrate": 900_000,
-                    "itag": 135,
-                },
-                {
-                    "url": "https://example.test/720.mp4",
-                    "mimeType": 'video/mp4; codecs="avc1.64001f"',
-                    "height": 720,
-                    "width": 1280,
-                    "fps": 30,
-                    "bitrate": 1_500_000,
-                    "itag": 136,
-                },
-            ],
-        },
-    }
-
-    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    monkeypatch.setattr("harmonia.video.InnerTubeStreamExtractor.extract_video", extract)
     stream = resolve_video_stream(
         PlayerClient(),
         item,
