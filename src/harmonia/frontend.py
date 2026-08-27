@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import logging
 import os
 import sys
@@ -56,7 +56,7 @@ def main() -> int:
                 raise
             LOGGER.exception("Qt/Kirigami frontend failed to start; falling back to GTK")
 
-    from . import app as gtk_app
+    gtk_app = importlib.import_module(".app", __package__)
 
     window_class = getattr(gtk_app, "HarmoniaWindow", None)
     if window_class is not None:
