@@ -94,9 +94,6 @@ class PlayerClientDirector:
             config.visitor_data if config else None
         )
 
-        # Tokenized web identities are especially important for video URLs and
-        # restricted/authenticated content. If the provider is unavailable, only
-        # optional-token clients may continue through the untokenized path.
         token = None
         provider = current_potoken_provider()
         should_mint = bool(
@@ -121,12 +118,14 @@ class PlayerClientDirector:
             CLIENT_HEALTH.failure(profile_id, transient=True)
             return None
 
+        profile_context = profile.context_values()
+        embed_url = profile_context.pop("thirdPartyEmbedUrl", None)
         client_context: dict[str, Any] = {
             "clientName": self._profile_base_name(profile),
             "clientVersion": version,
             "hl": getattr(self.client, "hl", "pt-BR"),
             "gl": getattr(self.client, "gl", "BR"),
-            **profile.context_values(),
+            **profile_context,
         }
         if profile.include_user_agent_in_context:
             client_context["userAgent"] = profile.user_agent
@@ -137,9 +136,12 @@ class PlayerClientDirector:
         data_sync_id = getattr(self.client, "data_sync_id", None)
         if authenticated and data_sync_id:
             user_context["onBehalfOfUser"] = data_sync_id
+        request_context: dict[str, Any] = {"client": client_context, "user": user_context}
+        if embed_url:
+            request_context["thirdParty"] = {"embedUrl": embed_url}
 
         body: dict[str, Any] = {
-            "context": {"client": client_context, "user": user_context},
+            "context": request_context,
             "videoId": video_id,
             "contentCheckOk": True,
             "racyCheckOk": True,
@@ -151,9 +153,8 @@ class PlayerClientDirector:
         if token is not None and token.player_request_token:
             body["serviceIntegrityDimensions"] = {"poToken": token.player_request_token}
 
-        endpoint = "player"
         request = urllib.request.Request(
-            f"{API_URL}/{endpoint}?prettyPrint=false",
+            f"{API_URL}/player?prettyPrint=false",
             data=json.dumps(body).encode(),
             method="POST",
             headers={
@@ -221,8 +222,6 @@ class PlayerClientDirector:
             key=lambda pair: CLIENT_HEALTH.order_key(str(pair[1].name), -pair[0]),
         )
         healthy = [pair for pair in ordered if CLIENT_HEALTH.available(str(pair[1].name))]
-        # If every identity is cooling down, probing them is still better than a
-        # hard failure; health only changes ordering in that case.
         selected = healthy or ordered
         for _index, profile in selected:
             payload = self._request(
