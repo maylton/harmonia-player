@@ -11,7 +11,6 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
-from . import qt_backend as qt_backend_module
 from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
@@ -95,10 +94,10 @@ def main() -> int:
 
     engine = QQmlApplicationEngine()
 
-    # Keep HarmoniaQtBackend as the stable facade while selecting the Qt-only
-    # playback specialization before the facade constructs its controllers.
-    qt_backend_module.QtPlaybackController = QtIntegratedPlaybackController
-    backend = HarmoniaQtBackend(engine)
+    backend = HarmoniaQtBackend(
+        engine,
+        playback_controller=QtIntegratedPlaybackController,
+    )
     auth = QtAuthController(engine)
     integrations = QtIntegrationsController(backend, backend._executor, engine)
     auth.cookieReady.connect(backend.connectCookie)
