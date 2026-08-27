@@ -54,6 +54,24 @@ jobs:
             --install \
             io.github.harmonia.Harmonia.yml
 
+      - name: Auditar plugins multimídia no runtime GTK
+        run: |
+          flatpak run --command=python3 io.github.harmonia.Harmonia -c '
+          import gi
+          gi.require_version("Gst", "1.0")
+          from gi.repository import Gst
+          Gst.init(None)
+          required = (
+              "playbin", "souphttpsrc", "audioconvert", "pitch",
+              "equalizer-10bands", "rgvolume", "removesilence",
+              "pulsesrc", "audioresample", "wavenc", "filesink",
+          )
+          missing = [name for name in required if Gst.ElementFactory.find(name) is None]
+          if missing:
+              raise SystemExit("Missing GStreamer elements: " + ", ".join(missing))
+          print("GStreamer runtime audit OK:", ", ".join(required))
+          '
+
       - name: Smoke do frontend GTK no runtime oficial
         run: |
           set +e
@@ -81,6 +99,24 @@ jobs:
             --disable-rofiles-fuse \
             --install \
             io.github.harmonia.Harmonia.KDE.yml
+
+      - name: Auditar plugins multimídia no runtime KDE
+        run: |
+          flatpak run --command=python3 io.github.harmonia.Harmonia -c '
+          import gi
+          gi.require_version("Gst", "1.0")
+          from gi.repository import Gst
+          Gst.init(None)
+          required = (
+              "playbin", "souphttpsrc", "audioconvert", "pitch",
+              "equalizer-10bands", "rgvolume", "removesilence",
+              "pulsesrc", "audioresample", "wavenc", "filesink",
+          )
+          missing = [name for name in required if Gst.ElementFactory.find(name) is None]
+          if missing:
+              raise SystemExit("Missing GStreamer elements: " + ", ".join(missing))
+          print("GStreamer runtime audit OK:", ", ".join(required))
+          '
 
       - name: Smoke do frontend Qt/Kirigami e WebEngine
         run: |
