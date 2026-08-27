@@ -23,6 +23,7 @@ class _StreamRelay:
     Googlevideo currently rejects the open-ended Range requests emitted by
     GStreamer's souphttpsrc. urllib works correctly with bounded ranges, so the
     relay translates those requests in 1 MiB chunks while remaining localhost-only.
+    The relay is media-agnostic and is shared by audio and progressive video.
     """
 
     CHUNK_SIZE = 1024 * 1024
@@ -72,7 +73,7 @@ class _StreamRelay:
                         content_range = first.headers.get("Content-Range", "")
                         match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", content_range)
                         if not match:
-                            raise OSError(_("O servidor de áudio não informou o tamanho total"))
+                            raise OSError(_("O servidor de mídia não informou o tamanho total"))
                         total = int(match.group(3))
                         if start >= total:
                             self.send_response(416)
@@ -86,7 +87,7 @@ class _StreamRelay:
                         )
                         self.send_response(206 if partial else 200)
                         self.send_header(
-                            "Content-Type", first.headers.get("Content-Type", "audio/mp4")
+                            "Content-Type", first.headers.get("Content-Type", "application/octet-stream")
                         )
                         self.send_header("Content-Length", str(end - start + 1))
                         self.send_header("Accept-Ranges", "bytes")
@@ -161,6 +162,8 @@ class NativePlayer:
         if self._playbin is None:
             raise RuntimeError(_("O elemento GStreamer playbin não está disponível"))
         self._audio_elements: dict[str, Gst.Element] = {}
+        self._video_sink: Gst.Element | None = None
+        self._replace_generation = 0
         self._install_audio_filter()
         self.on_state = on_state
         self.on_error = on_error
@@ -230,11 +233,59 @@ class NativePlayer:
             silence.set_property("squash", skip_silence)
             silence.set_property("minimum-silence-time", 1_500_000_000 if skip_silence else 0)
 
+    def set_video_sink(self, sink: Gst.Element | None) -> None:
+        """Attach a toolkit-owned video sink to the shared playbin."""
+        self._video_sink = sink
+        self._playbin.set_property("video-sink", sink)
+
+    @property
+    def video_sink(self) -> Gst.Element | None:
+        return self._video_sink
+
     def play(self, uri: str) -> None:
+        self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
         self._playbin.set_property("uri", self._source_uri(uri))
         self._playbin.set_state(Gst.State.PLAYING)
+
+    def replace(self, uri: str, position_us: int = 0, playing: bool | None = None) -> None:
+        """Replace only the media source while preserving transport state/position.
+
+        This is intentionally separate from :meth:`play`: callers use it for
+        Music <-> Video switching inside the same logical track, so queue,
+        MPRIS, history and scrobble generation stay untouched.
+        """
+        should_play = self.playing if playing is None else bool(playing)
+        target = max(0, int(position_us))
+        self._replace_generation += 1
+        generation = self._replace_generation
+        self._playbin.set_state(Gst.State.NULL)
+        self._last_position_us = target
+        self._playbin.set_property("uri", self._source_uri(uri))
+        # Preroll paused first; seeking before preroll is unreliable for remote
+        # MP4 streams and can briefly play from 0 before the requested position.
+        self._playbin.set_state(Gst.State.PAUSED)
+        GLib.timeout_add(40, self._finish_replace, generation, target, should_play, 0)
+
+    def _finish_replace(
+        self,
+        generation: int,
+        target: int,
+        should_play: bool,
+        attempt: int,
+    ) -> bool:
+        if generation != self._replace_generation:
+            return GLib.SOURCE_REMOVE
+        _result, state, _pending = self._playbin.get_state(0)
+        ready = state in (Gst.State.PAUSED, Gst.State.PLAYING)
+        if not ready and attempt < 50:
+            GLib.timeout_add(40, self._finish_replace, generation, target, should_play, attempt + 1)
+            return GLib.SOURCE_REMOVE
+        if target:
+            self.seek(target)
+        self._playbin.set_state(Gst.State.PLAYING if should_play else Gst.State.PAUSED)
+        return GLib.SOURCE_REMOVE
 
     def _source_uri(self, uri: str) -> str:
         scheme = urllib.parse.urlsplit(uri).scheme
@@ -249,6 +300,7 @@ class NativePlayer:
         )
 
     def stop(self) -> None:
+        self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
 
