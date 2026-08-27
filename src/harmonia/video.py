@@ -120,7 +120,9 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
     if not candidates:
         raise InnerTubeError(_("O YouTube Music não encontrou um vídeo para esta faixa."))
 
-    ranked = sorted(candidates, key=lambda candidate: _candidate_score(item, candidate), reverse=True)
+    ranked = sorted(
+        candidates, key=lambda candidate: _candidate_score(item, candidate), reverse=True
+    )
     selected = ranked[0]
     # Reject very weak matches instead of silently playing an unrelated video.
     if _candidate_score(item, selected) < 4.0:
