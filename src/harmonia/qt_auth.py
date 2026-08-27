@@ -3,10 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 from PySide6.QtWebEngineQuick import QQuickWebEngineProfile
 
-LOGIN_URL = (
-    "https://accounts.google.com/ServiceLogin?"
-    "continue=https%3A%2F%2Fmusic.youtube.com"
-)
+LOGIN_URL = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
 _REQUIRED_SESSION_COOKIES = {"SAPISID", "__Secure-3PAPISID"}
 
 
