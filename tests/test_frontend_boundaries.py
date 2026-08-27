@@ -8,8 +8,10 @@ QT_MODULES = (
     "qt_catalog.py",
     "qt_library.py",
     "qt_playback.py",
+    "qt_integrated_playback.py",
     "qt_activity.py",
     "qt_preferences.py",
+    "qt_integrations.py",
     "qt_mutations.py",
     "qt_presenters.py",
 )
