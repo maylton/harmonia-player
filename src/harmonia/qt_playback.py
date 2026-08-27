@@ -288,6 +288,10 @@ class QtPlaybackController(QObject):
 
         self.executor.submit(worker)
 
+    def _play_uri(self, uri: str) -> None:
+        """Start one resolved URI on the active playback transport."""
+        self.player.play(uri)
+
     def _start_uri(
         self,
         request_id: int,
@@ -301,7 +305,7 @@ class QtPlaybackController(QObject):
         self._duration_ms = max(0, int(duration_ms or 0))
         self._pending_tracking_url = tracking_url or ""
         self._stream_ready = True
-        self.player.play(uri)
+        self._play_uri(uri)
         self.playbackChanged.emit()
         self.durationChanged.emit()
         self.positionChanged.emit()
