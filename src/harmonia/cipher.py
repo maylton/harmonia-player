@@ -115,9 +115,10 @@ class _ZemerSolver:
 class YouTubeCipherService:
     """Resolve signatureCipher and n-throttling using the active YouTube player JS.
 
-    This is the Python counterpart of InnerTubeX's cipher layer. Remote Zemer
-    player expressions select the transform entry points while Harmonia executes
-    the real YouTube player script in Qt's QJSEngine or GTK's JavaScriptCore.
+    Remote Zemer player expressions select the current transform entry points,
+    while Harmonia executes YouTube's real player script in the JavaScript
+    engine already shipped by the active frontend. Unknown player rotations
+    trigger an immediate remote-config refresh instead of waiting for cache TTL.
     """
 
     def __init__(
@@ -163,6 +164,12 @@ class YouTubeCipherService:
         )
         self._solver_cache[player.player_url] = solver
         return solver, player
+
+    def refresh_after_stream_rejection(self) -> bool:
+        changed = self.config_store.refresh_after_stream_rejection()
+        if changed:
+            self._solver_cache.clear()
+        return changed
 
     @staticmethod
     def _cipher_values(fmt: dict[str, Any]) -> dict[str, list[str]]:
