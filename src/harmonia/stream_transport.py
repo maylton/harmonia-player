@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+import urllib.parse
 from dataclasses import dataclass
 
 
@@ -9,15 +10,38 @@ from dataclasses import dataclass
 class StreamTransport:
     headers: tuple[tuple[str, str], ...] = ()
     expires_at: int | None = None
-    blocked_until: float = 0.0
 
 
 _LOCK = threading.Lock()
 _TRANSPORTS: dict[str, StreamTransport] = {}
+_FAILURES: dict[str, float] = {}
+_VOLATILE_FAILURE_PARAMS = {"cpn", "pot"}
 
 
 def _expired(transport: StreamTransport, now: float) -> bool:
     return transport.expires_at is not None and transport.expires_at <= int(now)
+
+
+def _failure_key(url: str) -> str:
+    """Normalize request-scoped tokens so one broken itag stays quarantined."""
+    try:
+        parsed = urllib.parse.urlsplit(url)
+    except ValueError:
+        return url
+    query = [
+        (name, value)
+        for name, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        if name.casefold() not in _VOLATILE_FAILURE_PARAMS
+    ]
+    return urllib.parse.urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urllib.parse.urlencode(query),
+            "",
+        )
+    )
 
 
 def register_stream_transport(
@@ -29,13 +53,8 @@ def register_stream_transport(
     """Remember the HTTP contract required to consume one resolved media URL."""
     if not url:
         return
-    now = time.time()
     with _LOCK:
-        previous = _TRANSPORTS.get(url)
-        blocked_until = 0.0
-        if previous is not None and not _expired(previous, now):
-            blocked_until = previous.blocked_until
-        _TRANSPORTS[url] = StreamTransport(tuple(headers), expires_at, blocked_until)
+        _TRANSPORTS[url] = StreamTransport(tuple(headers), expires_at)
 
 
 def stream_transport_headers(url: str) -> tuple[tuple[str, str], ...]:
@@ -55,28 +74,24 @@ def stream_transport_headers(url: str) -> tuple[tuple[str, str], ...]:
 def stream_transport_blocked(url: str) -> bool:
     if not url:
         return False
+    key = _failure_key(url)
     now = time.time()
     with _LOCK:
-        transport = _TRANSPORTS.get(url)
-        if transport is None:
+        blocked_until = _FAILURES.get(key, 0.0)
+        if blocked_until <= now:
+            _FAILURES.pop(key, None)
             return False
-        if _expired(transport, now):
-            _TRANSPORTS.pop(url, None)
-            return False
-        return transport.blocked_until > now
+        return True
 
 
 def mark_stream_transport_failure(url: str, *, ttl: float = 120.0) -> None:
-    """Temporarily quarantine a URL that passed HTTP probing but failed playback."""
+    """Temporarily quarantine a media representation that failed playback."""
     if not url:
         return
+    key = _failure_key(url)
     now = time.time()
     with _LOCK:
-        previous = _TRANSPORTS.get(url)
-        headers = previous.headers if previous is not None else ()
-        expires_at = previous.expires_at if previous is not None else None
-        blocked_until = max(previous.blocked_until if previous is not None else 0.0, now + ttl)
-        _TRANSPORTS[url] = StreamTransport(headers, expires_at, blocked_until)
+        _FAILURES[key] = max(_FAILURES.get(key, 0.0), now + max(1.0, ttl))
 
 
 def clear_stream_transport(url: str | None = None) -> None:
@@ -84,5 +99,7 @@ def clear_stream_transport(url: str | None = None) -> None:
     with _LOCK:
         if url is None:
             _TRANSPORTS.clear()
+            _FAILURES.clear()
         else:
             _TRANSPORTS.pop(url, None)
+            _FAILURES.pop(_failure_key(url), None)
