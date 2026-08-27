@@ -27,6 +27,7 @@ Both frontends reuse the same non-visual implementation instead of maintaining t
 The Qt presentation layer is split into small controllers rather than a second monolithic application backend:
 
 - `qt_backend.py`: QML-facing facade and signal wiring
+- `qt_auth.py`: Qt WebEngine login-session capture and cookie handoff
 - `qt_catalog.py`: Home, Explore, search and detail/catalog state
 - `qt_library.py`: library origins, local media and local playlists
 - `qt_playback.py`: queue, playback state, radio and autoplay
@@ -45,6 +46,8 @@ The repository currently keeps two development manifests because Flatpak runtime
 - `io.github.harmonia.Harmonia.KDE.yml` uses `org.kde.Platform` plus the PySide BaseApp.
 
 They contain the same Harmonia source/core but provide different UI runtime dependencies. Therefore, **do not use `--gtk` as a regression test inside the KDE Flatpak** and do not expect `--qt` inside the GTK Flatpak. Test the other frontend from source/native packaging with its dependencies installed, or build the corresponding manifest.
+
+The KDE manifest keeps Qt WebEngine from the PySide BaseApp and sets `QTWEBENGINEPROCESS_PATH=/app/bin/QtWebEngineProcess` for the Chromium helper process used by the embedded sign-in view.
 
 The automatic selector is still useful: the normal executable chooses Qt on Plasma when PySide6 exists and otherwise chooses GTK. The KDE development Flatpak guarantees the Qt dependencies; the GTK Flatpak guarantees the GTK dependencies.
 
@@ -70,9 +73,11 @@ The KDE frontend currently includes:
 - portable backup export/restore
 - MPRIS integration with Plasma media controls
 - reuse of an existing Harmonia Secret Service session when available
-- manual YouTube Music cookie connection for a fresh Qt installation
+- embedded Google/YouTube Music sign-in using Qt WebEngine
+- automatic capture of the resulting YouTube session and handoff to the shared `YouTubeMusicService`
+- manual YouTube Music cookie connection as a fallback
 
-An embedded Qt WebEngine login is intentionally not duplicated at this stage. The KDE frontend reuses the same stored account when possible and provides the manual cookie path for a new session.
+The Qt login view uses WebEngine's off-the-record default profile. Google renders and handles the credential form; Harmonia watches only YouTube-domain cookies after navigation reaches `music.youtube.com`. Once a valid `SAPISID` or `__Secure-3PAPISID` session appears, the controller serializes the YouTube cookies and passes them through the same `connectCookie()` validation and Secret Service storage used by the manual path. Browser cookies themselves are not used as a second persistent credential store.
 
 ## Build and install the KDE Flatpak
 
@@ -124,15 +129,17 @@ That is the appropriate regression check for confirming that the original GTK fr
 After the first launch, check these paths before treating the KDE frontend as stable:
 
 1. Confirm the window is visually native to Plasma and uses the current KDE color/icon theme.
-2. Open Home, Explore, Library and Search and navigate into album/artist/playlist details.
-3. Start a track and test play/pause, seek, previous/next, volume, shuffle and repeat.
-4. Open the queue, reorder/remove entries and enable autoplay/related tracks.
-5. Open the expanded player and Lyrics; test synced lyrics and seeking from a lyric line.
-6. Test Downloads/offline playback and local media/local playlists if you use them.
-7. Change an audio preference such as EQ or playback speed and confirm playback keeps working.
-8. Check Plasma's media controls/MPRIS while Harmonia is playing.
-9. Close and reopen Harmonia to verify queue/playback state persistence.
-10. If both native toolkit stacks are installed, run the source checkout once with `--gtk` as the GTK regression check.
+2. With no saved account, press **Conectar**, complete the embedded Google login and confirm that the dialog closes after the YouTube Music session validates.
+3. Disconnect, reopen **Conectar**, switch to **Usar cookie manualmente**, and verify that the fallback path still validates a session.
+4. Open Home, Explore, Library and Search and navigate into album/artist/playlist details.
+5. Start a track and test play/pause, seek, previous/next, volume, shuffle and repeat.
+6. Open the queue, reorder/remove entries and enable autoplay/related tracks.
+7. Open the expanded player and Lyrics; test synced lyrics and seeking from a lyric line.
+8. Test Downloads/offline playback and local media/local playlists if you use them.
+9. Change an audio preference such as EQ or playback speed and confirm playback keeps working.
+10. Check Plasma's media controls/MPRIS while Harmonia is playing.
+11. Close and reopen Harmonia to verify queue/playback state and account-session persistence.
+12. If both native toolkit stacks are installed, run the source checkout once with `--gtk` as the GTK regression check.
 
 When reporting a Qt runtime problem, run the forced frontend from a terminal so the QML/Python error is visible:
 
