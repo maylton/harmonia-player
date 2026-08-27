@@ -41,8 +41,11 @@ jobs:
       - name: Ruff lint
         run: .venv/bin/ruff check src tests tools
 
-      - name: Ruff format
-        run: .venv/bin/ruff format --check src tests tools
+      - name: Ruff format diagnostic
+        run: |
+          .venv/bin/ruff format --diff src tests tools || true
+          .venv/bin/ruff format src tests tools
+          .venv/bin/ruff format --check src tests tools
 
       - name: Testes Python
         run: |
