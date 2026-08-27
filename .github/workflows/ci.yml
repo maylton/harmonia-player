@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-24.04
@@ -17,12 +21,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            appstream desktop-file-utils gettext gir1.2-adw-1 \
+            appstream dbus-x11 desktop-file-utils flatpak flatpak-builder gettext gir1.2-adw-1 \
             gir1.2-gstreamer-1.0 gir1.2-gtk-4.0 gir1.2-secret-1 \
             gir1.2-webkit-6.0 gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
             meson ninja-build python3-gi python3-venv \
             xauth xvfb
+
+      - name: Configurar Flathub
+        run: |
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
 
       - name: Preparar ferramentas Python
         run: |
@@ -34,6 +43,62 @@ jobs:
           .venv/bin/ruff check src tests tools
           .venv/bin/ruff format --check src tests tools
           xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -q
+
+      - name: Construir variante GTK no runtime oficial
+        run: |
+          flatpak-builder build-gtk \
+            --user \
+            --install-deps-from=flathub \
+            --force-clean \
+            --disable-rofiles-fuse \
+            --install \
+            io.github.harmonia.Harmonia.yml
+
+      - name: Smoke do frontend GTK no runtime oficial
+        run: |
+          set +e
+          output=$(xvfb-run -a dbus-run-session -- timeout 8 \
+            flatpak run \
+              --env=GSETTINGS_BACKEND=memory \
+              --env=GTK_A11Y=none \
+              io.github.harmonia.Harmonia --gtk 2>&1)
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            exit "$status"
+          fi
+          if printf '%s\n' "$output" | grep -E 'Traceback|ModuleNotFoundError|ImportError'; then
+            exit 1
+          fi
+
+      - name: Construir variante KDE no runtime oficial
+        run: |
+          flatpak-builder build-kde \
+            --user \
+            --install-deps-from=flathub \
+            --force-clean \
+            --disable-rofiles-fuse \
+            --install \
+            io.github.harmonia.Harmonia.KDE.yml
+
+      - name: Smoke do frontend Qt/Kirigami e WebEngine
+        run: |
+          set +e
+          output=$(xvfb-run -a dbus-run-session -- timeout 12 \
+            flatpak run \
+              --env=QT_QPA_PLATFORM=xcb \
+              io.github.harmonia.Harmonia --qt 2>&1)
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            exit "$status"
+          fi
+          if printf '%s\n' "$output" | grep -E \
+            'Traceback|ModuleNotFoundError|ImportError|QQmlApplicationEngine failed|module "QtWebEngine" is not installed|QtWebEngineProcess.*(not found|failed)'; then
+            exit 1
+          fi
 
       - name: Validar metadados e traduções
         run: |

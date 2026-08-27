@@ -11,6 +11,13 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
 from .i18n import _
+from .lyrics_state import (
+    active_lyric_index,
+    clamp_lyrics_offset,
+    lyric_seek_target,
+    lyrics_copy_text,
+    next_lyrics_provider,
+)
 from .models import (
     LibraryItem,
     LyricLine,
@@ -264,10 +271,7 @@ class WindowLyricsMixin:
         return bar
 
     def _cycle_lyrics_provider(self) -> None:
-        providers = ("auto", "lrclib", "youtube")
-        self.lyrics_provider = providers[
-            (providers.index(self.lyrics_provider) + 1) % len(providers)
-        ]
+        self.lyrics_provider = next_lyrics_provider(self.lyrics_provider)
         self.storage.set_setting("lyrics_provider", self.lyrics_provider)
         self._load_current_lyrics(force=False)
 
@@ -275,7 +279,7 @@ class WindowLyricsMixin:
         return "Sincronia 0 ms" if not self.lyrics_offset_ms else f"{self.lyrics_offset_ms:+d} ms"
 
     def _change_lyrics_offset(self, delta: int) -> None:
-        self._set_lyrics_offset(max(-5000, min(5000, self.lyrics_offset_ms + delta)))
+        self._set_lyrics_offset(clamp_lyrics_offset(self.lyrics_offset_ms + delta))
 
     def _set_lyrics_offset(self, value: int) -> None:
         self.lyrics_offset_ms = value
@@ -285,7 +289,7 @@ class WindowLyricsMixin:
             self._render_lyrics(item, self.current_lyrics_document)
 
     def _seek_lyric(self, start_ms: int) -> None:
-        position_ms = max(0, start_ms - self.lyrics_offset_ms)
+        position_ms = lyric_seek_target(start_ms, self.lyrics_offset_ms)
         if self.player.seek(position_ms * 1000):
             self._update_synced_lyrics(position_ms, allow_backward=True)
 
@@ -294,15 +298,7 @@ class WindowLyricsMixin:
         display = Gdk.Display.get_default()
         if not document or not display:
             return
-        value = document.display_text
-        if document.translation:
-            value += "\n\n" + document.translation
-        if document.synced and any(line.translation for line in document.synced):
-            value = "\n".join(
-                f"{line.text}\n{line.translation}" if line.translation else line.text
-                for line in document.synced
-            )
-        display.get_clipboard().set(value)
+        display.get_clipboard().set(lyrics_copy_text(document))
         self.toast_overlay.add_toast(Adw.Toast(title=_("Letra copiada"), timeout=2))
 
     def _translate_current_lyrics(self) -> None:
@@ -364,12 +360,12 @@ class WindowLyricsMixin:
         document = self.current_lyrics_document
         if not document or not document.synced:
             return
-        adjusted = position_ms + self.lyrics_offset_ms
-        active = -1
-        for index, line in enumerate(document.synced):
-            if line.start_ms > adjusted:
-                break
-            active = index
+        active = active_lyric_index(
+            document.synced,
+            position_ms,
+            self.lyrics_offset_ms,
+            floor_at_zero=False,
+        )
         # GStreamer can briefly report an older/zero position while a network
         # stream is buffering. Lyrics naturally move forward during playback,
         # so accepting that transient value would animate the footer back to
