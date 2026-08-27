@@ -8,7 +8,7 @@ from harmonia.auth_state import (
 
 def test_login_policy_is_shared_and_toolkit_free() -> None:
     assert LOGIN_URL.startswith("https://accounts.google.com/")
-    assert SESSION_COOKIE_NAMES == frozenset({"SAPISID", "__Secure-3PAPISID"})
+    assert frozenset({"SAPISID", "__Secure-3PAPISID"}) == SESSION_COOKIE_NAMES
     assert has_session_cookie({"SAPISID"})
     assert has_session_cookie({"__Secure-3PAPISID"})
     assert not has_session_cookie({"SID", "HSID"})
