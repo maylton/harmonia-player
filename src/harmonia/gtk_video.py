@@ -7,16 +7,16 @@ import gi
 gi.require_version("Adw", "1")
 gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "4.0")
-from gi.repository import Adw, GLib, Gst, Gtk
+from gi.repository import Adw, GLib, Gst, Gtk  # noqa: E402
 
-from .i18n import _
+from .i18n import _  # noqa: E402
 
 
 def install_gtk_video(window_class) -> None:
     """Install the optional video surface without coupling it to the GTK window core.
 
     Harmonia's GTK window predates the Qt frontend and intentionally keeps its
-    large layout builder stable.  This extension wraps only the playback hooks
+    large layout builder stable. This extension wraps only the playback hooks
     needed by Music/Video mode and replaces the existing expanded artwork child
     with a stack containing that same artwork plus a GStreamer paintable.
     """
