@@ -1,3 +1,5 @@
+import pytest
+
 from harmonia.preferences import Preferences
 
 
@@ -52,6 +54,12 @@ def test_audio_processing_graph_applies_all_controls():
     from harmonia.player import NativePlayer
 
     player = NativePlayer()
+    required = {"pitch", "equalizer", "replaygain", "silence"}
+    missing = sorted(required.difference(player._audio_elements))
+    if missing:
+        player.close()
+        pytest.skip(f"optional GStreamer audio plugins unavailable: {', '.join(missing)}")
+
     player.apply_audio_settings(
         normalization=True, equalizer="bass", speed=1.25, pitch=12, skip_silence=True
     )
@@ -60,4 +68,4 @@ def test_audio_processing_graph_applies_all_controls():
     assert player._audio_elements["equalizer"].get_property("band0") == 6.0
     assert player._audio_elements["replaygain"].get_property("fallback-gain") == -6.0
     assert player._audio_elements["silence"].get_property("remove") is True
-    player.stop()
+    player.close()
