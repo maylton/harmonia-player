@@ -12,6 +12,10 @@ from typing import Any
 
 from .cipher import YouTubeCipherService
 from .player_config import PlayerConfig, PlayerConfigResolver
+from .stream_transport import (
+    register_stream_transport,
+    stream_transport_blocked,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -449,6 +453,8 @@ class InnerTubeStreamExtractor:
         return result
 
     def _probe(self, candidate: StreamCandidate) -> bool:
+        if stream_transport_blocked(candidate.url):
+            return False
         host = urllib.parse.urlsplit(candidate.url).hostname or ""
         if "googlevideo.com" not in host:
             return True
@@ -492,11 +498,21 @@ class InnerTubeStreamExtractor:
         with _CACHE_LOCK:
             candidate = _STREAM_CACHE.get(cache_key)
         if candidate and candidate.valid_at(int(time.time())):
+            register_stream_transport(
+                candidate.url,
+                candidate.headers,
+                expires_at=candidate.expires_at,
+            )
             return candidate
         return None
 
     @staticmethod
     def _store(cache_key: str, candidate: StreamCandidate) -> StreamCandidate:
+        register_stream_transport(
+            candidate.url,
+            candidate.headers,
+            expires_at=candidate.expires_at,
+        )
         with _CACHE_LOCK:
             _STREAM_CACHE[cache_key] = candidate
         return candidate
@@ -536,8 +552,13 @@ class InnerTubeStreamExtractor:
             for candidate in ordered:
                 if self._probe(candidate):
                     return self._store(cache_key, candidate)
+                reason = (
+                    "falhou anteriormente no player"
+                    if stream_transport_blocked(candidate.url)
+                    else "rejeitado pelo CDN"
+                )
                 diagnostics.rejected.append(
-                    f"{profile.name}: itag {candidate.itag or '?'} rejeitado pelo CDN"
+                    f"{profile.name}: itag {candidate.itag or '?'} {reason}"
                 )
         raise StreamExtractionError(
             f"Não foi possível obter um stream de áudio reproduzível. {diagnostics.details()}",
@@ -586,8 +607,13 @@ class InnerTubeStreamExtractor:
             for candidate in ordered:
                 if self._probe(candidate):
                     return self._store(cache_key, candidate)
+                reason = (
+                    "falhou anteriormente no player"
+                    if stream_transport_blocked(candidate.url)
+                    else "rejeitado pelo CDN"
+                )
                 diagnostics.rejected.append(
-                    f"{profile.name}: itag {candidate.itag or '?'} rejeitado pelo CDN"
+                    f"{profile.name}: itag {candidate.itag or '?'} {reason}"
                 )
         raise StreamExtractionError(
             f"Não foi possível obter um stream de vídeo reproduzível. {diagnostics.details()}",
