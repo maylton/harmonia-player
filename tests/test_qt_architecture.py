@@ -27,6 +27,17 @@ def test_qt_app_exposes_shared_preferences_controller() -> None:
     assert "def setBackgroundBlur" in preferences
 
 
+def test_integrated_playback_uses_transport_hook_not_stream_startup_copy() -> None:
+    base = (ROOT / "src" / "harmonia" / "qt_playback.py").read_text(encoding="utf-8")
+    integrated = (ROOT / "src" / "harmonia" / "qt_integrated_playback.py").read_text(
+        encoding="utf-8"
+    )
+    assert "def _play_uri(self, uri: str)" in base
+    assert "self._play_uri(uri)" in base
+    assert "def _play_uri(self, uri: str)" in integrated
+    assert "def _start_uri(" not in integrated
+
+
 def test_main_qml_keeps_major_regions_componentized() -> None:
     source = (QML / "Main.qml").read_text(encoding="utf-8")
     assert "NavigationSidebar {" in source
