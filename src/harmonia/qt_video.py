@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import logging
 from contextlib import suppress
 
@@ -11,6 +13,51 @@ from gi.repository import Gst  # noqa: E402
 from PySide6.QtCore import Property, QObject, Signal, Slot  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _capsule_pointer(capsule) -> int:
+    """Return the native pointer stored in a CPython capsule."""
+    get_name = ctypes.pythonapi.PyCapsule_GetName
+    get_name.restype = ctypes.c_char_p
+    get_name.argtypes = [ctypes.py_object]
+    name = get_name(capsule)
+
+    get_pointer = ctypes.pythonapi.PyCapsule_GetPointer
+    get_pointer.restype = ctypes.c_void_p
+    get_pointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
+    pointer = get_pointer(capsule, name)
+    if not pointer:
+        raise RuntimeError("Não foi possível obter o ponteiro nativo do objeto GStreamer")
+    return int(pointer)
+
+
+def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> None:
+    """Set a G_TYPE_POINTER property that PyGObject cannot marshal itself.
+
+    qml6glsink's ``widget`` property is a raw QQuickItem* (gpointer), not a
+    GObject.  PyGObject intentionally cannot convert a PySide QObject wrapper
+    or an integer address into that foreign pointer.  Use the native GObject
+    setter only for this boundary while retaining ownership in the Python/Qt
+    wrappers on both sides.
+    """
+    capsule = getattr(gobject, "__gpointer__", None)
+    if capsule is None:
+        raise RuntimeError("O objeto GStreamer não expõe o ponteiro nativo")
+    object_pointer = _capsule_pointer(capsule)
+
+    library_name = ctypes.util.find_library("gobject-2.0") or "libgobject-2.0.so.0"
+    gobject_library = ctypes.CDLL(library_name)
+    g_object_set = gobject_library.g_object_set
+    g_object_set.restype = None
+    # g_object_set() is variadic.  Declare only its fixed arguments and pass
+    # explicitly typed pointer arguments for the varargs below.
+    g_object_set.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    g_object_set(
+        ctypes.c_void_p(object_pointer),
+        property_name.encode("utf-8"),
+        ctypes.c_void_p(pointer),
+        ctypes.c_void_p(),
+    )
 
 
 class QtVideoController(QObject):
@@ -111,7 +158,9 @@ class QtVideoController(QObject):
 
         try:
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
-            sink.set_property("widget", pointer)
+            if not pointer:
+                raise RuntimeError("A superfície QQuickItem não possui ponteiro nativo")
+            _set_foreign_pointer_property(sink, "widget", pointer)
             # qml6glsink should establish Qt's GstGLDisplay before the rest of
             # the GL pipeline reaches READY/PAUSED.
             result = sink.set_state(Gst.State.READY)
