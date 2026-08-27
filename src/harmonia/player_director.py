@@ -1,29 +1,32 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from .client_health import CLIENT_HEALTH
 from .player_config import PlayerConfig, PlayerConfigResolver
 from .potoken import current_potoken_provider
 
 LOGGER = logging.getLogger(__name__)
-ORIGIN = "https://music.youtube.com"
-API_URL = f"{ORIGIN}/youtubei/v1"
+ORIGIN_MUSIC = "https://music.youtube.com"
+ORIGIN_WWW = "https://www.youtube.com"
+ORIGIN_STUDIO = "https://studio.youtube.com"
 _TRANSIENT_HTTP = {408, 425, 429, 500, 502, 503, 504}
 
 
 class PlayerClientDirector:
     """Select and execute playback-client requests with PoToken fallback.
 
-    Profiles are intentionally duck-typed so the public ``PlayerClientProfile``
-    remains in :mod:`stream_extractor` for compatibility. Successful responses
-    receive two private metadata keys consumed only by the extractor:
-    ``_harmoniaStreamingPoToken`` and ``_harmoniaUsedPoToken``.
+    The director mirrors InnerTubeX's transport split: Music clients use the
+    music.youtube.com player endpoint, ordinary TV/web identities use
+    www.youtube.com, and WEB_CREATOR uses studio.youtube.com. Successful
+    responses receive private PoToken metadata consumed by the extractor.
     """
 
     def __init__(self, client, config_resolver: PlayerConfigResolver) -> None:
@@ -52,6 +55,9 @@ class PlayerClientDirector:
         self._configs[authenticated] = config
         return config
 
+    def invalidate_player_config(self) -> None:
+        self._configs.clear()
+
     def _ensure_session(self) -> None:
         try:
             self.client._bootstrap()
@@ -65,6 +71,36 @@ class PlayerClientDirector:
             if name.endswith(suffix):
                 return name[: -len(suffix)]
         return name
+
+    @classmethod
+    def _request_origin(cls, profile) -> tuple[str, str]:
+        base_name = cls._profile_base_name(profile)
+        if profile.use_music_player_endpoint or base_name == "WEB_REMIX":
+            return ORIGIN_MUSIC, f"{ORIGIN_MUSIC}/"
+        if base_name == "WEB_CREATOR":
+            return ORIGIN_STUDIO, f"{ORIGIN_STUDIO}/"
+        if profile.is_embedded:
+            return ORIGIN_WWW, "https://www.reddit.com/"
+        return ORIGIN_WWW, f"{ORIGIN_WWW}/"
+
+    @staticmethod
+    def _sapisid_hash(cookie: str, origin: str) -> str | None:
+        cookies: dict[str, str] = {}
+        for part in (cookie or "").split(";"):
+            if "=" not in part:
+                continue
+            key, value = part.strip().split("=", 1)
+            cookies[key] = value
+        sapisid = (
+            cookies.get("SAPISID")
+            or cookies.get("__Secure-3PAPISID")
+            or cookies.get("__Secure-1PAPISID")
+        )
+        if not sapisid:
+            return None
+        now = int(time.time())
+        digest = hashlib.sha1(f"{now} {sapisid} {origin}".encode()).hexdigest()
+        return f"SAPISIDHASH {now}_{digest}"
 
     def _request(
         self,
@@ -112,20 +148,17 @@ class PlayerClientDirector:
                 )
             except Exception as exc:
                 LOGGER.warning("PoToken provider failed for %s: %s", profile.name, exc)
-                token = None
         if profile.require_potoken and token is None:
             diagnostics.attempts.append(f"{profile.name}: PoToken obrigatório indisponível")
             CLIENT_HEALTH.failure(profile_id, transient=True)
             return None
 
-        profile_context = profile.context_values()
-        embed_url = profile_context.pop("thirdPartyEmbedUrl", None)
         client_context: dict[str, Any] = {
             "clientName": self._profile_base_name(profile),
             "clientVersion": version,
             "hl": getattr(self.client, "hl", "pt-BR"),
             "gl": getattr(self.client, "gl", "BR"),
-            **profile_context,
+            **profile.context_values(),
         }
         if profile.include_user_agent_in_context:
             client_context["userAgent"] = profile.user_agent
@@ -136,12 +169,9 @@ class PlayerClientDirector:
         data_sync_id = getattr(self.client, "data_sync_id", None)
         if authenticated and data_sync_id:
             user_context["onBehalfOfUser"] = data_sync_id
-        request_context: dict[str, Any] = {"client": client_context, "user": user_context}
-        if embed_url:
-            request_context["thirdParty"] = {"embedUrl": embed_url}
 
         body: dict[str, Any] = {
-            "context": request_context,
+            "context": {"client": client_context, "user": user_context},
             "videoId": video_id,
             "contentCheckOk": True,
             "racyCheckOk": True,
@@ -153,27 +183,34 @@ class PlayerClientDirector:
         if token is not None and token.player_request_token:
             body["serviceIntegrityDimensions"] = {"poToken": token.player_request_token}
 
+        origin, referer = self._request_origin(profile)
         request = urllib.request.Request(
-            f"{API_URL}/player?prettyPrint=false",
+            f"{origin}/youtubei/v1/player?prettyPrint=false",
             data=json.dumps(body).encode(),
             method="POST",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
+                "Accept-Language": getattr(self.client, "hl", "pt-BR"),
                 "User-Agent": profile.user_agent,
-                "Origin": ORIGIN,
-                "Referer": f"{ORIGIN}/",
+                "Origin": origin,
+                "X-Origin": origin,
+                "Referer": referer,
+                "X-Goog-Api-Format-Version": "1",
                 "X-YouTube-Client-Name": profile.id,
                 "X-YouTube-Client-Version": version,
                 **({"X-Goog-Visitor-Id": visitor_data} if visitor_data else {}),
             },
         )
         if authenticated:
-            from .innertube import sapisid_hash
-
-            request.add_header("Cookie", self.client.cookie)
-            request.add_header("Authorization", sapisid_hash(self.client.cookie))
-            request.add_header("X-Origin", ORIGIN)
+            cookie = getattr(self.client, "cookie", "")
+            request.add_header("Cookie", cookie)
+            auth = self._sapisid_hash(cookie, origin)
+            if auth:
+                request.add_header("Authorization", auth)
+            session_index = getattr(self.client, "session_index", None)
+            if session_index:
+                request.add_header("X-Goog-AuthUser", str(session_index))
 
         for attempt in range(2):
             try:
@@ -186,18 +223,26 @@ class PlayerClientDirector:
                         token.streaming_data_token if token is not None else ""
                     )
                     payload["_harmoniaUsedPoToken"] = token is not None
+                    payload["_harmoniaRequestOrigin"] = origin
+                    payload["_harmoniaRequestReferer"] = referer
                     CLIENT_HEALTH.success(profile_id)
                     return payload
                 diagnostics.attempts.append(
                     f"{profile.name}: "
                     f"{status.get('reason') or status.get('status') or 'não reproduzível'}"
                 )
-                CLIENT_HEALTH.failure(profile_id, severe=status.get("status") == "UNPLAYABLE")
+                CLIENT_HEALTH.failure(
+                    profile_id,
+                    severe=status.get("status") == "UNPLAYABLE",
+                )
                 return payload
             except urllib.error.HTTPError as exc:
                 if exc.code not in _TRANSIENT_HTTP or attempt == 1:
                     diagnostics.attempts.append(f"{profile.name}: HTTP {exc.code}")
-                    CLIENT_HEALTH.failure(profile_id, transient=exc.code in _TRANSIENT_HTTP)
+                    CLIENT_HEALTH.failure(
+                        profile_id,
+                        transient=exc.code in _TRANSIENT_HTTP,
+                    )
                     return None
             except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
                 if attempt == 1:
