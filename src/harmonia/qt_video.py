@@ -12,6 +12,8 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst  # noqa: E402
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot  # noqa: E402
 
+from .stream_transport import mark_stream_transport_failure  # noqa: E402
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -57,18 +59,14 @@ def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> 
 
 
 class QtVideoController(QObject):
-    """Qt video layer synchronized to the shared audio transport.
-
-    The main NativePlayer remains the only logical/audio player, so queue,
-    history, MPRIS, scrobbling and audio processing never change when the user
-    selects Video. A second muted GStreamer playbin owns only the visual stream
-    and follows the main transport's position and play/pause state.
-    """
+    """Muted Qt video layer synchronized to Harmonia's primary audio player."""
 
     modeChanged = Signal()
     loadingChanged = Signal()
     availabilityChanged = Signal()
     _resolved = Signal(int, object, str)
+
+    MAX_STREAM_RETRIES = 2
 
     def __init__(self, backend, sink=None, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -82,7 +80,11 @@ class QtVideoController(QObject):
         self._surface = None
         self._sink = sink
         self._sink_prepared = False
-        self._sink_error = "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
+        self._sink_error = (
+            "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
+        )
+        self._active_video_uri: str | None = None
+        self._video_retry_attempts = 0
 
         self._video_player = Gst.ElementFactory.make("playbin", "harmonia-video-layer")
         self._fake_audio_sink = Gst.ElementFactory.make("fakesink", "harmonia-video-muted-audio")
@@ -211,6 +213,8 @@ class QtVideoController(QObject):
             self._pending.clear()
             self._set_loading(False)
             self._stop_video_layer()
+            self._active_video_uri = None
+            self._video_retry_attempts = 0
             if self._mode != "audio":
                 self._mode = "audio"
                 self.modeChanged.emit()
@@ -228,6 +232,8 @@ class QtVideoController(QObject):
             self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
             return
 
+        if not force:
+            self._video_retry_attempts = 0
         self._request += 1
         request_id = self._request
         self._pending[request_id] = (item.id, self._mode)
@@ -271,12 +277,13 @@ class QtVideoController(QObject):
             return
 
         LOGGER.info(
-            "Resolved video %s: %sp itag=%s muxed=%s client=%s",
+            "Resolved video %s: %sp itag=%s muxed=%s client=%s codec=%s",
             stream.video_id,
             stream.height,
             stream.itag,
             stream.muxed,
             stream.client,
+            stream.mime_type,
         )
         self._mode = "video"
         self.modeChanged.emit()
@@ -289,6 +296,7 @@ class QtVideoController(QObject):
 
         self._video_generation += 1
         generation = self._video_generation
+        self._active_video_uri = uri
         try:
             self._video_player.set_state(Gst.State.READY)
             source_uri = self.playback.player._source_uri(uri)
@@ -315,7 +323,13 @@ class QtVideoController(QObject):
             return GLib.SOURCE_REMOVE
         if state not in (Gst.State.PAUSED, Gst.State.PLAYING):
             if attempt < 100:
-                GLib.timeout_add(40, self._finish_video_start, generation, target_ms, attempt + 1)
+                GLib.timeout_add(
+                    40,
+                    self._finish_video_start,
+                    generation,
+                    target_ms,
+                    attempt + 1,
+                )
             else:
                 self._video_failed("O vídeo demorou demais para iniciar.")
             return GLib.SOURCE_REMOVE
@@ -364,11 +378,32 @@ class QtVideoController(QObject):
 
     def _video_failed(self, detail: str) -> None:
         LOGGER.error("Qt video layer failed: %s", detail)
+        failed_uri = self._active_video_uri
+        self._active_video_uri = None
+        if failed_uri:
+            mark_stream_transport_failure(failed_uri)
         self._video_generation += 1
         if self._video_player is not None:
             with suppress(Exception):
                 self._video_player.set_state(Gst.State.READY)
         self._set_loading(False)
+
+        if (
+            failed_uri
+            and self._video_retry_attempts < self.MAX_STREAM_RETRIES
+            and self._track_eligible()
+        ):
+            self._video_retry_attempts += 1
+            if self._mode != "audio":
+                self._mode = "audio"
+                self.modeChanged.emit()
+            self.backend._set_status(
+                "O formato de vídeo falhou; tentando outro formato "
+                f"({self._video_retry_attempts}/{self.MAX_STREAM_RETRIES})…"
+            )
+            self._set_mode("video", force=True)
+            return
+
         if self._mode != "audio":
             self._mode = "audio"
             self.modeChanged.emit()
@@ -388,6 +423,8 @@ class QtVideoController(QObject):
         self._pending.clear()
         self._set_loading(False)
         self._stop_video_layer()
+        self._active_video_uri = None
+        self._video_retry_attempts = 0
         if self._mode != "audio":
             self._mode = "audio"
             self.modeChanged.emit()
@@ -399,6 +436,7 @@ class QtVideoController(QObject):
         self._pending.clear()
         self._sync_timer.stop()
         self._video_generation += 1
+        self._active_video_uri = None
         if self._video_bus is not None:
             with suppress(Exception):
                 self._video_bus.remove_signal_watch()
