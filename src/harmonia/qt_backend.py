@@ -62,7 +62,12 @@ class HarmoniaQtBackend(QObject):
     _sessionReady = Signal(bool, str)
     _accountProfileReady = Signal(str, str, str)
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    def __init__(
+        self,
+        parent: QObject | None = None,
+        *,
+        playback_controller: type[QtPlaybackController] = QtPlaybackController,
+    ) -> None:
         super().__init__(parent)
         self._engine = parent
         self.storage = Storage()
@@ -86,7 +91,7 @@ class HarmoniaQtBackend(QObject):
         )
         self._downloads = self.storage.load_downloads()
 
-        self.playback = QtPlaybackController(
+        self.playback = playback_controller(
             self.storage,
             self.youtube,
             self.downloads,
