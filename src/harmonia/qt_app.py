@@ -8,6 +8,7 @@ from gi.repository import GLib
 from PySide6.QtCore import QCoreApplication, QTimer, QUrl
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
@@ -16,7 +17,7 @@ from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
-from .qt_video import QtVideoController
+from .qt_video import QtVideoController, create_qml6_video_sink
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -86,6 +87,18 @@ def main() -> int:
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
 
+    # qml6glsink exchanges OpenGL textures directly with the Qt Quick scene
+    # graph. Follow GStreamer's Qt6 example and request OpenGL before the first
+    # QQuickWindow is constructed; otherwise Qt may choose Vulkan/RHI and the
+    # two graphics contexts are not compatible.
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
+
+    # Creating qml6glsink before loading QML registers the
+    # org.freedesktop.gstreamer.Qt6GLVideoItem module and its
+    # GstGLQt6VideoItem type. Keep the element alive for the application's
+    # lifetime and let QtVideoController bind it to the QML item below.
+    video_sink = create_qml6_video_sink()
+
     # The shared player, Secret Service and MPRIS implementation use GLib/Gio.
     # Pumping the default context from Qt keeps one event loop and lets both
     # frontends reuse the same non-visual helpers.
@@ -102,7 +115,7 @@ def main() -> int:
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
     integrations = QtIntegrationsController(backend, backend._executor, engine)
-    video = QtVideoController(backend, engine)
+    video = QtVideoController(backend, video_sink, engine)
     auth.cookieReady.connect(backend.connectCookie)
 
     context = engine.rootContext()
