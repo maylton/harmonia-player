@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import urllib.parse
+
 from harmonia.stream_extractor import InnerTubeStreamExtractor, PlayerClientProfile
 from harmonia.stream_transport import (
     clear_stream_transport,
@@ -30,7 +32,7 @@ def setup_function():
     clear_stream_transport()
 
 
-def test_force_retry_skips_url_that_failed_in_player():
+def test_force_retry_skips_representation_that_failed_in_player():
     high = "https://media.test/audio-high"
     low = "https://media.test/audio-low"
     payload = {
@@ -53,13 +55,13 @@ def test_force_retry_skips_url_that_failed_in_player():
         },
     }
     extractor = InnerTubeStreamExtractor(DummyClient())
-    extractor._payloads = lambda *_args: iter([(PROFILE, payload)])
+    extractor._payloads = lambda *_args, **_kwargs: iter([(PROFILE, payload)])
 
     first = extractor.extract_audio("retry-audio-unique", force=True)
-    assert first.url == high
+    assert urllib.parse.urlsplit(first.url).path == "/audio-high"
 
-    mark_stream_transport_failure(high, ttl=60)
+    mark_stream_transport_failure(first.url, ttl=60)
     second = extractor.extract_audio("retry-audio-unique", force=True)
 
-    assert second.url == low
-    assert ("User-Agent", "harmonia-test-agent") in stream_transport_headers(low)
+    assert urllib.parse.urlsplit(second.url).path == "/audio-low"
+    assert ("User-Agent", "harmonia-test-agent") in stream_transport_headers(second.url)
