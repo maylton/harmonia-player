@@ -9,6 +9,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
 
+from .player_config import PlayerConfig, PlayerConfigResolver
+
 LOGGER = logging.getLogger(__name__)
 
 ORIGIN = "https://music.youtube.com"
@@ -246,6 +248,23 @@ class InnerTubeStreamExtractor:
 
     def __init__(self, client):
         self.client = client
+        self.config_resolver = PlayerConfigResolver(client)
+        self._player_configs: dict[bool, PlayerConfig] = {}
+
+    def _player_config(self, video_id: str, *, authenticated: bool) -> PlayerConfig | None:
+        cached = self._player_configs.get(authenticated)
+        if cached is not None:
+            return cached
+        try:
+            config = self.config_resolver.fetch(
+                video_id,
+                use_login_cookies=authenticated,
+            )
+        except Exception as exc:
+            LOGGER.debug("YouTube player config unavailable: %s", exc)
+            return None
+        self._player_configs[authenticated] = config
+        return config
 
     def _authenticated(self) -> bool:
         try:
@@ -268,7 +287,18 @@ class InnerTubeStreamExtractor:
             diagnostics.attempts.append(f"{profile.name}: login necessário")
             return None
 
-        version = self._profile_version(profile)
+        config = None
+        if profile.use_signature_timestamp:
+            config = self._player_config(
+                video_id,
+                authenticated=profile.login_supported and self._authenticated(),
+            )
+
+        version = (
+            config.client_version
+            if profile.use_live_version and config and config.client_version
+            else self._profile_version(profile)
+        )
         client_name = profile.name.split("_0_1", 1)[0].split("_1_", 1)[0]
         client_context: dict[str, Any] = {
             "clientName": client_name,
@@ -279,7 +309,9 @@ class InnerTubeStreamExtractor:
         }
         if profile.include_user_agent_in_context:
             client_context["userAgent"] = profile.user_agent
-        visitor_data = getattr(self.client, "visitor_data", None)
+        visitor_data = getattr(self.client, "visitor_data", None) or (
+            config.visitor_data if config else None
+        )
         if visitor_data:
             client_context["visitorData"] = visitor_data
 
@@ -294,6 +326,12 @@ class InnerTubeStreamExtractor:
             "contentCheckOk": True,
             "racyCheckOk": True,
         }
+        if config and config.signature_timestamp is not None:
+            body["playbackContext"] = {
+                "contentPlaybackContext": {
+                    "signatureTimestamp": config.signature_timestamp,
+                }
+            }
 
         request = urllib.request.Request(
             f"{API_URL}/player?prettyPrint=false",
