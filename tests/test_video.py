@@ -24,7 +24,12 @@ def test_video_item_uses_its_existing_video_id():
 
 
 def test_video_variant_prefers_matching_title_and_artist():
-    item = LibraryItem("song123", "Midnight Drive", "The Satellites · Album · 3:42", kind="songs")
+    item = LibraryItem(
+        "song123",
+        "Midnight Drive",
+        "The Satellites · Album · 3:42",
+        kind="songs",
+    )
     client = SearchClient(
         [
             LibraryItem("wrong", "Midnight Drive", "Different Artist", kind="videos"),
@@ -54,10 +59,11 @@ def test_progressive_video_uses_shared_extractor(monkeypatch):
     class PlayerClient:
         gl = "BR"
 
-    def extract(_self, video_id, *, max_height, progressive_only):
+    def extract(_self, video_id, *, max_height, progressive_only, force=False):
         assert video_id == "video-quality"
         assert max_height == 720
         assert progressive_only is True
+        assert force is True
         return StreamCandidate(
             url="https://example.test/720.mp4",
             client="TEST",
@@ -84,10 +90,11 @@ def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
     class PlayerClient:
         gl = "BR"
 
-    def extract(_self, video_id, *, max_height, progressive_only):
+    def extract(_self, video_id, *, max_height, progressive_only, force=False):
         assert video_id == "video-adaptive"
         assert max_height == 720
         assert progressive_only is False
+        assert force is True
         return StreamCandidate(
             url="https://example.test/720.mp4",
             client="TEST",
