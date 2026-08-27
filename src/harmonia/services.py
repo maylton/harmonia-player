@@ -26,6 +26,7 @@ from .models import (
 )
 from .preferences import Preferences
 from .storage import Storage
+from .video import VideoStreamInfo, resolve_video_stream
 
 SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
 
@@ -182,6 +183,21 @@ class YouTubeMusicService:
 
     def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
         return self.client().resolve_stream(video_id, force=force)
+
+    def resolve_video(
+        self,
+        item: LibraryItem,
+        *,
+        max_height: int = 720,
+        force: bool = False,
+    ) -> VideoStreamInfo:
+        """Resolve the best matching progressive music-video stream."""
+        return resolve_video_stream(
+            self.client(),
+            item,
+            max_height=max_height,
+            force=force,
+        )
 
     def register_playback(self, tracking_url: str, playlist_id: str | None = None) -> None:
         self.client().register_playback(tracking_url, playlist_id)
