@@ -287,9 +287,10 @@ def install_gtk_video(window_class) -> None:
         return original_stop(self)
 
     def wrapped_player_error(self, error: str):
-        if getattr(self, "_media_mode", "audio") == "video" and getattr(
-            self, "current_item", None
-        ) is not None:
+        if (
+            getattr(self, "_media_mode", "audio") == "video"
+            and getattr(self, "current_item", None) is not None
+        ):
             self.toast_overlay.add_toast(
                 Adw.Toast(title=_("O vídeo falhou; voltando para a música…"), timeout=3)
             )
