@@ -189,6 +189,7 @@ class YouTubeMusicService:
             candidate = InnerTubeStreamExtractor(client).extract_audio(
                 video_id,
                 max_bitrate=getattr(client, "max_bitrate", 10_000_000),
+                force=force,
             )
         except (StreamExtractionError, AttributeError, TypeError):
             # Until cipher/PoToken support is fully ported, the mature legacy
