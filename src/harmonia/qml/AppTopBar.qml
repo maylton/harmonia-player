@@ -49,13 +49,21 @@ Controls.ToolBar {
             spacing: Kirigami.Units.smallSpacing
 
             Controls.ToolButton {
+                id: navigationButton
                 visible: !root.wideLayout
                 text: "Navegação"
-                icon.name: "sidebar-show"
                 display: Controls.AbstractButton.IconOnly
                 onClicked: root.navigationRequested()
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: text
+
+                contentItem: Kirigami.Icon {
+                    implicitWidth: Kirigami.Units.iconSizes.smallMedium
+                    implicitHeight: implicitWidth
+                    source: "application-menu"
+                    fallback: "view-list"
+                    isMask: false
+                }
             }
 
             Controls.ToolButton {
