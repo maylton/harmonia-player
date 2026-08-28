@@ -35,6 +35,7 @@ def install_gtk_video(window_class) -> None:
         self._media_switch_request = 0
         self._media_ui_guard = False
         self._gtk_video_sink = None
+        self._gtk_video_output = None
         self._gtk_video_sink_available = False
 
         artwork_overlay = self.expanded_cover.get_parent()
@@ -95,14 +96,34 @@ def install_gtk_video(window_class) -> None:
         sink = Gst.ElementFactory.make("gtk4paintablesink", "harmonia-gtk-video")
         if sink is not None:
             try:
-                self.player.set_video_sink(sink)
                 paintable = sink.get_property("paintable")
                 video_picture.set_paintable(paintable)
+
+                # gtk4paintablesink can consume ordinary system-memory frames,
+                # but when GTK exposes a GL context GStreamer recommends putting
+                # it behind glsinkbin.  glsinkbin performs the GL upload/color
+                # conversion and makes playbin negotiation considerably more
+                # robust across Mesa/Wayland/X11 drivers and decoder output
+                # formats.  Keep the direct sink as a safe non-GL fallback.
+                video_output = sink
+                try:
+                    gl_context = paintable.get_property("gl-context")
+                except Exception:
+                    gl_context = None
+                if gl_context is not None:
+                    glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-gtk-video-bin")
+                    if glsinkbin is not None:
+                        glsinkbin.set_property("sink", sink)
+                        video_output = glsinkbin
+
+                self.player.set_video_sink(video_output)
                 self._gtk_video_sink = sink
+                self._gtk_video_output = video_output
                 self._gtk_video_sink_available = True
             except Exception:
                 self.player.set_video_sink(None)
                 self._gtk_video_sink = None
+                self._gtk_video_output = None
 
         audio_button.connect(
             "toggled",
