@@ -307,7 +307,7 @@ class _StreamRelay:
             index_range[0],
             index_range[1],
         )
-        return f"http://127.0.0.1:{self.server.server_port}/manifest/{generation}.mpd"
+        return f"http://127.0.0.1:{self.server.server_port}/manifest/{generation}"
 
     def close(self) -> None:
         self.streams.clear()
