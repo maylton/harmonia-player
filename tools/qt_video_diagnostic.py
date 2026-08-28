@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Small Qt/GStreamer video-output diagnostic.
-
-Examples:
-    python tools/qt_video_diagnostic.py --mode synthetic
-    python tools/qt_video_diagnostic.py --mode playbin --uri /tmp/sample.mp4
-    python tools/qt_video_diagnostic.py --mode dash --uri http://127.0.0.1:...
-"""
+"""Exercise the Qt/GStreamer video output independently of the main UI."""
 
 from __future__ import annotations
 
@@ -130,7 +124,9 @@ class Diagnostic(QObject):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("synthetic", "file", "playbin", "dash"), default="synthetic")
+    parser.add_argument(
+        "--mode", choices=("synthetic", "file", "playbin", "dash"), default="synthetic"
+    )
     parser.add_argument("--uri")
     parser.add_argument("--seconds", type=float, default=8)
     args = parser.parse_args()
