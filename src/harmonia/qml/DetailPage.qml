@@ -264,7 +264,7 @@ Item {
                             Kirigami.Icon {
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: width
-                                source: "favorite"
+                                source: "love-symbolic"
                                 isMask: true
                                 color: Kirigami.Theme.highlightColor
                                 visible: modelData.liked
@@ -313,6 +313,7 @@ Item {
 
                                     Controls.MenuItem {
                                         text: modelData.liked ? "Remover das curtidas" : "Curtir música"
+                                        icon.name: "love-symbolic"
                                         onTriggered: backend.toggleLike(modelData.id)
                                     }
 

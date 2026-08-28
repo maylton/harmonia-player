@@ -9,6 +9,8 @@ Controls.AbstractButton {
     property string iconName: ""
     property string fallbackIcon: "application-x-executable"
     property bool selected: false
+    property real iconSize: Kirigami.Units.iconSizes.small
+    property bool monochromeIcon: false
 
     hoverEnabled: true
     checkable: false
@@ -37,11 +39,11 @@ Controls.AbstractButton {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.Icon {
-            Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
-            Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
+            Layout.preferredWidth: root.iconSize
+            Layout.preferredHeight: root.iconSize
             source: root.iconName
             fallback: root.fallbackIcon
-            isMask: true
+            isMask: root.monochromeIcon
             color: Kirigami.Theme.textColor
             opacity: root.selected ? 1.0 : 0.78
             selected: root.selected

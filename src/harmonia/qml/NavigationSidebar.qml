@@ -88,7 +88,7 @@ Rectangle {
             Layout.fillWidth: true
             text: "Músicas curtidas"
             iconName: "love-symbolic"
-            fallbackIcon: "emblem-favorite-symbolic"
+            monochromeIcon: true
             selected: root.currentView === 2 && root.currentCategory === "songs"
             onClicked: root.categoryRequested("songs")
         }

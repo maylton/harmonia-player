@@ -22,6 +22,11 @@ Kirigami.ApplicationWindow {
 
     pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.None
 
+    onWidthChanged: {
+        if (wideLayout && compactNavigationDrawer.opened)
+            compactNavigationDrawer.close()
+    }
+
     function showDetail(fromView) {
         previousView = fromView
         currentView = 4
@@ -43,70 +48,6 @@ Kirigami.ApplicationWindow {
             return
         }
         currentView = 0
-    }
-
-    globalDrawer: Kirigami.GlobalDrawer {
-        title: "Harmonia"
-        titleIcon: "audio-headphones"
-        isMenu: true
-        handleVisible: false
-        actions: [
-            Kirigami.Action {
-                text: "Início"
-                icon.name: "go-home"
-                onTriggered: root.currentView = 0
-            },
-            Kirigami.Action {
-                text: "Explorar"
-                icon.name: "find-location"
-                onTriggered: root.currentView = 1
-            },
-            Kirigami.Action {
-                text: "Biblioteca"
-                icon.name: "folder-music"
-                onTriggered: root.currentView = 2
-            },
-            Kirigami.Action {
-                text: "Músicas curtidas"
-                icon.name: "starred"
-                onTriggered: root.showLibraryCategory("songs")
-            },
-            Kirigami.Action {
-                text: "Playlists"
-                icon.name: "view-list"
-                onTriggered: root.showLibraryCategory("playlists")
-            },
-            Kirigami.Action {
-                text: "Artistas"
-                icon.name: "user-identity"
-                onTriggered: root.showLibraryCategory("artists")
-            },
-            Kirigami.Action {
-                text: "Histórico"
-                icon.name: "document-open-recent"
-                onTriggered: root.currentView = 7
-            },
-            Kirigami.Action {
-                text: "Estatísticas"
-                icon.name: "office-chart-line"
-                onTriggered: root.currentView = 8
-            },
-            Kirigami.Action {
-                text: "Downloads"
-                icon.name: "folder-download"
-                onTriggered: root.currentView = 5
-            },
-            Kirigami.Action {
-                text: "Preferências"
-                icon.name: "preferences-system"
-                onTriggered: root.currentView = 6
-            },
-            Kirigami.Action {
-                text: "Nova playlist"
-                icon.name: "list-add"
-                onTriggered: remotePlaylistDialog.open()
-            }
-        ]
     }
 
     Kirigami.Action {
@@ -167,7 +108,7 @@ Kirigami.ApplicationWindow {
                         wideLayout: root.wideLayout
                         currentView: root.currentView
                         ambientMode: preferences.backgroundBlur
-                        onNavigationRequested: root.globalDrawer.open()
+                        onNavigationRequested: compactNavigationDrawer.open()
                         onBackRequested: root.goBack()
                         onConnectRequested: loginDialog.openLogin()
                         onSearchRequested: function(query) {
@@ -240,6 +181,41 @@ Kirigami.ApplicationWindow {
                 onLyricsRequested: lyricsPanel.open()
                 onQueueRequested: queuePanel.open()
                 onExpandedRequested: expandedPlayer.open()
+            }
+        }
+    }
+
+    Controls.Drawer {
+        id: compactNavigationDrawer
+        parent: Controls.Overlay.overlay
+        edge: Qt.LeftEdge
+        modal: true
+        interactive: !root.wideLayout
+        padding: 0
+        width: Math.min(Kirigami.Units.gridUnit * 13, root.width * 0.82)
+        height: parent ? parent.height : root.height
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
+
+        contentItem: NavigationSidebar {
+            width: compactNavigationDrawer.availableWidth
+            height: compactNavigationDrawer.availableHeight
+            ambientMode: preferences.backgroundBlur
+            currentView: root.currentView
+            currentCategory: backend.currentLibraryCategory
+
+            onViewRequested: function(view) {
+                root.currentView = view
+                compactNavigationDrawer.close()
+            }
+
+            onCategoryRequested: function(category) {
+                root.showLibraryCategory(category)
+                compactNavigationDrawer.close()
+            }
+
+            onCreatePlaylistRequested: {
+                compactNavigationDrawer.close()
+                remotePlaylistDialog.open()
             }
         }
     }

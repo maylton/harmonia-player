@@ -7,6 +7,8 @@ import org.kde.kirigami as Kirigami
 Item {
     id: root
 
+    property url pendingRestoreUrl: ""
+
     signal connectRequested()
 
     Flickable {
@@ -398,6 +400,30 @@ Item {
         title: "Restaurar backup"
         fileMode: Dialogs.FileDialog.OpenFile
         nameFilters: ["Backup do Harmonia (*.harmonia-backup)", "Todos os arquivos (*)"]
-        onAccepted: backend.restoreBackup(selectedFile.toString())
+        onAccepted: {
+            root.pendingRestoreUrl = selectedFile
+            restoreConfirmDialog.open()
+        }
+    }
+
+    Controls.Dialog {
+        id: restoreConfirmDialog
+        parent: Controls.Overlay.overlay
+        anchors.centerIn: parent
+        modal: true
+        title: "Restaurar backup?"
+        standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
+
+        contentItem: Controls.Label {
+            text: "A restauração substitui os dados atuais do Harmonia pelos dados do backup selecionado."
+            wrapMode: Text.WordWrap
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 24
+        }
+
+        onAccepted: {
+            backend.restoreBackup(root.pendingRestoreUrl.toString())
+            root.pendingRestoreUrl = ""
+        }
+        onRejected: root.pendingRestoreUrl = ""
     }
 }
