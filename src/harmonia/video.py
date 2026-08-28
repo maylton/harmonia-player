@@ -40,6 +40,10 @@ class VideoStreamInfo:
     height: int = 0
     fps: int = 0
     muxed: bool = True
+    stream_type: str = ""
+    content_length: int | None = None
+    init_range: tuple[int, int] | None = None
+    index_range: tuple[int, int] | None = None
     expires_at: int | None = None
     request_headers: dict[str, str] | None = None
 
@@ -53,6 +57,7 @@ _VIDEO_CACHE_LOCK = threading.Lock()
 
 _DURATION_SUFFIX = re.compile(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$")
 _NON_WORD = re.compile(r"[^a-z0-9]+")
+_OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
 
 
 def _normalize(value: str) -> str:
@@ -231,6 +236,44 @@ def _video_compatibility(fmt: dict[str, Any]) -> int:
     return 0
 
 
+def _byte_range(fmt: dict[str, Any], key: str) -> tuple[int, int] | None:
+    value = fmt.get(key) or {}
+    try:
+        start = int(value["start"])
+        end = int(value["end"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return (start, end) if end >= start else None
+
+
+def _is_otf_video(fmt: dict[str, Any]) -> bool:
+    """OTF URLs are sequential fragment protocols, not random-access media files."""
+    return str(fmt.get("type") or "") == _OTF_STREAM_TYPE or bool(fmt.get("targetDurationSec"))
+
+
+def _video_random_access_score(fmt: dict[str, Any], muxed: bool) -> int:
+    """Rank direct formats by how safely a media player can seek them.
+
+    Progressive formats are ordinary files. For adaptive formats, the strongest
+    signal is the normal YouTube combination of contentLength + initRange +
+    indexRange. OTF formats deliberately score below usable direct streams.
+    """
+    if _is_otf_video(fmt):
+        return -1
+    if muxed:
+        return 4
+    content_length = fmt.get("contentLength")
+    init_range = _byte_range(fmt, "initRange")
+    index_range = _byte_range(fmt, "indexRange")
+    if content_length and init_range and index_range:
+        return 3
+    if content_length and index_range:
+        return 2
+    if content_length:
+        return 1
+    return 0
+
+
 def resolve_video_stream(
     client: InnerTubeClient,
     item: LibraryItem,
@@ -243,6 +286,8 @@ def resolve_video_stream(
 
     Callers with a dedicated visual layer can set ``allow_video_only`` and use
     YouTube's adaptiveFormats while keeping the normal audio player untouched.
+    OTF adaptive streams are excluded because their ``sq=N`` fragment protocol
+    is not a random-access file and therefore cannot support GStreamer seeking.
     """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
@@ -275,13 +320,14 @@ def resolve_video_stream(
             and fmt.get("url")
             and int(fmt.get("height", 0) or 0) > 0
         ]
-        adaptive = [
+        adaptive_all = [
             fmt
             for fmt in (streaming.get("adaptiveFormats") or [])
             if str(fmt.get("mimeType", "")).startswith("video/")
             and fmt.get("url")
             and int(fmt.get("height", 0) or 0) > 0
         ]
+        adaptive = [fmt for fmt in adaptive_all if not _is_otf_video(fmt)]
         candidates: list[tuple[dict[str, Any], bool]] = [(fmt, True) for fmt in progressive]
         if allow_video_only:
             candidates.extend((fmt, False) for fmt in adaptive)
@@ -293,14 +339,28 @@ def resolve_video_stream(
             )
             continue
         if not candidates:
-            missing = "sem stream de vídeo direto" if allow_video_only else "sem vídeo progressivo"
-            failures.append(f"{profile['name']}: {missing}")
+            if allow_video_only and adaptive_all:
+                failures.append(f"{profile['name']}: apenas vídeo OTF não-seekable")
+            else:
+                missing = (
+                    "sem stream de vídeo direto" if allow_video_only else "sem vídeo progressivo"
+                )
+                failures.append(f"{profile['name']}: {missing}")
             continue
 
-        within_quality = [
-            pair for pair in candidates if int(pair[0].get("height", 0) or 0) <= max_height
+        # Random access matters more than nominal resolution for the Music/Video
+        # switch: a 480p indexed MP4 can be synchronized; a 720p OTF/sequential
+        # stream cannot. Within the best seekability class, maximize quality.
+        best_access = max(_video_random_access_score(fmt, muxed) for fmt, muxed in candidates)
+        access_pool = [
+            pair
+            for pair in candidates
+            if _video_random_access_score(pair[0], pair[1]) == best_access
         ]
-        pool = within_quality or candidates
+        within_quality = [
+            pair for pair in access_pool if int(pair[0].get("height", 0) or 0) <= max_height
+        ]
+        pool = within_quality or access_pool
         if within_quality:
             selected, muxed = max(
                 pool,
@@ -321,6 +381,7 @@ def resolve_video_stream(
             continue
 
         duration = selected.get("approxDurationMs")
+        content_length = selected.get("contentLength")
         stream = VideoStreamInfo(
             url=url,
             video_id=video_id,
@@ -333,6 +394,10 @@ def resolve_video_stream(
             height=int(selected.get("height", 0) or 0),
             fps=int(selected.get("fps", 0) or 0),
             muxed=muxed,
+            stream_type=str(selected.get("type") or ""),
+            content_length=int(content_length) if content_length else None,
+            init_range=_byte_range(selected, "initRange"),
+            index_range=_byte_range(selected, "indexRange"),
             expires_at=_stream_expiration(url),
             request_headers=request_headers,
         )
