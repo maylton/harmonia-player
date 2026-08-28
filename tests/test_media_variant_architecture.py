@@ -34,3 +34,12 @@ def test_qt_independent_video_resolves_its_own_audio_and_restarts() -> None:
     assert "position_us=0" in source
     assert "_independent_video_primary_position_ms" in source
     assert "Ignoring visual EOS" in source
+
+
+def test_qt_video_primes_qml_gl_display_and_uses_glsinkbin() -> None:
+    source = (HARMONIA / "qt_media_variants.py").read_text(encoding="utf-8")
+    assert "self._sink.set_state(Gst.State.READY)" in source
+    assert 'Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")' in source
+    assert 'glsinkbin.set_property("sink", self._sink)' in source
+    assert 'self._video_player.set_property("video-sink", video_output)' in source
+    assert "Qt video output using glsinkbin -> qml6glsink" in source
