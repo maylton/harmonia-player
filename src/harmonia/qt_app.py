@@ -17,7 +17,8 @@ from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
-from .qt_video import QtVideoController, create_qml6_video_sink
+from .qt_media_variants import OfficialVideoQtController
+from .qt_video import create_qml6_video_sink
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -96,7 +97,7 @@ def main() -> int:
     # Creating qml6glsink before loading QML registers the
     # org.freedesktop.gstreamer.Qt6GLVideoItem module and its
     # GstGLQt6VideoItem type. Keep the element alive for the application's
-    # lifetime and let QtVideoController bind it to the QML item below.
+    # lifetime and let OfficialVideoQtController bind it to the QML item below.
     video_sink = create_qml6_video_sink()
 
     # The shared player, Secret Service and MPRIS implementation use GLib/Gio.
@@ -115,7 +116,7 @@ def main() -> int:
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
     integrations = QtIntegrationsController(backend, backend._executor, engine)
-    video = QtVideoController(backend, video_sink, engine)
+    video = OfficialVideoQtController(backend, video_sink, engine)
     auth.cookieReady.connect(backend.connectCookie)
 
     context = engine.rootContext()
