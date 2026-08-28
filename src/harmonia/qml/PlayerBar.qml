@@ -95,21 +95,14 @@ Rectangle {
 
             Controls.ToolButton {
                 id: footerLikeButton
+                icon.name: "love-symbolic"
+                icon.color: backend.currentLiked
+                            ? Kirigami.Theme.highlightColor
+                            : Kirigami.Theme.textColor
                 enabled: backend.currentId.length > 0
                 onClicked: backend.toggleLike(backend.currentId)
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: backend.currentLiked ? "Remover das curtidas" : "Curtir"
-
-                contentItem: Kirigami.Icon {
-                    source: "love-symbolic"
-                    isMask: true
-                    color: backend.currentLiked
-                           ? Kirigami.Theme.highlightColor
-                           : Kirigami.Theme.textColor
-                    opacity: footerLikeButton.enabled
-                             ? (backend.currentLiked ? 1.0 : 0.78)
-                             : 0.38
-                }
             }
         }
 
