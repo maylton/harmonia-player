@@ -241,11 +241,8 @@ def resolve_video_stream(
 ) -> VideoStreamInfo:
     """Resolve a direct stream for the matching music video.
 
-    GTK's current single-playbin implementation keeps ``allow_video_only``
-    disabled and therefore receives only muxed audio+video formats. The Qt
-    frontend owns a dedicated muted video layer, so it can also consume
-    ``adaptiveFormats`` video-only streams and keep the main audio transport
-    untouched.
+    Callers with a dedicated visual layer can set ``allow_video_only`` and use
+    YouTube's adaptiveFormats while keeping the normal audio player untouched.
     """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
@@ -289,11 +286,15 @@ def resolve_video_stream(
         if allow_video_only:
             candidates.extend((fmt, False) for fmt in adaptive)
 
-        if status.get("status") != "OK" or not candidates:
-            missing = "sem stream de vídeo direto" if allow_video_only else "sem vídeo progressivo"
+        if status.get("status") != "OK":
             failures.append(
-                f"{profile['name']}: {status.get('reason') or status.get('status') or missing}"
+                f"{profile['name']}: "
+                f"{status.get('reason') or status.get('status') or 'indisponível'}"
             )
+            continue
+        if not candidates:
+            missing = "sem stream de vídeo direto" if allow_video_only else "sem vídeo progressivo"
+            failures.append(f"{profile['name']}: {missing}")
             continue
 
         within_quality = [
