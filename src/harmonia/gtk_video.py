@@ -459,7 +459,7 @@ def install_gtk_video(window_class) -> None:
         if video_player is None:
             return GLib.SOURCE_REMOVE
 
-        result, state, _pending = video_player.get_state(0)
+        result, _state, _pending = video_player.get_state(0)
         if result == Gst.StateChangeReturn.FAILURE:
             self._gtk_video_failed(_("O GStreamer falhou durante a sincronização do vídeo."))
             return GLib.SOURCE_REMOVE
