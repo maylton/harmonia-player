@@ -146,7 +146,7 @@ def test_sidebar_uses_one_theme_aware_icon_component() -> None:
     assert "isMask: root.monochromeIcon" in button
     assert "fallback:" in button
     assert sidebar.count("monochromeIcon: true") == 1
-    assert sidebar.count("iconSize: Kirigami.Units.iconSizes.smallMedium") == 1
+    assert sidebar.count("iconSize:") == 0
 
 
 def test_visible_player_controls_do_not_use_missing_autoplay_icon() -> None:
