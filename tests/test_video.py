@@ -64,6 +64,20 @@ def test_video_variant_prefers_authoritative_music_video_counterpart():
     assert not client.search_called
 
 
+def test_video_variant_falls_back_when_counterpart_lookup_fails():
+    item = LibraryItem("song-fallback", "Fallback Song", "Fallback Artist · 3:12", kind="songs")
+
+    class FailingCounterpartClient(SearchClient):
+        def video_counterpart(self, _video_id: str):
+            raise InnerTubeError("counterpart unavailable")
+
+    client = FailingCounterpartClient(
+        [LibraryItem("fallback-video", "Fallback Song", "Fallback Artist", kind="videos")]
+    )
+
+    assert find_video_variant(client, item, force=True) == "fallback-video"
+
+
 def test_video_variant_rejects_unrelated_results():
     item = LibraryItem("song999", "Northern Lights", "Aster", kind="songs")
     client = SearchClient(
@@ -145,8 +159,6 @@ def test_video_variant_prefers_official_video_search_over_same_title_lyrics():
                         "Sean Kingston • 1,5 bi de visualizações • 4:22",
                         kind="videos",
                     ),
-                    # The canonical shelf can contain another exact-title
-                    # upload with no useful marker in the parsed metadata.
                     LibraryItem(
                         "lyrics-canonical",
                         "Beautiful Girls",
