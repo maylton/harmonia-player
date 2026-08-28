@@ -32,13 +32,13 @@ class _StreamRelay:
     CHUNK_SIZE = 1024 * 1024
 
     def __init__(self):
-        self.streams: dict[int, str] = {}
+        self.streams: dict[int, tuple[str, dict[str, str]]] = {}
         relay = self
 
         class Handler(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"
 
-            def _remote(self) -> str | None:
+            def _remote(self) -> tuple[str, dict[str, str]] | None:
                 try:
                     generation = int(self.path.rstrip("/").rsplit("/", 1)[-1])
                 except ValueError:
@@ -55,24 +55,34 @@ class _StreamRelay:
                 return int(match.group(1)), int(match.group(2)) if match.group(2) else None, True
 
             @staticmethod
-            def _upstream(remote: str, start: int, end: int):
+            def _upstream(
+                remote: str,
+                start: int,
+                end: int,
+                headers: dict[str, str],
+            ):
+                request_headers = dict(headers)
+                request_headers["Range"] = f"bytes={start}-{end}"
                 request = urllib.request.Request(
-                    remote, headers={"Range": f"bytes={start}-{end}"}, method="GET"
+                    remote,
+                    headers=request_headers,
+                    method="GET",
                 )
                 return urllib.request.urlopen(request, timeout=30)
 
             def _serve(self, send_body: bool):
-                remote = self._remote()
-                if not remote:
+                stream = self._remote()
+                if not stream:
                     self.send_error(404)
                     return
+                remote, request_headers = stream
                 headers_sent = False
                 try:
                     start, requested_end, partial = self._range(self.headers.get("Range"))
                     first_end = start + relay.CHUNK_SIZE - 1
                     if requested_end is not None:
                         first_end = min(first_end, requested_end)
-                    with self._upstream(remote, start, first_end) as first:
+                    with self._upstream(remote, start, first_end, request_headers) as first:
                         content_range = first.headers.get("Content-Range", "")
                         match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", content_range)
                         if not match:
@@ -108,7 +118,12 @@ class _StreamRelay:
                             cursor += len(chunk)
                         while cursor <= end:
                             chunk_end = min(cursor + relay.CHUNK_SIZE - 1, end)
-                            with self._upstream(remote, cursor, chunk_end) as response:
+                            with self._upstream(
+                                remote,
+                                cursor,
+                                chunk_end,
+                                request_headers,
+                            ) as response:
                                 while chunk := response.read(64 * 1024):
                                     self.wfile.write(chunk)
                                     cursor += len(chunk)
@@ -136,9 +151,9 @@ class _StreamRelay:
         ).start()
         self.generation = 0
 
-    def uri_for(self, remote_url: str) -> str:
+    def uri_for(self, remote_url: str, headers: dict[str, str] | None = None) -> str:
         self.generation += 1
-        self.streams[self.generation] = remote_url
+        self.streams[self.generation] = (remote_url, dict(headers or {}))
         for generation in list(self.streams):
             if generation < self.generation - 3:
                 self.streams.pop(generation, None)
@@ -253,7 +268,13 @@ class NativePlayer:
         self._playbin.set_property("uri", self._source_uri(uri))
         self._playbin.set_state(Gst.State.PLAYING)
 
-    def replace(self, uri: str, position_us: int = 0, playing: bool | None = None) -> None:
+    def replace(
+        self,
+        uri: str,
+        position_us: int = 0,
+        playing: bool | None = None,
+        request_headers: dict[str, str] | None = None,
+    ) -> None:
         """Replace only the media source while preserving transport state/position.
 
         This is intentionally separate from :meth:`play`: callers use it for
@@ -266,7 +287,7 @@ class NativePlayer:
         generation = self._replace_generation
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = target
-        self._playbin.set_property("uri", self._source_uri(uri))
+        self._playbin.set_property("uri", self._source_uri(uri, request_headers))
         # Preroll paused first; seeking before preroll is unreliable for remote
         # MP4 streams and can briefly play from 0 before the requested position.
         self._playbin.set_state(Gst.State.PAUSED)
@@ -291,11 +312,15 @@ class NativePlayer:
         self._playbin.set_state(Gst.State.PLAYING if should_play else Gst.State.PAUSED)
         return GLib.SOURCE_REMOVE
 
-    def _source_uri(self, uri: str) -> str:
+    def _source_uri(
+        self,
+        uri: str,
+        request_headers: dict[str, str] | None = None,
+    ) -> str:
         scheme = urllib.parse.urlsplit(uri).scheme
         if scheme == "file" or (scheme == "http" and "googlevideo.com" not in uri):
             return uri
-        return self._relay.uri_for(uri)
+        return self._relay.uri_for(uri, request_headers)
 
     def toggle(self) -> None:
         _result, state, _pending = self._playbin.get_state(0)
