@@ -143,7 +143,7 @@ def test_compact_player_bounds_seek_and_volume_widths() -> None:
     assert "root.centerMaxWidth" in source
 
 
-def test_expanded_player_tabs_are_centered_on_the_window() -> None:
+def test_expanded_player_tabs_center_the_visible_button_group() -> None:
     source = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
     header = source.split("id: expandedHeader", 1)[1].split("StackLayout {", 1)[0]
 
@@ -153,7 +153,12 @@ def test_expanded_player_tabs_are_centered_on_the_window() -> None:
     assert "id: viewTabs" in header
     assert "anchors.horizontalCenter: parent.horizontalCenter" in header
     assert "anchors.verticalCenter: parent.verticalCenter" in header
-    assert "expandedHeader.width" in header
+    assert "readonly property real tabsNaturalWidth:" in header
+    assert "musicTab.implicitWidth" in header
+    assert "lyricsTab.implicitWidth" in header
+    assert "relatedTab.implicitWidth" in header
+    assert "expandedHeader.tabsNaturalWidth" in header
+    assert "Kirigami.Units.gridUnit * 25" not in header
     assert "Item { Layout.fillWidth: true }" not in header
 
 
