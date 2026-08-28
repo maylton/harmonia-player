@@ -55,6 +55,9 @@ Controls.Dialog {
                 id: expandedHeader
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(closePlayerButton.implicitHeight, viewTabs.implicitHeight)
+                readonly property real tabsNaturalWidth: musicTab.implicitWidth
+                                                       + lyricsTab.implicitWidth
+                                                       + relatedTab.implicitWidth
 
                 Controls.ToolButton {
                     id: closePlayerButton
@@ -73,21 +76,24 @@ Controls.Dialog {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(
-                        Kirigami.Units.gridUnit * 25,
+                        expandedHeader.tabsNaturalWidth,
                         Math.max(0, expandedHeader.width - Kirigami.Units.gridUnit * 10)
                     )
 
                     Controls.TabButton {
+                        id: musicTab
                         text: "Música"
                         icon.name: "audio-headphones"
                     }
 
                     Controls.TabButton {
+                        id: lyricsTab
                         text: "Letras"
                         icon.name: "view-media-lyrics"
                     }
 
                     Controls.TabButton {
+                        id: relatedTab
                         text: "Relacionadas"
                         icon.name: "view-media-playlist"
                     }
