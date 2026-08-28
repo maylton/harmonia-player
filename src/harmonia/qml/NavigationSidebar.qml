@@ -88,8 +88,6 @@ Rectangle {
             Layout.fillWidth: true
             text: "Músicas curtidas"
             iconName: "love-symbolic"
-            fallbackIcon: "emblem-favorite-symbolic"
-            iconSize: Kirigami.Units.iconSizes.smallMedium
             monochromeIcon: true
             selected: root.currentView === 2 && root.currentCategory === "songs"
             onClicked: root.categoryRequested("songs")
