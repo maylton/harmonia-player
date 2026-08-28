@@ -38,7 +38,7 @@ def test_lyrics_toolbar_uses_abstract_buttons_without_native_ghost_content() -> 
     assert "property string actionText" in source
 
 
-def test_sidebar_keeps_plasma_icons_native_sized_with_explicit_app_glyph_override() -> None:
+def test_sidebar_keeps_liked_icon_at_the_native_navigation_size() -> None:
     component = (QML / "SidebarButton.qml").read_text(encoding="utf-8")
     navigation = (QML / "NavigationSidebar.qml").read_text(encoding="utf-8")
 
@@ -50,8 +50,9 @@ def test_sidebar_keeps_plasma_icons_native_sized_with_explicit_app_glyph_overrid
 
     liked = navigation.split('text: "Músicas curtidas"', 1)[1].split("SidebarButton {", 1)[0]
     assert 'iconName: "love-symbolic"' in liked
-    assert "iconSize: Kirigami.Units.iconSizes.smallMedium" in liked
     assert "monochromeIcon: true" in liked
+    assert "iconSize:" not in liked
+    assert "fallbackIcon:" not in liked
 
     settings = navigation.split('text: "Preferências"', 1)[1].split("SidebarButton {", 1)[0]
     assert 'iconName: "settings-configure"' in settings
@@ -60,15 +61,34 @@ def test_sidebar_keeps_plasma_icons_native_sized_with_explicit_app_glyph_overrid
     assert "monochromeIcon:" not in settings
 
 
-def test_sidebar_uses_recognizable_breeze_like_and_settings_icons() -> None:
+def test_liked_state_uses_heart_instead_of_star_icons() -> None:
+    heart_consumers = (
+        "NavigationSidebar.qml",
+        "PlayerBar.qml",
+        "ExpandedPlayer.qml",
+        "DetailPage.qml",
+        "LibraryPage.qml",
+        "SongShelf.qml",
+    )
+    for filename in heart_consumers:
+        source = (QML / filename).read_text(encoding="utf-8")
+        assert "love-symbolic" in source, filename
+
+    for path in QML.glob("*.qml"):
+        source = path.read_text(encoding="utf-8")
+        assert '"favorite"' not in source, path.name
+        assert '"non-starred"' not in source, path.name
+        assert "emblem-favorite-symbolic" not in source, path.name
+
+
+def test_sidebar_uses_recognizable_breeze_settings_icon() -> None:
     source = (QML / "NavigationSidebar.qml").read_text(encoding="utf-8")
     assert 'iconName: "love-symbolic"' in source
-    assert 'fallbackIcon: "emblem-favorite-symbolic"' in source
     assert 'iconName: "settings-configure"' in source
     assert 'fallbackIcon: "configure-symbolic"' in source
 
 
-def test_player_uses_clickable_shared_seek_slider_and_theme_driven_like_icon() -> None:
+def test_player_uses_clickable_shared_seek_slider_and_native_sized_like_icon() -> None:
     compact = (QML / "PlayerBar.qml").read_text(encoding="utf-8")
     expanded = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
     seek = (QML / "SeekSlider.qml").read_text(encoding="utf-8")
@@ -88,9 +108,17 @@ def test_player_uses_clickable_shared_seek_slider_and_theme_driven_like_icon() -
         assert "backend.seek(positionMs)" in source
         assert source.count("Controls.Slider {") >= 1
         assert "onPressedChanged: if (!pressed) backend.seek" not in source
-        assert 'source: "love-symbolic"' in source
+        assert 'icon.name: "love-symbolic"' in source
         assert "Kirigami.Theme.highlightColor" in source
         assert "palette.highlight:" not in source
+
+    compact_like = compact.split("id: footerLikeButton", 1)[1].split("Controls.ToolButton {", 1)[0]
+    expanded_like = expanded.split("id: expandedLikeButton", 1)[1].split("Kirigami.Icon {", 1)[0]
+    for like_block in (compact_like, expanded_like):
+        assert 'icon.name: "love-symbolic"' in like_block
+        assert "icon.width:" not in like_block
+        assert "icon.height:" not in like_block
+        assert "contentItem: Kirigami.Icon" not in like_block
 
 
 def test_compact_player_bounds_seek_and_volume_widths() -> None:
@@ -113,6 +141,20 @@ def test_compact_player_bounds_seek_and_volume_widths() -> None:
     assert "spacing: Kirigami.Units.gridUnit" in source
     assert "id: centerRegion" in source
     assert "root.centerMaxWidth" in source
+
+
+def test_expanded_player_tabs_are_centered_on_the_window() -> None:
+    source = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
+    header = source.split("id: expandedHeader", 1)[1].split("StackLayout {", 1)[0]
+
+    assert "Layout.fillWidth: true" in header
+    assert "id: closePlayerButton" in header
+    assert "anchors.left: parent.left" in header
+    assert "id: viewTabs" in header
+    assert "anchors.horizontalCenter: parent.horizontalCenter" in header
+    assert "anchors.verticalCenter: parent.verticalCenter" in header
+    assert "expandedHeader.width" in header
+    assert "Item { Layout.fillWidth: true }" not in header
 
 
 def test_expanded_media_visual_has_a_hard_maximum_and_replaces_cover_in_place() -> None:
