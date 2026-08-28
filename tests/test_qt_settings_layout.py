@@ -15,12 +15,14 @@ def test_settings_page_uses_grouped_reusable_sections() -> None:
     assert "Kirigami.Separator { width: parent.width }" not in source
 
 
-def test_settings_section_keeps_native_kde_theme_and_symbolic_icon() -> None:
+def test_settings_section_preserves_native_kde_icon_rendering() -> None:
     source = (QML / "SettingsSection.qml").read_text(encoding="utf-8")
     assert "default property alias contentData: body.data" in source
     assert "Kirigami.Theme.alternateBackgroundColor" in source
     assert "Kirigami.Theme.highlightColor" in source
-    assert "isMask: true" in source
+    assert "width: Kirigami.Units.iconSizes.smallMedium" in source
+    assert "isMask: false" in source
+    assert "color: Kirigami.Theme.textColor\n                }" not in source
     assert "Kirigami.Separator" in source
 
 
