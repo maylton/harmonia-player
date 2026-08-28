@@ -212,7 +212,9 @@ class OfficialVideoQtController(QtVideoController):
         should_play = self.playback.playing
         video_duration_ms = max(
             0,
-            int(playback_info.duration_ms or playback_info.video.duration_ms or primary_duration_ms),
+            int(
+                playback_info.duration_ms or playback_info.video.duration_ms or primary_duration_ms
+            ),
         )
 
         self._independent_video_primary_uri = primary_uri
