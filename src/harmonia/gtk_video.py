@@ -354,9 +354,7 @@ def install_gtk_video(window_class) -> None:
         # PLAYING while it remains hidden behind the artwork, then retry until
         # demux/source seeking becomes available. The video is muted, so this is
         # invisible and inaudible to the user.
-        LOGGER.info(
-            "GTK video initial seek was not accepted in PAUSED; warming hidden pipeline"
-        )
+        LOGGER.info("GTK video initial seek was not accepted in PAUSED; warming hidden pipeline")
         self._gtk_video_initial_warmup = True
         result = video_player.set_state(Gst.State.PLAYING)
         if result == Gst.StateChangeReturn.FAILURE:
@@ -554,10 +552,7 @@ def install_gtk_video(window_class) -> None:
         # Independent playbins share the same wall clock closely enough that
         # corrections should be rare. A short cooldown prevents seek storms on
         # fragmented MP4 while still correcting visible A/V drift quickly.
-        if (
-            abs(drift_us) > 500_000
-            and time.monotonic() - self._gtk_video_last_sync_seek >= 1.0
-        ):
+        if abs(drift_us) > 500_000 and time.monotonic() - self._gtk_video_last_sync_seek >= 1.0:
             LOGGER.info(
                 "GTK video drift correction: audio=%d us video=%d us drift=%d us",
                 audio_us,
