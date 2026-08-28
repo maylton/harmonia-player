@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class OfficialVideoQtController(QtVideoController):
-    """Qt video controller with YouTube Music-style independent MV semantics."""
+    """Qt controller for independent official music videos."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -29,13 +29,7 @@ class OfficialVideoQtController(QtVideoController):
         self.playback.player.on_error = self._on_primary_player_error
 
     def _prepare_sink(self) -> bool:
-        """Prime Qt's GL display and bridge decoded frames into qml6glsink.
-
-        qml6glsink accepts GLMemory only. Putting it behind glsinkbin gives
-        playbin a SystemMemory/DMABuf-capable sink while glsinkbin performs the
-        GL upload/conversion. Bringing qml6glsink to READY first also lets it
-        propagate Qt Quick's GstGLDisplay before any other GL element starts.
-        """
+        """Prepare qml6glsink through glsinkbin for Qt Quick rendering."""
         if self._sink_prepared:
             return True
         if self._sink is None:
@@ -57,29 +51,25 @@ class OfficialVideoQtController(QtVideoController):
 
         glsinkbin = None
         try:
-            LOGGER.info("Qt GL sink preparation starting")
+            LOGGER.debug("Preparing Qt GL video sink")
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
             if not pointer:
                 raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
             _set_foreign_pointer_property(self._sink, "widget", pointer)
 
-            # qml6glsink must establish Qt Quick's GL display before decodebin
-            # or any upload/conversion element creates its own GstGLDisplay.
+            # Initialize qml6glsink first so downstream GL elements reuse Qt's display.
             sink_state = self._sink.set_state(Gst.State.READY)
             if sink_state == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
-            LOGGER.info("qml6glsink READY")
 
             video_output = self._sink
             glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
             if glsinkbin is not None:
                 glsinkbin.set_property("sink", self._sink)
                 video_output = glsinkbin
-                LOGGER.info("Qt video output using glsinkbin -> qml6glsink")
                 bin_state = glsinkbin.set_state(Gst.State.READY)
                 if bin_state == Gst.StateChangeReturn.FAILURE:
                     raise RuntimeError("glsinkbin não conseguiu inicializar")
-                LOGGER.info("glsinkbin READY")
             else:
                 LOGGER.warning(
                     "glsinkbin unavailable; falling back to direct qml6glsink negotiation"
@@ -91,7 +81,6 @@ class OfficialVideoQtController(QtVideoController):
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("A camada de vídeo recusou o estado READY")
-            LOGGER.info("playbin READY")
         except Exception as exc:
             self._log_sink_prepare_failure(exc)
             with suppress(Exception):
@@ -114,7 +103,7 @@ class OfficialVideoQtController(QtVideoController):
         self._sink_prepared = True
         self._sink_error = ""
         self.availabilityChanged.emit()
-        LOGGER.info("Qt video layer ready")
+        LOGGER.debug("Qt video sink ready")
         return True
 
     def _clear_independent_video(self) -> None:
@@ -151,10 +140,7 @@ class OfficialVideoQtController(QtVideoController):
             )
             self._set_playback_duration(duration_ms)
             self._primary_save_state(max(0, int(position_ms)))
-            LOGGER.info(
-                "Qt restored song audio after independent video at %d ms",
-                position_ms,
-            )
+            LOGGER.debug("Restored song audio at %d ms", position_ms)
 
     def _set_mode(self, mode: str, *, force: bool = False) -> None:
         normalized = "video" if mode == "video" else "audio"
@@ -190,9 +176,7 @@ class OfficialVideoQtController(QtVideoController):
             super()._apply_resolved(request_id, stream, error)
             return
 
-        # Keep the pending request alive while the video's own audio stream is
-        # resolved. Reuse the existing cross-thread Qt signal for the result so
-        # all GStreamer/UI mutation still happens on the Qt main thread.
+        # Resolve the video's audio off the UI thread and apply it through the Qt signal.
         def worker() -> None:
             try:
                 audio = self.backend.youtube.resolve_stream(stream.video_id)
@@ -228,11 +212,7 @@ class OfficialVideoQtController(QtVideoController):
         should_play = self.playback.playing
         video_duration_ms = max(
             0,
-            int(
-                playback_info.duration_ms
-                or playback_info.video.duration_ms
-                or primary_duration_ms
-            ),
+            int(playback_info.duration_ms or playback_info.video.duration_ms or primary_duration_ms),
         )
 
         self._independent_video_primary_uri = primary_uri
@@ -241,8 +221,8 @@ class OfficialVideoQtController(QtVideoController):
         self._independent_video_owns_audio = True
         self._primary_save_state(primary_position_ms)
 
-        LOGGER.info(
-            "Qt independent music video %s: song=%d ms video=%d ms; restarting with video audio",
+        LOGGER.debug(
+            "Starting independent video %s: song=%d ms video=%d ms",
             playback_info.video.video_id,
             primary_duration_ms,
             video_duration_ms,
