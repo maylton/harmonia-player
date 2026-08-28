@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from contextlib import suppress
 
 import gi
@@ -31,6 +32,7 @@ def install_gtk_video(window_class) -> None:
     original_init = window_class.__init__
     original_play_item = window_class.play_item
     original_stop = window_class._stop_player
+    original_seek = window_class._seek_playback
 
     def video_feature_init(self) -> None:
         self._media_mode = "audio"
@@ -43,6 +45,7 @@ def install_gtk_video(window_class) -> None:
         self._gtk_video_player = None
         self._gtk_video_bus = None
         self._gtk_video_sink_available = False
+        self._gtk_video_last_sync_seek = 0.0
 
         artwork_overlay = self.expanded_cover.get_parent()
         frame = artwork_overlay.get_parent() if artwork_overlay is not None else None
@@ -156,7 +159,7 @@ def install_gtk_video(window_class) -> None:
                 else None
             ),
         )
-        self._gtk_video_sync_source = GLib.timeout_add(350, self._sync_gtk_video_transport)
+        self._gtk_video_sync_source = GLib.timeout_add(200, self._sync_gtk_video_transport)
         self._sync_media_mode_ui()
 
     def sync_media_mode_ui(self) -> None:
@@ -196,8 +199,12 @@ def install_gtk_video(window_class) -> None:
         else:
             self._media_spinner.stop()
 
-        self._media_stack.set_visible_child_name(self._media_mode)
-        if self._media_mode == "video":
+        # Keep the artwork visible while the secondary player prerolls and seeks.
+        # Exposing the paintable before the seek completes makes adaptive streams
+        # visibly flash/play from 0:00 even when the eventual seek succeeds.
+        show_video = self._media_mode == "video" and not self._media_switch_loading
+        self._media_stack.set_visible_child_name("video" if show_video else "audio")
+        if show_video:
             self._media_visual_frame.set_ratio(16 / 9)
             self._media_visual_frame.set_size_request(512, 288)
         else:
@@ -294,7 +301,7 @@ def install_gtk_video(window_class) -> None:
 
         self._gtk_video_generation += 1
         generation = self._gtk_video_generation
-        target_us = max(0, int(self._playback_position_us()))
+        self._gtk_video_last_sync_seek = 0.0
         try:
             video_player.set_state(Gst.State.READY)
             source_uri = self.player._source_uri(stream.url, stream.request_headers)
@@ -306,9 +313,9 @@ def install_gtk_video(window_class) -> None:
             self._gtk_video_failed(str(exc))
             return
 
-        GLib.timeout_add(40, self._finish_gtk_video_start, generation, target_us, 0)
+        GLib.timeout_add(40, self._finish_gtk_video_preroll, generation, 0)
 
-    def finish_gtk_video_start(self, generation: int, target_us: int, attempt: int) -> bool:
+    def finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
         if generation != self._gtk_video_generation or self._media_mode != "video":
             return GLib.SOURCE_REMOVE
         video_player = self._gtk_video_player
@@ -323,29 +330,141 @@ def install_gtk_video(window_class) -> None:
             if attempt < 100:
                 GLib.timeout_add(
                     40,
-                    self._finish_gtk_video_start,
+                    self._finish_gtk_video_preroll,
                     generation,
-                    target_us,
                     attempt + 1,
                 )
             else:
                 self._gtk_video_failed(_("O vídeo demorou demais para iniciar."))
             return GLib.SOURCE_REMOVE
 
-        current_target = max(target_us, int(self._playback_position_us()))
-        if current_target:
+        target_us = max(0, int(self._playback_position_us()))
+        if target_us > 250_000:
+            if not self._seek_gtk_video_position(target_us, accurate=True):
+                self._gtk_video_failed(_("O fluxo de vídeo recusou a sincronização inicial."))
+                return GLib.SOURCE_REMOVE
+            GLib.timeout_add(40, self._finish_gtk_video_seek, generation, target_us, 0)
+            return GLib.SOURCE_REMOVE
+
+        self._complete_gtk_video_start(generation)
+        return GLib.SOURCE_REMOVE
+
+    def seek_gtk_video_position(
+        self,
+        target_us: int,
+        *,
+        accurate: bool = True,
+    ) -> bool:
+        video_player = self._gtk_video_player
+        if video_player is None:
+            return False
+
+        target_us = max(0, int(target_us))
+        flags = Gst.SeekFlags.FLUSH | (
+            Gst.SeekFlags.ACCURATE if accurate else Gst.SeekFlags.KEY_UNIT
+        )
+        accepted = bool(
             video_player.seek_simple(
                 Gst.Format.TIME,
-                Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                current_target * 1000,
+                flags,
+                target_us * 1000,
             )
+        )
+        mode = "accurate" if accurate else "key-unit"
+        if not accepted and accurate:
+            accepted = bool(
+                video_player.seek_simple(
+                    Gst.Format.TIME,
+                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
+                    target_us * 1000,
+                )
+            )
+            mode = "key-unit-fallback"
+        if accepted:
+            self._gtk_video_last_sync_seek = time.monotonic()
+        LOGGER.debug(
+            "GTK video seek target=%d us mode=%s accepted=%s",
+            target_us,
+            mode,
+            accepted,
+        )
+        return accepted
+
+    def finish_gtk_video_seek(
+        self,
+        generation: int,
+        target_us: int,
+        attempt: int,
+    ) -> bool:
+        if generation != self._gtk_video_generation or self._media_mode != "video":
+            return GLib.SOURCE_REMOVE
+        video_player = self._gtk_video_player
+        if video_player is None:
+            return GLib.SOURCE_REMOVE
+
+        result, state, _pending = video_player.get_state(0)
+        if result == Gst.StateChangeReturn.FAILURE:
+            self._gtk_video_failed(_("O GStreamer falhou durante a sincronização do vídeo."))
+            return GLib.SOURCE_REMOVE
+
+        ok, video_ns = video_player.query_position(Gst.Format.TIME)
+        video_us = max(0, int(video_ns // 1000)) if ok else -1
+        if ok and abs(video_us - target_us) <= 750_000:
+            LOGGER.info(
+                "GTK video initial seek settled at %d us (target %d us)",
+                video_us,
+                target_us,
+            )
+            self._complete_gtk_video_start(generation)
+            return GLib.SOURCE_REMOVE
+
+        if attempt == 30:
+            # One retry after the initial seek had time to flush/preroll. Use the
+            # audio position at retry time so a slow network preroll cannot leave
+            # the newly displayed video seconds behind the still-playing song.
+            retry_target = max(0, int(self._playback_position_us()))
+            if self._seek_gtk_video_position(retry_target, accurate=True):
+                target_us = retry_target
+
+        if attempt < 75:
+            GLib.timeout_add(
+                40,
+                self._finish_gtk_video_seek,
+                generation,
+                target_us,
+                attempt + 1,
+            )
+            return GLib.SOURCE_REMOVE
+
+        LOGGER.warning(
+            "GTK video seek did not settle: target=%d us last=%d us",
+            target_us,
+            video_us,
+        )
+        self._gtk_video_failed(_("Não foi possível sincronizar o vídeo com a música."))
+        return GLib.SOURCE_REMOVE
+
+    def complete_gtk_video_start(self, generation: int) -> None:
+        if generation != self._gtk_video_generation or self._media_mode != "video":
+            return
+        video_player = self._gtk_video_player
+        if video_player is None:
+            return
+
         video_player.set_state(
             Gst.State.PLAYING if self._playback_is_playing() else Gst.State.PAUSED
         )
         self._media_switch_loading = False
         self._sync_media_mode_ui()
-        LOGGER.info("GTK video layer started at %d us", current_target)
-        return GLib.SOURCE_REMOVE
+        audio_us = max(0, int(self._playback_position_us()))
+        ok, video_ns = video_player.query_position(Gst.Format.TIME)
+        video_us = max(0, int(video_ns // 1000)) if ok else -1
+        LOGGER.info(
+            "GTK video layer visible: audio=%d us video=%d us drift=%d us",
+            audio_us,
+            video_us,
+            audio_us - video_us if video_us >= 0 else -1,
+        )
 
     def sync_gtk_video_transport(self) -> bool:
         if self._media_mode != "video" or self._media_switch_loading:
@@ -364,16 +483,27 @@ def install_gtk_video(window_class) -> None:
             return GLib.SOURCE_CONTINUE
         audio_us = max(0, int(self._playback_position_us()))
         video_us = max(0, int(video_ns // 1000))
-        if abs(audio_us - video_us) > 1_200_000:
-            video_player.seek_simple(
-                Gst.Format.TIME,
-                Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                audio_us * 1000,
+        drift_us = audio_us - video_us
+
+        # Independent playbins share the same wall clock closely enough that
+        # corrections should be rare. A short cooldown prevents seek storms on
+        # fragmented MP4 while still correcting visible A/V drift quickly.
+        if (
+            abs(drift_us) > 500_000
+            and time.monotonic() - self._gtk_video_last_sync_seek >= 1.0
+        ):
+            LOGGER.info(
+                "GTK video drift correction: audio=%d us video=%d us drift=%d us",
+                audio_us,
+                video_us,
+                drift_us,
             )
+            self._seek_gtk_video_position(audio_us, accurate=True)
         return GLib.SOURCE_CONTINUE
 
     def stop_gtk_video_layer(self) -> None:
         self._gtk_video_generation += 1
+        self._gtk_video_last_sync_seek = 0.0
         if self._gtk_video_player is not None:
             with suppress(Exception):
                 self._gtk_video_player.set_state(Gst.State.READY)
@@ -431,12 +561,26 @@ def install_gtk_video(window_class) -> None:
             self._sync_media_mode_ui()
         return original_stop(self)
 
+    def wrapped_seek(self, position_us: int) -> bool:
+        accepted = bool(original_seek(self, position_us))
+        if (
+            accepted
+            and getattr(self, "_media_mode", "audio") == "video"
+            and not getattr(self, "_media_switch_loading", False)
+            and getattr(self, "_gtk_video_player", None) is not None
+        ):
+            self._seek_gtk_video_position(position_us, accurate=True)
+        return accepted
+
     window_class._video_feature_init = video_feature_init
     window_class._sync_media_mode_ui = sync_media_mode_ui
     window_class._set_media_mode = set_media_mode
     window_class._apply_media_mode = apply_media_mode
     window_class._start_gtk_video_layer = start_gtk_video_layer
-    window_class._finish_gtk_video_start = finish_gtk_video_start
+    window_class._finish_gtk_video_preroll = finish_gtk_video_preroll
+    window_class._seek_gtk_video_position = seek_gtk_video_position
+    window_class._finish_gtk_video_seek = finish_gtk_video_seek
+    window_class._complete_gtk_video_start = complete_gtk_video_start
     window_class._sync_gtk_video_transport = sync_gtk_video_transport
     window_class._stop_gtk_video_layer = stop_gtk_video_layer
     window_class._gtk_video_failed = gtk_video_failed
@@ -444,3 +588,4 @@ def install_gtk_video(window_class) -> None:
     window_class.__init__ = wrapped_init
     window_class.play_item = wrapped_play_item
     window_class._stop_player = wrapped_stop
+    window_class._seek_playback = wrapped_seek
