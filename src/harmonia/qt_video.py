@@ -462,10 +462,7 @@ class QtVideoController(QObject):
         audio_ms = max(0, int(self.playback.position))
         video_ms = max(0, int(video_ns // 1_000_000))
         drift_ms = audio_ms - video_ms
-        if (
-            abs(drift_ms) > 500
-            and time.monotonic() - self._video_last_sync_seek >= 1.0
-        ):
+        if abs(drift_ms) > 500 and time.monotonic() - self._video_last_sync_seek >= 1.0:
             LOGGER.info(
                 "Qt video drift correction: audio=%d ms video=%d ms drift=%d ms",
                 audio_ms,
