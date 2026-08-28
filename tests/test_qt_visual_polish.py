@@ -38,11 +38,26 @@ def test_lyrics_toolbar_uses_abstract_buttons_without_native_ghost_content() -> 
     assert "property string actionText" in source
 
 
-def test_sidebar_glyphs_share_a_slightly_larger_box() -> None:
-    source = (QML / "SidebarButton.qml").read_text(encoding="utf-8")
-    assert "Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium" in source
-    assert "Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium" in source
-    assert "Layout.preferredWidth: Kirigami.Units.iconSizes.small\n" not in source
+def test_sidebar_keeps_plasma_icons_native_sized_with_explicit_app_glyph_override() -> None:
+    component = (QML / "SidebarButton.qml").read_text(encoding="utf-8")
+    navigation = (QML / "NavigationSidebar.qml").read_text(encoding="utf-8")
+
+    assert "property real iconSize: Kirigami.Units.iconSizes.small" in component
+    assert "property bool monochromeIcon: false" in component
+    assert "Layout.preferredWidth: root.iconSize" in component
+    assert "Layout.preferredHeight: root.iconSize" in component
+    assert "isMask: root.monochromeIcon" in component
+
+    liked = navigation.split('text: "Músicas curtidas"', 1)[1].split("SidebarButton {", 1)[0]
+    assert 'iconName: "love-symbolic"' in liked
+    assert "iconSize: Kirigami.Units.iconSizes.smallMedium" in liked
+    assert "monochromeIcon: true" in liked
+
+    settings = navigation.split('text: "Preferências"', 1)[1].split("SidebarButton {", 1)[0]
+    assert 'iconName: "settings-configure"' in settings
+    assert 'fallbackIcon: "configure-symbolic"' in settings
+    assert "iconSize:" not in settings
+    assert "monochromeIcon:" not in settings
 
 
 def test_sidebar_uses_recognizable_breeze_like_and_settings_icons() -> None:
@@ -76,6 +91,28 @@ def test_player_uses_clickable_shared_seek_slider_and_theme_driven_like_icon() -
         assert 'source: "love-symbolic"' in source
         assert "Kirigami.Theme.highlightColor" in source
         assert "palette.highlight:" not in source
+
+
+def test_compact_player_bounds_seek_and_volume_widths() -> None:
+    source = (QML / "PlayerBar.qml").read_text(encoding="utf-8")
+
+    assert "readonly property bool showSecondaryControls: width >= 920" in source
+    assert "readonly property bool showVolumeControls: width >= 1080" in source
+    assert "readonly property real seekMinWidth:" in source
+    assert "readonly property real seekPreferredWidth:" in source
+    assert "readonly property real seekMaxWidth:" in source
+    assert "Layout.minimumWidth: root.seekMinWidth" in source
+    assert "Layout.preferredWidth: root.seekPreferredWidth" in source
+    assert "Layout.maximumWidth: root.seekMaxWidth" in source
+    assert "readonly property real volumeMinWidth:" in source
+    assert "readonly property real volumePreferredWidth:" in source
+    assert "readonly property real volumeMaxWidth:" in source
+    assert "Layout.minimumWidth: root.volumeMinWidth" in source
+    assert "Layout.preferredWidth: root.volumePreferredWidth" in source
+    assert "Layout.maximumWidth: root.volumeMaxWidth" in source
+    assert "spacing: Kirigami.Units.gridUnit" in source
+    assert "id: centerRegion" in source
+    assert "root.centerMaxWidth" in source
 
 
 def test_expanded_media_visual_has_a_hard_maximum_and_replaces_cover_in_place() -> None:
