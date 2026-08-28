@@ -19,9 +19,6 @@ Controls.Dialog {
     y: 0
     z: 1000
 
-    // GTK uses a 900 px natural line length for the expanded media page.
-    // Keep that same ceiling in Qt, while also shrinking the media to the
-    // space left by the player controls below it.
     readonly property real mediaMaxWidth: 900
     readonly property real detailsMaxWidth: 420
     readonly property real contentSpacing: 40
@@ -54,10 +51,15 @@ Controls.Dialog {
             anchors.margins: Kirigami.Units.gridUnit * 1.4
             spacing: Kirigami.Units.largeSpacing
 
-            RowLayout {
+            Item {
+                id: expandedHeader
                 Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(closePlayerButton.implicitHeight, viewTabs.implicitHeight)
 
                 Controls.ToolButton {
+                    id: closePlayerButton
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
                     text: "Fechar player expandido"
                     icon.name: "go-down"
                     display: Controls.AbstractButton.IconOnly
@@ -66,13 +68,13 @@ Controls.Dialog {
                     Controls.ToolTip.text: text
                 }
 
-                Item { Layout.fillWidth: true }
-
                 Controls.TabBar {
                     id: viewTabs
-                    Layout.preferredWidth: Math.min(
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(
                         Kirigami.Units.gridUnit * 25,
-                        root.width - Kirigami.Units.gridUnit * 10
+                        Math.max(0, expandedHeader.width - Kirigami.Units.gridUnit * 10)
                     )
 
                     Controls.TabButton {
@@ -95,9 +97,6 @@ Controls.Dialog {
                             backend.loadLyrics()
                     }
                 }
-
-                Item { Layout.fillWidth: true }
-                Item { Layout.preferredWidth: Kirigami.Units.iconSizes.medium }
             }
 
             StackLayout {
@@ -111,9 +110,6 @@ Controls.Dialog {
 
                     ColumnLayout {
                         id: expandedContent
-                        // The media is above the player controls, as in the
-                        // GTK expanded page. Its height must include the
-                        // controls below it before the width is calculated.
                         readonly property real availableMediaWidth: Math.max(
                             0,
                             width
@@ -363,23 +359,16 @@ Controls.Dialog {
 
                                 Controls.ToolButton {
                                     id: expandedLikeButton
+                                    icon.name: "love-symbolic"
+                                    icon.color: backend.currentLiked
+                                                ? Kirigami.Theme.highlightColor
+                                                : Kirigami.Theme.textColor
                                     enabled: backend.currentId.length > 0
                                     onClicked: backend.toggleLike(backend.currentId)
                                     Controls.ToolTip.visible: hovered
                                     Controls.ToolTip.text: backend.currentLiked
                                                            ? "Remover das curtidas"
                                                            : "Curtir"
-
-                                    contentItem: Kirigami.Icon {
-                                        source: "love-symbolic"
-                                        isMask: true
-                                        color: backend.currentLiked
-                                               ? Kirigami.Theme.highlightColor
-                                               : Kirigami.Theme.textColor
-                                        opacity: expandedLikeButton.enabled
-                                                 ? (backend.currentLiked ? 1.0 : 0.78)
-                                                 : 0.38
-                                    }
                                 }
 
                                 Kirigami.Icon {
