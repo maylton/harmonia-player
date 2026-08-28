@@ -41,6 +41,7 @@ class VideoStreamInfo:
     fps: int = 0
     muxed: bool = True
     expires_at: int | None = None
+    request_headers: dict[str, str] | None = None
 
     def valid_at(self, timestamp: int, margin: int = 90) -> bool:
         return self.expires_at is None or timestamp + margin < self.expires_at
@@ -192,6 +193,34 @@ def _player_payload(
     return None
 
 
+def _stream_request_headers(profile: dict[str, Any]) -> dict[str, str]:
+    """Headers that must travel with a media URL returned for one client profile."""
+    headers = {
+        "User-Agent": str(profile["user_agent"]),
+        "Accept": "*/*",
+    }
+    if profile.get("name") == "WEB_REMIX":
+        headers["Origin"] = ORIGIN
+        headers["Referer"] = f"{ORIGIN}/"
+    return headers
+
+
+def _probe_stream(url: str, headers: dict[str, str]) -> bool:
+    """Reject Googlevideo URLs that the CDN already refuses before playback."""
+    hostname = (urllib.parse.urlsplit(url).hostname or "").lower()
+    if not hostname.endswith("googlevideo.com"):
+        return True
+    request_headers = dict(headers)
+    request_headers["Range"] = "bytes=0-1"
+    request = urllib.request.Request(url, headers=request_headers, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            status = getattr(response, "status", 200)
+            return status in (200, 206) and bool(response.read(1))
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+        return False
+
+
 def _video_compatibility(fmt: dict[str, Any]) -> int:
     """Prefer widely decoded H.264 MP4 when quality is otherwise equal."""
     mime = str(fmt.get("mimeType") or "").lower()
@@ -285,6 +314,11 @@ def resolve_video_stream(
             selected, muxed = min(pool, key=lambda pair: int(pair[0].get("height", 0) or 0))
 
         url = str(selected["url"])
+        request_headers = _stream_request_headers(profile)
+        if not _probe_stream(url, request_headers):
+            failures.append(f"{profile['name']}: CDN recusou o stream direto")
+            continue
+
         duration = selected.get("approxDurationMs")
         stream = VideoStreamInfo(
             url=url,
@@ -299,6 +333,7 @@ def resolve_video_stream(
             fps=int(selected.get("fps", 0) or 0),
             muxed=muxed,
             expires_at=_stream_expiration(url),
+            request_headers=request_headers,
         )
         with _VIDEO_CACHE_LOCK:
             _VIDEO_STREAM_CACHE[cache_key] = stream
