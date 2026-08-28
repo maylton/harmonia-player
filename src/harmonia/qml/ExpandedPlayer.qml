@@ -20,6 +20,7 @@ Controls.Dialog {
     z: 1000
 
     onOpened: {
+        videoBackend.refreshAvailability()
         if (viewTabs.currentIndex === 1)
             backend.loadLyrics()
     }
@@ -100,18 +101,74 @@ Controls.Dialog {
                 Item {
                     RowLayout {
                         anchors.centerIn: parent
-                        width: Math.min(parent.width, Kirigami.Units.gridUnit * 54)
+                        width: Math.min(parent.width, Kirigami.Units.gridUnit * 58)
                         spacing: Kirigami.Units.gridUnit * 3
 
-                        CoverArt {
+                        ColumnLayout {
+                            id: mediaColumn
                             Layout.preferredWidth: Math.min(
-                                Kirigami.Units.gridUnit * 21,
-                                parent.width * 0.42
+                                Kirigami.Units.gridUnit * 24,
+                                parent.width * 0.48
                             )
-                            Layout.preferredHeight: width
-                            source: backend.currentArtwork
-                            kind: "songs"
-                            emphasized: true
+                            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                            spacing: Kirigami.Units.smallSpacing
+
+                            RowLayout {
+                                Layout.alignment: Qt.AlignHCenter
+                                spacing: 0
+
+                                Controls.Button {
+                                    text: "Música"
+                                    checkable: true
+                                    checked: videoBackend.mode === "audio"
+                                    enabled: backend.currentId.length > 0 && !videoBackend.loading
+                                    onClicked: videoBackend.setMode("audio")
+                                }
+
+                                Controls.Button {
+                                    text: "Vídeo"
+                                    checkable: true
+                                    checked: videoBackend.mode === "video"
+                                    enabled: videoBackend.available && !videoBackend.loading
+                                    onClicked: videoBackend.setMode("video")
+                                    Controls.ToolTip.visible: hovered && !videoBackend.available
+                                    Controls.ToolTip.text: "Nenhum vídeo disponível para esta faixa"
+                                }
+
+                                Controls.BusyIndicator {
+                                    Layout.leftMargin: Kirigami.Units.smallSpacing
+                                    Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                                    Layout.preferredHeight: width
+                                    visible: videoBackend.loading
+                                    running: visible
+                                }
+                            }
+
+                            Item {
+                                id: mediaVisual
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: videoBackend.mode === "video"
+                                    ? width * 9 / 16
+                                    : width
+
+                                StackLayout {
+                                    anchors.fill: parent
+                                    currentIndex: videoBackend.mode === "video" ? 1 : 0
+
+                                    CoverArt {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        source: backend.currentArtwork
+                                        kind: "songs"
+                                        emphasized: true
+                                    }
+
+                                    VideoSurface {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                    }
+                                }
+                            }
                         }
 
                         ColumnLayout {

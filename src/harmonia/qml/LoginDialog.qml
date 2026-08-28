@@ -9,6 +9,12 @@ Controls.Popup {
 
     property bool manualMode: false
     readonly property bool connectionError: backend.statusText.indexOf("Não foi possível conectar") === 0
+    readonly property color separatorColor: Qt.rgba(
+        Kirigami.Theme.textColor.r,
+        Kirigami.Theme.textColor.g,
+        Kirigami.Theme.textColor.b,
+        0.16
+    )
 
     modal: true
     focus: true
@@ -63,7 +69,7 @@ Controls.Popup {
         radius: Kirigami.Units.cornerRadius
         color: Kirigami.Theme.backgroundColor
         border.width: 1
-        border.color: Kirigami.Theme.separatorColor
+        border.color: root.separatorColor
     }
 
     contentItem: ColumnLayout {
@@ -138,7 +144,7 @@ Controls.Popup {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: Kirigami.Theme.separatorColor
+            color: root.separatorColor
         }
 
         Kirigami.InlineMessage {

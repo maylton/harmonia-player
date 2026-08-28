@@ -150,3 +150,13 @@ def test_visible_player_controls_do_not_use_missing_autoplay_icon() -> None:
     for filename in ("PlayerBar.qml", "ExpandedPlayer.qml", "QueuePanel.qml"):
         source = (QML / filename).read_text(encoding="utf-8")
         assert "media-playlist-consecutive" not in source, filename
+
+
+def test_qt_video_uses_shared_dash_source_with_client_headers() -> None:
+    source = (ROOT / "src" / "harmonia" / "qt_video.py").read_text(encoding="utf-8")
+    assert "allow_video_only=True" in source
+    assert "self._start_video_layer(stream)" in source
+    assert "stream.url" in source
+    assert "stream.request_headers" in source
+    assert "self.playback.player._source_uri(" in source
+    assert "Qt video initial sync settled" in source

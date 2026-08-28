@@ -1,11 +1,13 @@
 src/harmonia/app.py
 src/harmonia/auth.py
+src/harmonia/gtk_video.py
 src/harmonia/innertube.py
 src/harmonia/player.py
 src/harmonia/recognition.py
 src/harmonia/social.py
 src/harmonia/together.py
 src/harmonia/ui.py
+src/harmonia/video.py
 src/harmonia/window_account.py
 src/harmonia/window_actions.py
 src/harmonia/window_constants.py
