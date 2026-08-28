@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 
+import shiboken6
 from gi.repository import Gst
 
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
-from .qt_video import QtVideoController
+from .qt_video import QtVideoController, _set_foreign_pointer_property
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,6 +17,8 @@ class OfficialVideoQtController(QtVideoController):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._qt_glsinkbin = None
+        self._qt_video_output = None
         self._independent_video_owns_audio = False
         self._independent_video_primary_uri = ""
         self._independent_video_primary_duration_ms = 0
@@ -23,6 +27,83 @@ class OfficialVideoQtController(QtVideoController):
         self._primary_player_error = self.playback.player.on_error
         self.playback._save_state = self._save_playback_state
         self.playback.player.on_error = self._on_primary_player_error
+
+    def _prepare_sink(self) -> bool:
+        """Prime Qt's GL display and bridge decoded frames into qml6glsink.
+
+        qml6glsink accepts GLMemory only. Putting it behind glsinkbin gives
+        playbin a SystemMemory/DMABuf-capable sink while glsinkbin performs the
+        GL upload/conversion. Bringing qml6glsink to READY first also lets it
+        propagate Qt Quick's GstGLDisplay before any other GL element starts.
+        """
+        if self._sink_prepared:
+            return True
+        if self._sink is None:
+            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
+            self.availabilityChanged.emit()
+            return False
+        if self._video_player is None:
+            self._sink_error = "O GStreamer playbin para vídeo não está disponível."
+            self.availabilityChanged.emit()
+            return False
+        if self._surface is None:
+            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
+            self.availabilityChanged.emit()
+            return False
+
+        glsinkbin = None
+        try:
+            pointer = int(shiboken6.getCppPointer(self._surface)[0])
+            if not pointer:
+                raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
+            _set_foreign_pointer_property(self._sink, "widget", pointer)
+
+            # qml6glsink must establish Qt Quick's GL display before decodebin
+            # or any upload/conversion element creates its own GstGLDisplay.
+            sink_state = self._sink.set_state(Gst.State.READY)
+            if sink_state == Gst.StateChangeReturn.FAILURE:
+                raise RuntimeError("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
+
+            video_output = self._sink
+            glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
+            if glsinkbin is not None:
+                glsinkbin.set_property("sink", self._sink)
+                video_output = glsinkbin
+                LOGGER.info("Qt video output using glsinkbin -> qml6glsink")
+            else:
+                LOGGER.warning(
+                    "glsinkbin unavailable; falling back to direct qml6glsink negotiation"
+                )
+
+            self._video_player.set_property("video-sink", video_output)
+            if self._fake_audio_sink is not None:
+                self._video_player.set_property("audio-sink", self._fake_audio_sink)
+            result = self._video_player.set_state(Gst.State.READY)
+            if result == Gst.StateChangeReturn.FAILURE:
+                raise RuntimeError("A camada de vídeo recusou o estado READY")
+        except Exception as exc:
+            LOGGER.exception("Could not prepare Qt video layer")
+            with suppress(Exception):
+                self._video_player.set_state(Gst.State.NULL)
+            if glsinkbin is not None:
+                with suppress(Exception):
+                    glsinkbin.set_state(Gst.State.NULL)
+            with suppress(Exception):
+                self._sink.set_state(Gst.State.NULL)
+            self._qt_glsinkbin = None
+            self._qt_video_output = None
+            self._sink_error = str(exc)
+            self._sink_prepared = False
+            self.availabilityChanged.emit()
+            return False
+
+        self._qt_glsinkbin = glsinkbin
+        self._qt_video_output = video_output
+        self._sink_prepared = True
+        self._sink_error = ""
+        self.availabilityChanged.emit()
+        LOGGER.info("Qt video layer ready")
+        return True
 
     def _clear_independent_video(self) -> None:
         self._independent_video_owns_audio = False
@@ -196,3 +277,5 @@ class OfficialVideoQtController(QtVideoController):
         if self.playback._save_state == self._save_playback_state:
             self.playback._save_state = self._primary_save_state
         super().shutdown()
+        self._qt_glsinkbin = None
+        self._qt_video_output = None
