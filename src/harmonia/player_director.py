@@ -277,7 +277,11 @@ class PlayerClientDirector:
     ) -> Iterator[tuple[Any, dict[str, Any]]]:
         self._ensure_session()
         deadline = time.monotonic() + _EXTRACTION_BUDGET
-        indexed = list(enumerate(profiles))
+        indexed = [
+            (index, profile)
+            for index, profile in enumerate(profiles)
+            if not CLIENT_HEALTH.disabled(str(profile.name))
+        ]
         ordered = sorted(
             indexed,
             key=lambda pair: CLIENT_HEALTH.order_key(str(pair[1].name), -pair[0]),

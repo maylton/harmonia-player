@@ -91,3 +91,18 @@ def test_director_adds_player_and_streaming_potokens():
     body = json.loads(request.data)
     assert body["serviceIntegrityDimensions"]["poToken"] == "player-pot"
     assert body["context"]["client"]["visitorData"] == "visitor-123"
+
+
+def test_director_never_attempts_permanently_disabled_profiles():
+    client = DummyClient()
+    profile = PlayerClientProfile(
+        id="28",
+        name="ANDROID_VR_1_65_10",
+        version="1.65.10",
+        user_agent="obsolete-agent",
+    )
+    diagnostics = ExtractionDiagnostics("video")
+    director = PlayerClientDirector(client, DummyConfigResolver())
+
+    assert list(director.payloads("video", [profile], diagnostics)) == []
+    assert client.requests == []

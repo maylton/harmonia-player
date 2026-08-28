@@ -22,8 +22,12 @@ class ClientHealthTracker:
         self._states: dict[str, _ClientState] = {}
         self._lock = threading.Lock()
 
+    @staticmethod
+    def disabled(profile_id: str) -> bool:
+        return profile_id in _DISABLED_PROFILES
+
     def available(self, profile_id: str) -> bool:
-        if profile_id in _DISABLED_PROFILES:
+        if self.disabled(profile_id):
             return False
         now = time.monotonic()
         with self._lock:
@@ -31,7 +35,7 @@ class ClientHealthTracker:
             return state is None or state.blocked_until <= now
 
     def order_key(self, profile_id: str, priority: int) -> tuple[int, int, float]:
-        if profile_id in _DISABLED_PROFILES:
+        if self.disabled(profile_id):
             return 2, 99, -float(priority)
         now = time.monotonic()
         with self._lock:
@@ -40,7 +44,7 @@ class ClientHealthTracker:
             return blocked, state.failures, -float(priority)
 
     def success(self, profile_id: str) -> None:
-        if profile_id in _DISABLED_PROFILES:
+        if self.disabled(profile_id):
             return
         now = time.monotonic()
         with self._lock:
@@ -56,7 +60,7 @@ class ClientHealthTracker:
         transient: bool = False,
         severe: bool = False,
     ) -> None:
-        if profile_id in _DISABLED_PROFILES:
+        if self.disabled(profile_id):
             return
         now = time.monotonic()
         with self._lock:
