@@ -101,10 +101,10 @@ def install_gtk_video(window_class) -> None:
 
                 # gtk4paintablesink can consume ordinary system-memory frames,
                 # but when GTK exposes a GL context GStreamer recommends putting
-                # it behind glsinkbin.  glsinkbin performs the GL upload/color
+                # it behind glsinkbin. glsinkbin performs the GL upload/color
                 # conversion and makes playbin negotiation considerably more
                 # robust across Mesa/Wayland/X11 drivers and decoder output
-                # formats.  Keep the direct sink as a safe non-GL fallback.
+                # formats. Keep the direct sink as a safe non-GL fallback.
                 video_output = sink
                 try:
                     gl_context = paintable.get_property("gl-context")
@@ -283,7 +283,12 @@ def install_gtk_video(window_class) -> None:
             self.duration_label.set_label(duration)
             self.expanded_duration_label.set_label(duration)
         self._sync_media_mode_ui()
-        self.player.replace(stream.url, position_us, playing=was_playing)
+        self.player.replace(
+            stream.url,
+            position_us,
+            playing=was_playing,
+            request_headers=getattr(stream, "request_headers", None),
+        )
         self.mpris.update(self.current_item, self.current_duration_ms * 1000)
         return GLib.SOURCE_REMOVE
 
