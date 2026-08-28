@@ -149,13 +149,28 @@ ColumnLayout {
                 }
             }
 
-            Controls.TextField {
+            RowLayout {
                 visible: integrations.togetherShareUrl.length > 0
                 Kirigami.FormData.label: "Link da sessão:"
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 28
-                text: integrations.togetherShareUrl
-                readOnly: true
-                selectByMouse: true
+                spacing: Kirigami.Units.smallSpacing
+
+                Controls.TextField {
+                    id: sessionLinkField
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 23
+                    text: integrations.togetherShareUrl
+                    readOnly: true
+                    selectByMouse: true
+                }
+
+                Controls.Button {
+                    text: "Copiar"
+                    icon.name: "edit-copy"
+                    onClicked: {
+                        sessionLinkField.selectAll()
+                        sessionLinkField.copy()
+                        sessionLinkField.deselect()
+                    }
+                }
             }
 
             RowLayout {

@@ -137,13 +137,16 @@ def test_ambient_backdrops_share_one_component_and_setting() -> None:
     assert "preferences.setBackgroundBlur(checked)" in settings
 
 
-def test_sidebar_uses_one_masked_icon_component() -> None:
+def test_sidebar_uses_one_theme_aware_icon_component() -> None:
     sidebar = (QML / "NavigationSidebar.qml").read_text(encoding="utf-8")
     button = (QML / "SidebarButton.qml").read_text(encoding="utf-8")
     assert sidebar.count("SidebarButton {") >= 10
     assert 'iconName: "applications-multimedia"' not in sidebar
-    assert "isMask: true" in button
+    assert "property bool monochromeIcon: false" in button
+    assert "isMask: root.monochromeIcon" in button
     assert "fallback:" in button
+    assert sidebar.count("monochromeIcon: true") == 1
+    assert sidebar.count("iconSize:") == 0
 
 
 def test_visible_player_controls_do_not_use_missing_autoplay_icon() -> None:

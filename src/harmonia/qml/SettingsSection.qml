@@ -36,26 +36,11 @@ Rectangle {
             Layout.fillWidth: true
             spacing: Kirigami.Units.largeSpacing
 
-            Rectangle {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 2.35
+            Kirigami.Icon {
+                Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
                 Layout.preferredHeight: width
-                radius: width / 2
-                color: Qt.rgba(
-                    Kirigami.Theme.highlightColor.r,
-                    Kirigami.Theme.highlightColor.g,
-                    Kirigami.Theme.highlightColor.b,
-                    0.13
-                )
-                antialiasing: true
-
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    width: Kirigami.Units.iconSizes.medium
-                    height: width
-                    source: root.iconName
-                    isMask: true
-                    color: Kirigami.Theme.textColor
-                }
+                source: root.iconName
+                isMask: false
             }
 
             ColumnLayout {
