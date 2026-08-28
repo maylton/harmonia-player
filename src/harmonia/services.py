@@ -26,6 +26,7 @@ from .models import (
 )
 from .preferences import Preferences
 from .storage import Storage
+from .video import VideoStreamInfo, resolve_video_stream
 
 SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
 
@@ -54,8 +55,6 @@ class YouTubeMusicService:
                 proxy=preferences.proxy,
             )
         except TypeError:
-            # Small injected test clients and third-party adapters may still
-            # implement the original one-argument contract.
             return self.client_factory(cookie)
 
     def client(self) -> InnerTubeClient:
@@ -78,7 +77,6 @@ class YouTubeMusicService:
         return self.client().account_profile()
 
     def sync_library(self) -> dict[str, list[LibraryItem]]:
-        """Fetch categories independently so no client bootstrap is shared across threads."""
         categories = (
             "playlists",
             "songs",
@@ -182,6 +180,23 @@ class YouTubeMusicService:
 
     def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
         return self.client().resolve_stream(video_id, force=force)
+
+    def resolve_video(
+        self,
+        item: LibraryItem,
+        *,
+        max_height: int = 720,
+        force: bool = False,
+        allow_video_only: bool = False,
+    ) -> VideoStreamInfo:
+        """Resolve the best matching music-video stream."""
+        return resolve_video_stream(
+            self.client(),
+            item,
+            max_height=max_height,
+            force=force,
+            allow_video_only=allow_video_only,
+        )
 
     def register_playback(self, tracking_url: str, playlist_id: str | None = None) -> None:
         self.client().register_playback(tracking_url, playlist_id)

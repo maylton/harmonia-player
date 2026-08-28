@@ -8,6 +8,7 @@ from gi.repository import GLib
 from PySide6.QtCore import QCoreApplication, QTimer, QUrl
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
@@ -16,6 +17,7 @@ from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
+from .qt_video import QtVideoController, create_qml6_video_sink
 
 APP_ID = "io.github.harmonia.Harmonia"
 
@@ -85,6 +87,18 @@ def main() -> int:
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
 
+    # qml6glsink exchanges OpenGL textures directly with the Qt Quick scene
+    # graph. Follow GStreamer's Qt6 example and request OpenGL before the first
+    # QQuickWindow is constructed; otherwise Qt may choose Vulkan/RHI and the
+    # two graphics contexts are not compatible.
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
+
+    # Creating qml6glsink before loading QML registers the
+    # org.freedesktop.gstreamer.Qt6GLVideoItem module and its
+    # GstGLQt6VideoItem type. Keep the element alive for the application's
+    # lifetime and let QtVideoController bind it to the QML item below.
+    video_sink = create_qml6_video_sink()
+
     # The shared player, Secret Service and MPRIS implementation use GLib/Gio.
     # Pumping the default context from Qt keeps one event loop and lets both
     # frontends reuse the same non-visual helpers.
@@ -101,12 +115,14 @@ def main() -> int:
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
     integrations = QtIntegrationsController(backend, backend._executor, engine)
+    video = QtVideoController(backend, video_sink, engine)
     auth.cookieReady.connect(backend.connectCookie)
 
     context = engine.rootContext()
     context.setContextProperty("backend", backend)
     context.setContextProperty("auth", auth)
     context.setContextProperty("integrations", integrations)
+    context.setContextProperty("videoBackend", video)
     # Appearance belongs to the existing preference controller rather than the
     # broad QML facade. Both GTK and Qt therefore read/write the same settings.
     context.setContextProperty("preferences", backend.settings)
@@ -114,12 +130,14 @@ def main() -> int:
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
+        video.shutdown()
         integrations.shutdown()
         backend.shutdown()
         raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
 
-    # Integrations still use the backend executor, so close their timers and
-    # transports before HarmoniaQtBackend shuts that executor down.
+    # Integrations/video still use the backend player/executor, so close them
+    # before HarmoniaQtBackend shuts those shared resources down.
+    app.aboutToQuit.connect(video.shutdown)
     app.aboutToQuit.connect(integrations.shutdown)
     app.aboutToQuit.connect(backend.shutdown)
     return app.exec()

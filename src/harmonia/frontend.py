@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import logging
 import os
@@ -9,16 +10,17 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _desktop_tokens() -> set[str]:
-    values = (
-        os.environ.get("XDG_CURRENT_DESKTOP", ""),
-        os.environ.get("XDG_SESSION_DESKTOP", ""),
-        os.environ.get("DESKTOP_SESSION", ""),
-    )
-    tokens: set[str] = set()
-    for value in values:
-        normalized = value.replace(";", ":").replace("-", ":")
-        tokens.update(part.strip().lower() for part in normalized.split(":") if part.strip())
-    return tokens
+    # XDG_CURRENT_DESKTOP describes the desktop currently presenting the
+    # application. Session variables can remain stale when switching shells or
+    # launching nested sessions, so consult them only when the primary value is
+    # unavailable.
+    value = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    if not value:
+        value = os.environ.get("XDG_SESSION_DESKTOP", "").strip()
+    if not value:
+        value = os.environ.get("DESKTOP_SESSION", "").strip()
+    normalized = value.replace(";", ":").replace("-", ":")
+    return {part.strip().lower() for part in normalized.split(":") if part.strip()}
 
 
 def running_on_plasma() -> bool:
@@ -56,6 +58,11 @@ def main() -> int:
                 raise
             LOGGER.exception("Qt/Kirigami frontend failed to start; falling back to GTK")
 
-    from .app import main as gtk_main
+    gtk_app = importlib.import_module(".app", __package__)
 
-    return gtk_main()
+    window_class = getattr(gtk_app, "HarmoniaWindow", None)
+    if window_class is not None:
+        from .gtk_video import install_gtk_video
+
+        install_gtk_video(window_class)
+    return gtk_app.main()
