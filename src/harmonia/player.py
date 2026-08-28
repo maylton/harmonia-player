@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import threading
 import urllib.parse
@@ -15,6 +16,8 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
 from .i18n import _
+
+LOGGER = logging.getLogger(__name__)
 
 
 class _StreamRelay:
@@ -348,7 +351,17 @@ class NativePlayer:
 
     def _on_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
-            error, _debug = message.parse_error()
+            error, debug = message.parse_error()
+            try:
+                source = message.src.get_path_string() if message.src is not None else "unknown"
+            except Exception:
+                source = "unknown"
+            LOGGER.error(
+                "GStreamer playback error from %s: %s (%s)",
+                source,
+                error,
+                debug or "sem debug",
+            )
             if self.on_error:
                 GLib.idle_add(self.on_error, str(error))
         elif message.type == Gst.MessageType.EOS:
