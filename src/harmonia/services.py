@@ -1,7 +1,7 @@
 """Application services shared by GTK views.
 
 The window owns presentation state; this module owns orchestration of network
-and persistence operations.  Keeping it free of GTK makes the important flows
+and persistence operations. Keeping it free of GTK makes the important flows
 cheap to test and reusable by future windows or background jobs.
 """
 
@@ -25,8 +25,10 @@ from .models import (
     StreamInfo,
 )
 from .preferences import Preferences
+from .resilient_video import resolve_resilient_video_stream
 from .storage import Storage
-from .video import VideoStreamInfo, resolve_video_stream
+from .stream_extractor import InnerTubeStreamExtractor
+from .video import VideoStreamInfo
 
 SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
 
@@ -179,7 +181,25 @@ class YouTubeMusicService:
         return self.client().search_suggestions(query)
 
     def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
-        return self.client().resolve_stream(video_id, force=force)
+        client = self.client()
+        if not (hasattr(client, "_open") and hasattr(client, "_bootstrap")):
+            return client.resolve_stream(video_id, force=force)
+
+        candidate = InnerTubeStreamExtractor(client).extract_audio(
+            video_id,
+            max_bitrate=getattr(client, "max_bitrate", 10_000_000),
+            force=force,
+        )
+        return StreamInfo(
+            url=candidate.url,
+            duration_ms=candidate.duration_ms,
+            client=candidate.client,
+            mime_type=candidate.mime_type,
+            bitrate=candidate.bitrate,
+            itag=candidate.itag,
+            expires_at=candidate.expires_at,
+            playback_tracking_url=candidate.playback_tracking_url,
+        )
 
     def resolve_video(
         self,
@@ -189,8 +209,7 @@ class YouTubeMusicService:
         force: bool = False,
         allow_video_only: bool = False,
     ) -> VideoStreamInfo:
-        """Resolve the best matching music-video stream."""
-        return resolve_video_stream(
+        return resolve_resilient_video_stream(
             self.client(),
             item,
             max_height=max_height,

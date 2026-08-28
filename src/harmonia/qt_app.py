@@ -14,11 +14,13 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from PySide6.QtWidgets import QApplication
 
 from . import qt_backend as qt_backend_module
+from .potoken import install_potoken_provider
 from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
 from .qt_media_variants import OfficialVideoQtController
+from .qt_potoken import QtPoTokenProvider
 from .qt_video import create_qml6_video_sink
 
 APP_ID = "io.github.harmonia.Harmonia"
@@ -88,6 +90,9 @@ def main() -> int:
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
 
+    potoken = QtPoTokenProvider(app)
+    install_potoken_provider(potoken)
+
     # Creating the sink before loading QML registers GstGLQt6VideoItem.
     video_sink = create_qml6_video_sink()
 
@@ -118,6 +123,7 @@ def main() -> int:
         video.shutdown()
         integrations.shutdown()
         backend.shutdown()
+        install_potoken_provider(None)
         raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
 
     for root in engine.rootObjects():
@@ -132,4 +138,5 @@ def main() -> int:
     app.aboutToQuit.connect(video.shutdown)
     app.aboutToQuit.connect(integrations.shutdown)
     app.aboutToQuit.connect(backend.shutdown)
+    app.aboutToQuit.connect(lambda: install_potoken_provider(None))
     return app.exec()

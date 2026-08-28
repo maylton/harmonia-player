@@ -17,6 +17,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
 from .i18n import _
+from .stream_transport import mark_stream_transport_failure, stream_transport_headers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -190,7 +191,8 @@ class _StreamRelay:
     def _register(self, remote_url: str, headers: dict[str, str] | None = None) -> int:
         self.generation += 1
         generation = self.generation
-        self.streams[generation] = (remote_url, dict(headers or {}))
+        effective_headers = dict(headers or stream_transport_headers(remote_url))
+        self.streams[generation] = (remote_url, effective_headers)
         for old_generation in list(self.streams):
             if old_generation < generation - 3:
                 self.streams.pop(old_generation, None)
@@ -334,6 +336,7 @@ class NativePlayer:
         self._audio_elements: dict[str, Gst.Element] = {}
         self._video_sink: Gst.Element | None = None
         self._replace_generation = 0
+        self._active_remote_uri: str | None = None
         self._install_audio_filter()
         self.on_state = on_state
         self.on_error = on_error
@@ -412,10 +415,19 @@ class NativePlayer:
     def video_sink(self) -> Gst.Element | None:
         return self._video_sink
 
+    @staticmethod
+    def _remote_googlevideo_uri(uri: str) -> str | None:
+        parsed = urllib.parse.urlsplit(uri)
+        host = parsed.hostname or ""
+        if parsed.scheme in {"http", "https"} and "googlevideo.com" in host:
+            return uri
+        return None
+
     def play(self, uri: str) -> None:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._active_remote_uri = self._remote_googlevideo_uri(uri)
         self._playbin.set_property("uri", self._source_uri(uri))
         self._playbin.set_state(Gst.State.PLAYING)
 
@@ -438,6 +450,7 @@ class NativePlayer:
         generation = self._replace_generation
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = target
+        self._active_remote_uri = self._remote_googlevideo_uri(uri)
         self._playbin.set_property("uri", self._source_uri(uri, request_headers))
         # Preroll paused first; seeking before preroll is unreliable for remote
         # MP4 streams and can briefly play from 0 before the requested position.
@@ -486,6 +499,7 @@ class NativePlayer:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._active_remote_uri = None
 
     def close(self) -> None:
         self.stop()
@@ -531,6 +545,8 @@ class NativePlayer:
     def _on_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
+            if self._active_remote_uri:
+                mark_stream_transport_failure(self._active_remote_uri)
             try:
                 source = message.src.get_path_string() if message.src is not None else "unknown"
             except Exception:
