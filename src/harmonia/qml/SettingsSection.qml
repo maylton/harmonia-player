@@ -50,11 +50,10 @@ Rectangle {
 
                 Kirigami.Icon {
                     anchors.centerIn: parent
-                    width: Kirigami.Units.iconSizes.medium
+                    width: Kirigami.Units.iconSizes.smallMedium
                     height: width
                     source: root.iconName
-                    isMask: true
-                    color: Kirigami.Theme.textColor
+                    isMask: false
                 }
             }
 
