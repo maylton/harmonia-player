@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 
+from gi.repository import Gst
+
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
 from .qt_video import QtVideoController
 
@@ -17,12 +19,21 @@ class OfficialVideoQtController(QtVideoController):
         self._independent_video_primary_uri = ""
         self._independent_video_primary_duration_ms = 0
         self._independent_video_primary_position_ms = 0
+        self._primary_save_state = self.playback._save_state
+        self._primary_player_error = self.playback.player.on_error
+        self.playback._save_state = self._save_playback_state
+        self.playback.player.on_error = self._on_primary_player_error
 
     def _clear_independent_video(self) -> None:
         self._independent_video_owns_audio = False
         self._independent_video_primary_uri = ""
         self._independent_video_primary_duration_ms = 0
         self._independent_video_primary_position_ms = 0
+
+    def _save_playback_state(self, position_ms: int | None = None) -> None:
+        if self._independent_video_owns_audio:
+            position_ms = self._independent_video_primary_position_ms
+        self._primary_save_state(position_ms)
 
     def _set_playback_duration(self, duration_ms: int) -> None:
         self.playback._duration_ms = max(0, int(duration_ms or 0))
@@ -46,7 +57,7 @@ class OfficialVideoQtController(QtVideoController):
                 playing=should_play,
             )
             self._set_playback_duration(duration_ms)
-            self.playback._save_state(max(0, int(position_ms)))
+            self._primary_save_state(max(0, int(position_ms)))
             LOGGER.info(
                 "Qt restored song audio after independent video at %d ms",
                 position_ms,
@@ -135,6 +146,7 @@ class OfficialVideoQtController(QtVideoController):
         self._independent_video_primary_duration_ms = primary_duration_ms
         self._independent_video_primary_position_ms = primary_position_ms
         self._independent_video_owns_audio = True
+        self._primary_save_state(primary_position_ms)
 
         LOGGER.info(
             "Qt independent music video %s: song=%d ms video=%d ms; restarting with video audio",
@@ -160,6 +172,27 @@ class OfficialVideoQtController(QtVideoController):
         if should_restore:
             self._restore_primary_audio(playing=should_play)
 
+    def _on_video_message(self, bus, message) -> None:
+        if self._independent_video_owns_audio and message.type == Gst.MessageType.EOS:
+            LOGGER.debug("Ignoring visual EOS; independent video audio owns transport EOS")
+            return
+        super()._on_video_message(bus, message)
+
+    def _on_primary_player_error(self, error: str):
+        if self._independent_video_owns_audio:
+            self._video_failed(error)
+            return False
+        if self._primary_player_error is not None:
+            return self._primary_player_error(error)
+        return False
+
     def _on_track_changed(self) -> None:
         self._clear_independent_video()
         super()._on_track_changed()
+
+    def shutdown(self) -> None:
+        if self.playback.player.on_error == self._on_primary_player_error:
+            self.playback.player.on_error = self._primary_player_error
+        if self.playback._save_state == self._save_playback_state:
+            self.playback._save_state = self._primary_save_state
+        super().shutdown()
