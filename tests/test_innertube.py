@@ -1,6 +1,7 @@
 from harmonia.innertube import (
     find_browse_endpoint,
     find_continuation,
+    find_video_counterpart,
     parse_account_profile,
     parse_cookie,
     parse_explore,
@@ -141,6 +142,64 @@ def test_find_and_parse_native_lyrics():
         "lyrics-params",
     )
     assert parse_lyrics(lyrics_payload) == "Primeira linha\nSegunda linha"
+
+
+def test_find_official_video_counterpart_from_watch_next():
+    def counterpart(video_id, music_type):
+        return {
+            "counterpartRenderer": {
+                "playlistPanelVideoRenderer": {
+                    "videoId": video_id,
+                    "navigationEndpoint": {
+                        "watchEndpoint": {
+                            "watchEndpointMusicSupportedConfigs": {
+                                "watchEndpointMusicConfig": {"musicVideoType": music_type}
+                            }
+                        }
+                    },
+                }
+            }
+        }
+
+    payload = {
+        "contents": [
+            counterpart("audio-placeholder", "MUSIC_VIDEO_TYPE_ATV"),
+            counterpart("official-video", "MUSIC_VIDEO_TYPE_OMV"),
+        ]
+    }
+    assert find_video_counterpart(payload) == "official-video"
+
+
+def test_video_counterpart_uses_authenticated_next_endpoint():
+    from harmonia.innertube import InnerTubeClient
+
+    client = InnerTubeClient("SAPISID=x")
+    calls = []
+    client._api_post = lambda endpoint, body, authenticated=True: (
+        calls.append((endpoint, body, authenticated))
+        or {
+            "counterpart": [
+                {
+                    "counterpartRenderer": {
+                        "playlistPanelVideoRenderer": {
+                            "videoId": "official-video",
+                            "navigationEndpoint": {
+                                "watchEndpoint": {
+                                    "watchEndpointMusicSupportedConfigs": {
+                                        "watchEndpointMusicConfig": {
+                                            "musicVideoType": "MUSIC_VIDEO_TYPE_OMV"
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            ]
+        }
+    )
+    assert client.video_counterpart("audio") == "official-video"
+    assert calls == [("next", {"videoId": "audio"}, True)]
 
 
 def test_lyrics_follows_watch_next_endpoint():

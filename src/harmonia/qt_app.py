@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ from .qt_media_variants import OfficialVideoQtController
 from .qt_video import create_qml6_video_sink
 
 APP_ID = "io.github.harmonia.Harmonia"
+LOGGER = logging.getLogger(__name__)
 
 
 def _drain_glib_context() -> None:
@@ -80,6 +82,9 @@ def main() -> int:
     QCoreApplication.setApplicationName("Harmonia")
     QCoreApplication.setOrganizationName("Harmonia")
     QCoreApplication.setOrganizationDomain("io.github.harmonia")
+    # Select the API before either Qt Quick or WebEngine can create a window.
+    # qml6glsink shares OpenGL textures with GstGLQt6VideoItem.
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
     # Qt Quick WebEngine requires initialization before QApplication creates
     # the graphics context used by Chromium's render process.
     QtWebEngineQuick.initialize()
@@ -87,12 +92,6 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
-
-    # qml6glsink exchanges OpenGL textures directly with the Qt Quick scene
-    # graph. Follow GStreamer's Qt6 example and request OpenGL before the first
-    # QQuickWindow is constructed; otherwise Qt may choose Vulkan/RHI and the
-    # two graphics contexts are not compatible.
-    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
 
     # Creating qml6glsink before loading QML registers the
     # org.freedesktop.gstreamer.Qt6GLVideoItem module and its
@@ -135,6 +134,15 @@ def main() -> int:
         integrations.shutdown()
         backend.shutdown()
         raise RuntimeError("Qt/Kirigami frontend failed to load its QML root object")
+
+    for root in engine.rootObjects():
+        if isinstance(root, QQuickWindow):
+            LOGGER.info(
+                "Qt QQuickWindow graphics API: requested=%s effective=%s renderer=%s",
+                QSGRendererInterface.GraphicsApi.OpenGL,
+                root.graphicsApi(),
+                root.rendererInterface().graphicsApi(),
+            )
 
     # Integrations/video still use the backend player/executor, so close them
     # before HarmoniaQtBackend shuts those shared resources down.

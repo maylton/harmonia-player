@@ -38,6 +38,32 @@ def test_video_variant_prefers_matching_title_and_artist():
     assert find_video_variant(client, item, force=True) == "right"
 
 
+def test_video_variant_prefers_authoritative_music_video_counterpart():
+    item = LibraryItem(
+        "audio-closer",
+        "Closer",
+        "Tocou 79\u00a0mi vezes · 3:29",
+        kind="songs",
+    )
+
+    class CounterpartClient(SearchClient):
+        def __init__(self):
+            super().__init__([LibraryItem("wrong", "Closer", "Outro artista", kind="videos")])
+            self.search_called = False
+
+        def video_counterpart(self, video_id: str):
+            assert video_id == "audio-closer"
+            return "official-closer"
+
+        def search_category(self, query: str, category: str):
+            self.search_called = True
+            return super().search_category(query, category)
+
+    client = CounterpartClient()
+    assert find_video_variant(client, item, force=True) == "official-closer"
+    assert not client.search_called
+
+
 def test_video_variant_rejects_unrelated_results():
     item = LibraryItem("song999", "Northern Lights", "Aster", kind="songs")
     client = SearchClient(
@@ -45,6 +71,106 @@ def test_video_variant_rejects_unrelated_results():
     )
     with pytest.raises(InnerTubeError):
         find_video_variant(client, item, force=True)
+
+
+def test_video_variant_does_not_treat_play_count_as_artist():
+    item = LibraryItem(
+        "song-sign",
+        "Sign",
+        "Tocou 251\u00a0mi vezes · 3:57",
+        kind="songs",
+    )
+
+    class QueryClient(SearchClient):
+        def __init__(self):
+            super().__init__([LibraryItem("sign-video", "Sign", "FLOW", kind="videos")])
+            self.queries = []
+
+        def search_category(self, query: str, category: str):
+            self.queries.append(query)
+            return super().search_category(query, category)
+
+    client = QueryClient()
+    assert find_video_variant(client, item, force=True) == "sign-video"
+    assert client.queries == ["Sign"]
+
+
+def test_video_variant_rejects_exact_title_from_unrelated_artist():
+    item = LibraryItem(
+        "song-body-type",
+        "BODY TYPE",
+        "Pabllo Vittar e Urias · Tocou 66\u00a0mil vezes · 2:27",
+        kind="songs",
+    )
+    client = SearchClient(
+        [
+            LibraryItem("wrong", "Body Type", "Zepeto Drift", kind="videos"),
+            LibraryItem(
+                "variant",
+                "Pabllo Vittar, Urias - BODY TYPE (Sped Up)",
+                "Kye • 49 visualizações • 2:03",
+                kind="videos",
+            ),
+            LibraryItem(
+                "right",
+                "Pabllo Vittar, Urias - BODY TYPE (Videoclipe)",
+                "QG da Pabllo Vittar • 128 visualizações • 2:22",
+                kind="videos",
+            ),
+        ]
+    )
+    assert find_video_variant(client, item, force=True) == "right"
+
+
+def test_video_variant_prefers_official_video_search_over_same_title_lyrics():
+    item = LibraryItem(
+        "song-beautiful-girls",
+        "Beautiful Girls",
+        "Sean Kingston · Sean Kingston · 4:02",
+        kind="songs",
+    )
+
+    class OfficialQueryClient(SearchClient):
+        def __init__(self):
+            super().__init__([])
+            self.queries = []
+
+        def search_category(self, query: str, category: str):
+            self.queries.append(query)
+            if query.endswith("official music video"):
+                items = [
+                    LibraryItem(
+                        "official",
+                        "Beautiful Girls",
+                        "Sean Kingston • 1,5 bi de visualizações • 4:22",
+                        kind="videos",
+                    ),
+                    # The canonical shelf can contain another exact-title
+                    # upload with no useful marker in the parsed metadata.
+                    LibraryItem(
+                        "lyrics-canonical",
+                        "Beautiful Girls",
+                        "Sean Kingston • 37 mi de visualizações • 4:02",
+                        kind="videos",
+                    ),
+                ]
+            else:
+                items = [
+                    LibraryItem(
+                        "lyrics",
+                        "Beautiful Girls",
+                        "Sean Kingston • 37 mi de visualizações • 4:02",
+                        kind="videos",
+                    )
+                ]
+            return SearchGroup("videos", "Vídeos", items)
+
+    client = OfficialQueryClient()
+    assert find_video_variant(client, item, force=True) == "official"
+    assert client.queries == [
+        "Beautiful Girls Sean Kingston",
+        "Beautiful Girls Sean Kingston official music video",
+    ]
 
 
 def test_progressive_video_prefers_highest_format_within_limit(monkeypatch):

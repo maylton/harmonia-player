@@ -56,6 +56,30 @@ _VIDEO_STREAM_CACHE: dict[str, VideoStreamInfo] = {}
 _VIDEO_CACHE_LOCK = threading.Lock()
 
 _DURATION_SUFFIX = re.compile(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$")
+_DURATION_VALUE = re.compile(r"(?:(\d+):)?([0-5]?\d):([0-5]\d)\s*$")
+_NON_ARTIST_SUBTITLE = re.compile(
+    r"^(?:tocou|played|reproduziu|reproduzido|ouviu|ouvido)\b", re.IGNORECASE
+)
+_ARTIST_CONNECTORS = {"e", "and", "feat", "ft", "com"}
+_NON_CANONICAL_VIDEO_MARKERS = {
+    "ao vivo": 3.0,
+    "audio": 2.0,
+    "cover": 4.0,
+    "demo": 4.0,
+    "instrumental": 5.0,
+    "karaoke": 5.0,
+    "live": 3.0,
+    "lyric": 4.0,
+    "lyrics": 4.0,
+    "preview": 4.0,
+    "reaction": 5.0,
+    "remix": 3.0,
+    "reverb": 3.0,
+    "slowed": 4.0,
+    "snippet": 4.0,
+    "sped up": 4.0,
+    "visualizer": 1.0,
+}
 _NON_WORD = re.compile(r"[^a-z0-9]+")
 _OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
 
@@ -68,7 +92,17 @@ def _normalize(value: str) -> str:
 
 def _artist_hint(subtitle: str) -> str:
     value = _DURATION_SUFFIX.sub("", subtitle or "")
+    if _NON_ARTIST_SUBTITLE.match(value.strip()):
+        return ""
     return re.split(r"\s*[·•]\s*", value, maxsplit=1)[0].strip()
+
+
+def _duration_hint(value: str) -> int | None:
+    match = _DURATION_VALUE.search(value or "")
+    if not match:
+        return None
+    hours, minutes, seconds = match.groups()
+    return (int(hours or 0) * 60 + int(minutes)) * 60 + int(seconds)
 
 
 def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
@@ -76,6 +110,7 @@ def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
     candidate_title = _normalize(candidate.title)
     wanted_artist = _normalize(_artist_hint(item.subtitle))
     candidate_subtitle = _normalize(candidate.subtitle)
+    candidate_text = f"{candidate_title} {candidate_subtitle}".strip()
 
     score = SequenceMatcher(None, wanted_title, candidate_title).ratio() * 8.0
     if wanted_title and candidate_title == wanted_title:
@@ -84,18 +119,35 @@ def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
         score += 3.0
 
     if wanted_artist:
-        artist_tokens = set(wanted_artist.split())
-        subtitle_tokens = set(candidate_subtitle.split())
+        artist_tokens = {
+            token for token in wanted_artist.split() if token not in _ARTIST_CONNECTORS
+        }
+        candidate_tokens = set(candidate_text.split())
         if artist_tokens:
-            score += 5.0 * len(artist_tokens & subtitle_tokens) / len(artist_tokens)
-        if wanted_artist in candidate_subtitle:
+            artist_overlap = len(artist_tokens & candidate_tokens)
+            score += 7.0 * artist_overlap / len(artist_tokens)
+            # Search can return an unrelated upload with an exact generic
+            # title. Keep it below a result that identifies the requested
+            # artist in either its title or channel metadata.
+            if artist_overlap == 0:
+                score -= 8.0
+        if wanted_artist in candidate_text:
             score += 3.0
 
-    normalized = f"{candidate_title} {candidate_subtitle}"
-    if "official video" in normalized or "official music video" in normalized:
+    if "official music video" in candidate_text:
+        score += 2.5
+    elif "official" in candidate_title and "video" in candidate_title:
         score += 1.5
-    if any(token in normalized for token in ("lyrics", "lyric video", "karaoke", "reaction")):
-        score -= 1.25
+    if "videoclipe" in candidate_title or "music video" in candidate_title:
+        score += 2.5
+    for marker, penalty in _NON_CANONICAL_VIDEO_MARKERS.items():
+        if marker in candidate_title:
+            score -= penalty
+
+    wanted_duration = _duration_hint(item.subtitle)
+    candidate_duration = _duration_hint(candidate.subtitle)
+    if wanted_duration is not None and candidate_duration is not None:
+        score += max(0.0, 4.0 - abs(wanted_duration - candidate_duration) / 10.0)
     return score
 
 
@@ -113,18 +165,79 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
         if cached:
             return cached
 
+    # YouTube Music already knows the exact official-video relationship for
+    # many audio tracks. Prefer that server-provided OMV counterpart before
+    # searching: a library item may not retain its artist metadata, and a
+    # generic title can otherwise resolve to another artist's upload.
+    counterpart_resolver = getattr(client, "video_counterpart", None)
+    if callable(counterpart_resolver):
+        with suppress(InnerTubeError):
+            counterpart = counterpart_resolver(item.id)
+        if counterpart:
+            with _VIDEO_CACHE_LOCK:
+                _VIDEO_ID_CACHE[cache_key] = counterpart
+            return counterpart
+
     artist = _artist_hint(item.subtitle)
     query = " ".join(part for part in (item.title.strip(), artist) if part).strip()
     if not query:
         query = item.title.strip()
-    group = client.search_category(query, "videos")
-    candidates = [candidate for candidate in group.items if candidate.id]
+    groups = [client.search_category(query, "videos")]
+    canonical_ranks: dict[str, int] = {}
+    if artist:
+        # The regular Videos shelf can hide an official clip behind a lyric
+        # upload with the same visible title. Ask YouTube Music explicitly for
+        # the canonical video and use the order of that shelf as a ranking
+        # signal. The shelf can still contain lyric uploads, so only a
+        # matching, unmarked result receives the preference.
+        with suppress(InnerTubeError):
+            canonical = client.search_category(f"{query} official music video", "videos")
+            groups.append(canonical)
+            for rank, candidate in enumerate(canonical.items):
+                if candidate.id and candidate.id not in canonical_ranks:
+                    canonical_ranks[candidate.id] = rank
+    # Library subtitles can contain play-count metadata instead of the artist
+    # (for example: "Tocou 251 mi vezes · 3:57"). If the first query does not
+    # produce an exact title, retry with the title alone instead of allowing
+    # that metadata to hide an otherwise valid official music video.
+    if artist and not any(
+        _normalize(candidate.title) == _normalize(item.title)
+        for candidate in groups[0].items
+        if candidate.id
+    ):
+        groups.append(client.search_category(item.title.strip(), "videos"))
+
+    candidates: list[LibraryItem] = []
+    seen: set[str] = set()
+    for group in groups:
+        for candidate in group.items:
+            if candidate.id and candidate.id not in seen:
+                seen.add(candidate.id)
+                candidates.append(candidate)
     if not candidates:
         raise InnerTubeError(_("O YouTube Music não encontrou um vídeo para esta faixa."))
 
-    ranked = sorted(
-        candidates, key=lambda candidate: _candidate_score(item, candidate), reverse=True
-    )
+    def ranking_score(candidate: LibraryItem) -> float:
+        score = _candidate_score(item, candidate)
+        canonical_rank = canonical_ranks.get(candidate.id)
+        if canonical_rank is not None and canonical_rank < 10:
+            wanted_title = _normalize(item.title)
+            candidate_title = _normalize(candidate.title)
+            title_matches = wanted_title in candidate_title or candidate_title in wanted_title
+            wanted_artist = _normalize(artist)
+            candidate_tokens = set(f"{candidate_title} {_normalize(candidate.subtitle)}".split())
+            artist_tokens = {
+                token for token in wanted_artist.split() if token not in _ARTIST_CONNECTORS
+            }
+            artist_matches = not artist_tokens or bool(artist_tokens & candidate_tokens)
+            has_non_canonical_marker = any(
+                marker in candidate_title for marker in _NON_CANONICAL_VIDEO_MARKERS
+            )
+            if title_matches and artist_matches and not has_non_canonical_marker:
+                score += 12.0 / (canonical_rank + 1)
+        return score
+
+    ranked = sorted(candidates, key=ranking_score, reverse=True)
     selected = ranked[0]
     if _candidate_score(item, selected) < 4.0:
         raise InnerTubeError(_("Nenhum vídeo correspondente foi encontrado para esta faixa."))

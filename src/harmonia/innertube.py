@@ -325,6 +325,31 @@ def find_browse_endpoint(payload: dict[str, Any], page_type: str) -> tuple[str, 
     return None
 
 
+def find_video_counterpart(payload: dict[str, Any]) -> str | None:
+    """Return YouTube Music's linked official music video, when present.
+
+    The ``next`` response for an audio track can contain a ``counterpart``
+    renderer. Its watch endpoint carries ``MUSIC_VIDEO_TYPE_OMV`` for the
+    official music video, so this relationship is authoritative and does not
+    require guessing from a title or a search result.
+    """
+    for node in _walk(payload):
+        counterpart = node.get("counterpartRenderer")
+        if not isinstance(counterpart, dict):
+            continue
+        renderer = counterpart.get("playlistPanelVideoRenderer")
+        if not isinstance(renderer, dict):
+            continue
+        video_id = renderer.get("videoId")
+        endpoint = (renderer.get("navigationEndpoint") or {}).get("watchEndpoint") or {}
+        music_config = (endpoint.get("watchEndpointMusicSupportedConfigs") or {}).get(
+            "watchEndpointMusicConfig"
+        ) or {}
+        if video_id and music_config.get("musicVideoType") == "MUSIC_VIDEO_TYPE_OMV":
+            return str(video_id)
+    return None
+
+
 def parse_lyrics(payload: dict[str, Any]) -> str | None:
     """Extract the plain lyrics returned by a YouTube Music lyrics tab."""
     for node in _walk(payload):
@@ -810,6 +835,13 @@ class InnerTubeClient:
         if params:
             body["params"] = params
         return parse_lyrics(self._post(body))
+
+    def video_counterpart(self, video_id: str) -> str | None:
+        """Return the official music-video counterpart linked to an audio track."""
+        if not video_id:
+            return None
+        payload = self._api_post("next", {"videoId": video_id}, authenticated=True)
+        return find_video_counterpart(payload)
 
     def radio(self, video_id: str, limit: int = 50) -> list[LibraryItem]:
         """Build YouTube Music's automatic radio queue from a seed track."""
