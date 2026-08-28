@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from harmonia.innertube import InnerTubeError
+from harmonia.innertube import PLAYER_CLIENTS, InnerTubeError
 from harmonia.models import LibraryItem, SearchGroup
 from harmonia.video import find_video_variant, resolve_video_stream
 
@@ -96,6 +96,10 @@ def test_progressive_video_prefers_highest_format_within_limit(monkeypatch):
     assert stream.height == 720
     assert stream.url.endswith("720.mp4")
     assert stream.muxed is True
+    assert stream.request_headers == {
+        "User-Agent": PLAYER_CLIENTS[0]["user_agent"],
+        "Accept": "*/*",
+    }
 
 
 def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
