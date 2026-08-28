@@ -76,3 +76,22 @@ def test_player_uses_clickable_shared_seek_slider_and_theme_driven_like_icon() -
         assert 'source: "love-symbolic"' in source
         assert "Kirigami.Theme.highlightColor" in source
         assert "palette.highlight:" not in source
+
+
+def test_expanded_media_visual_has_a_hard_maximum_and_replaces_cover_in_place() -> None:
+    source = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
+    assert "readonly property real mediaMaxWidth: 900" in source
+    assert "readonly property real availableMediaHeight" in source
+    assert "readonly property real mediaAspectWidth" in source
+    assert "availableMediaHeight * mediaAspectWidth" in source
+    assert "readonly property real boundedMediaWidth" in source
+    assert "ColumnLayout {\n                        id: expandedContent" in source
+    assert "id: detailsColumn" in source
+    assert "anchors.top: parent.top" in source
+    assert "Layout.fillWidth: false" in source
+    assert "width: expandedContent.boundedMediaWidth" in source
+    assert "Layout.maximumWidth: expandedContent.boundedMediaWidth" in source
+    assert "Layout.maximumHeight: root.mediaMaxWidth" in source
+    assert "clip: true" in source
+    assert "visible: videoBackend.mode !== \"video\" || videoBackend.loading" in source
+    assert "opacity: videoBackend.mode === \"video\" && !videoBackend.loading" in source

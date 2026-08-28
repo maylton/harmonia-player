@@ -70,6 +70,7 @@ class QtVideoController(QObject):
     loadingChanged = Signal()
     availabilityChanged = Signal()
     _resolved = Signal(int, object, str)
+    _prepare_sink_requested = Signal()
 
     def __init__(self, backend, sink=None, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -82,6 +83,11 @@ class QtVideoController(QObject):
         self._video_last_sync_seek = 0.0
         self._pending: dict[int, tuple[str, str]] = {}
         self._surface = None
+        self._surface_window = None
+        self._scene_graph_window = None
+        self._surface_visibility_signal = None
+        self._sink_prepare_attempts = 0
+        self._sink_prepare_retry_pending = False
         self._sink = sink
         self._sink_prepared = False
         self._sink_error = (
@@ -101,6 +107,11 @@ class QtVideoController(QObject):
             self._video_bus.connect("message", self._on_video_message)
 
         self._resolved.connect(self._apply_resolved)
+        # sceneGraphInitialized is emitted from Qt Quick's render thread on
+        # some render-loop implementations. Emitting this signal from that
+        # callback queues the actual GStreamer/Qt object mutation back to this
+        # controller's (main) thread.
+        self._prepare_sink_requested.connect(self._prepare_sink_when_ready)
         self.backend.nowPlayingChanged.connect(self._on_track_changed)
 
         self._sync_timer = QTimer(self)
@@ -160,6 +171,16 @@ class QtVideoController(QObject):
             self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
             self.availabilityChanged.emit()
             return False
+        if not self._surface_window or not self._scene_graph_ready(self._surface_window):
+            return False
+        if not self._surface_is_visible():
+            # ExpandedPlayer creates VideoSurface while its Dialog is closed.
+            # qml6glsink cannot bind a render target that is not in the visible
+            # scene graph yet; registerSurface therefore only stores the item
+            # until the dialog makes it visible.
+            return False
+
+        LOGGER.info("Qt GL sink preparation starting")
 
         try:
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
@@ -172,13 +193,15 @@ class QtVideoController(QObject):
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("A camada de vídeo recusou o estado READY")
+            LOGGER.info("playbin READY")
         except Exception as exc:
-            LOGGER.exception("Could not prepare Qt video layer")
+            self._log_sink_prepare_failure(exc)
             with suppress(Exception):
                 self._video_player.set_state(Gst.State.NULL)
             self._sink_error = str(exc)
             self._sink_prepared = False
             self.availabilityChanged.emit()
+            self._schedule_sink_prepare_retry()
             return False
 
         self._sink_prepared = True
@@ -190,8 +213,123 @@ class QtVideoController(QObject):
     @Slot(QObject)
     def registerSurface(self, surface: QObject) -> None:
         if self._surface is not surface:
+            if self._surface_visibility_signal is not None:
+                with suppress(Exception):
+                    self._surface_visibility_signal.disconnect(
+                        self._on_surface_visibility_changed
+                    )
             self._surface = surface
+            self._surface_window = None
+            self._sink_prepare_attempts = 0
+            self._sink_prepare_retry_pending = False
+            self._surface_visibility_signal = surface.visibleChanged
             self._sink_error = ""
+            with suppress(Exception):
+                surface.windowChanged.connect(self._on_surface_window_changed)
+                surface.visibleChanged.connect(self._on_surface_visibility_changed)
+        LOGGER.info("Qt video surface registered")
+        self._on_surface_window_changed(self._surface.window())
+        self._on_surface_visibility_changed()
+
+    @staticmethod
+    def _scene_graph_ready(window) -> bool:
+        checker = getattr(window, "isSceneGraphInitialized", None)
+        return bool(checker()) if callable(checker) else False
+
+    def _on_surface_window_changed(self, window) -> None:
+        if self._surface_window is window and window is not None:
+            self._request_sink_prepare()
+            return
+        if self._scene_graph_window is not None:
+            with suppress(Exception):
+                self._scene_graph_window.sceneGraphInitialized.disconnect(
+                    self._on_scene_graph_initialized
+                )
+        self._surface_window = window
+        self._scene_graph_window = window
+        if window is None:
+            LOGGER.info("Qt video surface is not associated with a QQuickWindow yet")
+            return
+
+        LOGGER.info(
+            "Qt video QQuickWindow available: graphicsApi=%s rendererGraphicsApi=%s sceneGraphInitialized=%s",
+            self._graphics_api_name(window),
+            self._renderer_graphics_api_name(window),
+            self._scene_graph_ready(window),
+        )
+        with suppress(Exception):
+            window.sceneGraphInitialized.connect(self._on_scene_graph_initialized)
+        if self._scene_graph_ready(window):
+            self._request_sink_prepare()
+
+    def _on_scene_graph_initialized(self) -> None:
+        LOGGER.info("Qt scene graph initialized")
+        self._request_sink_prepare()
+
+    def _on_surface_visibility_changed(self) -> None:
+        if self._surface is not None:
+            self._request_sink_prepare()
+
+    def _surface_is_visible(self) -> bool:
+        if self._surface is None:
+            return False
+        checker = getattr(self._surface, "isVisible", None)
+        return bool(checker()) if callable(checker) else bool(self._surface.visible)
+
+    def _schedule_sink_prepare_retry(self) -> None:
+        if self._sink_prepare_retry_pending or self._sink_prepare_attempts >= 10:
+            return
+        self._sink_prepare_retry_pending = True
+
+        def retry() -> None:
+            self._sink_prepare_retry_pending = False
+            if self._sink_prepared:
+                return
+            self._request_sink_prepare()
+
+        QTimer.singleShot(100, retry)
+
+    def _log_sink_prepare_failure(self, error: Exception) -> None:
+        if self._sink_prepare_attempts >= 10:
+            LOGGER.error(
+                "Could not prepare Qt video layer after %d attempts: %s",
+                self._sink_prepare_attempts,
+                error,
+            )
+        else:
+            LOGGER.warning(
+                "Qt GL sink preparation attempt %d failed; retrying: %s",
+                self._sink_prepare_attempts,
+                error,
+            )
+
+    def _request_sink_prepare(self) -> None:
+        self._prepare_sink_requested.emit()
+
+    @staticmethod
+    def _graphics_api_name(window) -> str:
+        try:
+            return str(window.graphicsApi())
+        except Exception:
+            return "unknown"
+
+    @staticmethod
+    def _renderer_graphics_api_name(window) -> str:
+        try:
+            renderer = window.rendererInterface()
+            return str(renderer.graphicsApi()) if renderer is not None else "none"
+        except Exception:
+            return "unknown"
+
+    @Slot()
+    def _prepare_sink_when_ready(self) -> None:
+        if self._sink_prepared or self._surface is None or self._surface_window is None:
+            return
+        if not self._scene_graph_ready(self._surface_window):
+            return
+        if not self._surface_is_visible():
+            return
+        self._sink_prepare_attempts += 1
         self._prepare_sink()
 
     @Slot()
@@ -494,6 +632,12 @@ class QtVideoController(QObject):
     def _on_video_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
+            if self._mode != "video":
+                # READY/NULL transitions can deliver a late error from the
+                # previous URI. It is not a playback failure after the user
+                # has already returned to Music, so keep it out of normal logs.
+                LOGGER.debug("Ignoring inactive Qt video error: %s", error)
+                return
             try:
                 source = message.src.get_path_string() if message.src is not None else "unknown"
             except Exception:

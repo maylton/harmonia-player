@@ -50,9 +50,14 @@ class OfficialVideoQtController(QtVideoController):
             self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
             self.availabilityChanged.emit()
             return False
+        if not self._surface_window or not self._scene_graph_ready(self._surface_window):
+            return False
+        if not self._surface_is_visible():
+            return False
 
         glsinkbin = None
         try:
+            LOGGER.info("Qt GL sink preparation starting")
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
             if not pointer:
                 raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
@@ -63,6 +68,7 @@ class OfficialVideoQtController(QtVideoController):
             sink_state = self._sink.set_state(Gst.State.READY)
             if sink_state == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
+            LOGGER.info("qml6glsink READY")
 
             video_output = self._sink
             glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
@@ -70,6 +76,10 @@ class OfficialVideoQtController(QtVideoController):
                 glsinkbin.set_property("sink", self._sink)
                 video_output = glsinkbin
                 LOGGER.info("Qt video output using glsinkbin -> qml6glsink")
+                bin_state = glsinkbin.set_state(Gst.State.READY)
+                if bin_state == Gst.StateChangeReturn.FAILURE:
+                    raise RuntimeError("glsinkbin não conseguiu inicializar")
+                LOGGER.info("glsinkbin READY")
             else:
                 LOGGER.warning(
                     "glsinkbin unavailable; falling back to direct qml6glsink negotiation"
@@ -81,8 +91,9 @@ class OfficialVideoQtController(QtVideoController):
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("A camada de vídeo recusou o estado READY")
+            LOGGER.info("playbin READY")
         except Exception as exc:
-            LOGGER.exception("Could not prepare Qt video layer")
+            self._log_sink_prepare_failure(exc)
             with suppress(Exception):
                 self._video_player.set_state(Gst.State.NULL)
             if glsinkbin is not None:
@@ -95,6 +106,7 @@ class OfficialVideoQtController(QtVideoController):
             self._sink_error = str(exc)
             self._sink_prepared = False
             self.availabilityChanged.emit()
+            self._schedule_sink_prepare_retry()
             return False
 
         self._qt_glsinkbin = glsinkbin

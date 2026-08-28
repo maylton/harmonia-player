@@ -19,6 +19,13 @@ Controls.Dialog {
     y: 0
     z: 1000
 
+    // GTK uses a 900 px natural line length for the expanded media page.
+    // Keep that same ceiling in Qt, while also shrinking the media to the
+    // space left by the player controls below it.
+    readonly property real mediaMaxWidth: 900
+    readonly property real detailsMaxWidth: 420
+    readonly property real contentSpacing: 40
+
     onOpened: {
         videoBackend.refreshAvailability()
         if (viewTabs.currentIndex === 1)
@@ -99,80 +106,122 @@ Controls.Dialog {
                 currentIndex: viewTabs.currentIndex
 
                 Item {
-                    RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    ColumnLayout {
+                        id: expandedContent
+                        // The media is above the player controls, as in the
+                        // GTK expanded page. Its height must include the
+                        // controls below it before the width is calculated.
+                        readonly property real availableMediaWidth: Math.max(
+                            0,
+                            width
+                        )
+                        readonly property real availableMediaHeight: Math.max(
+                            0,
+                            (parent ? parent.height : 0)
+                                - detailsColumn.implicitHeight
+                                - root.contentSpacing
+                        )
+                        readonly property real mediaAspectWidth: videoBackend.mode === "video"
+                            ? 16 / 9
+                            : 1
+                        readonly property real boundedMediaWidth: Math.min(
+                            root.mediaMaxWidth,
+                            availableMediaWidth,
+                            availableMediaHeight * mediaAspectWidth
+                        )
                         anchors.centerIn: parent
-                        width: Math.min(parent.width, Kirigami.Units.gridUnit * 58)
-                        spacing: Kirigami.Units.gridUnit * 3
+                        width: Math.min(
+                            parent.width,
+                            root.mediaMaxWidth
+                        )
+                        spacing: root.contentSpacing
 
                         ColumnLayout {
                             id: mediaColumn
-                            Layout.preferredWidth: Math.min(
-                                Kirigami.Units.gridUnit * 24,
-                                parent.width * 0.48
-                            )
-                            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                            Layout.fillWidth: false
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: expandedContent.boundedMediaWidth
+                            Layout.minimumWidth: expandedContent.boundedMediaWidth
+                            Layout.maximumWidth: expandedContent.boundedMediaWidth
+                            width: expandedContent.boundedMediaWidth
                             spacing: Kirigami.Units.smallSpacing
-
-                            RowLayout {
-                                Layout.alignment: Qt.AlignHCenter
-                                spacing: 0
-
-                                Controls.Button {
-                                    text: "Música"
-                                    checkable: true
-                                    checked: videoBackend.mode === "audio"
-                                    enabled: backend.currentId.length > 0 && !videoBackend.loading
-                                    onClicked: videoBackend.setMode("audio")
-                                }
-
-                                Controls.Button {
-                                    text: "Vídeo"
-                                    checkable: true
-                                    checked: videoBackend.mode === "video"
-                                    enabled: videoBackend.available && !videoBackend.loading
-                                    onClicked: videoBackend.setMode("video")
-                                    Controls.ToolTip.visible: hovered && !videoBackend.available
-                                    Controls.ToolTip.text: "Nenhum vídeo disponível para esta faixa"
-                                }
-
-                                Controls.BusyIndicator {
-                                    Layout.leftMargin: Kirigami.Units.smallSpacing
-                                    Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
-                                    Layout.preferredHeight: width
-                                    visible: videoBackend.loading
-                                    running: visible
-                                }
-                            }
 
                             Item {
                                 id: mediaVisual
-                                Layout.fillWidth: true
+                                Layout.fillWidth: false
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: expandedContent.boundedMediaWidth
+                                Layout.minimumWidth: expandedContent.boundedMediaWidth
+                                Layout.maximumWidth: expandedContent.boundedMediaWidth
+                                width: expandedContent.boundedMediaWidth
+                                Layout.maximumHeight: root.mediaMaxWidth
+                                clip: true
                                 Layout.preferredHeight: videoBackend.mode === "video"
                                     ? width * 9 / 16
                                     : width
 
-                                StackLayout {
+                                CoverArt {
                                     anchors.fill: parent
-                                    currentIndex: videoBackend.mode === "video" ? 1 : 0
+                                    visible: videoBackend.mode !== "video" || videoBackend.loading
+                                    source: backend.currentArtwork
+                                    kind: "songs"
+                                    emphasized: true
+                                    z: 0
+                                }
 
-                                    CoverArt {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        source: backend.currentArtwork
-                                        kind: "songs"
-                                        emphasized: true
+                                RowLayout {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.top: parent.top
+                                    anchors.topMargin: Kirigami.Units.smallSpacing
+                                    spacing: 0
+                                    z: 2
+
+                                    Controls.Button {
+                                        text: "Música"
+                                        checkable: true
+                                        checked: videoBackend.mode === "audio"
+                                        enabled: backend.currentId.length > 0 && !videoBackend.loading
+                                        onClicked: videoBackend.setMode("audio")
                                     }
 
-                                    VideoSurface {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
+                                    Controls.Button {
+                                        text: "Vídeo"
+                                        checkable: true
+                                        checked: videoBackend.mode === "video"
+                                        enabled: videoBackend.available && !videoBackend.loading
+                                        onClicked: videoBackend.setMode("video")
+                                        Controls.ToolTip.visible: hovered && !videoBackend.available
+                                        Controls.ToolTip.text: "Nenhum vídeo disponível para esta faixa"
                                     }
+
+                                    Controls.BusyIndicator {
+                                        Layout.leftMargin: Kirigami.Units.smallSpacing
+                                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                                        Layout.preferredHeight: width
+                                        visible: videoBackend.loading
+                                        running: visible
+                                    }
+                                }
+
+                                VideoSurface {
+                                    anchors.fill: parent
+                                    opacity: videoBackend.mode === "video" && !videoBackend.loading
+                                             ? 1.0 : 0.0
+                                    z: 1
                                 }
                             }
                         }
 
                         ColumnLayout {
+                            id: detailsColumn
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: root.detailsMaxWidth
+                            Layout.minimumWidth: 0
+                            Layout.maximumWidth: root.detailsMaxWidth
                             spacing: Kirigami.Units.largeSpacing
 
                             ColumnLayout {
