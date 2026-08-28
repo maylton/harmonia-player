@@ -4,6 +4,8 @@ import threading
 import time
 from dataclasses import dataclass
 
+_DISABLED_PROFILES = frozenset({"ANDROID_VR_1_65_10"})
+
 
 @dataclass(slots=True)
 class _ClientState:
@@ -14,26 +16,23 @@ class _ClientState:
 
 
 class ClientHealthTracker:
-    """In-memory health/cooldown tracker for InnerTube playback identities.
-
-    A broken YouTube client/profile should not be retried for every track. The
-    cooldown grows with consecutive failures and is cleared immediately after a
-    successful extraction. This mirrors InnerTubeX's client-health concept while
-    keeping state local to the running Harmonia process.
-    """
+    """In-memory health/cooldown tracker for InnerTube playback identities."""
 
     def __init__(self) -> None:
         self._states: dict[str, _ClientState] = {}
         self._lock = threading.Lock()
 
     def available(self, profile_id: str) -> bool:
+        if profile_id in _DISABLED_PROFILES:
+            return False
         now = time.monotonic()
         with self._lock:
             state = self._states.get(profile_id)
             return state is None or state.blocked_until <= now
 
     def order_key(self, profile_id: str, priority: int) -> tuple[int, int, float]:
-        """Sort healthy/low-failure profiles before degraded ones, preserving priority."""
+        if profile_id in _DISABLED_PROFILES:
+            return 2, 99, -float(priority)
         now = time.monotonic()
         with self._lock:
             state = self._states.get(profile_id) or _ClientState()
@@ -41,6 +40,8 @@ class ClientHealthTracker:
             return blocked, state.failures, -float(priority)
 
     def success(self, profile_id: str) -> None:
+        if profile_id in _DISABLED_PROFILES:
+            return
         now = time.monotonic()
         with self._lock:
             state = self._states.setdefault(profile_id, _ClientState())
@@ -55,6 +56,8 @@ class ClientHealthTracker:
         transient: bool = False,
         severe: bool = False,
     ) -> None:
+        if profile_id in _DISABLED_PROFILES:
+            return
         now = time.monotonic()
         with self._lock:
             state = self._states.setdefault(profile_id, _ClientState())
