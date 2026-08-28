@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import logging
 import re
 import threading
@@ -26,24 +27,34 @@ class _StreamRelay:
     Googlevideo currently rejects the open-ended Range requests emitted by
     GStreamer's souphttpsrc. urllib works correctly with bounded ranges, so the
     relay translates those requests in 1 MiB chunks while remaining localhost-only.
-    The relay is media-agnostic and is shared by audio and progressive video.
+
+    For indexed adaptive MP4 video the relay can additionally expose a tiny
+    local MPEG-DASH SegmentBase manifest. This lets GStreamer's DASH demuxer use
+    the MP4 ``sidx`` index for time-based seeking instead of treating the remote
+    fragmented MP4 as one sequential HTTP resource.
     """
 
     CHUNK_SIZE = 1024 * 1024
+    INDEX_PROBE_SIZE = 4 * 1024 * 1024
 
     def __init__(self):
         self.streams: dict[int, tuple[str, dict[str, str]]] = {}
+        self.manifests: dict[int, bytes] = {}
         relay = self
 
         class Handler(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"
 
-            def _remote(self) -> tuple[str, dict[str, str]] | None:
+            def _generation(self) -> int | None:
+                path = urllib.parse.urlsplit(self.path).path
                 try:
-                    generation = int(self.path.rstrip("/").rsplit("/", 1)[-1])
+                    return int(path.rstrip("/").rsplit("/", 1)[-1])
                 except ValueError:
                     return None
-                return relay.streams.get(generation)
+
+            def _remote(self) -> tuple[str, dict[str, str]] | None:
+                generation = self._generation()
+                return relay.streams.get(generation) if generation is not None else None
 
             @staticmethod
             def _range(value: str | None) -> tuple[int, int | None, bool]:
@@ -70,7 +81,7 @@ class _StreamRelay:
                 )
                 return urllib.request.urlopen(request, timeout=30)
 
-            def _serve(self, send_body: bool):
+            def _serve_stream(self, send_body: bool):
                 stream = self._remote()
                 if not stream:
                     self.send_error(404)
@@ -136,11 +147,36 @@ class _StreamRelay:
                 finally:
                     self.close_connection = True
 
+            def _serve_manifest(self, send_body: bool):
+                generation = self._generation()
+                payload = relay.manifests.get(generation) if generation is not None else None
+                if payload is None:
+                    self.send_error(404)
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "application/dash+xml")
+                self.send_header("Content-Length", str(len(payload)))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Connection", "close")
+                self.end_headers()
+                if send_body:
+                    with suppress(BrokenPipeError, ConnectionError):
+                        self.wfile.write(payload)
+                self.close_connection = True
+
             def do_GET(self):
-                self._serve(True)
+                path = urllib.parse.urlsplit(self.path).path
+                if path.startswith("/manifest/"):
+                    self._serve_manifest(True)
+                else:
+                    self._serve_stream(True)
 
             def do_HEAD(self):
-                self._serve(False)
+                path = urllib.parse.urlsplit(self.path).path
+                if path.startswith("/manifest/"):
+                    self._serve_manifest(False)
+                else:
+                    self._serve_stream(False)
 
             def log_message(self, *_args):
                 pass
@@ -151,16 +187,131 @@ class _StreamRelay:
         ).start()
         self.generation = 0
 
-    def uri_for(self, remote_url: str, headers: dict[str, str] | None = None) -> str:
+    def _register(self, remote_url: str, headers: dict[str, str] | None = None) -> int:
         self.generation += 1
-        self.streams[self.generation] = (remote_url, dict(headers or {}))
-        for generation in list(self.streams):
-            if generation < self.generation - 3:
-                self.streams.pop(generation, None)
-        return f"http://127.0.0.1:{self.server.server_port}/stream/{self.generation}"
+        generation = self.generation
+        self.streams[generation] = (remote_url, dict(headers or {}))
+        for old_generation in list(self.streams):
+            if old_generation < generation - 3:
+                self.streams.pop(old_generation, None)
+                self.manifests.pop(old_generation, None)
+        return generation
+
+    @staticmethod
+    def _locate_mp4_segment_base(data: bytes) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        """Return init/index byte ranges for a top-level MP4 ``sidx`` box."""
+        cursor = 0
+        size_data = len(data)
+        while cursor + 8 <= size_data:
+            box_size = int.from_bytes(data[cursor : cursor + 4], "big")
+            box_type = data[cursor + 4 : cursor + 8]
+            header_size = 8
+            if box_size == 1:
+                if cursor + 16 > size_data:
+                    return None
+                box_size = int.from_bytes(data[cursor + 8 : cursor + 16], "big")
+                header_size = 16
+            elif box_size == 0:
+                return None
+            if box_size < header_size:
+                return None
+            box_end = cursor + box_size
+            if box_type == b"sidx":
+                if box_end > size_data or cursor <= 0:
+                    return None
+                return (0, cursor - 1), (cursor, box_end - 1)
+            if box_end > size_data:
+                return None
+            cursor = box_end
+        return None
+
+    @classmethod
+    def _probe_mp4_segment_base(
+        cls,
+        remote_url: str,
+        headers: dict[str, str] | None,
+    ) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        request_headers = dict(headers or {})
+        request_headers["Range"] = f"bytes=0-{cls.INDEX_PROBE_SIZE - 1}"
+        request = urllib.request.Request(remote_url, headers=request_headers, method="GET")
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                data = response.read(cls.INDEX_PROBE_SIZE)
+        except Exception:
+            LOGGER.debug("Could not probe MP4 SegmentBase", exc_info=True)
+            return None
+        return cls._locate_mp4_segment_base(data)
+
+    def uri_for(self, remote_url: str, headers: dict[str, str] | None = None) -> str:
+        generation = self._register(remote_url, headers)
+        return f"http://127.0.0.1:{self.server.server_port}/stream/{generation}"
+
+    def dash_uri_for(
+        self,
+        remote_url: str,
+        headers: dict[str, str] | None = None,
+    ) -> str | None:
+        """Expose an indexed adaptive MP4 as a local DASH SegmentBase asset."""
+        values = urllib.parse.parse_qs(urllib.parse.urlsplit(remote_url).query)
+        mime_type = str((values.get("mime") or [""])[0]).lower()
+        gir = str((values.get("gir") or [""])[0]).lower()
+        if mime_type != "video/mp4" or gir != "yes":
+            return None
+
+        ranges = self._probe_mp4_segment_base(remote_url, headers)
+        if ranges is None:
+            return None
+        init_range, index_range = ranges
+
+        try:
+            duration = float((values.get("dur") or ["0"])[0])
+        except (TypeError, ValueError):
+            duration = 0.0
+        if duration <= 0:
+            return None
+
+        try:
+            content_length = int((values.get("clen") or ["0"])[0])
+        except (TypeError, ValueError):
+            content_length = 0
+        bandwidth = max(1, int(content_length * 8 / duration)) if content_length else 1
+        representation_id = html.escape(str((values.get("itag") or ["video"])[0]), quote=True)
+
+        generation = self._register(remote_url, headers)
+        media_uri = f"http://127.0.0.1:{self.server.server_port}/stream/{generation}"
+        escaped_media_uri = html.escape(media_uri, quote=True)
+        duration_text = f"{duration:.3f}"
+        manifest = f"""<?xml version="1.0" encoding="UTF-8"?>
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011"
+     type="static"
+     profiles="urn:mpeg:dash:profile:isoff-on-demand:2011"
+     minBufferTime="PT1.5S"
+     mediaPresentationDuration="PT{duration_text}S">
+  <Period start="PT0S" duration="PT{duration_text}S">
+    <AdaptationSet mimeType="video/mp4" segmentAlignment="true" startWithSAP="1">
+      <Representation id="{representation_id}" bandwidth="{bandwidth}">
+        <BaseURL>{escaped_media_uri}</BaseURL>
+        <SegmentBase indexRange="{index_range[0]}-{index_range[1]}" indexRangeExact="true">
+          <Initialization range="{init_range[0]}-{init_range[1]}" />
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>
+""".encode()
+        self.manifests[generation] = manifest
+        LOGGER.info(
+            "Using local DASH SegmentBase for YouTube video: init=%d-%d index=%d-%d",
+            init_range[0],
+            init_range[1],
+            index_range[0],
+            index_range[1],
+        )
+        return f"http://127.0.0.1:{self.server.server_port}/manifest/{generation}.mpd"
 
     def close(self) -> None:
         self.streams.clear()
+        self.manifests.clear()
         self.server.shutdown()
         self.server.server_close()
 
@@ -320,6 +471,9 @@ class NativePlayer:
         scheme = urllib.parse.urlsplit(uri).scheme
         if scheme == "file" or (scheme == "http" and "googlevideo.com" not in uri):
             return uri
+        dash_uri = self._relay.dash_uri_for(uri, request_headers)
+        if dash_uri is not None:
+            return dash_uri
         return self._relay.uri_for(uri, request_headers)
 
     def toggle(self) -> None:
