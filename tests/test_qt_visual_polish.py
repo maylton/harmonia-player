@@ -93,5 +93,5 @@ def test_expanded_media_visual_has_a_hard_maximum_and_replaces_cover_in_place() 
     assert "Layout.maximumWidth: expandedContent.boundedMediaWidth" in source
     assert "Layout.maximumHeight: root.mediaMaxWidth" in source
     assert "clip: true" in source
-    assert "visible: videoBackend.mode !== \"video\" || videoBackend.loading" in source
-    assert "opacity: videoBackend.mode === \"video\" && !videoBackend.loading" in source
+    assert 'visible: videoBackend.mode !== "video" || videoBackend.loading' in source
+    assert 'opacity: videoBackend.mode === "video" && !videoBackend.loading' in source

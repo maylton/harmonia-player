@@ -58,13 +58,7 @@ def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> 
 
 
 class QtVideoController(QObject):
-    """Qt video layer synchronized to the shared audio transport.
-
-    The main NativePlayer remains the only logical/audio player, so queue,
-    history, MPRIS, scrobbling and audio processing never change when the user
-    selects Video. A second muted GStreamer playbin owns only the visual stream
-    and follows the main transport's position and play/pause state.
-    """
+    """Synchronize a muted Qt video layer with the shared audio transport."""
 
     modeChanged = Signal()
     loadingChanged = Signal()
@@ -107,10 +101,7 @@ class QtVideoController(QObject):
             self._video_bus.connect("message", self._on_video_message)
 
         self._resolved.connect(self._apply_resolved)
-        # sceneGraphInitialized is emitted from Qt Quick's render thread on
-        # some render-loop implementations. Emitting this signal from that
-        # callback queues the actual GStreamer/Qt object mutation back to this
-        # controller's (main) thread.
+        # Queue render-thread initialization back onto the controller thread.
         self._prepare_sink_requested.connect(self._prepare_sink_when_ready)
         self.backend.nowPlayingChanged.connect(self._on_track_changed)
 
@@ -174,13 +165,10 @@ class QtVideoController(QObject):
         if not self._surface_window or not self._scene_graph_ready(self._surface_window):
             return False
         if not self._surface_is_visible():
-            # ExpandedPlayer creates VideoSurface while its Dialog is closed.
-            # qml6glsink cannot bind a render target that is not in the visible
-            # scene graph yet; registerSurface therefore only stores the item
-            # until the dialog makes it visible.
+            # qml6glsink can only bind a surface in the visible scene graph.
             return False
 
-        LOGGER.info("Qt GL sink preparation starting")
+        LOGGER.debug("Preparing Qt GL video sink")
 
         try:
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
@@ -193,7 +181,6 @@ class QtVideoController(QObject):
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
                 raise RuntimeError("A camada de vídeo recusou o estado READY")
-            LOGGER.info("playbin READY")
         except Exception as exc:
             self._log_sink_prepare_failure(exc)
             with suppress(Exception):
@@ -207,7 +194,7 @@ class QtVideoController(QObject):
         self._sink_prepared = True
         self._sink_error = ""
         self.availabilityChanged.emit()
-        LOGGER.info("Qt video layer ready")
+        LOGGER.debug("Qt video layer ready")
         return True
 
     @Slot(QObject)
@@ -215,9 +202,7 @@ class QtVideoController(QObject):
         if self._surface is not surface:
             if self._surface_visibility_signal is not None:
                 with suppress(Exception):
-                    self._surface_visibility_signal.disconnect(
-                        self._on_surface_visibility_changed
-                    )
+                    self._surface_visibility_signal.disconnect(self._on_surface_visibility_changed)
             self._surface = surface
             self._surface_window = None
             self._sink_prepare_attempts = 0
@@ -227,7 +212,6 @@ class QtVideoController(QObject):
             with suppress(Exception):
                 surface.windowChanged.connect(self._on_surface_window_changed)
                 surface.visibleChanged.connect(self._on_surface_visibility_changed)
-        LOGGER.info("Qt video surface registered")
         self._on_surface_window_changed(self._surface.window())
         self._on_surface_visibility_changed()
 
@@ -248,11 +232,11 @@ class QtVideoController(QObject):
         self._surface_window = window
         self._scene_graph_window = window
         if window is None:
-            LOGGER.info("Qt video surface is not associated with a QQuickWindow yet")
+            LOGGER.debug("Qt video surface has no QQuickWindow yet")
             return
 
-        LOGGER.info(
-            "Qt video QQuickWindow available: graphicsApi=%s rendererGraphicsApi=%s sceneGraphInitialized=%s",
+        LOGGER.debug(
+            "Qt video window: graphicsApi=%s rendererGraphicsApi=%s sceneGraphInitialized=%s",
             self._graphics_api_name(window),
             self._renderer_graphics_api_name(window),
             self._scene_graph_ready(window),
@@ -263,7 +247,6 @@ class QtVideoController(QObject):
             self._request_sink_prepare()
 
     def _on_scene_graph_initialized(self) -> None:
-        LOGGER.info("Qt scene graph initialized")
         self._request_sink_prepare()
 
     def _on_surface_visibility_changed(self) -> None:
@@ -377,7 +360,7 @@ class QtVideoController(QObject):
         self._pending[request_id] = (item.id, self._mode)
         self._set_loading(True)
         self.backend._set_status("")
-        LOGGER.info("Resolving video variant for %s", item.id)
+        LOGGER.debug("Resolving video variant for %s", item.id)
 
         def worker() -> None:
             try:
@@ -414,7 +397,7 @@ class QtVideoController(QObject):
             self.backend._set_status(f"Não foi possível abrir o vídeo: {detail}")
             return
 
-        LOGGER.info(
+        LOGGER.debug(
             "Resolved video %s: %sp itag=%s muxed=%s client=%s",
             stream.video_id,
             stream.height,
@@ -531,8 +514,8 @@ class QtVideoController(QObject):
         drift_ms = audio_ms - video_ms if video_ms >= 0 else -1
 
         if ok and abs(drift_ms) <= 1000:
-            LOGGER.info(
-                "Qt video initial sync settled: audio=%d ms video=%d ms drift=%d ms",
+            LOGGER.debug(
+                "Qt video initial sync: audio=%d ms video=%d ms drift=%d ms",
                 audio_ms,
                 video_ms,
                 drift_ms,
@@ -578,8 +561,8 @@ class QtVideoController(QObject):
         audio_ms = max(0, int(self.playback.position))
         ok, video_ns = self._video_player.query_position(Gst.Format.TIME)
         video_ms = max(0, int(video_ns // 1_000_000)) if ok else -1
-        LOGGER.info(
-            "Qt video layer visible: audio=%d ms video=%d ms drift=%d ms",
+        LOGGER.debug(
+            "Qt video started: audio=%d ms video=%d ms drift=%d ms",
             audio_ms,
             video_ms,
             audio_ms - video_ms if video_ms >= 0 else -1,
@@ -601,7 +584,7 @@ class QtVideoController(QObject):
         video_ms = max(0, int(video_ns // 1_000_000))
         drift_ms = audio_ms - video_ms
         if abs(drift_ms) > 500 and time.monotonic() - self._video_last_sync_seek >= 1.0:
-            LOGGER.info(
+            LOGGER.debug(
                 "Qt video drift correction: audio=%d ms video=%d ms drift=%d ms",
                 audio_ms,
                 video_ms,
@@ -633,9 +616,7 @@ class QtVideoController(QObject):
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
             if self._mode != "video":
-                # READY/NULL transitions can deliver a late error from the
-                # previous URI. It is not a playback failure after the user
-                # has already returned to Music, so keep it out of normal logs.
+                # State transitions may deliver an error from the previous URI.
                 LOGGER.debug("Ignoring inactive Qt video error: %s", error)
                 return
             try:

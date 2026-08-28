@@ -11,14 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def install_gtk_media_variants(window_class) -> None:
-    """Extend the GTK Music/Video switch with independent videoclip playback.
-
-    The base GTK video layer keeps the song audio running when Song and Video
-    share one timeline. If the resolved video's duration is meaningfully
-    different, this wrapper resolves audio from the video's own video ID,
-    restarts that media at 0:00, and restores the original song/position when
-    the user returns to Music.
-    """
+    """Add independent official-video playback to the GTK media switch."""
     if getattr(window_class, "_harmonia_media_variants_installed", False):
         return
     window_class._harmonia_media_variants_installed = True
@@ -58,17 +51,13 @@ def install_gtk_media_variants(window_class) -> None:
         position_us = max(0, int(getattr(self, "_independent_video_primary_position_us", 0)))
         should_play = self._playback_is_playing() if playing is None else bool(playing)
 
-        # Clear first so a source-level failure while restoring cannot recurse
-        # through the visual-layer failure path.
+        # Clear ownership before replacing the source to avoid recursive recovery.
         clear_independent_video(self)
         if uri:
             self.player.replace(uri, position_us=position_us, playing=should_play)
             set_transport_duration(self, duration_ms)
             self._save_playback_state(position_us // 1000)
-            LOGGER.info(
-                "GTK restored song audio after independent video at %d us",
-                position_us,
-            )
+            LOGGER.debug("Restored song audio at %d us", position_us)
 
     def apply_independent_video(
         self,
@@ -107,17 +96,14 @@ def install_gtk_media_variants(window_class) -> None:
             0,
             int(playback.duration_ms or playback.video.duration_ms or primary_duration_ms),
         )
-        LOGGER.info(
-            "GTK independent music video %s: song=%d ms video=%d ms; restarting with video audio",
+        LOGGER.debug(
+            "Starting independent video %s: song=%d ms video=%d ms",
             playback.video.video_id,
             primary_duration_ms,
             video_duration_ms,
         )
         self.player.replace(playback.audio.url, position_us=0, playing=should_play)
         set_transport_duration(self, video_duration_ms)
-
-        # The existing visual layer now sees the video's audio clock near 0:00,
-        # so its normal initial-sync and drift-correction code remains valid.
         return original_apply_media_mode(
             self,
             request_id,
@@ -184,10 +170,7 @@ def install_gtk_media_variants(window_class) -> None:
             restore_primary_audio(self, playing=should_play)
 
     def on_gtk_video_message(self, bus, message) -> None:
-        # In independent-video mode the primary playbin owns the video's audio
-        # and therefore also owns end-of-stream. The visual-only playbin may post
-        # EOS a few frames earlier; do not mistake that harmless race for a
-        # failed video and restore the song prematurely.
+        # The audio transport owns EOS for independent videos.
         if (
             getattr(self, "_independent_video_owns_audio", False)
             and message.type == Gst.MessageType.EOS

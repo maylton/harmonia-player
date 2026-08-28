@@ -159,4 +159,5 @@ def test_qt_video_uses_shared_dash_source_with_client_headers() -> None:
     assert "stream.url" in source
     assert "stream.request_headers" in source
     assert "self.playback.player._source_uri(" in source
-    assert "Qt video initial sync settled" in source
+    assert "abs(drift_ms) <= 1000" in source
+    assert "self._complete_video_start(generation)" in source

@@ -27,7 +27,7 @@ from .models import LibraryItem
 
 @dataclass(frozen=True, slots=True)
 class VideoStreamInfo:
-    """One direct YouTube video stream suitable for GStreamer playback."""
+    """Direct YouTube video stream suitable for GStreamer playback."""
 
     url: str
     video_id: str
@@ -126,9 +126,6 @@ def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
         if artist_tokens:
             artist_overlap = len(artist_tokens & candidate_tokens)
             score += 7.0 * artist_overlap / len(artist_tokens)
-            # Search can return an unrelated upload with an exact generic
-            # title. Keep it below a result that identifies the requested
-            # artist in either its title or channel metadata.
             if artist_overlap == 0:
                 score -= 8.0
         if wanted_artist in candidate_text:
@@ -165,12 +162,9 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
         if cached:
             return cached
 
-    # YouTube Music already knows the exact official-video relationship for
-    # many audio tracks. Prefer that server-provided OMV counterpart before
-    # searching: a library item may not retain its artist metadata, and a
-    # generic title can otherwise resolve to another artist's upload.
     counterpart_resolver = getattr(client, "video_counterpart", None)
     if callable(counterpart_resolver):
+        counterpart: str | None = None
         with suppress(InnerTubeError):
             counterpart = counterpart_resolver(item.id)
         if counterpart:
@@ -185,21 +179,13 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
     groups = [client.search_category(query, "videos")]
     canonical_ranks: dict[str, int] = {}
     if artist:
-        # The regular Videos shelf can hide an official clip behind a lyric
-        # upload with the same visible title. Ask YouTube Music explicitly for
-        # the canonical video and use the order of that shelf as a ranking
-        # signal. The shelf can still contain lyric uploads, so only a
-        # matching, unmarked result receives the preference.
         with suppress(InnerTubeError):
             canonical = client.search_category(f"{query} official music video", "videos")
             groups.append(canonical)
             for rank, candidate in enumerate(canonical.items):
                 if candidate.id and candidate.id not in canonical_ranks:
                     canonical_ranks[candidate.id] = rank
-    # Library subtitles can contain play-count metadata instead of the artist
-    # (for example: "Tocou 251 mi vezes · 3:57"). If the first query does not
-    # produce an exact title, retry with the title alone instead of allowing
-    # that metadata to hide an otherwise valid official music video.
+
     if artist and not any(
         _normalize(candidate.title) == _normalize(item.title)
         for candidate in groups[0].items
@@ -312,7 +298,7 @@ def _player_payload(
 
 
 def _stream_request_headers(profile: dict[str, Any]) -> dict[str, str]:
-    """Headers that must travel with a media URL returned for one client profile."""
+    """Return headers required by a media URL for one client profile."""
     headers = {
         "User-Agent": str(profile["user_agent"]),
         "Accept": "*/*",
@@ -324,7 +310,7 @@ def _stream_request_headers(profile: dict[str, Any]) -> dict[str, str]:
 
 
 def _probe_stream(url: str, headers: dict[str, str]) -> bool:
-    """Reject Googlevideo URLs that the CDN already refuses before playback."""
+    """Reject Googlevideo URLs already refused by the CDN."""
     hostname = (urllib.parse.urlsplit(url).hostname or "").lower()
     if not hostname.endswith("googlevideo.com"):
         return True
@@ -340,7 +326,7 @@ def _probe_stream(url: str, headers: dict[str, str]) -> bool:
 
 
 def _video_compatibility(fmt: dict[str, Any]) -> int:
-    """Prefer widely decoded H.264 MP4 when quality is otherwise equal."""
+    """Prefer H.264 MP4 when quality is otherwise equal."""
     mime = str(fmt.get("mimeType") or "").lower()
     if "video/mp4" in mime and "avc1" in mime:
         return 2
@@ -360,17 +346,11 @@ def _byte_range(fmt: dict[str, Any], key: str) -> tuple[int, int] | None:
 
 
 def _is_otf_video(fmt: dict[str, Any]) -> bool:
-    """OTF URLs are sequential fragment protocols, not random-access media files."""
     return str(fmt.get("type") or "") == _OTF_STREAM_TYPE or bool(fmt.get("targetDurationSec"))
 
 
 def _video_random_access_score(fmt: dict[str, Any], muxed: bool) -> int:
-    """Rank direct formats by how safely a media player can seek them.
-
-    Progressive formats are ordinary files. For adaptive formats, the strongest
-    signal is the normal YouTube combination of contentLength + initRange +
-    indexRange. OTF formats deliberately score below usable direct streams.
-    """
+    """Rank direct formats by seekability."""
     if _is_otf_video(fmt):
         return -1
     if muxed:
@@ -395,13 +375,7 @@ def resolve_video_stream(
     force: bool = False,
     allow_video_only: bool = False,
 ) -> VideoStreamInfo:
-    """Resolve a direct stream for the matching music video.
-
-    Callers with a dedicated visual layer can set ``allow_video_only`` and use
-    YouTube's adaptiveFormats while keeping the normal audio player untouched.
-    OTF adaptive streams are excluded because their ``sq=N`` fragment protocol
-    is not a random-access file and therefore cannot support GStreamer seeking.
-    """
+    """Resolve a direct stream for the matching music video."""
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
     mode_key = "adaptive" if allow_video_only else "muxed"
@@ -461,9 +435,6 @@ def resolve_video_stream(
                 failures.append(f"{profile['name']}: {missing}")
             continue
 
-        # Random access matters more than nominal resolution for the Music/Video
-        # switch: a 480p indexed MP4 can be synchronized; a 720p OTF/sequential
-        # stream cannot. Within the best seekability class, maximize quality.
         best_access = max(_video_random_access_score(fmt, muxed) for fmt, muxed in candidates)
         access_pool = [
             pair

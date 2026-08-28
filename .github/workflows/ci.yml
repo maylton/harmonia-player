@@ -40,11 +40,14 @@ jobs:
           python3 -m venv --system-site-packages .venv
           .venv/bin/pip install pytest ruff
 
-      - name: Validar código e testes
-        run: |
-          .venv/bin/ruff check src tests tools
-          .venv/bin/ruff format --check src tests tools
-          xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -q
+      - name: Ruff lint
+        run: .venv/bin/ruff check src tests tools
+
+      - name: Ruff format
+        run: .venv/bin/ruff format --check src tests tools
+
+      - name: Testes Python
+        run: xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -q
 
       - name: Construir variante GTK no runtime oficial
         run: |

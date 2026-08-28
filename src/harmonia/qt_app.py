@@ -26,7 +26,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _drain_glib_context() -> None:
-    """Let shared Gio/GStreamer helpers progress without a second main loop."""
+    """Let GLib helpers progress without a second main loop."""
     context = GLib.MainContext.default()
     for _ in range(64):
         if not context.pending():
@@ -35,15 +35,13 @@ def _drain_glib_context() -> None:
 
 
 def _application_icon() -> QIcon:
-    """Resolve the installed Harmonia icon before falling back to the theme."""
+    """Resolve the installed icon before falling back to the theme."""
     data_dirs: list[Path] = []
     for value in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":"):
         value = value.strip()
         if value:
             data_dirs.append(Path(value))
 
-    # Flatpak installs application data below /app/share. Keep it explicit in
-    # case the desktop theme does not include that directory in QIcon's lookup.
     flatpak_share = Path("/app/share")
     if flatpak_share not in data_dirs:
         data_dirs.insert(0, flatpak_share)
@@ -66,7 +64,6 @@ def _application_icon() -> QIcon:
             if candidate.is_file():
                 return QIcon(str(candidate))
 
-    # Source-tree fallback for local development outside Meson/Flatpak.
     repository_root = Path(__file__).resolve().parents[2]
     for size in sizes:
         candidate = repository_root / "data" / "icons" / "hicolor" / size / "apps" / f"{APP_ID}.png"
@@ -82,26 +79,18 @@ def main() -> int:
     QCoreApplication.setApplicationName("Harmonia")
     QCoreApplication.setOrganizationName("Harmonia")
     QCoreApplication.setOrganizationDomain("io.github.harmonia")
-    # Select the API before either Qt Quick or WebEngine can create a window.
-    # qml6glsink shares OpenGL textures with GstGLQt6VideoItem.
+
+    # qml6glsink and Qt Quick must share the same OpenGL context.
     QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
-    # Qt Quick WebEngine requires initialization before QApplication creates
-    # the graphics context used by Chromium's render process.
     QtWebEngineQuick.initialize()
 
     app = QApplication(sys.argv)
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(_application_icon())
 
-    # Creating qml6glsink before loading QML registers the
-    # org.freedesktop.gstreamer.Qt6GLVideoItem module and its
-    # GstGLQt6VideoItem type. Keep the element alive for the application's
-    # lifetime and let OfficialVideoQtController bind it to the QML item below.
+    # Creating the sink before loading QML registers GstGLQt6VideoItem.
     video_sink = create_qml6_video_sink()
 
-    # The shared player, Secret Service and MPRIS implementation use GLib/Gio.
-    # Pumping the default context from Qt keeps one event loop and lets both
-    # frontends reuse the same non-visual helpers.
     glib_timer = QTimer()
     glib_timer.setInterval(10)
     glib_timer.timeout.connect(_drain_glib_context)
@@ -109,8 +98,6 @@ def main() -> int:
 
     engine = QQmlApplicationEngine()
 
-    # Keep HarmoniaQtBackend as the stable facade while selecting the Qt-only
-    # playback specialization before the facade constructs its controllers.
     qt_backend_module.QtPlaybackController = QtIntegratedPlaybackController
     backend = HarmoniaQtBackend(engine)
     auth = QtAuthController(engine)
@@ -123,8 +110,6 @@ def main() -> int:
     context.setContextProperty("auth", auth)
     context.setContextProperty("integrations", integrations)
     context.setContextProperty("videoBackend", video)
-    # Appearance belongs to the existing preference controller rather than the
-    # broad QML facade. Both GTK and Qt therefore read/write the same settings.
     context.setContextProperty("preferences", backend.settings)
 
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
@@ -137,15 +122,13 @@ def main() -> int:
 
     for root in engine.rootObjects():
         if isinstance(root, QQuickWindow):
-            LOGGER.info(
-                "Qt QQuickWindow graphics API: requested=%s effective=%s renderer=%s",
+            LOGGER.debug(
+                "Qt graphics API: requested=%s effective=%s renderer=%s",
                 QSGRendererInterface.GraphicsApi.OpenGL,
                 root.graphicsApi(),
                 root.rendererInterface().graphicsApi(),
             )
 
-    # Integrations/video still use the backend player/executor, so close them
-    # before HarmoniaQtBackend shuts those shared resources down.
     app.aboutToQuit.connect(video.shutdown)
     app.aboutToQuit.connect(integrations.shutdown)
     app.aboutToQuit.connect(backend.shutdown)
