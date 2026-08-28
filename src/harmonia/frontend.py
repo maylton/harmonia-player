@@ -63,8 +63,10 @@ def main() -> int:
     window_class = getattr(gtk_app, "HarmoniaWindow", None)
     if window_class is not None:
         from .gtk_media_variants import install_gtk_media_variants
+        from .gtk_potoken import install_gtk_potoken
         from .gtk_video import install_gtk_video
 
         install_gtk_video(window_class)
         install_gtk_media_variants(window_class)
+        install_gtk_potoken(window_class)
     return gtk_app.main()

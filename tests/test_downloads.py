@@ -3,6 +3,7 @@ import io
 from harmonia.downloads import DownloadManager
 from harmonia.models import DownloadRecord, LibraryItem, StreamInfo
 from harmonia.storage import Storage
+from harmonia.stream_transport import register_stream_transport
 
 
 class FakeYouTube:
@@ -91,6 +92,58 @@ def test_download_resumes_from_partial_file(monkeypatch, tmp_path):
     manager._workers[item.id].join(timeout=5)
     assert requests[0][0] == len(partial)
     assert final.read_bytes() == payload
+
+
+def test_download_reuses_registered_stream_headers(monkeypatch, tmp_path):
+    from harmonia import downloads
+
+    storage = make_storage(monkeypatch, tmp_path)
+    url = "https://media.example/protected"
+
+    class ProtectedYouTube(FakeYouTube):
+        def resolve_stream(self, video_id, force=False):
+            self.calls.append((video_id, force))
+            return StreamInfo(url, 1000, "TEST")
+
+    register_stream_transport(
+        url,
+        (
+            ("User-Agent", "harmonia-test-agent"),
+            ("Origin", "https://www.youtube.com"),
+            ("Referer", "https://www.youtube.com/"),
+        ),
+    )
+    captured = {}
+
+    class Response(io.BytesIO):
+        def __init__(self):
+            super().__init__(b"audio")
+            self.headers = {
+                "Content-Range": "bytes 0-4/5",
+                "Content-Length": "5",
+            }
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+    def urlopen(request, **_kwargs):
+        captured.update(dict(request.header_items()))
+        return Response()
+
+    monkeypatch.setattr(downloads.urllib.request, "urlopen", urlopen)
+    manager = DownloadManager(storage, ProtectedYouTube())
+    item = LibraryItem("protected", "Faixa", kind="songs")
+    manager.start(item)
+    manager._workers[item.id].join(timeout=5)
+
+    assert storage.get_download(item.id).status == "completed"
+    assert captured["User-agent"] == "harmonia-test-agent"
+    assert captured["Origin"] == "https://www.youtube.com"
+    assert captured["Referer"] == "https://www.youtube.com/"
+    assert captured["Range"] == "bytes=0-1048575"
 
 
 def test_download_access_requires_matching_recent_account(monkeypatch, tmp_path):

@@ -13,6 +13,7 @@ from pathlib import Path
 from .models import DownloadRecord, LibraryItem
 from .services import YouTubeMusicService
 from .storage import Storage
+from .stream_transport import stream_transport_headers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -143,10 +144,10 @@ class DownloadManager:
                     record.status = "paused"
                     break
                 end = downloaded + self.CHUNK_SIZE - 1
-                request = urllib.request.Request(
-                    stream.url,
-                    headers={"Range": f"bytes={downloaded}-{end}", "User-Agent": "Mozilla/5.0"},
-                )
+                headers = dict(stream_transport_headers(stream.url))
+                headers.setdefault("User-Agent", "Mozilla/5.0")
+                headers["Range"] = f"bytes={downloaded}-{end}"
+                request = urllib.request.Request(stream.url, headers=headers)
                 with urllib.request.urlopen(request, timeout=45) as response:
                     content_range = response.headers.get("Content-Range", "")
                     if "/" in content_range:
