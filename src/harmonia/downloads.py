@@ -144,7 +144,7 @@ class DownloadManager:
                     record.status = "paused"
                     break
                 end = downloaded + self.CHUNK_SIZE - 1
-                headers = stream_transport_headers(stream.url)
+                headers = dict(stream_transport_headers(stream.url))
                 headers.setdefault("User-Agent", "Mozilla/5.0")
                 headers["Range"] = f"bytes={downloaded}-{end}"
                 request = urllib.request.Request(stream.url, headers=headers)

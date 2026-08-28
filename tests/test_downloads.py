@@ -107,11 +107,11 @@ def test_download_reuses_registered_stream_headers(monkeypatch, tmp_path):
 
     register_stream_transport(
         url,
-        {
-            "User-Agent": "harmonia-test-agent",
-            "Origin": "https://www.youtube.com",
-            "Referer": "https://www.youtube.com/",
-        },
+        (
+            ("User-Agent", "harmonia-test-agent"),
+            ("Origin", "https://www.youtube.com"),
+            ("Referer", "https://www.youtube.com/"),
+        ),
     )
     captured = {}
 
