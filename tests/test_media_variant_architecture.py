@@ -42,4 +42,5 @@ def test_qt_video_primes_qml_gl_display_and_uses_glsinkbin() -> None:
     assert 'Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")' in source
     assert 'glsinkbin.set_property("sink", self._sink)' in source
     assert 'self._video_player.set_property("video-sink", video_output)' in source
-    assert "Qt video output using glsinkbin -> qml6glsink" in source
+    assert "self._qt_glsinkbin = glsinkbin" in source
+    assert "self._qt_video_output = video_output" in source
