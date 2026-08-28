@@ -8,10 +8,7 @@ import urllib.request
 from dataclasses import dataclass
 from threading import Lock
 
-WEB_USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) "
-    "Gecko/20100101 Firefox/140.0"
-)
+WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 _SAFE_VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _PLAYER_PATH = re.compile(r"^/s/player/[A-Za-z0-9_-]+/.+\.js(?:\?.*)?$")
 _CONFIG_TTL = 30 * 60
@@ -125,10 +122,7 @@ class PlayerConfigResolver:
         if not match:
             return None
         player_id = match.group(1)
-        return (
-            f"https://www.youtube.com/s/player/{player_id}/"
-            "player_ias.vflset/en_GB/base.js"
-        )
+        return f"https://www.youtube.com/s/player/{player_id}/player_ias.vflset/en_GB/base.js"
 
     def fetch(
         self,

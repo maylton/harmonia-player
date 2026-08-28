@@ -91,9 +91,7 @@ def parse_cipher_configs(raw: str) -> dict[str, CipherConfig]:
         aliases = value.get("aliases", [])
         if isinstance(aliases, list):
             keys.extend(
-                alias
-                for alias in aliases
-                if isinstance(alias, str) and _HASH_RE.fullmatch(alias)
+                alias for alias in aliases if isinstance(alias, str) and _HASH_RE.fullmatch(alias)
             )
         if any(key in result for key in keys):
             raise ValueError(f"duplicate cipher player hash/alias: {player_hash}")

@@ -18,6 +18,8 @@ ORIGIN_MUSIC = "https://music.youtube.com"
 ORIGIN_WWW = "https://www.youtube.com"
 ORIGIN_STUDIO = "https://studio.youtube.com"
 _TRANSIENT_HTTP = {408, 425, 429, 500, 502, 503, 504}
+_REQUEST_TIMEOUT = 12.0
+_EXTRACTION_BUDGET = 45.0
 
 
 class PlayerClientDirector:
@@ -109,6 +111,7 @@ class PlayerClientDirector:
         diagnostics,
         *,
         want_video: bool,
+        deadline: float,
     ) -> dict[str, Any] | None:
         profile_id = str(profile.name)
         authenticated = bool(profile.login_supported and self._authenticated())
@@ -140,11 +143,15 @@ class PlayerClientDirector:
         )
         if should_mint:
             try:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    diagnostics.attempts.append(f"{profile.name}: tempo de extração esgotado")
+                    return None
                 token = provider.get_po_token(
                     video_id,
                     str(visitor_data),
                     getattr(self.client, "cookie", "") if authenticated else None,
-                    timeout=50.0,
+                    timeout=min(50.0, remaining),
                 )
             except Exception as exc:
                 LOGGER.warning("PoToken provider failed for %s: %s", profile.name, exc)
@@ -220,8 +227,14 @@ class PlayerClientDirector:
                 request.add_header("X-Goog-AuthUser", str(session_index))
 
         for attempt in range(2):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                diagnostics.attempts.append(f"{profile.name}: tempo de extração esgotado")
+                return None
             try:
-                with self.client._open(request, timeout=30) as response:
+                with self.client._open(
+                    request, timeout=min(_REQUEST_TIMEOUT, remaining)
+                ) as response:
                     payload = json.load(response)
                 status = payload.get("playabilityStatus") or {}
                 playable = status.get("status") == "OK" or bool(profile.skip_response_validation)
@@ -268,6 +281,7 @@ class PlayerClientDirector:
         want_video: bool = False,
     ) -> Iterator[tuple[Any, dict[str, Any]]]:
         self._ensure_session()
+        deadline = time.monotonic() + _EXTRACTION_BUDGET
         indexed = list(enumerate(profiles))
         ordered = sorted(
             indexed,
@@ -276,11 +290,15 @@ class PlayerClientDirector:
         healthy = [pair for pair in ordered if CLIENT_HEALTH.available(str(pair[1].name))]
         selected = healthy or ordered
         for _index, profile in selected:
+            if time.monotonic() >= deadline:
+                diagnostics.attempts.append("limite global de extração atingido")
+                break
             payload = self._request(
                 video_id,
                 profile,
                 diagnostics,
                 want_video=want_video,
+                deadline=deadline,
             )
             if not payload:
                 continue

@@ -33,7 +33,7 @@ class DummyClient:
 
 def test_extract_player_url_accepts_youtube_player_script():
     html = r'{"PLAYER_JS_URL":"\/s\/player\/abc123\/player_ias.vflset\/en_US\/base.js"}'
-    html = html.replace(r'\"', '"')
+    html = html.replace(r"\"", '"')
     assert _extract_player_url(html) == (
         "https://www.youtube.com/s/player/abc123/player_ias.vflset/en_US/base.js"
     )

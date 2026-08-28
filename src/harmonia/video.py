@@ -28,7 +28,12 @@ class VideoStreamInfo:
     height: int = 0
     fps: int = 0
     muxed: bool = True
+    stream_type: str = ""
+    content_length: int | None = None
+    init_range: tuple[int, int] | None = None
+    index_range: tuple[int, int] | None = None
     expires_at: int | None = None
+    request_headers: dict[str, str] | None = None
 
     def valid_at(self, timestamp: int, margin: int = 90) -> bool:
         return self.expires_at is None or timestamp + margin < self.expires_at
@@ -40,6 +45,7 @@ _VIDEO_CACHE_LOCK = threading.Lock()
 
 _DURATION_SUFFIX = re.compile(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$")
 _NON_WORD = re.compile(r"[^a-z0-9]+")
+_OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
 
 
 def _normalize(value: str) -> str:
@@ -126,13 +132,7 @@ def resolve_video_stream(
     force: bool = False,
     allow_video_only: bool = False,
 ) -> VideoStreamInfo:
-    """Resolve a validated direct stream for the matching music video.
-
-    All player-response/client fallback logic now lives in
-    :mod:`harmonia.stream_extractor`, shared with audio extraction. GTK asks for
-    progressive/muxed media; Qt can accept a separate video-only adaptive stream
-    because its visual layer remains muted and synchronized to the main audio transport.
-    """
+    """Resolve a validated stream through the shared resilient extractor."""
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
     mode_key = "adaptive" if allow_video_only else "muxed"
@@ -168,7 +168,9 @@ def resolve_video_stream(
         height=candidate.height,
         fps=candidate.fps,
         muxed=candidate.muxed,
+        content_length=candidate.content_length,
         expires_at=candidate.expires_at,
+        request_headers=dict(candidate.headers),
     )
     with _VIDEO_CACHE_LOCK:
         _VIDEO_STREAM_CACHE[cache_key] = stream

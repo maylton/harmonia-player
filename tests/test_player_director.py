@@ -80,6 +80,7 @@ def test_director_adds_player_and_streaming_potokens():
     _profile, payload = results[0]
     assert payload["_harmoniaStreamingPoToken"] == "stream-pot"
     request, _timeout = client.requests[0]
+    assert 0 < _timeout <= 12
     body = json.loads(request.data)
     assert body["serviceIntegrityDimensions"]["poToken"] == "player-pot"
     assert body["context"]["client"]["visitorData"] == "visitor-123"

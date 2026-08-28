@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -44,13 +46,8 @@ jobs:
       - name: Ruff format diagnostic
         run: |
           .venv/bin/ruff format --diff src tests tools || true
-          .venv/bin/ruff format src tests tools
           .venv/bin/ruff format --check src tests tools
-
-      - name: Testes Python
-        run: |
-          PYTHONUNBUFFERED=1 timeout 120 \
-            xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -vv --durations=20
+          xvfb-run -a dbus-run-session -- .venv/bin/python -m pytest -q
 
       - name: Construir variante GTK no runtime oficial
         run: |

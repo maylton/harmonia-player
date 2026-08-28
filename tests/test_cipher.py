@@ -39,9 +39,12 @@ def test_cipher_config_parses_aliases_and_player_hash():
 
     assert configs["1234abcd"] == configs["abcd1234"]
     assert configs["1234abcd"].signature_timestamp == 20640
-    assert extract_player_hash(
-        "https://www.youtube.com/s/player/1234abcd/player_ias.vflset/en_US/base.js"
-    ) == "1234abcd"
+    assert (
+        extract_player_hash(
+            "https://www.youtube.com/s/player/1234abcd/player_ias.vflset/en_US/base.js"
+        )
+        == "1234abcd"
+    )
 
 
 def test_cipher_config_rejects_duplicate_aliases():

@@ -69,7 +69,7 @@ def get_po_token(
 # Browser-side BotGuard implementation based on the same public protocol used by
 # Metrolist/Zemer. Network requests stay restricted to YouTube's JNN endpoints;
 # the generated page is off-the-record and never receives the account cookie.
-POTOKEN_HTML = r'''<!doctype html>
+POTOKEN_HTML = r"""<!doctype html>
 <meta charset="utf-8">
 <script>
 'use strict';
@@ -220,4 +220,4 @@ async function harmoniaGenerate(identifier, requestId) {
     state.resultErrors[requestId] = String(error && (error.stack || error.message) || error);
   }
 }
-</script>'''
+</script>"""

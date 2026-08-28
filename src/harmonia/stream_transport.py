@@ -35,9 +35,7 @@ def _failure_key(url: str) -> str:
         if itag:
             return f"googlevideo:itag:{itag}"
     query = [
-        (name, value)
-        for name, value in pairs
-        if name.casefold() not in _VOLATILE_FAILURE_PARAMS
+        (name, value) for name, value in pairs if name.casefold() not in _VOLATILE_FAILURE_PARAMS
     ]
     return urllib.parse.urlunsplit(
         (

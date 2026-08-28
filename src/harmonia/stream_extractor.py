@@ -17,10 +17,7 @@ from .player_director import PlayerClientDirector
 from .stream_transport import register_stream_transport, stream_transport_blocked
 
 LOGGER = logging.getLogger(__name__)
-WEB_USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) "
-    "Gecko/20100101 Firefox/140.0"
-)
+WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 _CACHE_LOCK = threading.Lock()
 _STREAM_CACHE: dict[str, "StreamCandidate"] = {}
 
@@ -208,8 +205,7 @@ PLAYER_CLIENTS: tuple[PlayerClientProfile, ...] = (
         name="IOS",
         version="21.26.4",
         user_agent=(
-            "com.google.ios.youtube/21.26.4 "
-            "(iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)"
+            "com.google.ios.youtube/21.26.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)"
         ),
         include_user_agent_in_context=True,
         context=(
@@ -246,11 +242,7 @@ class StreamCandidate:
         if marker not in mime:
             return ""
         codecs = mime.split(marker, 1)[1].strip()
-        return (
-            codecs[1:].split('"', 1)[0]
-            if codecs.startswith('"')
-            else codecs.split(";", 1)[0]
-        )
+        return codecs[1:].split('"', 1)[0] if codecs.startswith('"') else codecs.split(";", 1)[0]
 
     @property
     def is_audio(self) -> bool:
@@ -366,12 +358,9 @@ class InnerTubeStreamExtractor:
 
     @staticmethod
     def _tracking_url(payload: dict[str, Any], cpn: str) -> str | None:
-        base = (
-            ((payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}).get(
-                "baseUrl"
-            )
-            or None
-        )
+        base = ((payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}).get(
+            "baseUrl"
+        ) or None
         return _set_query_parameter(str(base), "cpn", cpn) if base else None
 
     def _authenticated(self) -> bool:
@@ -407,6 +396,11 @@ class InnerTubeStreamExtractor:
         for fmt in formats:
             mime_type = str(fmt.get("mimeType") or "")
             if not mime_type.startswith(("audio/", "video/")):
+                continue
+            if mime_type.startswith("video/") and (
+                str(fmt.get("type") or "") == "FORMAT_STREAM_TYPE_OTF"
+                or fmt.get("targetDurationSec") is not None
+            ):
                 continue
             resolved = self.cipher_service.resolve_format_url(
                 fmt,

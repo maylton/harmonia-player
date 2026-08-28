@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import ctypes.util
 import logging
+import time
 from contextlib import suppress
 
 import gi
@@ -76,6 +77,7 @@ class QtVideoController(QObject):
         self._loading = False
         self._request = 0
         self._video_generation = 0
+        self._video_last_sync_seek = 0.0
         self._pending: dict[int, tuple[str, str]] = {}
         self._surface = None
         self._sink = sink
@@ -102,7 +104,7 @@ class QtVideoController(QObject):
         self.backend.nowPlayingChanged.connect(self._on_track_changed)
 
         self._sync_timer = QTimer(self)
-        self._sync_timer.setInterval(350)
+        self._sync_timer.setInterval(200)
         self._sync_timer.timeout.connect(self._sync_video_transport)
         self._sync_timer.start()
 
@@ -224,7 +226,9 @@ class QtVideoController(QObject):
         if self._mode == "video" and not force:
             return
         if not self.available:
-            self.backend._set_status("O vídeo não está disponível para esta faixa neste dispositivo.")
+            self.backend._set_status(
+                "O vídeo não está disponível para esta faixa neste dispositivo."
+            )
             self.availabilityChanged.emit()
             return
         if not self._sink_prepared:
@@ -287,19 +291,23 @@ class QtVideoController(QObject):
         )
         self._mode = "video"
         self.modeChanged.emit()
-        self._start_video_layer(stream.url)
+        self._start_video_layer(stream)
 
-    def _start_video_layer(self, uri: str) -> None:
+    def _start_video_layer(self, stream) -> None:
         if self._video_player is None:
             self._video_failed("A camada de vídeo do GStreamer não está disponível.")
             return
 
         self._video_generation += 1
         generation = self._video_generation
-        self._active_video_uri = uri
+        self._video_last_sync_seek = 0.0
+        self._active_video_uri = stream.url
         try:
             self._video_player.set_state(Gst.State.READY)
-            source_uri = self.playback.player._source_uri(uri)
+            source_uri = self.playback.player._source_uri(
+                stream.url,
+                stream.request_headers,
+            )
             self._video_player.set_property("uri", source_uri)
             result = self._video_player.set_state(Gst.State.PAUSED)
             if result == Gst.StateChangeReturn.FAILURE:
@@ -308,10 +316,9 @@ class QtVideoController(QObject):
             self._video_failed(str(exc))
             return
 
-        target_ms = max(0, int(self.playback.position))
-        GLib.timeout_add(40, self._finish_video_start, generation, target_ms, 0)
+        GLib.timeout_add(40, self._finish_video_preroll, generation, 0)
 
-    def _finish_video_start(self, generation: int, target_ms: int, attempt: int) -> bool:
+    def _finish_video_preroll(self, generation: int, attempt: int) -> bool:
         if generation != self._video_generation or self._mode != "video":
             return GLib.SOURCE_REMOVE
         if self._video_player is None:
@@ -323,31 +330,128 @@ class QtVideoController(QObject):
             return GLib.SOURCE_REMOVE
         if state not in (Gst.State.PAUSED, Gst.State.PLAYING):
             if attempt < 100:
-                GLib.timeout_add(
-                    40,
-                    self._finish_video_start,
-                    generation,
-                    target_ms,
-                    attempt + 1,
-                )
+                GLib.timeout_add(40, self._finish_video_preroll, generation, attempt + 1)
             else:
                 self._video_failed("O vídeo demorou demais para iniciar.")
             return GLib.SOURCE_REMOVE
 
-        current_target = max(target_ms, int(self.playback.position))
-        if current_target:
+        target_ms = max(0, int(self.playback.position))
+        if target_ms <= 250:
+            self._complete_video_start(generation)
+            return GLib.SOURCE_REMOVE
+
+        if not self._seek_video_position(target_ms, accurate=True):
+            self._video_failed("O fluxo de vídeo não ficou disponível para sincronização.")
+            return GLib.SOURCE_REMOVE
+
+        GLib.timeout_add(60, self._finish_video_seek, generation, target_ms, 0)
+        return GLib.SOURCE_REMOVE
+
+    def _seek_video_position(self, target_ms: int, *, accurate: bool = True) -> bool:
+        if self._video_player is None:
+            return False
+
+        target_ms = max(0, int(target_ms))
+        flags = Gst.SeekFlags.FLUSH | (
+            Gst.SeekFlags.ACCURATE if accurate else Gst.SeekFlags.KEY_UNIT
+        )
+        accepted = bool(
             self._video_player.seek_simple(
                 Gst.Format.TIME,
-                Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                current_target * 1_000_000,
+                flags,
+                target_ms * 1_000_000,
             )
+        )
+        mode = "accurate" if accurate else "key-unit"
+        if not accepted and accurate:
+            accepted = bool(
+                self._video_player.seek_simple(
+                    Gst.Format.TIME,
+                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
+                    target_ms * 1_000_000,
+                )
+            )
+            mode = "key-unit-fallback"
+        if accepted:
+            self._video_last_sync_seek = time.monotonic()
+        LOGGER.debug(
+            "Qt video seek target=%d ms mode=%s accepted=%s",
+            target_ms,
+            mode,
+            accepted,
+        )
+        return accepted
+
+    def _finish_video_seek(self, generation: int, target_ms: int, attempt: int) -> bool:
+        if generation != self._video_generation or self._mode != "video":
+            return GLib.SOURCE_REMOVE
+        if self._video_player is None:
+            return GLib.SOURCE_REMOVE
+
+        result, _state, _pending = self._video_player.get_state(0)
+        if result == Gst.StateChangeReturn.FAILURE:
+            self._video_failed("O GStreamer falhou durante a sincronização do vídeo.")
+            return GLib.SOURCE_REMOVE
+
+        ok, video_ns = self._video_player.query_position(Gst.Format.TIME)
+        video_ms = max(0, int(video_ns // 1_000_000)) if ok else -1
+        audio_ms = max(0, int(self.playback.position))
+        drift_ms = audio_ms - video_ms if video_ms >= 0 else -1
+
+        if ok and abs(drift_ms) <= 1000:
+            LOGGER.info(
+                "Qt video initial sync settled: audio=%d ms video=%d ms drift=%d ms",
+                audio_ms,
+                video_ms,
+                drift_ms,
+            )
+            self._complete_video_start(generation)
+            return GLib.SOURCE_REMOVE
+
+        if attempt in (15, 35, 55):
+            retry_target = audio_ms
+            if self._seek_video_position(retry_target, accurate=True):
+                target_ms = retry_target
+
+        if attempt < 75:
+            GLib.timeout_add(
+                60,
+                self._finish_video_seek,
+                generation,
+                target_ms,
+                attempt + 1,
+            )
+            return GLib.SOURCE_REMOVE
+
+        LOGGER.warning(
+            "Qt video sync did not settle: requested=%d ms audio=%d ms video=%d ms",
+            target_ms,
+            audio_ms,
+            video_ms,
+        )
+        self._video_failed("Não foi possível sincronizar o vídeo com a música.")
+        return GLib.SOURCE_REMOVE
+
+    def _complete_video_start(self, generation: int) -> None:
+        if generation != self._video_generation or self._mode != "video":
+            return
+        if self._video_player is None:
+            return
+
         self._video_player.set_state(
             Gst.State.PLAYING if self.playback.playing else Gst.State.PAUSED
         )
         self._set_loading(False)
         self.backend._set_status("")
-        LOGGER.info("Qt video layer started at %d ms", current_target)
-        return GLib.SOURCE_REMOVE
+        audio_ms = max(0, int(self.playback.position))
+        ok, video_ns = self._video_player.query_position(Gst.Format.TIME)
+        video_ms = max(0, int(video_ns // 1_000_000)) if ok else -1
+        LOGGER.info(
+            "Qt video layer visible: audio=%d ms video=%d ms drift=%d ms",
+            audio_ms,
+            video_ms,
+            audio_ms - video_ms if video_ms >= 0 else -1,
+        )
 
     def _sync_video_transport(self) -> None:
         if self._mode != "video" or self._loading or self._video_player is None:
@@ -363,15 +467,19 @@ class QtVideoController(QObject):
             return
         audio_ms = max(0, int(self.playback.position))
         video_ms = max(0, int(video_ns // 1_000_000))
-        if abs(audio_ms - video_ms) > 1200:
-            self._video_player.seek_simple(
-                Gst.Format.TIME,
-                Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                audio_ms * 1_000_000,
+        drift_ms = audio_ms - video_ms
+        if abs(drift_ms) > 500 and time.monotonic() - self._video_last_sync_seek >= 1.0:
+            LOGGER.info(
+                "Qt video drift correction: audio=%d ms video=%d ms drift=%d ms",
+                audio_ms,
+                video_ms,
+                drift_ms,
             )
+            self._seek_video_position(audio_ms, accurate=True)
 
     def _stop_video_layer(self) -> None:
         self._video_generation += 1
+        self._video_last_sync_seek = 0.0
         if self._video_player is not None:
             with suppress(Exception):
                 self._video_player.set_state(Gst.State.READY)
@@ -383,6 +491,7 @@ class QtVideoController(QObject):
         if failed_uri:
             mark_stream_transport_failure(failed_uri)
         self._video_generation += 1
+        self._video_last_sync_seek = 0.0
         if self._video_player is not None:
             with suppress(Exception):
                 self._video_player.set_state(Gst.State.READY)
@@ -412,7 +521,16 @@ class QtVideoController(QObject):
     def _on_video_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
-            LOGGER.error("Qt video GStreamer error: %s (%s)", error, debug or "sem debug")
+            try:
+                source = message.src.get_path_string() if message.src is not None else "unknown"
+            except Exception:
+                source = "unknown"
+            LOGGER.error(
+                "Qt video GStreamer error from %s: %s (%s)",
+                source,
+                error,
+                debug or "sem debug",
+            )
             if self._mode == "video":
                 self._video_failed(str(error))
         elif message.type == Gst.MessageType.EOS and self._mode == "video":

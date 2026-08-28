@@ -82,6 +82,7 @@ def test_progressive_video_uses_shared_extractor(monkeypatch):
     assert stream.height == 720
     assert stream.url.endswith("720.mp4")
     assert stream.muxed is True
+    assert stream.request_headers == {}
 
 
 def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
@@ -119,3 +120,63 @@ def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
     assert stream.height == 720
     assert stream.itag == 136
     assert stream.muxed is False
+
+
+def test_adaptive_video_rejects_otf_and_prefers_indexed_random_access(monkeypatch):
+    item = LibraryItem("video-seekable", "Song", "Artist", kind="videos")
+
+    class PlayerClient:
+        gl = "BR"
+
+    payload = {
+        "playabilityStatus": {"status": "OK"},
+        "streamingData": {
+            "formats": [],
+            "adaptiveFormats": [
+                {
+                    "url": "https://example.test/720-otf.mp4",
+                    "mimeType": 'video/mp4; codecs="avc1.64001f"',
+                    "height": 720,
+                    "width": 1280,
+                    "fps": 30,
+                    "bitrate": 1_800_000,
+                    "itag": 136,
+                    "type": "FORMAT_STREAM_TYPE_OTF",
+                    "targetDurationSec": 5,
+                },
+                {
+                    "url": "https://example.test/480-indexed.mp4",
+                    "mimeType": 'video/mp4; codecs="avc1.4d401f"',
+                    "height": 480,
+                    "width": 854,
+                    "fps": 30,
+                    "bitrate": 900_000,
+                    "itag": 135,
+                    "contentLength": "12345678",
+                    "initRange": {"start": "0", "end": "739"},
+                    "indexRange": {"start": "740", "end": "1515"},
+                },
+            ],
+        },
+    }
+
+    def payloads(_self, *_args, **_kwargs):
+        from harmonia.stream_extractor import PlayerClientProfile
+
+        yield PlayerClientProfile("1", "TEST", "1", "test-agent"), payload
+
+    monkeypatch.setattr("harmonia.stream_extractor.InnerTubeStreamExtractor._payloads", payloads)
+    monkeypatch.setattr(
+        "harmonia.stream_extractor.InnerTubeStreamExtractor._probe", lambda *_: True
+    )
+    stream = resolve_video_stream(
+        PlayerClient(),
+        item,
+        max_height=720,
+        force=True,
+        allow_video_only=True,
+    )
+
+    assert stream.itag == 135
+    assert stream.height == 480
+    assert stream.content_length == 12_345_678
