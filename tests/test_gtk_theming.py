@@ -98,3 +98,60 @@ def test_storage_closes_sqlite_connections(monkeypatch, tmp_path):
             assert "closed" in str(exc).lower()
         else:
             raise AssertionError("a conexão SQLite deveria estar fechada")
+
+
+def test_gtk_theme_is_dropped_unless_explicitly_kept():
+    from harmonia.frontend import ignore_foreign_gtk_theme
+
+    environ = {"GTK_THEME": "Adwaita:dark"}
+    assert ignore_foreign_gtk_theme(environ) == "Adwaita:dark"
+    assert "GTK_THEME" not in environ
+
+    kept = {"GTK_THEME": "Adwaita:dark", "HARMONIA_KEEP_GTK_THEME": "1"}
+    assert ignore_foreign_gtk_theme(kept) is None
+    assert kept["GTK_THEME"] == "Adwaita:dark"
+    assert ignore_foreign_gtk_theme({}) is None
+
+
+def test_gtk_theme_is_dropped_before_gtk_is_imported_and_only_for_gtk():
+    from harmonia import frontend
+
+    source = inspect.getsource(frontend.main)
+    qt_branch = source.index("qt_main()")
+    dropped = source.index("ignore_foreign_gtk_theme()")
+    imported = source.index('import_module(".app"')
+    assert qt_branch < dropped < imported
+
+
+def test_elementary_overlay_is_only_used_where_gtk_ignores_group_transforms():
+    from harmonia.window_preferences import (
+        ELEMENTARY_COMPAT_ICON_THEME,
+        icon_theme_for_system,
+    )
+
+    assert icon_theme_for_system("elementary", (4, 22)) == ELEMENTARY_COMPAT_ICON_THEME
+    assert icon_theme_for_system("elementary", (4, 21)) == ELEMENTARY_COMPAT_ICON_THEME
+    assert icon_theme_for_system("elementary", (4, 20)) == "elementary"
+    assert icon_theme_for_system("Adwaita", (4, 22)) == "Adwaita"
+
+
+def test_elementary_overlay_inherits_elementary_and_ships_only_fixed_used_icons():
+    import re
+    import xml.etree.ElementTree as ET
+
+    theme_dir = SOURCE / "icons" / "HarmoniaElementary"
+    assert icon_theme_installed(IconThemeStub([SOURCE / "icons"]), "HarmoniaElementary")
+    index = (theme_dir / "index.theme").read_text(encoding="utf-8")
+    assert "Inherits=elementary," in index
+
+    used = set()
+    for source in SOURCE.glob("*.py"):
+        used.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
+    icons = sorted((theme_dir / "scalable" / "actions").glob("*.svg"))
+    assert icons
+    for path in icons:
+        text = path.read_text(encoding="utf-8")
+        assert path.stem in used
+        assert "Source: elementary/icons" in text
+        root = ET.fromstring(text)
+        assert not any(element.get("transform") for element in root.iter())

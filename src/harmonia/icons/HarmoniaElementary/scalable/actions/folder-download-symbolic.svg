@@ -1,0 +1,32 @@
+<!-- Source: elementary/icons 9.0.0 (GPL-3.0-or-later) -->
+<svg
+        xmlns='http://www.w3.org/2000/svg'
+        xmlns:svg='http://www.w3.org/2000/svg'
+        id='svg2'
+        width='16'
+        height='16'>
+  <path
+          id='path1'
+          fill='url(#gpa:foreground) #555761'
+          fill-opacity='1'
+          fill-rule='nonzero'
+          marker-start='none'
+          marker-mid='none'
+          marker-end='none'
+          overflow='visible'
+          d='M 8 11.97 A 0.498 0.498 0 0 1 7.625 11.812 L 5.125 8.812 A 0.428 0.428 0 0 1 5.035 8.564 C 5.021 8.298, 5.223 8.008, 5.5 8 L 7 8 L 7 4.5 C 7 4.238, 7.238 4, 7.5 4 L 8.5 4 A 0.492 0.492 0 0 1 8.594 4 C 8.824 4.044, 9.004 4.267, 9 4.5 L 9 8 L 10.5 8 C 10.87 8.011, 11.106 8.524, 10.875 8.813 L 8.375 11.813 A 0.497 0.497 0 0 1 8 11.971 Z'
+          class='foreground foreground-fill'>
+  </path>
+  <path
+          id='path2'
+          fill='url(#gpa:foreground) #555761'
+          fill-opacity='1'
+          fill-rule='nonzero'
+          marker-start='none'
+          marker-mid='none'
+          marker-end='none'
+          overflow='visible'
+          d='M 8 0 A 8 8 0 1 0 8 16 A 8 8 0 0 0 8 0 Z M 8 2 A 6 6 0 1 1 8 14 A 6 6 0 0 1 8 2 Z'
+          class='foreground foreground-fill'>
+  </path>
+</svg>
