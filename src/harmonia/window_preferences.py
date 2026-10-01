@@ -14,6 +14,7 @@ from gi.repository import Adw, Gdk, GLib, Gtk
 from .backup import BackupError, BackupManager
 from .i18n import _, ngettext
 from .preferences import Preferences
+from .theming import builtin_themes
 from .ui import (
     style_icon_button,
 )
@@ -99,6 +100,10 @@ class WindowPreferencesMixin:
             self._apply_audio_preferences()
 
     def _apply_appearance_preferences(self) -> None:
+        application = self.get_application() if hasattr(self, "get_application") else None
+        controller = getattr(application, "theme_controller", None)
+        if controller:
+            controller.apply(self.preferences.theme, self.preferences.theme_variant)
         blurred = self.preferences.background_blur
         if blurred:
             self.root.add_css_class("appearance-blur")
@@ -378,6 +383,27 @@ class WindowPreferencesMixin:
         appearance = Adw.PreferencesGroup(
             title=_("Aparência"),
             description=_("Personalize o ambiente visual sem alterar o conteúdo."),
+        )
+        appearance.add(
+            combo(
+                _("Tema"),
+                [(theme.name, theme.id) for theme in builtin_themes().values()],
+                self.preferences.theme,
+                lambda value: self._appearance_changed("theme", value),
+            )
+        )
+        appearance.add(
+            combo(
+                _("Modo de cor"),
+                [
+                    (_("Padrão do tema"), "theme"),
+                    (_("Seguir o sistema"), "system"),
+                    (_("Claro"), "light"),
+                    (_("Escuro"), "dark"),
+                ],
+                self.preferences.theme_variant,
+                lambda value: self._appearance_changed("theme_variant", value),
+            )
         )
         blur = Adw.SwitchRow(
             title=_("Fundo ambiente desfocado"),

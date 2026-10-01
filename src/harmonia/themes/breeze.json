@@ -1,0 +1,75 @@
+{
+  "id": "breeze",
+  "name": "KDE (Breeze)",
+  "description": "Inspirado no Breeze do Plasma: cantos menores e azul KDE.",
+  "default_variant": "system",
+  "restyle_adwaita": true,
+  "font_family": "Noto Sans",
+  "corner_scale": 0.5,
+  "accent": {
+    "dark": {
+      "accent_bg": "#1d99f3",
+      "accent_fg": "#ffffff",
+      "accent": "#3daee9"
+    },
+    "light": {
+      "accent_bg": "#1d99f3",
+      "accent_fg": "#ffffff",
+      "accent": "#2671a8"
+    }
+  },
+  "palettes": {
+    "dark": {
+      "bg": "#202326",
+      "sidebar_bg": "#1b1e20",
+      "headerbar_bg": "#2a2e32",
+      "border": "#141618",
+      "hover_bg": "#2d3136",
+      "selected_bg": "#3a3f44",
+      "chip_bg": "#292c30",
+      "chip_hover_bg": "#31363b",
+      "fg": "#fcfcfc",
+      "fg_secondary": "#eff0f1",
+      "fg_tertiary": "#dcdee0",
+      "fg_muted": "#bdc3c7",
+      "fg_subtle": "#a1a9b1",
+      "fg_dim": "#949ba3",
+      "overlay": "#ffffff",
+      "shadow": "#000000",
+      "inverse_bg": "#fcfcfc",
+      "inverse_fg": "#232629",
+      "inverse_hover_bg": "#eff0f1",
+      "destructive_fg": "#ed7984",
+      "destructive_bg": "#da4453",
+      "destructive_border": "#da4453",
+      "warning_bg": "#f67400",
+      "warning_fg": "#fdbc4b"
+    },
+    "light": {
+      "bg": "#eff0f1",
+      "sidebar_bg": "#e3e5e7",
+      "headerbar_bg": "#dee0e2",
+      "border": "#bcc0c4",
+      "hover_bg": "#d6d9dc",
+      "selected_bg": "#c8ccd0",
+      "chip_bg": "#e3e5e7",
+      "chip_hover_bg": "#d6d9dc",
+      "fg": "#232629",
+      "fg_secondary": "#2f3337",
+      "fg_tertiary": "#3b4045",
+      "fg_muted": "#4d5257",
+      "fg_subtle": "#5c6166",
+      "fg_dim": "#646b72",
+      "overlay": "#000000",
+      "shadow": "#000000",
+      "inverse_bg": "#232629",
+      "inverse_fg": "#fcfcfc",
+      "inverse_hover_bg": "#31363b",
+      "destructive_fg": "#b52a37",
+      "destructive_bg": "#da4453",
+      "destructive_border": "#da4453",
+      "warning_bg": "#f67400",
+      "warning_fg": "#8a4100"
+    }
+  }
+}

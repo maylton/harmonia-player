@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
+from .theming import DEFAULT_THEME, VARIANTS, builtin_themes
+
 
 @dataclass(slots=True)
 class Preferences:
@@ -17,6 +19,8 @@ class Preferences:
     skip_silence: bool = False
     background_blur: bool = False
     icon_style: str = "gtk"
+    theme: str = DEFAULT_THEME
+    theme_variant: str = "theme"
     lastfm_enabled: bool = False
     lastfm_api_key: str = ""
     discord_enabled: bool = False
@@ -44,6 +48,8 @@ class Preferences:
         quality = storage.get_setting("quality", "high")
         equalizer = storage.get_setting("equalizer", "flat")
         icon_style = storage.get_setting("icon_style", "gtk")
+        theme = storage.get_setting("theme", DEFAULT_THEME)
+        theme_variant = storage.get_setting("theme_variant", "theme")
         return cls(
             language=storage.get_setting("language", "pt-BR"),
             region=storage.get_setting("region", "BR"),
@@ -56,6 +62,8 @@ class Preferences:
             skip_silence=boolean("skip_silence", False),
             background_blur=boolean("background_blur", False),
             icon_style=icon_style if icon_style in {"gtk", "material"} else "gtk",
+            theme=theme if theme in builtin_themes() else DEFAULT_THEME,
+            theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
@@ -83,6 +91,8 @@ class Preferences:
             "skip_silence": "1" if self.skip_silence else "0",
             "background_blur": "1" if self.background_blur else "0",
             "icon_style": self.icon_style,
+            "theme": self.theme,
+            "theme_variant": self.theme_variant,
             "lastfm_enabled": "1" if self.lastfm_enabled else "0",
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",

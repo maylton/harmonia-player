@@ -13,6 +13,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from .downloads import DownloadManager
+from .gtk_theme import GtkThemeController
 from .i18n import _
 from .lyrics import GoogleTranslationClient, LyricsResolver
 from .models import (
@@ -26,6 +27,7 @@ from .player import NativePlayer
 from .preferences import Preferences
 from .services import YouTubeMusicService
 from .storage import Storage
+from .theming import DEFAULT_THEME
 from .ui import (
     menu_action_button,
     set_icon_selected,
@@ -1141,15 +1143,11 @@ class HarmoniaApplication(Adw.Application):
     def do_startup(self):
         Adw.Application.do_startup(self)
         Gtk.Window.set_default_icon_name(APP_ID)
-        # style.css defines a dark palette. Tell libadwaita so its own widgets
-        # (cards, entries, popovers, dialogs) match it instead of following a
-        # light system preference such as elementary OS's default.
-        Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
-        provider = Gtk.CssProvider()
-        provider.load_from_path(str(Path(__file__).with_name("style.css")))
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+        # The theme controller owns style.css and the colour scheme. The default
+        # theme is dark, so libadwaita's own widgets match it until the window
+        # applies the saved preference.
+        self.theme_controller = GtkThemeController(Gdk.Display.get_default())
+        self.theme_controller.apply(DEFAULT_THEME)
 
     def do_activate(self):
         window = self.get_active_window() or HarmoniaWindow(self)
