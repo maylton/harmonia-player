@@ -43,6 +43,18 @@ def selected_frontend(argv: list[str] | None = None) -> str:
     return "qt" if running_on_plasma() and qt_frontend_available() else "gtk"
 
 
+def ignore_foreign_gtk_theme(environ=os.environ) -> str | None:
+    """Drop GTK_THEME before GTK loads so libadwaita keeps its stylesheet.
+
+    libadwaita does not load its stylesheet when GTK_THEME is set, which leaves
+    every Adw widget unstyled (a common global Flatpak override sets
+    GTK_THEME=Adwaita:dark). Set HARMONIA_KEEP_GTK_THEME=1 to keep it.
+    """
+    if environ.get("HARMONIA_KEEP_GTK_THEME") == "1":
+        return None
+    return environ.pop("GTK_THEME", None)
+
+
 def main() -> int:
     frontend = selected_frontend()
     forced_qt = "--qt" in sys.argv[1:] or os.environ.get("HARMONIA_FRONTEND", "").lower() == "qt"
@@ -58,6 +70,9 @@ def main() -> int:
                 raise
             LOGGER.exception("Qt/Kirigami frontend failed to start; falling back to GTK")
 
+    ignored = ignore_foreign_gtk_theme()
+    if ignored is not None:
+        LOGGER.info("Ignorando GTK_THEME=%r; o frontend GTK usa o estilo do libadwaita", ignored)
     gtk_app = importlib.import_module(".app", __package__)
 
     window_class = getattr(gtk_app, "HarmoniaWindow", None)

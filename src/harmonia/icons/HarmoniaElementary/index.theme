@@ -1,0 +1,13 @@
+[Icon Theme]
+Name=Harmonia elementary compatibility
+Comment=elementary icons rewritten for GTK 4.22; everything else comes from elementary
+Inherits=elementary,Adwaita,hicolor
+Hidden=true
+Directories=scalable/actions
+
+[scalable/actions]
+Size=16
+Type=Scalable
+MinSize=8
+MaxSize=512
+Context=Actions
