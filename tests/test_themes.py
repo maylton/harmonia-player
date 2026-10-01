@@ -233,3 +233,12 @@ def test_structural_layers_exist_and_only_use_known_colors():
             assert name.removeprefix("harmonia_") in named, (theme.id, name)
         rendered = render_gtk_css(theme, dark=True, base_css=BASE_CSS, css_variables=False)
         assert rendered.index("structural layer") > rendered.index("window { background:")
+
+
+def test_elementary_layer_follows_the_flat_elementary_os_8_style():
+    css = (THEMES_DIR / "elementary.css").read_text(encoding="utf-8")
+    assert "linear-gradient" not in css
+    # The source-list selection is neutral in io.elementary.stylesheet.
+    active = re.search(r"\.sidebar-active, \.sidebar-active:hover \{([^}]*)\}", css).group(1)
+    assert "accent" not in active
+    assert get_theme("elementary").palette(dark=True)["bg"] == "#333333"  # BLACK_500
