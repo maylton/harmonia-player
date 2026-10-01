@@ -6,12 +6,15 @@ import pytest
 
 from harmonia.preferences import Preferences
 from harmonia.theming import (
+    ACCENT_PRESETS,
     ADWAITA_SURFACES,
     DEFAULT_THEME,
+    THEMES_DIR,
     TOKENS,
     VARIANTS,
     Theme,
     ThemeError,
+    accent_preset,
     builtin_themes,
     get_theme,
     render_gtk_css,
@@ -167,13 +170,15 @@ def test_theme_preferences_round_trip_and_validate():
     storage = MemoryStorage()
     preferences = Preferences.load(storage)
     assert (preferences.theme, preferences.theme_variant) == (DEFAULT_THEME, "theme")
-    preferences.theme, preferences.theme_variant = "breeze", "light"
+    preferences.theme, preferences.theme_variant, preferences.accent = "breeze", "light", "purple"
     preferences.save(storage)
     loaded = Preferences.load(storage)
-    assert (loaded.theme, loaded.theme_variant) == ("breeze", "light")
+    assert (loaded.theme, loaded.theme_variant, loaded.accent) == ("breeze", "light", "purple")
 
-    broken = Preferences.load(MemoryStorage({"theme": "nope", "theme_variant": "neon"}))
-    assert (broken.theme, broken.theme_variant) == (DEFAULT_THEME, "theme")
+    broken = Preferences.load(
+        MemoryStorage({"theme": "nope", "theme_variant": "neon", "accent": "gold"})
+    )
+    assert (broken.theme, broken.theme_variant, broken.accent) == (DEFAULT_THEME, "theme", "theme")
 
 
 def test_gtk_controller_applies_themes_live():
@@ -189,7 +194,42 @@ def test_gtk_controller_applies_themes_live():
     controller = GtkThemeController(display)
     controller.apply("breeze", "light")
     assert controller.style_manager.get_dark() is False
-    assert controller._rendered == ("breeze", False)
-    controller.apply("harmonia")
+    assert controller._rendered == ("breeze", False, "theme")
+    controller.apply("harmonia", accent="purple")
     assert controller.style_manager.get_dark() is True
-    assert controller._rendered == ("harmonia", True)
+    assert controller._rendered == ("harmonia", True, "purple")
+
+
+def test_accent_presets_are_readable_on_every_literal_palette():
+    for name, preset in ACCENT_PRESETS.items():
+        assert contrast(preset["accent_fg"], preset["accent_bg"]) >= 3.0, name
+    for theme, variant, palette in literal_palettes():
+        for name in ACCENT_PRESETS:
+            tone = accent_preset(name, dark=variant == "dark")["accent"]
+            ratio = contrast(tone, palette["bg"])
+            assert ratio >= 3.0, f"{name} sobre {theme.id}/{variant}: {ratio:.2f}"
+
+
+def test_accent_preference_overrides_the_theme_accent():
+    breeze = get_theme("breeze")
+    css = render_gtk_css(breeze, dark=True, base_css="", css_variables=False, accent="purple")
+    assert "@define-color accent_bg_color #a56de2;" in css
+    assert "#1d99f3" not in css
+    default = render_gtk_css(get_theme("harmonia"), dark=False, base_css="", css_variables=False)
+    assert "accent_bg_color" not in default
+
+
+def test_structural_layers_exist_and_only_use_known_colors():
+    named = set(TOKENS) | {
+        "window_bg_color", "window_fg_color", "view_bg_color", "headerbar_bg_color",
+        "sidebar_bg_color", "accent_bg_color", "accent_fg_color", "accent_color",
+    }  # fmt: skip
+    layered = [theme for theme in builtin_themes().values() if theme.stylesheet]
+    assert {theme.id for theme in layered} == {"adwaita", "elementary", "breeze"}
+    for theme in layered:
+        css = (THEMES_DIR / theme.stylesheet).read_text(encoding="utf-8")
+        assert css.count("{") == css.count("}"), theme.id
+        for name in re.findall(r"@([a-z_]+)", css):
+            assert name.removeprefix("harmonia_") in named, (theme.id, name)
+        rendered = render_gtk_css(theme, dark=True, base_css=BASE_CSS, css_variables=False)
+        assert rendered.index("structural layer") > rendered.index("window { background:")

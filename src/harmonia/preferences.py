@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from .theming import DEFAULT_THEME, VARIANTS, builtin_themes
+from .theming import ACCENTS, DEFAULT_THEME, VARIANTS, builtin_themes
 
 
 @dataclass(slots=True)
@@ -21,6 +21,7 @@ class Preferences:
     icon_style: str = "gtk"
     theme: str = DEFAULT_THEME
     theme_variant: str = "theme"
+    accent: str = "theme"
     lastfm_enabled: bool = False
     lastfm_api_key: str = ""
     discord_enabled: bool = False
@@ -50,6 +51,7 @@ class Preferences:
         icon_style = storage.get_setting("icon_style", "gtk")
         theme = storage.get_setting("theme", DEFAULT_THEME)
         theme_variant = storage.get_setting("theme_variant", "theme")
+        accent = storage.get_setting("accent", "theme")
         return cls(
             language=storage.get_setting("language", "pt-BR"),
             region=storage.get_setting("region", "BR"),
@@ -64,6 +66,7 @@ class Preferences:
             icon_style=icon_style if icon_style in {"gtk", "material"} else "gtk",
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
+            accent=accent if accent in ACCENTS else "theme",
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
@@ -93,6 +96,7 @@ class Preferences:
             "icon_style": self.icon_style,
             "theme": self.theme,
             "theme_variant": self.theme_variant,
+            "accent": self.accent,
             "lastfm_enabled": "1" if self.lastfm_enabled else "0",
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",

@@ -58,5 +58,6 @@
       "warning_bg": "#f9c440",
       "warning_fg": "#ad5f00"
     }
-  }
+  },
+  "stylesheet": "elementary.css"
 }

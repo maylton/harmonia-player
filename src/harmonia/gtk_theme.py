@@ -41,23 +41,29 @@ class GtkThemeController:
         self.style_manager = Adw.StyleManager.get_default()
         self.theme: Theme = get_theme(DEFAULT_THEME)
         self.variant = "theme"
-        self._rendered: tuple[str, bool] | None = None
+        self.accent = "theme"
+        self._rendered: tuple[str, bool, str] | None = None
         self.style_manager.connect("notify::dark", lambda *_: self._render())
 
-    def apply(self, theme_id: str, variant: str = "theme") -> None:
+    def apply(self, theme_id: str, variant: str = "theme", accent: str = "theme") -> None:
         self.theme = get_theme(theme_id)
         self.variant = variant
+        self.accent = accent
         scheme = self.theme.color_scheme(variant)
         self.style_manager.set_color_scheme(COLOR_SCHEMES[scheme])
         self._render()
 
     def _render(self) -> None:
         dark = self.style_manager.get_dark()
-        key = (self.theme.id, dark)
+        key = (self.theme.id, dark, self.accent)
         if key == self._rendered:
             return
         css = render_gtk_css(
-            self.theme, dark=dark, base_css=self.base_css, css_variables=supports_css_variables()
+            self.theme,
+            dark=dark,
+            base_css=self.base_css,
+            css_variables=supports_css_variables(),
+            accent=self.accent,
         )
         if hasattr(self.provider, "load_from_string"):
             self.provider.load_from_string(css)
