@@ -61,11 +61,13 @@ def test_icon_refresh_no_longer_tracks_every_image():
         assert "_refresh_custom_icons" not in text
 
 
-def test_gtk_frontend_declares_the_dark_palette_used_by_its_stylesheet():
+def test_gtk_frontend_starts_with_the_dark_default_theme():
+    from harmonia.theming import DEFAULT_THEME, get_theme
+
     startup = inspect.getsource(app.HarmoniaApplication.do_startup)
-    assert "Adw.ColorScheme.FORCE_DARK" in startup
-    css = (SOURCE / "style.css").read_text(encoding="utf-8")
-    assert css.startswith("window { background: #242424;")
+    assert "GtkThemeController(" in startup
+    assert "apply(DEFAULT_THEME)" in startup
+    assert get_theme(DEFAULT_THEME).default_variant == "dark"
 
 
 def test_gtk_theming_changes_stay_out_of_the_qt_frontend():
@@ -74,7 +76,7 @@ def test_gtk_theming_changes_stay_out_of_the_qt_frontend():
     qt_sources = [path.read_text(encoding="utf-8") for path in qt_files]
     for text in qt_sources:
         assert "style.css" not in text
-        assert "FORCE_DARK" not in text
+        assert "gtk_theme" not in text
 
 
 def test_sidebar_navigation_scrolls_instead_of_forcing_window_height():

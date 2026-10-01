@@ -1,15 +1,15 @@
-window { background: #242424; color: #ffffff; }
+window { background: @harmonia_bg; color: @harmonia_fg; }
 .ambient-background {
   filter: blur(64px);
 }
-.app-root { background: alpha(#242424, .98); }
-.appearance-blur { background: alpha(#242424, .76); }
-.appearance-blur headerbar { background: alpha(#303030, .84); }
-.appearance-blur .sidebar { background: alpha(#1e1e1e, .86); }
-.appearance-blur .player-bar { background: alpha(#1e1e1e, .88); }
+.app-root { background: alpha(@harmonia_bg, .98); }
+.appearance-blur { background: alpha(@harmonia_bg, .76); }
+.appearance-blur headerbar { background: alpha(@harmonia_headerbar_bg, .84); }
+.appearance-blur .sidebar { background: alpha(@harmonia_sidebar_bg, .86); }
+.appearance-blur .player-bar { background: alpha(@harmonia_sidebar_bg, .88); }
 .appearance-blur .detail-surface,
 .appearance-blur .detail-background,
-.appearance-blur .artist-surface { background: alpha(#242424, .76); }
+.appearance-blur .artist-surface { background: alpha(@harmonia_bg, .76); }
 .icons-material button.app-icon-button,
 .icons-material .expanded-secondary-control,
 .icons-material .expanded-skip-control {
@@ -32,7 +32,7 @@ window { background: #242424; color: #ffffff; }
 }
 .icons-material menubutton.app-icon-button > button:hover,
 .icons-material menubutton.app-icon-button > button:checked {
-  color: #ffffff;
+  color: @harmonia_fg;
   background: alpha(@accent_bg_color, .22);
   border-color: alpha(@accent_color, .28);
 }
@@ -58,29 +58,29 @@ window { background: #242424; color: #ffffff; }
 .icons-material button.account-avatar-button {
   border-radius: 9999px;
 }
-.artist-surface { background: #242424; }
+.artist-surface { background: @harmonia_bg; }
 .artist-page { padding: 48px 38px 80px; }
 .artist-backdrop { filter: blur(18px); }
-.artist-backdrop-shade { background: linear-gradient(to bottom, alpha(#242424, .12), #242424 96%); }
-.artist-portrait { border-radius: 999px; box-shadow: 0 16px 38px alpha(#000, .42); }
+.artist-backdrop-shade { background: linear-gradient(to bottom, alpha(@harmonia_bg, .12), @harmonia_bg 96%); }
+.artist-portrait { border-radius: 999px; box-shadow: 0 16px 38px alpha(@harmonia_shadow, .42); }
 .artist-title { font-size: 46px; font-weight: 900; letter-spacing: -1.4px; }
-.artist-listeners { color: #deddda; font-weight: 650; }
-.artist-description { color: #b5b3b0; line-height: 1.35; }
-headerbar { background: #303030; border-bottom: 1px solid #1a1a1a; min-height: 48px; }
-headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1a1a1a; }
-.sidebar { min-width: 230px; background: #1e1e1e; padding: 12px 8px 16px; }
+.artist-listeners { color: @harmonia_fg_secondary; font-weight: 650; }
+.artist-description { color: @harmonia_fg_muted; line-height: 1.35; }
+headerbar { background: @harmonia_headerbar_bg; border-bottom: 1px solid @harmonia_border; min-height: 48px; }
+headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px solid @harmonia_border; }
+.sidebar { min-width: 230px; background: @harmonia_sidebar_bg; padding: 12px 8px 16px; }
 .sidebar-brand { padding: 8px 12px 18px; }
 .sidebar-brand-title { font-size: 18px; font-weight: 750; }
-.sidebar-heading { padding: 24px 12px 8px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #9a9996; }
-.sidebar-item { background: transparent; box-shadow: none; padding: 9px 12px; border-radius: 8px; color: #b5b3b0; }
-.sidebar-item:hover { background: #3a3a3a; color: #ffffff; }
-.sidebar-active { background: #4a4a4a; color: #ffffff; }
-.sidebar-create { margin: 10px 8px 0; background: #3a3a3a; border-radius: 8px; }
+.sidebar-heading { padding: 24px 12px 8px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: @harmonia_fg_dim; }
+.sidebar-item { background: transparent; box-shadow: none; padding: 9px 12px; border-radius: 8px; color: @harmonia_fg_muted; }
+.sidebar-item:hover { background: @harmonia_hover_bg; color: @harmonia_fg; }
+.sidebar-active { background: @harmonia_selected_bg; color: @harmonia_fg; }
+.sidebar-create { margin: 10px 8px 0; background: @harmonia_hover_bg; border-radius: 8px; }
 .compact-menu { padding: 8px; min-width: 190px; }
 .compact-menu button { padding: 8px 12px; }
 .hero { padding: 26px 0 10px; }
 .hero-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
-.hero-subtitle { color: #9a9996; font-size: 14px; }
+.hero-subtitle { color: @harmonia_fg_dim; font-size: 14px; }
 .section-title { font-size: 22px; font-weight: 750; margin: 8px 0; }
 .content { padding: 8px 32px 36px; }
 .home-content { padding-top: 14px; padding-bottom: 58px; }
@@ -102,16 +102,16 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
   min-width: 36px;
   min-height: 36px;
   padding: 0;
-  color: #d0cfcc;
+  color: @harmonia_fg_tertiary;
   background: transparent;
-  border: 1px solid alpha(#ffffff, .16);
+  border: 1px solid alpha(@harmonia_overlay, .16);
   box-shadow: none;
   transition: 140ms ease;
 }
 .home-shelf-nav:hover {
-  color: #ffffff;
-  background: alpha(#ffffff, .10);
-  border-color: alpha(#ffffff, .28);
+  color: @harmonia_fg;
+  background: alpha(@harmonia_overlay, .10);
+  border-color: alpha(@harmonia_overlay, .28);
 }
 .home-shelf-nav:focus-visible {
   outline: 2px solid @accent_color;
@@ -119,9 +119,9 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 }
 .home-shelf-nav:disabled {
   opacity: .28;
-  color: #9a9996;
+  color: @harmonia_fg_dim;
   background: transparent;
-  border-color: alpha(#ffffff, .10);
+  border-color: alpha(@harmonia_overlay, .10);
 }
 .home-song-grid { padding: 0 1px; }
 .home-song-shelf-header { margin-bottom: 1px; }
@@ -133,19 +133,19 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .home-play-all {
   min-height: 36px;
   padding: 0 16px;
-  border: 1px solid alpha(#ffffff, .22);
+  border: 1px solid alpha(@harmonia_overlay, .22);
   background: transparent;
-  color: #ffffff;
+  color: @harmonia_fg;
   font-size: 13px;
   font-weight: 650;
 }
-.home-play-all:hover { background: alpha(#ffffff, .10); }
+.home-play-all:hover { background: alpha(@harmonia_overlay, .10); }
 .home-song-row {
   min-height: 64px;
   padding: 0 8px;
   border-radius: 8px;
 }
-.home-song-row:hover { background: alpha(#ffffff, .075); }
+.home-song-row:hover { background: alpha(@harmonia_overlay, .075); }
 .home-song-current { background: alpha(@accent_bg_color, .16); }
 .home-song-cover {
   border-radius: 4px;
@@ -156,17 +156,17 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
   background: alpha(#000000, .54);
   color: #ffffff;
 }
-.home-song-title { color: #ffffff; font-size: 14px; font-weight: 650; }
-.home-song-subtitle { color: #9a9996; font-size: 12px; }
+.home-song-title { color: @harmonia_fg; font-size: 14px; font-weight: 650; }
+.home-song-subtitle { color: @harmonia_fg_dim; font-size: 12px; }
 .home-song-liked { min-width: 20px; color: @accent_color; }
 .home-song-options {
   min-width: 34px;
   min-height: 34px;
   padding: 0;
 }
-.segmented-control { background: #1e1e1e; border-radius: 9px; padding: 4px; }
-.segmented-control button { background: transparent; box-shadow: none; border-radius: 6px; color: #9a9996; }
-.segmented-control button:checked { background: #4a4a4a; color: #ffffff; }
+.segmented-control { background: @harmonia_sidebar_bg; border-radius: 9px; padding: 4px; }
+.segmented-control button { background: transparent; box-shadow: none; border-radius: 6px; color: @harmonia_fg_dim; }
+.segmented-control button:checked { background: @harmonia_selected_bg; color: @harmonia_fg; }
 .media-card { padding: 0; border-radius: 16px; }
 .media-card-button { padding: 0; background: transparent; border: 0; box-shadow: none; }
 .media-card-button:hover { background: transparent; box-shadow: none; opacity: .88; }
@@ -175,7 +175,7 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .artist-cover { border-radius: 9999px; }
 .cover-placeholder { color: alpha(@window_fg_color, .55); }
 .card-title { font-weight: 650; font-size: 15px; }
-.card-subtitle { color: #9a9996; font-size: 12px; }
+.card-subtitle { color: @harmonia_fg_dim; font-size: 12px; }
 .welcome { padding: 44px; }
 .account-avatar-button {
   min-width: 36px;
@@ -185,23 +185,23 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 }
 .account-avatar-frame,
 .account-avatar-picture { border-radius: 9999px; }
-.detail-surface, .detail-background { background: #242424; }
+.detail-surface, .detail-background { background: @harmonia_bg; }
 .detail-page { padding: 52px 32px 48px; }
 .detail-backdrop { filter: blur(28px); }
 .detail-backdrop-shade {
   background-image: linear-gradient(
     to bottom,
-    alpha(#242424, .12) 0,
-    alpha(#242424, .92) 390px,
-    alpha(#242424, .92) 100%
+    alpha(@harmonia_bg, .12) 0,
+    alpha(@harmonia_bg, .92) 390px,
+    alpha(@harmonia_bg, .92) 100%
   );
 }
 .appearance-blur .detail-backdrop-shade {
   background-image: linear-gradient(
     to bottom,
-    alpha(#242424, .08) 0,
-    alpha(#242424, .66) 390px,
-    alpha(#242424, .66) 100%
+    alpha(@harmonia_bg, .08) 0,
+    alpha(@harmonia_bg, .66) 390px,
+    alpha(@harmonia_bg, .66) 100%
   );
 }
 .detail-hero {
@@ -211,10 +211,10 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .detail-hero-copy { min-width: 0; }
 .detail-hero-cover {
   border-radius: 13px;
-  box-shadow: 0 14px 32px alpha(#000000, .38);
+  box-shadow: 0 14px 32px alpha(@harmonia_shadow, .38);
 }
 .detail-eyebrow {
-  color: #9a9996;
+  color: @harmonia_fg_dim;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.6px;
@@ -231,13 +231,13 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
   min-height: 24px;
   padding: 0;
   border-radius: 9999px;
-  background: #4a4a4a;
-  color: #ffffff;
+  background: @harmonia_selected_bg;
+  color: @harmonia_fg;
   font-size: 10px;
   font-weight: 700;
 }
-.detail-creator { color: #ffffff; font-size: 13px; font-weight: 650; }
-.detail-meta-muted { color: #aaa8a5; font-size: 13px; font-weight: 550; }
+.detail-creator { color: @harmonia_fg; font-size: 13px; font-weight: 650; }
+.detail-meta-muted { color: @harmonia_fg_subtle; font-size: 13px; font-weight: 550; }
 .detail-actions { margin-top: 12px; }
 .detail-actions flowboxchild,
 .detail-actions flowboxchild:hover,
@@ -253,8 +253,8 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .detail-track-header {
   min-height: 40px;
   padding: 0 14px;
-  border-bottom: 1px solid #1a1a1a;
-  color: #9a9996;
+  border-bottom: 1px solid @harmonia_border;
+  color: @harmonia_fg_dim;
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 1px;
@@ -263,13 +263,13 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
   min-height: 48px;
   padding: 0 14px;
   border-radius: 9px;
-  color: #9a9996;
+  color: @harmonia_fg_dim;
 }
-.detail-track-row:hover { background: #3a3a3a; color: #ffffff; }
-.detail-track-current { background: #4a4a4a; }
-.detail-track-title { color: #ffffff; font-size: 14px; font-weight: 600; }
+.detail-track-row:hover { background: @harmonia_hover_bg; color: @harmonia_fg; }
+.detail-track-current { background: @harmonia_selected_bg; }
+.detail-track-title { color: @harmonia_fg; font-size: 14px; font-weight: 600; }
 .detail-track-number, .detail-track-duration {
-  color: #9a9996;
+  color: @harmonia_fg_dim;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
@@ -281,12 +281,12 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .detail-track-accent { color: @accent_color; }
 .detail-menu { padding: 7px; min-width: 210px; }
 .detail-menu button { padding: 8px 10px; }
-.detail-menu-note { padding: 10px; color: #9a9996; font-size: 12px; }
-.player-bar { min-height: 72px; padding: 8px 16px; border-top: 1px solid #1a1a1a; background: #1e1e1e; }
+.detail-menu-note { padding: 10px; color: @harmonia_fg_dim; font-size: 12px; }
+.player-bar { min-height: 72px; padding: 8px 16px; border-top: 1px solid @harmonia_border; background: @harmonia_sidebar_bg; }
 .player-track { min-width: 190px; }
 .player-secondary { min-width: 190px; }
 .player-center { min-width: 250px; }
-.player-cover { border-radius: 7px; background: #4a4a4a; }
+.player-cover { border-radius: 7px; background: @harmonia_selected_bg; }
 .player-cover-placeholder { color: alpha(@window_fg_color, .34); }
 .player-bar-empty .player-track { color: alpha(@window_fg_color, .68); }
 .player-bar-empty .card-title { color: alpha(@window_fg_color, .72); }
@@ -490,12 +490,12 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .search-partial-warning {
   padding: 10px 12px;
   border-radius: 9px;
-  background: alpha(#e5a50a, .14);
-  color: #f8e45c;
+  background: alpha(@harmonia_warning_bg, .14);
+  color: @harmonia_warning_fg;
 }
 .explore-shortcut { padding: 16px; border-radius: 12px; font-weight: 700; }
-.genre-chip { padding: 10px 12px; border-radius: 9px; background: #333333; }
-.genre-chip:hover { background: #414141; }
+.genre-chip { padding: 10px 12px; border-radius: 9px; background: @harmonia_chip_bg; }
+.genre-chip:hover { background: @harmonia_chip_hover_bg; }
 .song-row { padding: 3px 6px; border-radius: 12px; }
 .song-row:hover { background: alpha(@window_fg_color, .06); }
 .row-cover { border-radius: 8px; background: alpha(@accent_bg_color, .12); }
@@ -510,13 +510,13 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
   box-shadow: none;
 }
 .app-action-primary {
-  color: #111111;
-  background: #ffffff;
-  border: 1px solid alpha(#ffffff, .88);
-  box-shadow: 0 4px 12px alpha(#000000, .20);
+  color: @harmonia_inverse_fg;
+  background: @harmonia_inverse_bg;
+  border: 1px solid alpha(@harmonia_inverse_bg, .88);
+  box-shadow: 0 4px 12px alpha(@harmonia_shadow, .20);
 }
 .app-action-primary:hover,
-.app-action-primary:active { background: #eeeeec; }
+.app-action-primary:active { background: @harmonia_inverse_hover_bg; }
 .app-action-accent {
   color: @accent_fg_color;
   background: @accent_bg_color;
@@ -525,24 +525,24 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 .app-action-accent:hover,
 .app-action-accent:active { background: shade(@accent_bg_color, 1.08); }
 .app-action-secondary {
-  color: #ffffff;
-  background: alpha(#ffffff, .055);
-  border: 1px solid alpha(#ffffff, .16);
+  color: @harmonia_fg;
+  background: alpha(@harmonia_overlay, .055);
+  border: 1px solid alpha(@harmonia_overlay, .16);
 }
 .app-action-secondary:hover,
-.app-action-secondary:active { background: alpha(#ffffff, .11); }
+.app-action-secondary:active { background: alpha(@harmonia_overlay, .11); }
 .app-action-destructive {
-  color: #ffb4ab;
-  background: alpha(#c01c28, .16);
-  border: 1px solid alpha(#f66151, .32);
+  color: @harmonia_destructive_fg;
+  background: alpha(@harmonia_destructive_bg, .16);
+  border: 1px solid alpha(@harmonia_destructive_border, .32);
 }
 .app-action-destructive:hover,
-.app-action-destructive:active { background: alpha(#c01c28, .28); }
+.app-action-destructive:active { background: alpha(@harmonia_destructive_bg, .28); }
 .app-action:disabled { opacity: .42; box-shadow: none; }
 
 .app-icon-button {
   padding: 0;
-  color: #d0cfcc;
+  color: @harmonia_fg_tertiary;
   background: transparent;
   border: 1px solid transparent;
   box-shadow: none;
@@ -553,9 +553,9 @@ headerbar entry { background: #242424; border-radius: 18px; border: 1px solid #1
 button.app-icon-button:hover,
 button.app-icon-button:active,
 button.app-icon-button:checked {
-  color: #ffffff;
-  background: alpha(#ffffff, .10);
-  border-color: alpha(#ffffff, .12);
+  color: @harmonia_fg;
+  background: alpha(@harmonia_overlay, .10);
+  border-color: alpha(@harmonia_overlay, .12);
 }
 button.app-icon-button:focus-visible,
 menubutton.app-icon-button > button:focus-visible,
@@ -568,26 +568,26 @@ menubutton.app-icon-button > button:focus-visible,
   outline-offset: 2px;
 }
 button.app-icon-button:disabled { opacity: .36; background: transparent; }
-.app-icon-button-destructive { color: #ffb4ab; }
-button.app-icon-button-destructive:hover { background: alpha(#c01c28, .20); }
+.app-icon-button-destructive { color: @harmonia_destructive_fg; }
+button.app-icon-button-destructive:hover { background: alpha(@harmonia_destructive_bg, .20); }
 .app-menu-action {
   min-height: 40px;
   padding: 8px 10px;
   border-radius: 8px;
-  color: #deddda;
+  color: @harmonia_fg_secondary;
   background: transparent;
   border: 1px solid transparent;
   box-shadow: none;
 }
 .app-menu-action:hover,
 .app-menu-action:active {
-  color: #ffffff;
-  background: alpha(#ffffff, .09);
+  color: @harmonia_fg;
+  background: alpha(@harmonia_overlay, .09);
 }
 .icons-material .app-menu-action { border-radius: 12px; }
 .icons-material .app-menu-action:hover,
 .icons-material .app-menu-action:active {
-  color: #ffffff;
+  color: @harmonia_fg;
   background: alpha(@accent_bg_color, .18);
   border-color: alpha(@accent_color, .22);
 }
@@ -601,13 +601,13 @@ button.app-icon-button-destructive:hover { background: alpha(#c01c28, .20); }
 .app-media-play,
 .app-media-play:hover,
 .app-media-play:active {
-  color: #111111;
-  background: #ffffff;
+  color: @harmonia_inverse_fg;
+  background: @harmonia_inverse_bg;
   border-color: transparent;
-  box-shadow: 0 4px 12px alpha(#000000, .20);
+  box-shadow: 0 4px 12px alpha(@harmonia_shadow, .20);
 }
 .app-media-play:hover,
-.app-media-play:active { background: #eeeeec; }
+.app-media-play:active { background: @harmonia_inverse_hover_bg; }
 menubutton.app-icon-button {
   padding: 0;
   border: 0;
@@ -625,7 +625,7 @@ menubutton.app-icon-button > button {
   padding: 0;
   border: 1px solid transparent;
   border-radius: 9999px;
-  color: #d0cfcc;
+  color: @harmonia_fg_tertiary;
   background: transparent;
   box-shadow: none;
 }
@@ -634,9 +634,9 @@ menubutton.app-icon-button-md > button { min-width: 42px; min-height: 42px; }
 menubutton.app-icon-button-lg > button { min-width: 48px; min-height: 48px; }
 menubutton.app-icon-button > button:hover,
 menubutton.app-icon-button > button:checked {
-  color: #ffffff;
-  background: alpha(#ffffff, .10);
-  border-color: alpha(#ffffff, .12);
+  color: @harmonia_fg;
+  background: alpha(@harmonia_overlay, .10);
+  border-color: alpha(@harmonia_overlay, .12);
 }
 
 .app-page { padding: 32px 32px 80px; }
@@ -647,10 +647,10 @@ menubutton.app-icon-button > button:checked {
 .section-link {
   min-height: 36px;
   padding: 0 10px;
-  color: #deddda;
+  color: @harmonia_fg_secondary;
   font-weight: 650;
 }
-.section-link:hover { color: #ffffff; background: alpha(#ffffff, .08); }
+.section-link:hover { color: @harmonia_fg; background: alpha(@harmonia_overlay, .08); }
 
 .media-card-button { border-radius: 12px; }
 .media-card-button .media-card-cover { transition: 150ms ease; }
@@ -662,4 +662,4 @@ menubutton.app-icon-button > button:checked {
   border-radius: 8px;
 }
 .media-row-detailed { min-height: 72px; }
-.media-row:hover { background: alpha(#ffffff, .07); }
+.media-row:hover { background: alpha(@harmonia_overlay, .07); }
