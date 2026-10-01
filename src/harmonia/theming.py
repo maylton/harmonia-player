@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from functools import lru_cache
+from functools import cache, lru_cache
 from pathlib import Path
 
 THEMES_DIR = Path(__file__).with_name("themes")
@@ -69,6 +69,64 @@ ADWAITA_ACCENT = {
     "accent_color": "accent",
 }
 
+# Accent presets from the elementary palette. accent_bg/accent_fg colour filled
+# controls; "accent" is the standalone tone for text and icons, per variant.
+ACCENT_PRESETS: dict[str, dict[str, str]] = {
+    "red": {"accent_bg": "#c6262e", "accent_fg": "#ffffff", "dark": "#ed5353", "light": "#a10705"},
+    "orange": {
+        "accent_bg": "#cc3b02",
+        "accent_fg": "#ffffff",
+        "dark": "#ffa154",
+        "light": "#cc3b02",
+    },
+    "yellow": {
+        "accent_bg": "#f9c440",
+        "accent_fg": "#333333",
+        "dark": "#ffe16b",
+        "light": "#ad5f00",
+    },
+    "green": {
+        "accent_bg": "#3a9104",
+        "accent_fg": "#ffffff",
+        "dark": "#9bdb4d",
+        "light": "#3a9104",
+    },
+    "mint": {"accent_bg": "#0e9a83", "accent_fg": "#ffffff", "dark": "#43d6b5", "light": "#0b7a68"},
+    "blue": {"accent_bg": "#3689e6", "accent_fg": "#ffffff", "dark": "#64baff", "light": "#0d52bf"},
+    "purple": {
+        "accent_bg": "#a56de2",
+        "accent_fg": "#ffffff",
+        "dark": "#cd9ef7",
+        "light": "#7239b3",
+    },
+    "pink": {"accent_bg": "#de3e80", "accent_fg": "#ffffff", "dark": "#f4679d", "light": "#bc245d"},
+    "brown": {
+        "accent_bg": "#715344",
+        "accent_fg": "#ffffff",
+        "dark": "#a3907c",
+        "light": "#57392d",
+    },
+    "slate": {
+        "accent_bg": "#485a6c",
+        "accent_fg": "#ffffff",
+        "dark": "#95a3ab",
+        "light": "#273445",
+    },
+}
+ACCENTS = ("theme", *ACCENT_PRESETS)
+
+
+def accent_preset(name: str, *, dark: bool) -> dict[str, str] | None:
+    preset = ACCENT_PRESETS.get(name)
+    if not preset:
+        return None
+    return {
+        "accent_bg": preset["accent_bg"],
+        "accent_fg": preset["accent_fg"],
+        "accent": preset["dark" if dark else "light"],
+    }
+
+
 _RADIUS = re.compile(r"(border-radius:\s*)([^;}]+)")
 _PIXELS = re.compile(r"(\d+(?:\.\d+)?)px")
 _PILL_RADIUS = 999
@@ -89,6 +147,7 @@ class Theme:
     restyle_adwaita: bool = False
     corner_scale: float = 1.0
     font_family: str = ""
+    stylesheet: str = ""  # optional structural layer in themes/, applied after style.css
 
     @classmethod
     def from_dict(cls, data: dict) -> Theme:
@@ -103,6 +162,7 @@ class Theme:
                 restyle_adwaita=bool(data.get("restyle_adwaita", False)),
                 corner_scale=float(data.get("corner_scale", 1.0)),
                 font_family=str(data.get("font_family", "")),
+                stylesheet=str(data.get("stylesheet", "")),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ThemeError(f"tema inválido: {exc}") from exc
@@ -126,6 +186,8 @@ class Theme:
         for variant, accent in self.accent.items():
             if variant not in self.palettes or set(accent) != set(ACCENT_TOKENS):
                 raise ThemeError(f"{self.id}/{variant}: acento precisa de {ACCENT_TOKENS}")
+        if self.stylesheet and not re.fullmatch(r"[a-z0-9-]+\.css", self.stylesheet):
+            raise ThemeError(f"{self.id}: stylesheet inválido")
         if not 0 <= self.corner_scale <= 2:
             raise ThemeError(f"{self.id}: corner_scale fora de 0 a 2")
 
@@ -155,6 +217,11 @@ def builtin_themes() -> dict[str, Theme]:
     }
 
 
+@cache
+def theme_stylesheet(name: str) -> str:
+    return (THEMES_DIR / name).read_text(encoding="utf-8") if name else ""
+
+
 def get_theme(theme_id: str) -> Theme:
     themes = builtin_themes()
     return themes.get(theme_id, themes[DEFAULT_THEME])
@@ -176,7 +243,9 @@ def scale_corners(css: str, scale: float) -> str:
     return _RADIUS.sub(radius, css)
 
 
-def render_gtk_css(theme: Theme, *, dark: bool, base_css: str, css_variables: bool) -> str:
+def render_gtk_css(
+    theme: Theme, *, dark: bool, base_css: str, css_variables: bool, accent: str = "theme"
+) -> str:
     """Return the full stylesheet for ``theme``.
 
     ``css_variables`` selects how libadwaita colours are overridden: GTK 4.16+
@@ -190,9 +259,11 @@ def render_gtk_css(theme: Theme, *, dark: bool, base_css: str, css_variables: bo
     overrides: dict[str, str] = {}
     if theme.restyle_adwaita:
         overrides |= {name: f"@harmonia_{token}" for name, token in ADWAITA_SURFACES.items()}
-    accent = theme.accent.get("dark" if dark else "light")
-    if accent:
-        overrides |= {name: accent[token] for name, token in ADWAITA_ACCENT.items()}
+    accent_colors = accent_preset(accent, dark=dark) or theme.accent.get(
+        "dark" if dark else "light"
+    )
+    if accent_colors:
+        overrides |= {name: accent_colors[token] for name, token in ADWAITA_ACCENT.items()}
     if overrides:
         if css_variables:
             # Custom properties cannot reference named colours, so resolve tokens.
@@ -211,6 +282,8 @@ def render_gtk_css(theme: Theme, *, dark: bool, base_css: str, css_variables: bo
         lines += [f"@define-color {name} {value};" for name, value in overrides.items()]
 
     css = "\n".join(lines) + "\n\n" + scale_corners(base_css, theme.corner_scale)
+    if theme.stylesheet:
+        css += f"\n/* {theme.id}: structural layer */\n" + theme_stylesheet(theme.stylesheet)
     if theme.font_family:
         css += f'\nwindow {{ font-family: "{theme.font_family}", sans-serif; }}\n'
     return css

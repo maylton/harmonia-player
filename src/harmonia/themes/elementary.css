@@ -1,0 +1,74 @@
+/* elementary OS: raised controls with gradients and highlights, shadowed
+   cards, accent-tinted source-list selection and inset entries. */
+headerbar {
+  background-image: linear-gradient(to bottom, alpha(#ffffff, .07), alpha(#ffffff, 0));
+  border-bottom: 1px solid alpha(#000000, .28);
+  box-shadow: inset 0 1px alpha(#ffffff, .10), 0 1px 3px alpha(#000000, .18);
+  min-height: 50px;
+}
+headerbar entry, entry {
+  border-radius: 6px;
+  border: 1px solid alpha(#000000, .22);
+  background: @view_bg_color;
+  box-shadow: inset 0 1px 2px alpha(#000000, .14), 0 1px alpha(#ffffff, .06);
+}
+headerbar entry:focus-within, entry:focus-within {
+  border-color: @accent_bg_color;
+  box-shadow: inset 0 1px 2px alpha(#000000, .10), 0 0 0 3px alpha(@accent_bg_color, .25);
+}
+
+.sidebar { padding: 10px 6px 14px; border-right: 1px solid alpha(#000000, .22); }
+.sidebar-heading { font-size: 11px; font-weight: 700; letter-spacing: .5px; padding: 20px 12px 6px; }
+.sidebar-item { padding: 6px 10px; border-radius: 4px; font-weight: 400; color: @harmonia_fg; }
+.sidebar-item label { font-weight: 400; }
+.sidebar-item:hover { background: alpha(@harmonia_overlay, .06); }
+.sidebar-active, .sidebar-active:hover {
+  background: alpha(@accent_bg_color, .22);
+  box-shadow: inset 0 0 0 1px alpha(@accent_bg_color, .30);
+}
+.sidebar-active image { color: @accent_color; }
+.sidebar-active label { font-weight: 600; }
+
+/* Raised buttons: the most recognisable trait of the elementary stylesheet. */
+.app-action, row button:not(.flat), .sidebar-create, .genre-chip {
+  border-radius: 6px;
+  border: 1px solid alpha(#000000, .22);
+  background-image: linear-gradient(to bottom, alpha(#ffffff, .10), alpha(#ffffff, 0));
+  box-shadow: inset 0 1px alpha(#ffffff, .14), 0 1px 2px alpha(#000000, .16);
+}
+.app-action-secondary, row button:not(.flat):not(.suggested-action), .sidebar-create { background-color: @harmonia_chip_bg; }
+.app-action-secondary:hover, row button:not(.flat):not(.suggested-action):hover, .sidebar-create:hover { background-color: @harmonia_chip_hover_bg; }
+.app-action-primary, .app-action-accent, row button.suggested-action {
+  color: @accent_fg_color;
+  background-color: @accent_bg_color;
+  border-color: shade(@accent_bg_color, .75);
+}
+.app-action-primary:hover, .app-action-accent:hover { background-color: shade(@accent_bg_color, 1.08); }
+.app-action:active, row button:active { box-shadow: inset 0 1px 2px alpha(#000000, .22); background-image: none; }
+
+.app-media-play, .app-media-play:hover, .app-media-play:active {
+  color: @accent_fg_color;
+  background-color: @accent_bg_color;
+  background-image: linear-gradient(to bottom, alpha(#ffffff, .16), alpha(#ffffff, 0));
+  border: 1px solid shade(@accent_bg_color, .75);
+  box-shadow: inset 0 1px alpha(#ffffff, .22), 0 2px 4px alpha(#000000, .25);
+}
+
+/* Cards and boxed lists float on a soft shadow. */
+list.boxed-list, .square-cover, .player-cover {
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px alpha(#000000, .16), 0 2px 4px alpha(#000000, .16);
+}
+.square-cover { border-radius: 8px; }
+
+.player-bar {
+  background-image: linear-gradient(to bottom, alpha(#ffffff, .05), alpha(#ffffff, 0));
+  border-top: 1px solid alpha(#000000, .28);
+  box-shadow: inset 0 1px alpha(#ffffff, .08);
+}
+.segmented-control { border: 1px solid alpha(#000000, .22); border-radius: 6px; padding: 2px; }
+.segmented-control button { border-radius: 4px; }
+.segmented-control button:checked {
+  background-color: @accent_bg_color; color: @accent_fg_color;
+  box-shadow: inset 0 1px alpha(#ffffff, .18);
+}

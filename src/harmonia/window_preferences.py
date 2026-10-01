@@ -103,7 +103,9 @@ class WindowPreferencesMixin:
         application = self.get_application() if hasattr(self, "get_application") else None
         controller = getattr(application, "theme_controller", None)
         if controller:
-            controller.apply(self.preferences.theme, self.preferences.theme_variant)
+            controller.apply(
+                self.preferences.theme, self.preferences.theme_variant, self.preferences.accent
+            )
         blurred = self.preferences.background_blur
         if blurred:
             self.root.add_css_class("appearance-blur")
@@ -403,6 +405,26 @@ class WindowPreferencesMixin:
                 ],
                 self.preferences.theme_variant,
                 lambda value: self._appearance_changed("theme_variant", value),
+            )
+        )
+        appearance.add(
+            combo(
+                _("Cor de destaque"),
+                [
+                    (_("Padrão do tema"), "theme"),
+                    (_("Vermelho"), "red"),
+                    (_("Laranja"), "orange"),
+                    (_("Amarelo"), "yellow"),
+                    (_("Verde"), "green"),
+                    (_("Menta"), "mint"),
+                    (_("Azul"), "blue"),
+                    (_("Roxo"), "purple"),
+                    (_("Rosa"), "pink"),
+                    (_("Marrom"), "brown"),
+                    (_("Ardósia"), "slate"),
+                ],
+                self.preferences.accent,
+                lambda value: self._appearance_changed("accent", value),
             )
         )
         blur = Adw.SwitchRow(
