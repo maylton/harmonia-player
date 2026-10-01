@@ -6,6 +6,8 @@ import logging
 import os
 import sqlite3
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from .insights import (
@@ -50,10 +52,18 @@ class Storage:
         self._initialize_database()
         self._migrate_json_cache()
 
-    def _connect(self):
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        # sqlite3's own context manager only commits or rolls back; it never
+        # closes the connection, which leaks file handles and triggers
+        # ResourceWarning on Python 3.13+.
         connection = sqlite3.connect(self.database_file)
         connection.row_factory = sqlite3.Row
-        return connection
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def _initialize_database(self) -> None:
         with self._connect() as db:

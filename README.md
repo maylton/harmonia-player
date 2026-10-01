@@ -51,7 +51,7 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 
 ## Running from source
 
-Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita, and WebKitGTK 6. The KDE frontend requires PySide6, Kirigami, and Qt WebEngine from a compatible Qt/KDE stack.
+Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita 1.7 or later (for `Adw.WrapBox`), and WebKitGTK 6. Distributions that ship an older libadwaita, such as elementary OS 8 and other Ubuntu 24.04-based systems, should use the Flatpak build. The KDE frontend requires PySide6, Kirigami, and Qt WebEngine from a compatible Qt/KDE stack.
 
 ```bash
 PYTHONPATH=src python3 -m harmonia

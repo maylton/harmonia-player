@@ -114,12 +114,7 @@ class HarmoniaWindow(
         self._history_tracking_request = -1
         self._account_avatar_request = 0
         self._artwork_requests: dict[int, str] = {}
-        self._icon_sources: dict[Gtk.Image, str] = {}
-        self._icon_update_guard = False
-        icon_settings = Gtk.Settings.get_for_display(Gdk.Display.get_default())
-        self._system_icon_theme_name = (
-            icon_settings.get_property("gtk-icon-theme-name") if icon_settings else "Adwaita"
-        )
+        self._icon_settings_handler = 0
         self._sleep_timer_source = 0
         self._sleep_timer_deadline = 0.0
         self._artist_current_item: LibraryItem | None = None
@@ -168,17 +163,8 @@ class HarmoniaWindow(
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
-        self.stack.connect(
-            "notify::visible-child",
-            lambda *_: GLib.idle_add(self._refresh_custom_icons),
-        )
         self.main_shell.append(self.stack)
         self.root.append(self.main_shell)
-        compact = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 800px"))
-        compact.add_setter(self.sidebar, "visible", False)
-        compact.add_setter(self.sidebar_separator, "visible", False)
-        compact.add_setter(self.compact_menu, "visible", True)
-        self.add_breakpoint(compact)
         self.player = NativePlayer(self._player_state, self._player_error, self._play_next)
         self._initialize_optional_services()
         self._apply_audio_preferences()
@@ -205,6 +191,8 @@ class HarmoniaWindow(
         )
         self.connect("close-request", self._shutdown_application)
         self._build_player_bar()
+        # A single breakpoint covers both the compact navigation and the compact
+        # player bar; a narrower duplicate would only repeat these setters.
         compact_player = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 900px"))
         compact_player.add_setter(self.sidebar, "visible", False)
         compact_player.add_setter(self.sidebar_separator, "visible", False)
@@ -368,6 +356,17 @@ class HarmoniaWindow(
         self.sidebar.set_size_request(230, -1)
         self.sidebar.set_hexpand(False)
         self.sidebar.set_halign(Gtk.Align.START)
+        # The navigation list scrolls so the sidebar never dictates the window's
+        # minimum height; the player bar stays visible on short screens.
+        nav = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        nav_scroll = Gtk.ScrolledWindow(
+            hscrollbar_policy=Gtk.PolicyType.NEVER,
+            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
+            vexpand=True,
+        )
+        nav_scroll.add_css_class("sidebar-scroll")
+        nav_scroll.set_child(nav)
+        self.sidebar_scroll = nav_scroll
         brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         brand.add_css_class("sidebar-brand")
         logo = Gtk.Image.new_from_icon_name("audio-headphones-symbolic")
@@ -376,28 +375,24 @@ class HarmoniaWindow(
         name = Gtk.Label(label=_("Harmonia"), xalign=0)
         name.add_css_class("sidebar-brand-title")
         brand.append(name)
-        self.sidebar.append(brand)
+        nav.append(brand)
         self.nav_buttons: dict[str, Gtk.Button] = {}
-        self.sidebar.append(
-            self._sidebar_button("home", _("Início"), "go-home-symbolic", self.show_home)
-        )
-        self.sidebar.append(
-            self._sidebar_button("explore", _("Explorar"), EXPLORE_ICON, self.show_explore)
-        )
-        self.sidebar.append(
+        nav.append(self._sidebar_button("home", _("Início"), "go-home-symbolic", self.show_home))
+        nav.append(self._sidebar_button("explore", _("Explorar"), EXPLORE_ICON, self.show_explore))
+        nav.append(
             self._sidebar_button(
                 "library", _("Biblioteca"), "folder-music-symbolic", self.show_library
             )
         )
         heading = Gtk.Label(label=_("SUAS MÚSICAS"), xalign=0)
         heading.add_css_class("sidebar-heading")
-        self.sidebar.append(heading)
-        self.sidebar.append(
+        nav.append(heading)
+        nav.append(
             self._sidebar_button(
                 "songs", _("Músicas curtidas"), LIKED_ICON, lambda: self.show_category("songs")
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "playlists",
                 _("Playlists"),
@@ -405,7 +400,7 @@ class HarmoniaWindow(
                 lambda: self.show_category("playlists"),
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "artists",
                 _("Artistas"),
@@ -413,12 +408,12 @@ class HarmoniaWindow(
                 lambda: self.show_category("artists"),
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "history", _("Histórico"), "document-open-recent-symbolic", self.show_history
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "insights",
                 _("Estatísticas"),
@@ -426,18 +421,17 @@ class HarmoniaWindow(
                 self.show_insights,
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "downloads", _("Downloads"), "folder-download-symbolic", self.show_downloads
             )
         )
-        self.sidebar.append(
+        nav.append(
             self._sidebar_button(
                 "settings", _("Preferências"), "preferences-system-symbolic", self.show_settings
             )
         )
-        spacer = Gtk.Box(vexpand=True)
-        self.sidebar.append(spacer)
+        self.sidebar.append(nav_scroll)
         create = Gtk.Button(label=_("Nova playlist"), icon_name="list-add-symbolic")
         create.add_css_class("sidebar-create")
         create.connect("clicked", lambda *_: self.create_playlist_dialog())
@@ -460,9 +454,13 @@ class HarmoniaWindow(
         return button
 
     def _set_active_nav(self, key: str) -> None:
+        viewport = self.sidebar_scroll.get_child()
         for name, button in self.nav_buttons.items():
             if name == key:
                 button.add_css_class("sidebar-active")
+                # Keep the active entry visible when the navigation list scrolls.
+                if isinstance(viewport, Gtk.Viewport) and hasattr(viewport, "scroll_to"):
+                    viewport.scroll_to(button, None)
             else:
                 button.remove_css_class("sidebar-active")
 
@@ -1143,6 +1141,10 @@ class HarmoniaApplication(Adw.Application):
     def do_startup(self):
         Adw.Application.do_startup(self)
         Gtk.Window.set_default_icon_name(APP_ID)
+        # style.css defines a dark palette. Tell libadwaita so its own widgets
+        # (cards, entries, popovers, dialogs) match it instead of following a
+        # light system preference such as elementary OS's default.
+        Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
         provider = Gtk.CssProvider()
         provider.load_from_path(str(Path(__file__).with_name("style.css")))
         Gtk.StyleContext.add_provider_for_display(

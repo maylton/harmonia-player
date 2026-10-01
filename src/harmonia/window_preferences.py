@@ -19,6 +19,21 @@ from .ui import (
 )
 
 LOGGER = logging.getLogger(__name__)
+BUNDLED_ICON_THEME = "HarmoniaMaterial"
+BUNDLED_ICONS_PATH = str(Path(__file__).with_name("icons"))
+FALLBACK_ICON_THEMES = ("Adwaita",)
+
+
+def add_bundled_icon_path(theme: Gtk.IconTheme) -> None:
+    if BUNDLED_ICONS_PATH not in theme.get_search_path():
+        theme.add_search_path(BUNDLED_ICONS_PATH)
+
+
+def icon_theme_installed(theme: Gtk.IconTheme, name: str) -> bool:
+    """Return whether GTK can load the named theme from its search path."""
+    if not name:
+        return False
+    return any((Path(base) / name / "index.theme").is_file() for base in theme.get_search_path())
 
 
 class WindowPreferencesMixin:
@@ -80,58 +95,50 @@ class WindowPreferencesMixin:
         self.root.remove_css_class("icons-material")
         if self.preferences.icon_style != "gtk":
             self.root.add_css_class(f"icons-{self.preferences.icon_style}")
+        self._apply_icon_theme()
+
+    def _apply_icon_theme(self) -> None:
+        """Select the icon theme without pinning the system one.
+
+        In "gtk" mode Harmonia follows the desktop's theme live. When that theme
+        is not installed where GTK can see it (for example the elementary theme
+        inside the GNOME Flatpak runtime), GTK would otherwise render
+        "image-missing", so a theme that is actually present is used instead.
+        GTK refreshes every GtkImage by itself when the theme changes.
+        """
         display = Gdk.Display.get_default()
-        if display:
-            theme = Gtk.IconTheme.get_for_display(display)
-            icons_path = str(Path(__file__).with_name("icons"))
-            if icons_path not in theme.get_search_path():
-                theme.add_search_path(icons_path)
-            settings = Gtk.Settings.get_for_display(display)
-            if settings:
-                selected = {
-                    "material": "HarmoniaMaterial",
-                }.get(self.preferences.icon_style, self._system_icon_theme_name)
-                settings.set_property("gtk-icon-theme-name", selected)
-        self._refresh_custom_icons()
-
-    def _icon_name_changed(self, image: Gtk.Image, _pspec) -> None:
-        if self._icon_update_guard:
+        if not display:
             return
-        name = image.get_icon_name()
-        if name:
-            self._icon_sources[image] = name
-            GLib.idle_add(self._apply_custom_icon, image)
+        theme = Gtk.IconTheme.get_for_display(display)
+        add_bundled_icon_path(theme)
+        settings = Gtk.Settings.get_for_display(display)
+        if not settings:
+            return
+        if not self._icon_settings_handler:
+            self._icon_settings_handler = settings.connect(
+                "notify::gtk-icon-theme-name", lambda *_: self._ensure_icon_theme_available()
+            )
+        if self.preferences.icon_style == "material":
+            settings.set_property("gtk-icon-theme-name", BUNDLED_ICON_THEME)
+            return
+        settings.reset_property("gtk-icon-theme-name")
+        self._ensure_icon_theme_available()
 
-    def _apply_custom_icon(self, image: Gtk.Image) -> bool:
-        name = image.get_icon_name()
-        if name:
-            self._icon_sources[image] = name
-        base_name = self._icon_sources.get(image)
-        if not base_name:
-            return GLib.SOURCE_REMOVE
-        self._icon_update_guard = True
-        try:
-            # Keep the semantic icon name on GtkImage. The process-wide icon
-            # theme resolves the selected pack and GTK can then recolor every
-            # symbolic icon from the widget's current foreground/accent color.
-            image.set_from_icon_name(base_name)
-        finally:
-            self._icon_update_guard = False
-        return GLib.SOURCE_REMOVE
-
-    def _refresh_custom_icons(self) -> bool:
-        pending = [self.root]
-        while pending:
-            widget = pending.pop()
-            if isinstance(widget, Gtk.Image):
-                if widget not in self._icon_sources:
-                    widget.connect("notify::icon-name", self._icon_name_changed)
-                self._apply_custom_icon(widget)
-            child = widget.get_first_child()
-            while child:
-                pending.append(child)
-                child = child.get_next_sibling()
-        return GLib.SOURCE_REMOVE
+    def _ensure_icon_theme_available(self) -> None:
+        display = Gdk.Display.get_default()
+        settings = Gtk.Settings.get_for_display(display) if display else None
+        if not settings or self.preferences.icon_style != "gtk":
+            return
+        theme = Gtk.IconTheme.get_for_display(display)
+        current = settings.get_property("gtk-icon-theme-name") or ""
+        if icon_theme_installed(theme, current):
+            return
+        fallback = next(
+            (name for name in FALLBACK_ICON_THEMES if icon_theme_installed(theme, name)),
+            BUNDLED_ICON_THEME,
+        )
+        LOGGER.info("Tema de ícones %r indisponível; usando %r", current, fallback)
+        settings.set_property("gtk-icon-theme-name", fallback)
 
     def _appearance_changed(self, name: str, value) -> None:
         self._preference_changed(name, value)
