@@ -1044,10 +1044,6 @@ class HarmoniaQtBackend(QObject):
     def reloadLyrics(self) -> None:
         self.lyrics.load(force=True)
 
-    @Slot(str)
-    def setLyricsProvider(self, provider: str) -> None:
-        self.lyrics.set_provider(provider)
-
     @Slot()
     def cycleLyricsProvider(self) -> None:
         self.lyrics.cycle_provider()

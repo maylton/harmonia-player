@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import mimetypes
+import secrets
 import socket
 import threading
 import time
@@ -18,25 +19,50 @@ MEDIA_RENDERER = "urn:schemas-upnp-org:device:MediaRenderer:1"
 AVTRANSPORT = "urn:schemas-upnp-org:service:AVTransport:1"
 
 
+MAX_DESCRIPTION_BYTES = 512 * 1024
+
+
+def parse_byte_range(header: str, size: int) -> tuple[int, int] | None:
+    """Parse a single HTTP Range header; None means the whole file.
+
+    Malformed ranges yield an unsatisfiable (start > end) range, answered 416.
+    """
+    if not header.startswith("bytes="):
+        return None
+    first, separator, last = header[6:].split(",", 1)[0].strip().partition("-")
+    try:
+        if not separator:
+            raise ValueError
+        if not first:  # suffix range: the last N bytes
+            length = int(last)
+            return (max(0, size - length), size - 1) if length > 0 else (size, size - 1)
+        start = int(first)
+        end = min(size - 1, int(last)) if last else size - 1
+    except ValueError:
+        return (size, size - 1)
+    return start, end
+
+
 class LocalMediaServer:
     """Expose one local audio file to a renderer on the LAN, with byte ranges."""
 
     def __init__(self, path: Path) -> None:
         self.path = path.resolve()
         self.content_type = mimetypes.guess_type(self.path.name)[0] or "application/octet-stream"
+        # The server listens on the LAN so a renderer can fetch the file; a
+        # random path keeps other devices from reading it.
+        self.token = secrets.token_urlsafe(16)
         media = self
 
         class Handler(BaseHTTPRequestHandler):
             def _serve(self, body: bool) -> None:
+                if self.path.split("?", 1)[0] != f"/audio/{media.token}":
+                    self.send_error(404)
+                    return
                 size = media.path.stat().st_size
-                start, end = 0, size - 1
-                partial = False
-                requested = self.headers.get("Range", "")
-                if requested.startswith("bytes="):
-                    partial = True
-                    first, _, last = requested[6:].partition("-")
-                    start = int(first or 0)
-                    end = min(size - 1, int(last) if last else size - 1)
+                byte_range = parse_byte_range(self.headers.get("Range", ""), size)
+                partial = byte_range is not None
+                start, end = byte_range or (0, size - 1)
                 if start < 0 or start > end or start >= size:
                     self.send_response(416)
                     self.send_header("Content-Range", f"bytes */{size}")
@@ -82,7 +108,7 @@ class LocalMediaServer:
 
     @property
     def url(self) -> str:
-        return f"http://{local_address()}:{self.server.server_port}/audio"
+        return f"http://{local_address()}:{self.server.server_port}/audio/{self.token}"
 
     def close(self) -> None:
         self.server.shutdown()
@@ -149,8 +175,13 @@ class UpnpDiscovery:
         return headers
 
     def _device(self, location: str) -> CastDevice | None:
+        # Any device on the network can answer discovery, so bound the read and
+        # refuse DTDs/entities (entity expansion bombs) before parsing.
         with self._opener(location, timeout=4) as response:
-            root = ET.fromstring(response.read())
+            data = response.read(MAX_DESCRIPTION_BYTES + 1)
+        if len(data) > MAX_DESCRIPTION_BYTES or b"<!DOCTYPE" in data or b"<!ENTITY" in data:
+            return None
+        root = ET.fromstring(data)
         name = next((node.text for node in root.iter() if node.tag.endswith("friendlyName")), None)
         for service in root.iter():
             if not service.tag.endswith("service"):

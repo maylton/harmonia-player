@@ -403,11 +403,6 @@ class NativePlayer:
             silence.set_property("squash", skip_silence)
             silence.set_property("minimum-silence-time", 1_500_000_000 if skip_silence else 0)
 
-    def set_video_sink(self, sink: Gst.Element | None) -> None:
-        """Attach a toolkit-owned video sink to the shared playbin."""
-        self._video_sink = sink
-        self._playbin.set_property("video-sink", sink)
-
     @property
     def video_sink(self) -> Gst.Element | None:
         return self._video_sink
