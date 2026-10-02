@@ -2,6 +2,8 @@ import inspect
 import warnings
 from pathlib import Path
 
+import pytest
+
 from harmonia import app, window_preferences
 from harmonia.storage import Storage
 from harmonia.window_preferences import (
@@ -125,35 +127,107 @@ def test_gtk_theme_is_dropped_before_gtk_is_imported_and_only_for_gtk():
     assert qt_branch < dropped < imported
 
 
-def test_elementary_overlay_is_only_used_where_gtk_ignores_group_transforms():
-    from harmonia.window_preferences import (
-        ELEMENTARY_COMPAT_ICON_THEME,
-        icon_theme_for_system,
-    )
-
-    assert icon_theme_for_system("elementary", (4, 22)) == ELEMENTARY_COMPAT_ICON_THEME
-    assert icon_theme_for_system("elementary", (4, 21)) == ELEMENTARY_COMPAT_ICON_THEME
-    assert icon_theme_for_system("elementary", (4, 20)) == "elementary"
-    assert icon_theme_for_system("Adwaita", (4, 22)) == "Adwaita"
-
-
-def test_elementary_overlay_inherits_elementary_and_ships_only_fixed_used_icons():
+def test_elementary_shadow_ships_only_fixed_used_icons_and_no_theme_index():
     import re
     import xml.etree.ElementTree as ET
 
-    theme_dir = SOURCE / "icons" / "HarmoniaElementary"
-    assert icon_theme_installed(IconThemeStub([SOURCE / "icons"]), "HarmoniaElementary")
-    index = (theme_dir / "index.theme").read_text(encoding="utf-8")
-    assert "Inherits=elementary," in index
-
+    root = SOURCE / "icons-compat" / "elementary"
+    # Without an index.theme the tree never becomes a theme of its own: GTK
+    # merges it into the installed elementary theme and its variants.
+    assert not list((SOURCE / "icons-compat").rglob("index.theme"))
     used = set()
     for source in SOURCE.glob("*.py"):
         used.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
-    icons = sorted((theme_dir / "scalable" / "actions").glob("*.svg"))
+    icons = sorted(root.rglob("*.svg"))
     assert icons
     for path in icons:
         text = path.read_text(encoding="utf-8")
         assert path.stem in used
         assert "Source: elementary/icons" in text
-        root = ET.fromstring(text)
-        assert not any(element.get("transform") for element in root.iter())
+        assert not any(element.get("transform") for element in ET.fromstring(text).iter())
+    # HiDPI: elementary lists <context>@2x and @3x directories, mirror them all.
+    for path in icons:
+        context, *rest = path.relative_to(root).parts
+        if "@" not in context:
+            for scale in (2, 3):
+                assert root.joinpath(f"{context}@{scale}x", *rest).is_file(), (path, scale)
+
+
+def _fake_elementary(tmp_path):
+    host = tmp_path / "host"
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M0 0h16v16H0z"/></svg>'
+    (host / "elementary" / "actions" / "symbolic").mkdir(parents=True)
+    (host / "elementary" / "index.theme").write_text(
+        "[Icon Theme]\nName=elementary\nInherits=hicolor\nDirectories=actions/symbolic\n\n"
+        "[actions/symbolic]\nSize=16\nMinSize=8\nMaxSize=512\nType=Scalable\n"
+    )
+    for name in ("go-home-symbolic", "find-location-symbolic"):
+        (host / "elementary" / "actions" / "symbolic" / f"{name}.svg").write_text(svg)
+    (host / "elementary-grape" / "places" / "48").mkdir(parents=True)
+    (host / "elementary-grape" / "index.theme").write_text(
+        "[Icon Theme]\nName=elementary Grape\nInherits=elementary\nDirectories=places/48\n\n"
+        "[places/48]\nSize=48\nType=Fixed\n"
+    )
+    return host
+
+
+def test_elementary_shadow_reaches_accent_variants_on_new_gtk(tmp_path):
+    gi = pytest.importorskip("gi")
+    gi.require_version("Gtk", "4.0")
+    from gi.repository import Gtk
+
+    from harmonia.window_preferences import ELEMENTARY_SHADOW_PATH, install_elementary_shadow
+
+    host = _fake_elementary(tmp_path)
+    theme = Gtk.IconTheme()
+    theme.set_search_path([str(host)])
+    theme.set_theme_name("elementary-grape")  # an elementary-accent-folders variant
+
+    def resolved(name):
+        icon = theme.lookup_icon(name, None, 16, 1, Gtk.TextDirection.LTR, Gtk.IconLookupFlags(0))
+        return icon.get_file().get_path()
+
+    assert install_elementary_shadow(theme, (4, 20)) is False
+    assert theme.get_search_path() == [str(host)]
+    assert install_elementary_shadow(theme, (4, 22)) is True
+    assert resolved("go-home-symbolic").startswith(ELEMENTARY_SHADOW_PATH)
+    assert resolved("find-location-symbolic").startswith(str(host))  # untouched icons
+    install_elementary_shadow(theme, (4, 22))  # idempotent
+    assert theme.get_search_path().count(ELEMENTARY_SHADOW_PATH) == 1
+
+
+def test_elementary_shadow_moves_first_when_gtk_prefers_earlier_paths():
+    from harmonia.window_preferences import ELEMENTARY_SHADOW_PATH, install_elementary_shadow
+
+    class File:
+        def __init__(self, path):
+            self.path = path
+
+        def get_path(self):
+            return self.path
+
+    class Icon:
+        def __init__(self, path):
+            self.path = path
+
+        def get_file(self):
+            return File(self.path)
+
+    class FirstWinsTheme:
+        """Simulates a GTK where the earliest search path wins for equal matches."""
+
+        def __init__(self):
+            self.paths = ["/run/host/share/icons"]
+
+        def get_search_path(self):
+            return list(self.paths)
+
+        def set_search_path(self, paths):
+            self.paths = list(paths)
+
+        def lookup_icon(self, *_args):
+            return Icon(f"{self.paths[0]}/elementary/actions/symbolic/go-home-symbolic.svg")
+
+    theme = FirstWinsTheme()
+    install_elementary_shadow(theme, (4, 22))
+    assert theme.paths == [ELEMENTARY_SHADOW_PATH, "/run/host/share/icons"]

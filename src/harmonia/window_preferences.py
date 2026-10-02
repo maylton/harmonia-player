@@ -24,19 +24,41 @@ BUNDLED_ICON_THEME = "HarmoniaMaterial"
 BUNDLED_ICONS_PATH = str(Path(__file__).with_name("icons"))
 FALLBACK_ICON_THEMES = ("Adwaita",)
 # elementary icons 8.x position some symbolic paths through <g transform>, which
-# GTK 4.21+ ignores, so those icons render blank on the GNOME 50 runtime. This
-# overlay inherits from elementary and only replaces them with the redrawn 9.x
-# versions (see tools/sync_elementary_icons.py).
-ELEMENTARY_ICON_THEME = "elementary"
-ELEMENTARY_COMPAT_ICON_THEME = "HarmoniaElementary"
-ELEMENTARY_COMPAT_MIN_GTK = (4, 21)
+# GTK 4.21+ ignores, so those icons render blank on the GNOME 50 runtime. The
+# icons-compat tree holds the redrawn 9.x versions under elementary/<dir>/
+# without an index.theme, so GTK merges it into the installed elementary theme
+# and every theme inheriting from it (accent variants such as elementary-grape)
+# while the system theme stays in charge. See tools/sync_elementary_icons.py.
+ELEMENTARY_SHADOW_PATH = str(Path(__file__).with_name("icons-compat"))
+ELEMENTARY_SHADOW_MIN_GTK = (4, 21)
+ELEMENTARY_SHADOW_PROBE = "go-home-symbolic"
 
 
-def icon_theme_for_system(name: str, gtk_version: tuple[int, int]) -> str:
-    """Return the theme Harmonia should use for the system theme ``name``."""
-    if name == ELEMENTARY_ICON_THEME and gtk_version >= ELEMENTARY_COMPAT_MIN_GTK:
-        return ELEMENTARY_COMPAT_ICON_THEME
-    return name
+def shadow_resolves(path: str | None) -> bool:
+    """Whether a looked-up icon file is not an unshadowed elementary icon."""
+    if not path or path.startswith(ELEMENTARY_SHADOW_PATH):
+        return True
+    return "/elementary" not in path
+
+
+def install_elementary_shadow(theme: Gtk.IconTheme, gtk_version: tuple[int, int]) -> bool:
+    """Merge the redrawn elementary icons into the active icon theme.
+
+    For directories present in several search paths GTK 4 keeps one file per
+    icon; which path wins is an implementation detail, so the shadow is
+    appended, checked with a probe icon and moved to the front if it lost.
+    """
+    if gtk_version < ELEMENTARY_SHADOW_MIN_GTK:
+        return False
+    others = [path for path in theme.get_search_path() if path != ELEMENTARY_SHADOW_PATH]
+    theme.set_search_path([*others, ELEMENTARY_SHADOW_PATH])
+    probe = theme.lookup_icon(
+        ELEMENTARY_SHADOW_PROBE, None, 16, 1, Gtk.TextDirection.LTR, Gtk.IconLookupFlags(0)
+    )
+    resolved = probe.get_file().get_path() if probe.get_file() else None
+    if not shadow_resolves(resolved):
+        theme.set_search_path([ELEMENTARY_SHADOW_PATH, *others])
+    return True
 
 
 def add_bundled_icon_path(theme: Gtk.IconTheme) -> None:
@@ -153,11 +175,7 @@ class WindowPreferencesMixin:
         theme = Gtk.IconTheme.get_for_display(display)
         current = settings.get_property("gtk-icon-theme-name") or ""
         if icon_theme_installed(theme, current):
-            gtk_version = (Gtk.get_major_version(), Gtk.get_minor_version())
-            replacement = icon_theme_for_system(current, gtk_version)
-            if replacement != current and icon_theme_installed(theme, replacement):
-                LOGGER.info("Usando %r sobre %r (GTK %s.%s)", replacement, current, *gtk_version)
-                settings.set_property("gtk-icon-theme-name", replacement)
+            install_elementary_shadow(theme, (Gtk.get_major_version(), Gtk.get_minor_version()))
             return
         fallback = next(
             (name for name in FALLBACK_ICON_THEMES if icon_theme_installed(theme, name)),

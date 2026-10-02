@@ -21,14 +21,13 @@ https://www.apache.org/licenses/LICENSE-2.0
 - Project: elementary icons
 - Source: https://github.com/elementary/icons
 - License: GNU General Public License, version 3 or later
-- Used by: Harmonia elementary compatibility overlay
-  (`src/harmonia/icons/HarmoniaElementary`), regenerated with
-  `tools/sync_elementary_icons.py`
+- Used by: elementary compatibility shadow (`src/harmonia/icons-compat`),
+  regenerated with `tools/sync_elementary_icons.py`
 
-A small set of symbolic icons from elementary icons 9.x, used only when the
-system icon theme is elementary and GTK is 4.21 or newer, where the 8.x
-versions of these icons render blank. All other icons keep coming from the
-installed elementary theme.
+A small set of symbolic icons from elementary icons 9.x, merged into the
+installed elementary theme (and themes inheriting from it, such as accent
+variants) only on GTK 4.21 or newer, where the 8.x versions of these icons
+render blank. All other icons keep coming from the installed theme.
 
 ## Iconify
 
