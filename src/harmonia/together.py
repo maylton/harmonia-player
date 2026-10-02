@@ -36,7 +36,7 @@ class TogetherState:
     @classmethod
     def from_payload(cls, payload: dict) -> TogetherState:
         return cls(
-            queue=[LibraryItem(**item) for item in payload.get("queue", [])],
+            queue=[LibraryItem.from_dict(item) for item in payload.get("queue", [])],
             index=max(0, int(payload.get("index", 0))),
             position_ms=max(0, int(payload.get("position_ms", 0))),
             playing=bool(payload.get("playing", False)),

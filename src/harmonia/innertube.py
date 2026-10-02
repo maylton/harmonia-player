@@ -218,14 +218,15 @@ _ALBUM_PAGES = {"MUSIC_PAGE_TYPE_ALBUM", "MUSIC_PAGE_TYPE_AUDIOBOOK"}
 
 
 def _linked_pages(renderer: dict[str, Any]) -> dict[str, str]:
-    """Return the first artist and album linked from a track's byline runs."""
+    """Return the linked credits of a byline: the first artist and album, plus all links."""
     containers = [renderer.get("subtitle"), renderer.get("longBylineText")]
     for column in renderer.get("flexColumns", [])[1:]:
         if isinstance(column, dict):
             containers.append(
                 column.get("musicResponsiveListItemFlexColumnRenderer", {}).get("text")
             )
-    links: dict[str, str] = {}
+    links: dict = {}
+    credits: list[tuple[str, str, str]] = []
     for container in containers:
         runs = container.get("runs", []) if isinstance(container, dict) else []
         for run in runs:
@@ -238,10 +239,22 @@ def _linked_pages(renderer: dict[str, Any]) -> dict[str, str]:
             browse_id, text = browse.get("browseId"), str(run.get("text", "")).strip()
             if not browse_id or not text:
                 continue
-            if page_type in _ARTIST_PAGES and "artist_id" not in links:
+            kind = (
+                "artist"
+                if page_type in _ARTIST_PAGES
+                else "album"
+                if page_type in _ALBUM_PAGES
+                else None
+            )
+            if not kind or any(credit[2] == browse_id for credit in credits):
+                continue
+            credits.append((kind, text, str(browse_id)))
+            if kind == "artist" and "artist_id" not in links:
                 links.update(artist=text, artist_id=str(browse_id))
-            elif page_type in _ALBUM_PAGES and "album_id" not in links:
+            elif kind == "album" and "album_id" not in links:
                 links.update(album=text, album_id=str(browse_id))
+    if credits:
+        links["links"] = tuple(credits)
     return links
 
 

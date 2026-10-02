@@ -16,6 +16,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    link_row_subtitle,
     page_header,
     page_shell,
 )
@@ -182,6 +183,7 @@ class WindowSearchMixin:
             row.set_use_markup(False)
             row.set_title(item.title)
             row.set_subtitle(item.subtitle)
+            link_row_subtitle(row, item, self.navigate_credit)
             row.set_activatable(True)
             row.add_prefix(self._square_cover(item, size=48, fixed=True))
             icon = (

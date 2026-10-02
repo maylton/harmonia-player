@@ -666,3 +666,7 @@ menubutton.app-icon-button > button:checked {
 }
 .media-row-detailed { min-height: 72px; }
 .media-row:hover { background: alpha(@harmonia_overlay, .07); }
+
+/* Clickable artist and album names keep the subtitle colour; GTK shows the
+   pointer cursor and a "Ir para…" tooltip over them. */
+.credits link, .credits link:visited { color: inherit; text-decoration-line: none; }

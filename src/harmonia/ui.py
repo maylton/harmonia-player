@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from html import escape
 
 import gi
 
@@ -12,6 +14,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
 from .i18n import _
+from .models import LibraryItem
 
 ACTION_ROLES = {"primary", "accent", "secondary", "destructive"}
 ICON_SIZES = {"sm", "md", "lg"}
@@ -205,3 +208,142 @@ def section_link(label: str, callback: Callable[[], None]) -> Gtk.Button:
     button.set_valign(Gtk.Align.CENTER)
     button.connect("clicked", lambda *_: callback())
     return button
+
+
+_DURATION = re.compile(r"^\d{1,2}(?::\d{2}){1,2}$")
+_BYLINE_SEPARATORS = re.compile(r"\s+[·•]\s+")
+CREDIT_SCHEME = "harmonia-credit:"
+Credit = tuple[str, str, str]  # (kind, name, target): kind is artist, album or search
+
+
+def track_byline(track: LibraryItem) -> str:
+    """The track subtitle without durations, which have their own column."""
+    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
+    return " · ".join(part for part in parts if not _DURATION.match(part.strip()))
+
+
+def track_artist(track: LibraryItem) -> str:
+    if track.artist:
+        return track.artist
+    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
+    first = parts[0].strip() if parts else ""
+    return "" if _DURATION.match(first) else first
+
+
+def item_credits(item: LibraryItem) -> list[Credit]:
+    """Navigable credits of an item.
+
+    Linked credits come from YouTube Music; tracks restored from the local cache
+    have none, so their first byline name falls back to an artist search.
+    """
+    if item.links:
+        return list(item.links)
+    if item.artist_id:
+        return [("artist", item.artist or track_artist(item), item.artist_id)]
+    if item.kind in ("songs", "videos"):
+        artist = track_artist(item)
+        if artist:
+            return [("search", artist, artist)]
+    return []
+
+
+def credits_markup(text: str, credits: list[Credit]) -> tuple[str, list[Credit]]:
+    """Escape ``text`` and wrap each credit name, in order, in a Pango link.
+
+    Returns the markup and the credits that were actually linked; the link URI
+    is an index into that list so names never travel through the URI.
+    """
+    parts: list[str] = []
+    linked: list[Credit] = []
+    position = 0
+    for credit in credits:
+        kind, name, _target = credit
+        index = text.find(name, position) if name else -1
+        if index < 0:
+            continue
+        tooltip = (
+            _("Ir para o álbum {name}")
+            if kind == "album"
+            else _("Buscar {name}")
+            if kind == "search"
+            else _("Ir para o artista {name}")
+        ).format(name=name)
+        parts.append(escape(text[position:index]))
+        parts.append(
+            f'<a href="{CREDIT_SCHEME}{len(linked)}" title="{escape(tooltip)}">{escape(name)}</a>'
+        )
+        linked.append(credit)
+        position = index + len(name)
+    parts.append(escape(text[position:]))
+    return "".join(parts), linked
+
+
+def connect_credit_links(
+    label: Gtk.Label, credits: list[Credit], navigate: Callable[[str, str, str], None]
+) -> None:
+    """Route a label's credit links to ``navigate(kind, target, name)``.
+
+    GTK shows the pointer cursor and the link title as a tooltip on hover.
+    """
+    label._harmonia_credits = credits
+    if getattr(label, "_harmonia_credit_handler", None):
+        return
+
+    def activate(widget: Gtk.Label, uri: str) -> bool:
+        if not uri.startswith(CREDIT_SCHEME):
+            return False
+        try:
+            kind, name, target = widget._harmonia_credits[int(uri[len(CREDIT_SCHEME) :])]
+        except (ValueError, IndexError):
+            return True
+        navigate(kind, target, name)
+        return True
+
+    label._harmonia_credit_handler = label.connect("activate-link", activate)
+
+
+class CreditsLabel(Gtk.Label):
+    """A subtitle whose artist and album names open their pages."""
+
+    def __init__(self, navigate: Callable[[str, str, str], None], **kwargs):
+        super().__init__(**kwargs)
+        self._navigate = navigate
+        self.add_css_class("credits")
+
+    def show_item(self, item: LibraryItem | None, text: str | None = None) -> None:
+        if item is None:
+            self.set_text(text or "")
+            return
+        text = item.subtitle if text is None else text
+        markup, linked = credits_markup(text or "", item_credits(item))
+        self.set_markup(markup)
+        connect_credit_links(self, linked, self._navigate)
+
+
+def link_row_subtitle(
+    row: Adw.ActionRow, item: LibraryItem, navigate: Callable[[str, str, str], None]
+) -> None:
+    """Make the credits in an AdwActionRow subtitle clickable.
+
+    The subtitle label is internal to libadwaita; if it cannot be found the
+    row keeps its plain text.
+    """
+    markup, linked = credits_markup(item.subtitle or "", item_credits(item))
+    if not linked:
+        row.set_use_markup(False)
+        row.set_subtitle(item.subtitle or "")
+        return
+    row.set_use_markup(True)
+    row.set_title(escape(item.title))
+    row.set_subtitle(markup)
+    pending = [row]
+    while pending:
+        widget = pending.pop()
+        if isinstance(widget, Gtk.Label) and widget.has_css_class("subtitle"):
+            widget.add_css_class("credits")
+            connect_credit_links(widget, linked, navigate)
+            return
+        child = widget.get_first_child()
+        while child:
+            pending.append(child)
+            child = child.get_next_sibling()

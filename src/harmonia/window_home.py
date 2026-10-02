@@ -16,6 +16,7 @@ from .models import (
     LibraryItem,
 )
 from .ui import (
+    CreditsLabel,
     menu_action_button,
     page_header,
     page_shell,
@@ -318,7 +319,8 @@ class WindowHomeMixin:
         )
         name = Gtk.Label(label=track.title, xalign=0, ellipsize=3)
         name.add_css_class("home-song-title")
-        subtitle = Gtk.Label(label=track.subtitle or "YouTube Music", xalign=0, ellipsize=3)
+        subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
+        subtitle.show_item(track, track.subtitle or "YouTube Music")
         subtitle.add_css_class("home-song-subtitle")
         copy.append(name)
         copy.append(subtitle)

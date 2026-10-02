@@ -67,7 +67,9 @@ class WindowPlaybackMixin:
         self._restored_position_ms = state.position_ms
         self.current_item = self.queue[self.queue_index]
         self.now_title.set_label(self.current_item.title)
-        self.now_subtitle.set_label(self.current_item.subtitle or "YouTube Music")
+        self.now_subtitle.show_item(
+            self.current_item, self.current_item.subtitle or "YouTube Music"
+        )
         if self.current_item.thumbnail:
             self._load_artwork(self.current_item.thumbnail, self.now_cover, size=128)
         self.elapsed_label.set_label(self._format_time(state.position_ms))
@@ -380,7 +382,7 @@ class WindowPlaybackMixin:
         self._refresh_home_song_rows()
         self._set_footer_item_state(True)
         self.now_title.set_label(item.title)
-        self.now_subtitle.set_label(item.subtitle or "YouTube Music")
+        self.now_subtitle.show_item(item, item.subtitle or "YouTube Music")
         if item.thumbnail:
             self._load_artwork(item.thumbnail, self.now_cover, size=128)
         else:

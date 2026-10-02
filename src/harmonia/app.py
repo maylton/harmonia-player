@@ -29,6 +29,7 @@ from .services import YouTubeMusicService
 from .storage import Storage
 from .theming import DEFAULT_THEME
 from .ui import (
+    CreditsLabel,
     menu_action_button,
     set_icon_selected,
     style_icon_button,
@@ -544,7 +545,9 @@ class HarmoniaWindow(
         self.footer_track_copy = copy
         self.now_title = Gtk.Label(xalign=0, ellipsize=3, max_width_chars=28)
         self.now_title.add_css_class("card-title")
-        self.now_subtitle = Gtk.Label(xalign=0, ellipsize=3, max_width_chars=28)
+        self.now_subtitle = CreditsLabel(
+            self.navigate_credit, xalign=0, ellipsize=3, max_width_chars=28
+        )
         self.now_subtitle.add_css_class("card-subtitle")
         copy.append(self.now_title)
         copy.append(self.now_subtitle)
@@ -827,7 +830,7 @@ class HarmoniaWindow(
         self.expanded_title = Gtk.Label(xalign=0, wrap=True)
         self.expanded_title.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
         self.expanded_title.add_css_class("expanded-title")
-        self.expanded_subtitle = Gtk.Label(xalign=0, ellipsize=3)
+        self.expanded_subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
         self.expanded_subtitle.add_css_class("expanded-subtitle")
         title_box.append(self.expanded_title)
         title_box.append(self.expanded_subtitle)
@@ -945,7 +948,7 @@ class HarmoniaWindow(
             return
         self.player_bar.add_css_class("player-bar-empty")
         self.now_title.set_label(_("Nenhuma música reproduzindo"))
-        self.now_subtitle.set_label(_("Escolha uma faixa para começar"))
+        self.now_subtitle.show_item(None, _("Escolha uma faixa para começar"))
         self.now_cover.set_paintable(None)
         self.ambient_background.set_paintable(None)
         self.now_cover.set_opacity(1.0)
@@ -989,7 +992,7 @@ class HarmoniaWindow(
             return
         self.expanded_title.set_label(item.title)
         subtitle = re.sub(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$", "", item.subtitle or "")
-        self.expanded_subtitle.set_label(subtitle or "YouTube Music")
+        self.expanded_subtitle.show_item(item, subtitle or "YouTube Music")
         if item.thumbnail:
             self.expanded_cover.set_paintable(None)
             self.expanded_backdrop_base.set_paintable(None)
