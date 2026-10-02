@@ -4,6 +4,7 @@ import logging
 import random
 import re
 import threading
+from dataclasses import replace
 
 import gi
 
@@ -31,6 +32,30 @@ from .ui import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+TRACK_COVER_SIZE = 40
+_DURATION = re.compile(r"^\d{1,2}(?::\d{2}){1,2}$")
+_BYLINE_SEPARATORS = re.compile(r"\s+[·•]\s+")
+
+
+def track_byline(track: LibraryItem) -> str:
+    """The track subtitle without durations, which have their own column."""
+    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
+    return " · ".join(part for part in parts if not _DURATION.match(part.strip()))
+
+
+def track_artist(track: LibraryItem) -> str:
+    if track.artist:
+        return track.artist
+    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
+    first = parts[0].strip() if parts else ""
+    return "" if _DURATION.match(first) else first
+
+
+def radio_queue(seed: LibraryItem, items: list[LibraryItem]) -> list[LibraryItem]:
+    """Start the radio with its seed track, without repeating it."""
+    return [seed, *(item for item in items if item.id != seed.id)]
 
 
 class WindowDetailMixin:
@@ -574,6 +599,7 @@ class WindowDetailMixin:
         header.add_css_class("detail-track-header")
         number = Gtk.Label(label=_("#"), width_chars=3, xalign=1)
         header.append(number)
+        header.append(Gtk.Box(width_request=TRACK_COVER_SIZE))
         title = Gtk.Label(label=_("TÍTULO"), xalign=0, hexpand=True)
         header.append(title)
         heart_space = Gtk.Box(width_request=36)
@@ -615,9 +641,22 @@ class WindowDetailMixin:
         leading.add_named(play, "play")
         row.append(leading)
 
-        title = Gtk.Label(label=track.title, xalign=0, ellipsize=3, hexpand=True)
+        artwork = track if track.thumbnail else replace(track, thumbnail=collection.thumbnail)
+        cover = self._square_cover(artwork, size=TRACK_COVER_SIZE, fixed=True)
+        cover.add_css_class("detail-track-cover")
+        cover.set_valign(Gtk.Align.CENTER)
+        row.append(cover)
+
+        text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, valign=Gtk.Align.CENTER)
+        title = Gtk.Label(label=track.title, xalign=0, ellipsize=3)
         title.add_css_class("detail-track-title")
-        row.append(title)
+        text.append(title)
+        byline = track_byline(track)
+        if byline:
+            subtitle = Gtk.Label(label=byline, xalign=0, ellipsize=3)
+            subtitle.add_css_class("detail-track-subtitle")
+            text.append(subtitle)
+        row.append(text)
 
         liked_ids = {song.id for song in self.sections.get("songs", [])}
         liked = track.id in liked_ids
@@ -639,22 +678,11 @@ class WindowDetailMixin:
         style_icon_button(options, "sm")
         options.add_css_class("detail-track-action")
         popover = Gtk.Popover()
-        option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        option_box.add_css_class("detail-menu")
-        add = menu_action_button(_("Adicionar à playlist"), "list-add-symbolic")
-        add.connect("clicked", lambda *_: (popover.popdown(), self.add_to_playlist_dialog(track)))
-        option_box.append(add)
-        download = menu_action_button(_("Baixar"), "folder-download-symbolic")
-        download.connect("clicked", lambda *_: (popover.popdown(), self._download_items([track])))
-        option_box.append(download)
-        if collection.kind == "playlists" and track.set_video_id:
-            remove = menu_action_button(_("Remover desta playlist"), "list-remove-symbolic")
-            remove.connect(
-                "clicked", lambda *_: (popover.popdown(), self._remove_track(collection, track))
-            )
-            option_box.append(remove)
-        popover.set_child(option_box)
         options.set_popover(popover)
+        # Built when opened, so the offline state is always current.
+        options.set_create_popup_func(
+            lambda _button: popover.set_child(self._track_menu(collection, track, popover))
+        )
         row.append(options)
 
         state = {
@@ -679,6 +707,9 @@ class WindowDetailMixin:
         motion.connect("enter", lambda *_: self._set_detail_track_hover(state, True))
         motion.connect("leave", lambda *_: self._set_detail_track_hover(state, False))
         row.add_controller(motion)
+        secondary = Gtk.GestureClick(button=3)
+        secondary.connect("pressed", lambda *_: options.popup())
+        row.add_controller(secondary)
         click = Gtk.GestureClick(button=1)
         click.connect(
             "released", lambda _gesture, _press, _x, _y: self._activate_detail_track(state)
@@ -736,12 +767,85 @@ class WindowDetailMixin:
         else:
             state["like"].remove_css_class("detail-track-accent")
         show_like = hovered or state["liked"]
-        show_options = hovered or state["options"].get_active()
+        emphasized = hovered or state["options"].get_active()
         state["like"].set_opacity(1.0 if show_like else 0.0)
         state["like"].set_can_target(show_like)
-        state["options"].set_opacity(1.0 if show_options else 0.0)
-        state["options"].set_can_target(show_options)
+        # Always reachable so the menu is discoverable without hovering.
+        state["options"].set_opacity(1.0 if emphasized else 0.55)
 
     def _refresh_detail_track_states(self) -> None:
         for state in self.detail_track_rows:
             self._update_detail_track_row(state)
+
+    def _track_menu(
+        self, collection: LibraryItem, track: LibraryItem, popover: Gtk.Popover
+    ) -> Gtk.Widget:
+        """Per-track actions: navigation, radio, playlists and offline download."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        box.add_css_class("detail-menu")
+
+        def entry(label: str, icon: str, callback, sensitive: bool = True) -> None:
+            button = menu_action_button(label, icon)
+            button.set_sensitive(sensitive)
+            button.connect("clicked", lambda *_: (popover.popdown(), callback()))
+            box.append(button)
+
+        playable = track.kind in ("songs", "videos") and not track.id.startswith("local:")
+        if playable:
+            entry(_("Iniciar rádio"), "media-playlist-consecutive-symbolic",
+                  lambda: self._start_track_radio(track))  # fmt: skip
+        artist = track_artist(track)
+        if track.artist_id:
+            entry(_("Ir para o artista"), "avatar-default-symbolic",
+                  lambda: self.open_item(LibraryItem(track.artist_id, artist, kind="artists")))  # fmt: skip
+        elif artist:
+            entry(_("Buscar o artista"), "system-search-symbolic",
+                  lambda: self._search_for(artist))  # fmt: skip
+        album_id = track.album_id or (collection.id if collection.kind == "albums" else None)
+        if album_id and album_id != collection.id:
+            entry(_("Ir para o álbum"), "media-optical-symbolic",
+                  lambda: self.open_item(LibraryItem(album_id, track.album, kind="albums")))  # fmt: skip
+        box.append(Gtk.Separator())
+        entry(_("Adicionar à playlist"), "list-add-symbolic",
+              lambda: self.add_to_playlist_dialog(track))  # fmt: skip
+        if playable:
+            offline = self.downloads.offline_path(track.id) is not None
+            if offline:
+                entry(_("Disponível offline"), "emblem-ok-symbolic", lambda: None, sensitive=False)
+            else:
+                entry(_("Baixar para ouvir offline"), "folder-download-symbolic",
+                      lambda: self._download_items([track]))  # fmt: skip
+        if collection.kind == "playlists" and track.set_video_id:
+            entry(_("Remover desta playlist"), "list-remove-symbolic",
+                  lambda: self._remove_track(collection, track))  # fmt: skip
+        return box
+
+    def _search_for(self, query: str) -> None:
+        self.search_entry.set_text(query)
+        self.search(query)
+
+    def _start_track_radio(self, track: LibraryItem) -> None:
+        self.toast_overlay.add_toast(
+            Adw.Toast(title=_("Preparando a rádio de {title}…").format(title=track.title))
+        )
+
+        def done(items: list[LibraryItem], error: str | None) -> bool:
+            if error:
+                self.toast_overlay.add_toast(
+                    Adw.Toast(
+                        title=_("Não foi possível iniciar a rádio: {error}").format(error=error)
+                    )
+                )
+                return False
+            self.set_queue(radio_queue(track, items), 0)
+            return False
+
+        def worker() -> None:
+            try:
+                items = self.youtube.radio(track.id)
+            except Exception as exc:
+                GLib.idle_add(done, [], str(exc))
+                return
+            GLib.idle_add(done, items, None)
+
+        threading.Thread(target=worker, daemon=True, name="track-radio").start()

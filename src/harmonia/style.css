@@ -266,6 +266,9 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
   color: @harmonia_fg_dim;
 }
 .detail-track-row:hover { background: @harmonia_hover_bg; color: @harmonia_fg; }
+.detail-track-cover { border-radius: 4px; }
+.detail-track-subtitle { color: @harmonia_fg_dim; font-size: 12px; }
+.detail-track-current .detail-track-subtitle { color: @harmonia_fg_muted; }
 .detail-track-current { background: @harmonia_selected_bg; }
 .detail-track-title { color: @harmonia_fg; font-size: 14px; font-weight: 600; }
 .detail-track-number, .detail-track-duration {

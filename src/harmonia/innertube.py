@@ -213,6 +213,38 @@ def _endpoint(renderer: dict[str, Any]) -> tuple[str, str | None]:
     return video_id or browse_id, playlist_id
 
 
+_ARTIST_PAGES = {"MUSIC_PAGE_TYPE_ARTIST", "MUSIC_PAGE_TYPE_USER_CHANNEL"}
+_ALBUM_PAGES = {"MUSIC_PAGE_TYPE_ALBUM", "MUSIC_PAGE_TYPE_AUDIOBOOK"}
+
+
+def _linked_pages(renderer: dict[str, Any]) -> dict[str, str]:
+    """Return the first artist and album linked from a track's byline runs."""
+    containers = [renderer.get("subtitle"), renderer.get("longBylineText")]
+    for column in renderer.get("flexColumns", [])[1:]:
+        if isinstance(column, dict):
+            containers.append(
+                column.get("musicResponsiveListItemFlexColumnRenderer", {}).get("text")
+            )
+    links: dict[str, str] = {}
+    for container in containers:
+        runs = container.get("runs", []) if isinstance(container, dict) else []
+        for run in runs:
+            browse = ((run or {}).get("navigationEndpoint") or {}).get("browseEndpoint") or {}
+            page_type = (
+                (browse.get("browseEndpointContextSupportedConfigs") or {})
+                .get("browseEndpointContextMusicConfig", {})
+                .get("pageType")
+            )
+            browse_id, text = browse.get("browseId"), str(run.get("text", "")).strip()
+            if not browse_id or not text:
+                continue
+            if page_type in _ARTIST_PAGES and "artist_id" not in links:
+                links.update(artist=text, artist_id=str(browse_id))
+            elif page_type in _ALBUM_PAGES and "album_id" not in links:
+                links.update(album=text, album_id=str(browse_id))
+    return links
+
+
 def _kind_for_id(item_id: str, renderer: dict[str, Any], default: str) -> str:
     if item_id.startswith("MPSP"):
         return "podcasts"
@@ -295,6 +327,7 @@ def parse_library_items(payload: dict[str, Any], kind: str = "item") -> list[Lib
                     actual_kind,
                     playlist_id,
                     _set_video_id(renderer),
+                    **_linked_pages(renderer),
                 )
             )
     return items
@@ -402,7 +435,14 @@ def parse_watch_queue(payload: dict[str, Any], audio_only: bool = True) -> list[
             renderer.get("shortBylineText")
         )
         items.append(
-            LibraryItem(str(video_id), title, subtitle, _best_thumbnail(renderer), "songs")
+            LibraryItem(
+                str(video_id),
+                title,
+                subtitle,
+                _best_thumbnail(renderer),
+                "songs",
+                **_linked_pages(renderer),
+            )
         )
     return items
 

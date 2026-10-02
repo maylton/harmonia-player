@@ -10,6 +10,12 @@ class LibraryItem:
     kind: str = "item"
     playlist_id: str | None = None
     set_video_id: str | None = None
+    # Navigation targets linked from a track's byline. Only filled when the
+    # YouTube Music response carries them; cached rows leave them empty.
+    artist: str = ""
+    artist_id: str | None = None
+    album: str = ""
+    album_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

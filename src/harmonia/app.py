@@ -224,9 +224,17 @@ class HarmoniaWindow(
         self.search_entry.set_size_request(380, -1)
         self.search_entry.connect("activate", lambda *_: self.search(self.search_entry.get_text()))
         self.search_entry.connect("search-changed", self._search_text_changed)
-        self.search_suggestions = Gtk.Popover(autohide=True, has_arrow=False)
+        # Suggestions must never take the keyboard from the entry: an autohide
+        # popover grabs focus when it opens, which moved typing into its
+        # buttons (spaces activated suggestions and the caret jumped).
+        self.search_suggestions = Gtk.Popover(autohide=False, has_arrow=False)
+        self.search_suggestions.set_can_focus(False)
         self.search_suggestions.set_parent(self.search_entry)
         self.search_suggestions.add_css_class("search-suggestions")
+        self.search_entry.connect("stop-search", lambda *_: self.search_suggestions.popdown())
+        search_focus = Gtk.EventControllerFocus()
+        search_focus.connect("leave", lambda *_: self.search_suggestions.popdown())
+        self.search_entry.add_controller(search_focus)
         self.header.set_title_widget(self.search_entry)
         self.back = Gtk.Button(icon_name="go-previous-symbolic", tooltip_text=_("Voltar"))
         style_icon_button(self.back, "md")

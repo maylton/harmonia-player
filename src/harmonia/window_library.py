@@ -27,6 +27,7 @@ from .ui import (
 from .window_constants import ICONS, LABELS, LIKED_ICON
 
 LOGGER = logging.getLogger(__name__)
+ARTWORK_DOWNLOADS = threading.BoundedSemaphore(6)
 
 
 class WindowLibraryMixin:
@@ -387,7 +388,7 @@ class WindowLibraryMixin:
         frame.add_css_class("artist-cover" if item.kind == "artists" else "square-cover")
         overlay = Gtk.Overlay(hexpand=True, vexpand=True)
         placeholder = Gtk.Image.new_from_icon_name(ICONS.get(item.kind, "audio-x-generic-symbolic"))
-        placeholder.set_pixel_size(42)
+        placeholder.set_pixel_size(min(42, max(16, size // 2)))
         placeholder.add_css_class("cover-placeholder")
         overlay.set_child(placeholder)
         if item.thumbnail:
@@ -396,7 +397,10 @@ class WindowLibraryMixin:
             )
             picture.add_css_class("cover-art")
             overlay.add_overlay(picture)
-            self._load_artwork(item.thumbnail, picture, size=max(256, size * 2))
+            # Thumbnails in track lists only need a small image.
+            self._load_artwork(
+                item.thumbnail, picture, size=size * 3 if size < 64 else max(256, size * 2)
+            )
         frame.set_child(overlay)
         return frame
 
@@ -527,7 +531,9 @@ class WindowLibraryMixin:
         def worker():
             try:
                 request = urllib.request.Request(request_url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(request, timeout=15) as response:
+                # Long track lists request many covers at once; cap the
+                # parallel downloads instead of opening one connection each.
+                with ARTWORK_DOWNLOADS, urllib.request.urlopen(request, timeout=15) as response:
                     data = response.read(12 * 1024 * 1024)
                 target.write_bytes(data)
                 GLib.idle_add(self._set_artwork_if_current, picture, target, request_key)
