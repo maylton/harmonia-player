@@ -53,6 +53,11 @@ def test_tracks_keep_the_first_linked_artist_and_album():
     renderer = track_renderer()["musicResponsiveListItemRenderer"]
     assert _linked_pages(renderer) == {
         "artist": "Elis Regina", "artist_id": "UCelis", "album": "Elis & Tom", "album_id": "MPREb_elis",
+        "links": (
+            ("artist", "Elis Regina", "UCelis"),
+            ("artist", "Tom Jobim", "UCtom"),
+            ("album", "Elis & Tom", "MPREb_elis"),
+        ),
     }  # fmt: skip
     (item,) = parse_library_items({"contents": [track_renderer()]}, kind="songs")
     assert (item.artist_id, item.album_id) == ("UCelis", "MPREb_elis")

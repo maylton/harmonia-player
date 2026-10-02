@@ -172,7 +172,9 @@ class Storage:
             return
         try:
             data = json.loads(self.library_file.read_text())
-            sections = {key: [LibraryItem(**item) for item in items] for key, items in data.items()}
+            sections = {
+                key: [LibraryItem.from_dict(item) for item in items] for key, items in data.items()
+            }
             self.save_library(sections)
             self.library_file.rename(self.library_file.with_suffix(".json.migrated"))
         except (OSError, ValueError, TypeError):

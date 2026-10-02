@@ -19,8 +19,10 @@ from .models import (
     LibraryItem,
 )
 from .ui import (
+    CreditsLabel,
     action_button,
     icon_button,
+    item_credits,
     media_play_button,
     menu_action_button,
     page_header,
@@ -29,28 +31,14 @@ from .ui import (
     set_action_role,
     set_icon_selected,
     style_icon_button,
+    track_artist,
+    track_byline,
 )
 
 LOGGER = logging.getLogger(__name__)
 
 
 TRACK_COVER_SIZE = 40
-_DURATION = re.compile(r"^\d{1,2}(?::\d{2}){1,2}$")
-_BYLINE_SEPARATORS = re.compile(r"\s+[·•]\s+")
-
-
-def track_byline(track: LibraryItem) -> str:
-    """The track subtitle without durations, which have their own column."""
-    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
-    return " · ".join(part for part in parts if not _DURATION.match(part.strip()))
-
-
-def track_artist(track: LibraryItem) -> str:
-    if track.artist:
-        return track.artist
-    parts = [part for part in _BYLINE_SEPARATORS.split(track.subtitle or "") if part.strip()]
-    first = parts[0].strip() if parts else ""
-    return "" if _DURATION.match(first) else first
 
 
 def radio_queue(seed: LibraryItem, items: list[LibraryItem]) -> list[LibraryItem]:
@@ -430,7 +418,11 @@ class WindowDetailMixin:
         avatar = Gtk.Label(label=initials, width_chars=2)
         avatar.add_css_class("detail-avatar")
         meta.append(avatar)
-        creator_label = Gtk.Label(label=creator, ellipsize=3)
+        creator_label = CreditsLabel(self.navigate_credit, ellipsize=3)
+        # Albums credit their artist; playlists credit their owner, not a link.
+        if item.kind == "albums" and not item_credits(item) and creator:
+            item = replace(item, links=(("search", creator, creator),))
+        creator_label.show_item(item if item.kind != "playlists" else None, creator)
         creator_label.add_css_class("detail-creator")
         meta.append(creator_label)
 
@@ -653,7 +645,8 @@ class WindowDetailMixin:
         text.append(title)
         byline = track_byline(track)
         if byline:
-            subtitle = Gtk.Label(label=byline, xalign=0, ellipsize=3)
+            subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
+            subtitle.show_item(track, byline)
             subtitle.add_css_class("detail-track-subtitle")
             text.append(subtitle)
         row.append(text)

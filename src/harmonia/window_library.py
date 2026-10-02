@@ -18,8 +18,10 @@ from .models import (
     LocalPlaylist,
 )
 from .ui import (
+    CreditsLabel,
     action_button,
     icon_button,
+    link_row_subtitle,
     page_header,
     page_shell,
     section_link,
@@ -296,8 +298,12 @@ class WindowLibraryMixin:
         item: LibraryItem,
         size: int,
         activate,
-    ) -> Gtk.Button:
-        """One card interaction shared by Home, Library and artist shelves."""
+    ) -> Gtk.Widget:
+        """One card interaction shared by Home, Library and artist shelves.
+
+        The subtitle sits below the button, not inside it: GtkButton claims
+        clicks in the capture phase, so links inside it could never be used.
+        """
         button = Gtk.Button()
         button.add_css_class("media-card-button")
         button.set_halign(Gtk.Align.START)
@@ -353,22 +359,33 @@ class WindowLibraryMixin:
         title.add_css_class("card-title")
         card.append(title)
         if item.subtitle:
-            subtitle = Gtk.Label(
-                label=item.subtitle,
+            subtitle = CreditsLabel(
+                self.navigate_credit,
                 xalign=0,
                 ellipsize=3,
                 width_chars=width_chars,
                 max_width_chars=width_chars,
             )
+            subtitle.show_item(item)
             subtitle.add_css_class("card-subtitle")
-            card.append(subtitle)
+        else:
+            subtitle = None
         button.set_child(card)
         hover = Gtk.EventControllerMotion()
         hover.connect("enter", lambda *_args: self._home_card_hover(cover, hint, True))
         hover.connect("leave", lambda *_args: self._home_card_hover(cover, hint, False))
         button.add_controller(hover)
         button.connect("clicked", lambda *_: activate())
-        return button
+        shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=7)
+        shell.add_css_class("media-card-shell")
+        shell.set_halign(Gtk.Align.START)
+        shell.set_valign(Gtk.Align.START)
+        shell.set_hexpand(False)
+        shell.set_size_request(size, -1)
+        shell.append(button)
+        if subtitle:
+            shell.append(subtitle)
+        return shell
 
     def _square_cover(self, item: LibraryItem, size: int = 140, fixed: bool = False) -> Gtk.Widget:
         """Create conventional 1:1 music artwork, circular only for artists."""
@@ -417,6 +434,7 @@ class WindowLibraryMixin:
             row.set_use_markup(False)
             row.set_title(item.title)
             row.set_subtitle(item.subtitle)
+            link_row_subtitle(row, item, self.navigate_credit)
             row.add_css_class("song-row")
             row.set_activatable(True)
             thumb = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
@@ -542,6 +560,17 @@ class WindowLibraryMixin:
 
         threading.Thread(target=worker, daemon=True).start()
 
+    def navigate_credit(self, kind: str, target: str, name: str) -> None:
+        """Open an artist or album named in a subtitle, from anywhere in the app."""
+        if getattr(self, "expanded_revealer", None) and self.expanded_revealer.get_reveal_child():
+            self._hide_expanded_player()
+        if kind == "artist":
+            self.open_item(LibraryItem(target, name, kind="artists"))
+        elif kind == "album":
+            self.open_item(LibraryItem(target, name, kind="albums"))
+        elif name:
+            self._search_for(name)
+
     def open_item(self, item: LibraryItem) -> None:
         if item.kind in ("songs", "videos"):
             songs = self.sections.get("songs", [])
@@ -622,6 +651,7 @@ class WindowLibraryMixin:
             row.set_use_markup(False)
             row.set_title(item.title)
             row.set_subtitle(item.subtitle)
+            link_row_subtitle(row, item, self.navigate_credit)
             row.set_activatable(True)
             row.connect(
                 "activated",

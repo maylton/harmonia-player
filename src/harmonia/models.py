@@ -16,6 +16,19 @@ class LibraryItem:
     artist_id: str | None = None
     album: str = ""
     album_id: str | None = None
+    # Every linked credit in byline order, as (kind, name, browse_id) with kind
+    # "artist" or "album", so each artist of a collaboration is navigable.
+    links: tuple[tuple[str, str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        # JSON round trips (listen together, caches) turn tuples into lists.
+        self.links = tuple(tuple(link) for link in self.links or ())
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "LibraryItem":
+        """Build an item from serialized data, ignoring fields from other versions."""
+        known = {name: value for name, value in data.items() if name in cls.__dataclass_fields__}
+        return cls(**known)
 
 
 @dataclass(frozen=True, slots=True)
