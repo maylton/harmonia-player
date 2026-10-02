@@ -23,6 +23,15 @@ from .ui import (
 LOGGER = logging.getLogger(__name__)
 
 
+def search_entry_focused(entry: Gtk.Widget) -> bool:
+    """True when the keyboard focus is inside the entry.
+
+    GtkSearchEntry delegates focus to an internal GtkText, so has_focus() on the
+    entry itself is always False and suggestions never appeared.
+    """
+    return bool(entry.get_state_flags() & Gtk.StateFlags.FOCUS_WITHIN)
+
+
 class WindowSearchMixin:
     def _search_text_changed(self, entry: Gtk.SearchEntry) -> None:
         if self._suggestion_timeout:
@@ -31,7 +40,9 @@ class WindowSearchMixin:
         query = entry.get_text().strip()
         self._suggestion_request += 1
         request_id = self._suggestion_request
-        if len(query) < 2:
+        # Filling the entry with a chosen suggestion or a finished search must
+        # not reopen the list over the results.
+        if len(query) < 2 or query == getattr(self, "_searched_query", None):
             self.search_suggestions.popdown()
             return
 
@@ -58,13 +69,19 @@ class WindowSearchMixin:
     ) -> bool:
         if request_id != self._suggestion_request or query != self.search_entry.get_text().strip():
             return False
-        if not suggestions or not self.search_entry.has_focus():
+        if not suggestions or not search_entry_focused(self.search_entry):
             self.search_suggestions.popdown()
             return False
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.add_css_class("search-suggestion-list")
         for value in suggestions[:8]:
-            button = Gtk.Button(label=value, icon_name="system-search-symbolic")
+            # A GtkButton shows either a label or an icon; build both explicitly.
+            content = Gtk.Box(spacing=10)
+            content.append(Gtk.Image.new_from_icon_name("system-search-symbolic"))
+            content.append(Gtk.Label(label=value, xalign=0, hexpand=True, ellipsize=3))
+            button = Gtk.Button(child=content)
+            button.set_focusable(False)
+            button.set_focus_on_click(False)
             button.add_css_class("flat")
             button.set_halign(Gtk.Align.FILL)
             button.connect(
@@ -85,6 +102,8 @@ class WindowSearchMixin:
         if not query:
             return
         self.search_suggestions.popdown()
+        self._searched_query = query
+        self._suggestion_request += 1  # drop suggestions still in flight
         self._search_request += 1
         request_id = self._search_request
         status = Adw.StatusPage(
