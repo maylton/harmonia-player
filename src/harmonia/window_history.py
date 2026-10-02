@@ -76,7 +76,11 @@ class WindowHistoryMixin:
             for record in records:
                 subtitle = status_labels.get(record.status, record.status)
                 if record.total_bytes:
-                    subtitle += f" · {self._format_bytes(record.downloaded_bytes)} de {self._format_bytes(record.total_bytes)}"
+                    progress = _("{done} de {total}").format(
+                        done=self._format_bytes(record.downloaded_bytes),
+                        total=self._format_bytes(record.total_bytes),
+                    )
+                    subtitle += f" · {progress}"
                 if record.error:
                     subtitle += f" · {record.error}"
                 row = Adw.ActionRow()

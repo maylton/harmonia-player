@@ -258,7 +258,7 @@ def _linked_pages(renderer: dict[str, Any]) -> dict[str, str]:
     return links
 
 
-def _kind_for_id(item_id: str, renderer: dict[str, Any], default: str) -> str:
+def _kind_for_id(item_id: str, default: str) -> str:
     if item_id.startswith("MPSP"):
         return "podcasts"
     if item_id.startswith("MPRE"):
@@ -330,7 +330,7 @@ def parse_library_items(payload: dict[str, Any], kind: str = "item") -> list[Lib
             if stable_id in seen:
                 continue
             seen.add(stable_id)
-            actual_kind = _kind_for_id(item_id, renderer, kind) if kind == "auto" else kind
+            actual_kind = _kind_for_id(item_id, kind) if kind == "auto" else kind
             items.append(
                 LibraryItem(
                     stable_id,

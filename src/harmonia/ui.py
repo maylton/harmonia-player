@@ -333,9 +333,12 @@ def link_row_subtitle(
         row.set_use_markup(False)
         row.set_subtitle(item.subtitle or "")
         return
-    row.set_use_markup(True)
+    # Set the escaped texts before enabling markup: switching markup on
+    # re-parses the current title and subtitle, and the plain ones may hold
+    # a bare "&" (e.g. "Elis & Tom"), which Pango rejects.
     row.set_title(escape(item.title))
     row.set_subtitle(markup)
+    row.set_use_markup(True)
     pending = [row]
     while pending:
         widget = pending.pop()
