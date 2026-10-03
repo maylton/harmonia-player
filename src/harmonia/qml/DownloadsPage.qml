@@ -13,11 +13,11 @@ Item {
         PageHeader {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.gridUnit * 1.5
-            title: "Downloads"
-            subtitle: backend.downloadItems.length + " itens · " + backend.downloadStorageLabel + " utilizados"
+            title: i18n.tr("Downloads")
+            subtitle: i18n.ntrf("{count} item · {size} utilizados", "{count} itens · {size} utilizados", backend.downloadItems.length, { size: backend.downloadStorageLabel })
 
             Controls.Button {
-                text: "Validar conta"
+                text: i18n.tr("Validar conta")
                 icon.name: "emblem-ok"
                 enabled: backend.loggedIn
                 onClicked: backend.validateDownloads()
@@ -85,14 +85,14 @@ Item {
                         Controls.Label {
                             Layout.fillWidth: true
                             text: modelData.status === "completed"
-                                  ? "Disponível offline"
+                                  ? i18n.tr("Disponível offline")
                                   : modelData.status === "downloading"
                                     ? Math.round(modelData.progress * 100) + "%"
                                     : modelData.status === "paused"
-                                      ? "Pausado"
+                                      ? i18n.tr("Pausado")
                                       : modelData.status === "failed"
-                                        ? "Falhou: " + modelData.error
-                                        : "Na fila"
+                                        ? i18n.trf("Falhou: {error}", { error: modelData.error })
+                                        : i18n.tr("Na fila")
                             color: modelData.status === "failed"
                                  ? Kirigami.Theme.negativeTextColor
                                  : Kirigami.Theme.textColor
@@ -106,7 +106,7 @@ Item {
                         icon.name: "media-playback-start"
                         onClicked: backend.playDownload(index)
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Reproduzir offline"
+                        Controls.ToolTip.text: i18n.tr("Reproduzir offline")
                     }
 
                     Controls.ToolButton {
@@ -114,7 +114,7 @@ Item {
                         icon.name: "media-playback-pause"
                         onClicked: backend.pauseDownload(modelData.id)
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Pausar"
+                        Controls.ToolTip.text: i18n.tr("Pausar")
                     }
 
                     Controls.ToolButton {
@@ -122,14 +122,14 @@ Item {
                         icon.name: "media-playback-start"
                         onClicked: backend.resumeDownload(modelData.id)
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Retomar"
+                        Controls.ToolTip.text: i18n.tr("Retomar")
                     }
 
                     Controls.ToolButton {
                         icon.name: "edit-delete"
                         onClicked: backend.removeDownload(modelData.id)
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Remover download"
+                        Controls.ToolTip.text: i18n.tr("Remover download")
                     }
                 }
             }
@@ -137,8 +137,8 @@ Item {
             Kirigami.PlaceholderMessage {
                 anchors.centerIn: parent
                 visible: backend.downloadItems.length === 0
-                text: "Nenhum download"
-                explanation: "Use o botão de download em um álbum ou playlist para ouvir offline."
+                text: i18n.tr("Nenhum download")
+                explanation: i18n.tr("Use o botão de download em um álbum ou playlist para ouvir offline.")
                 icon.name: "download"
             }
         }

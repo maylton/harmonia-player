@@ -112,6 +112,22 @@ To install a bundle downloaded manually from the corresponding GitHub release:
 The bundle includes both Brazilian Portuguese and English translations. The
 GNOME runtime is resolved separately by Flatpak.
 
+## Translations
+
+Both frontends share the gettext catalogs in `po/`. Python code uses `_()` and
+`ngettext()`; QML uses the `i18n` object (`i18n.tr()`, `i18n.trf()` with
+`{placeholders}`, `i18n.ntr()` and `i18n.ntrf()` for plurals). After changing
+any user-facing text, regenerate the template and merge the catalogs, then fill
+in the new entries:
+
+```bash
+python3 tools/update_translations.py
+```
+
+It extracts Python (`po/POTFILES`) and QML (`po/POTFILES.qml`) with their own
+parsers, so use it instead of Meson's `harmonia-pot` target. The tests fail if a
+catalog is missing a message, has an untranslated one or keeps obsolete entries.
+
 ## Tests
 
 ```bash

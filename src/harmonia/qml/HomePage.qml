@@ -23,8 +23,8 @@ Item {
             spacing: Kirigami.Units.gridUnit * 1.65
 
             PageHeader {
-                title: "Início"
-                subtitle: "Escolhas feitas para você pelo YouTube Music"
+                title: i18n.tr("Início")
+                subtitle: i18n.tr("Escolhas feitas para você pelo YouTube Music")
             }
 
             Repeater {
@@ -71,8 +71,8 @@ Item {
                 width: parent.width
                 visible: backend.homeSections.length === 0 && !backend.busy
                 text: backend.loggedIn
-                      ? "Sincronize para carregar suas recomendações"
-                      : "Conecte sua conta para começar"
+                      ? i18n.tr("Sincronize para carregar suas recomendações")
+                      : i18n.tr("Conecte sua conta para começar")
                 icon.name: "audio-headphones"
             }
         }

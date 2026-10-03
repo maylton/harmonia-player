@@ -63,7 +63,7 @@ Controls.Dialog {
                     id: closePlayerButton
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Fechar player expandido"
+                    text: i18n.tr("Fechar player expandido")
                     icon.name: "go-down"
                     display: Controls.AbstractButton.IconOnly
                     onClicked: root.close()
@@ -82,19 +82,19 @@ Controls.Dialog {
 
                     Controls.TabButton {
                         id: musicTab
-                        text: "Música"
+                        text: i18n.tr("Música")
                         icon.name: "audio-headphones"
                     }
 
                     Controls.TabButton {
                         id: lyricsTab
-                        text: "Letras"
+                        text: i18n.tr("Letras")
                         icon.name: "view-media-lyrics"
                     }
 
                     Controls.TabButton {
                         id: relatedTab
-                        text: "Relacionadas"
+                        text: i18n.tr("Relacionadas")
                         icon.name: "view-media-playlist"
                     }
 
@@ -182,7 +182,7 @@ Controls.Dialog {
                                     z: 2
 
                                     Controls.Button {
-                                        text: "Música"
+                                        text: i18n.tr("Música")
                                         checkable: true
                                         checked: videoBackend.mode === "audio"
                                         enabled: backend.currentId.length > 0 && !videoBackend.loading
@@ -190,13 +190,13 @@ Controls.Dialog {
                                     }
 
                                     Controls.Button {
-                                        text: "Vídeo"
+                                        text: i18n.tr("Vídeo")
                                         checkable: true
                                         checked: videoBackend.mode === "video"
                                         enabled: videoBackend.available && !videoBackend.loading
                                         onClicked: videoBackend.setMode("video")
                                         Controls.ToolTip.visible: hovered && !videoBackend.available
-                                        Controls.ToolTip.text: "Nenhum vídeo disponível para esta faixa"
+                                        Controls.ToolTip.text: i18n.tr("Nenhum vídeo disponível para esta faixa")
                                     }
 
                                     Controls.BusyIndicator {
@@ -255,7 +255,7 @@ Controls.Dialog {
                                     checked: backend.shuffle
                                     onClicked: backend.toggleShuffle()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Ordem aleatória"
+                                    Controls.ToolTip.text: i18n.tr("Ordem aleatória")
                                 }
 
                                 Controls.ToolButton {
@@ -263,7 +263,7 @@ Controls.Dialog {
                                     enabled: backend.currentId.length > 0
                                     onClicked: backend.previous()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Anterior"
+                                    Controls.ToolTip.text: i18n.tr("Anterior")
                                 }
 
                                 Controls.RoundButton {
@@ -281,7 +281,7 @@ Controls.Dialog {
                                     padding: 0
                                     onClicked: backend.togglePlayback()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: backend.playing ? "Pausar" : "Reproduzir"
+                                    Controls.ToolTip.text: backend.playing ? i18n.tr("Pausar") : i18n.tr("Reproduzir")
 
                                     background: Rectangle {
                                         radius: width / 2
@@ -312,7 +312,7 @@ Controls.Dialog {
                                     enabled: backend.canNext
                                     onClicked: backend.next()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Próxima"
+                                    Controls.ToolTip.text: i18n.tr("Próxima")
                                 }
 
                                 Controls.ToolButton {
@@ -321,7 +321,7 @@ Controls.Dialog {
                                     checked: backend.repeat
                                     onClicked: backend.toggleRepeat()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Repetir"
+                                    Controls.ToolTip.text: i18n.tr("Repetir")
                                 }
 
                                 Controls.ToolButton {
@@ -333,7 +333,7 @@ Controls.Dialog {
                                     checked: backend.autoplay
                                     onClicked: backend.toggleAutoplay()
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Reprodução automática"
+                                    Controls.ToolTip.text: i18n.tr("Reprodução automática")
                                 }
                             }
 
@@ -373,8 +373,8 @@ Controls.Dialog {
                                     onClicked: backend.toggleLike(backend.currentId)
                                     Controls.ToolTip.visible: hovered
                                     Controls.ToolTip.text: backend.currentLiked
-                                                           ? "Remover das curtidas"
-                                                           : "Curtir"
+                                                           ? i18n.tr("Remover das curtidas")
+                                                           : i18n.tr("Curtir")
                                 }
 
                                 Kirigami.Icon {
@@ -401,7 +401,7 @@ Controls.Dialog {
                                         root.close()
                                     }
                                     Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.text: "Parar"
+                                    Controls.ToolTip.text: i18n.tr("Parar")
                                 }
                             }
                         }
@@ -425,10 +425,10 @@ Controls.Dialog {
 
                         PageHeader {
                             Layout.fillWidth: true
-                            title: "Relacionadas"
+                            title: i18n.tr("Relacionadas")
                             subtitle: backend.autoplay
-                                      ? "A reprodução automática usa estas recomendações para continuar a fila."
-                                      : "Ative a reprodução automática para continuar ouvindo músicas relacionadas."
+                                      ? i18n.tr("A reprodução automática usa estas recomendações para continuar a fila.")
+                                      : i18n.tr("Ative a reprodução automática para continuar ouvindo músicas relacionadas.")
 
                             Controls.Switch {
                                 checked: backend.autoplay
@@ -490,14 +490,14 @@ Controls.Dialog {
                                         icon.name: "go-next"
                                         onClicked: backend.promoteRelated(index, true)
                                         Controls.ToolTip.visible: hovered
-                                        Controls.ToolTip.text: "Tocar em seguida"
+                                        Controls.ToolTip.text: i18n.tr("Tocar em seguida")
                                     }
 
                                     Controls.ToolButton {
                                         icon.name: "list-add"
                                         onClicked: backend.promoteRelated(index, false)
                                         Controls.ToolTip.visible: hovered
-                                        Controls.ToolTip.text: "Adicionar ao fim"
+                                        Controls.ToolTip.text: i18n.tr("Adicionar ao fim")
                                     }
                                 }
                             }
@@ -505,7 +505,7 @@ Controls.Dialog {
                             Kirigami.PlaceholderMessage {
                                 anchors.centerIn: parent
                                 visible: backend.relatedItems.length === 0 && !backend.autoplayLoading
-                                text: "As recomendações aparecem conforme a fila avança."
+                                text: i18n.tr("As recomendações aparecem conforme a fila avança.")
                                 icon.name: "view-media-playlist"
                             }
                         }

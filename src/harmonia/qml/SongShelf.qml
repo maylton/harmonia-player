@@ -53,7 +53,7 @@ Column {
         }
 
         Controls.Button {
-            text: "Tocar tudo"
+            text: i18n.tr("Tocar tudo")
             icon.name: "media-playback-start"
             flat: true
             onClicked: root.playAll()
@@ -193,13 +193,13 @@ Column {
                                 y: options.height
 
                                 Controls.MenuItem {
-                                    text: modelData.liked ? "Remover das curtidas" : "Curtir música"
+                                    text: modelData.liked ? i18n.tr("Remover das curtidas") : i18n.tr("Curtir música")
                                     icon.name: "love-symbolic"
                                     onTriggered: root.likeItem(modelData.id)
                                 }
 
                                 Controls.MenuItem {
-                                    text: "Baixar"
+                                    text: i18n.tr("Baixar")
                                     icon.name: "download"
                                     onTriggered: root.downloadItem(modelData.id)
                                 }

@@ -34,14 +34,14 @@ Item {
 
             PageHeader {
                 width: parent.width
-                title: "Preferências"
-                subtitle: "Conta, aparência, streaming, áudio, integrações e dados — compartilhados entre GTK e KDE"
+                title: i18n.tr("Preferências")
+                subtitle: i18n.tr("Conta, aparência, streaming, áudio, integrações e dados — compartilhados entre GTK e KDE")
             }
 
             SettingsSection {
                 width: parent.width
-                title: "Conta"
-                subtitle: "Sessão usada para biblioteca, recomendações e sincronização do YouTube Music."
+                title: i18n.tr("Conta")
+                subtitle: i18n.tr("Sessão usada para biblioteca, recomendações e sincronização do YouTube Music.")
                 iconName: "user-identity"
 
                 RowLayout {
@@ -64,8 +64,8 @@ Item {
                             text: backend.loggedIn
                                   ? (backend.accountName.length > 0
                                      ? backend.accountName
-                                     : "YouTube Music conectado")
-                                  : "Conta não conectada"
+                                     : i18n.tr("YouTube Music conectado"))
+                                  : i18n.tr("Conta não conectada")
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
                         }
@@ -75,8 +75,8 @@ Item {
                             text: backend.loggedIn
                                   ? (backend.accountEmail.length > 0
                                      ? backend.accountEmail
-                                     : "Sessão disponível para sincronização")
-                                  : "Conecte sua conta para carregar biblioteca e recomendações."
+                                     : i18n.tr("Sessão disponível para sincronização"))
+                                  : i18n.tr("Conecte sua conta para carregar biblioteca e recomendações.")
                             opacity: 0.62
                             elide: Text.ElideRight
                         }
@@ -84,21 +84,21 @@ Item {
 
                     Controls.Button {
                         visible: backend.loggedIn
-                        text: "Validar"
+                        text: i18n.tr("Validar")
                         icon.name: "emblem-ok"
                         onClicked: backend.validateAccount()
                     }
 
                     Controls.Button {
                         visible: backend.loggedIn
-                        text: "Desconectar"
+                        text: i18n.tr("Desconectar")
                         icon.name: "system-log-out"
                         onClicked: backend.disconnectAccount()
                     }
 
                     Controls.Button {
                         visible: !backend.loggedIn
-                        text: "Conectar"
+                        text: i18n.tr("Conectar")
                         icon.name: "user-online"
                         highlighted: true
                         onClicked: root.connectRequested()
@@ -108,8 +108,8 @@ Item {
 
             SettingsSection {
                 width: parent.width
-                title: "Aparência"
-                subtitle: "Integração visual com o Plasma e o fundo ambiente do player."
+                title: i18n.tr("Aparência")
+                subtitle: i18n.tr("Integração visual com o Plasma e o fundo ambiente do player.")
                 iconName: "preferences-desktop-theme"
 
                 RowLayout {
@@ -122,13 +122,13 @@ Item {
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: "Fundo ambiente desfocado"
+                            text: i18n.tr("Fundo ambiente desfocado")
                             font.weight: Font.DemiBold
                         }
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: "Usa a capa atual para colorir o fundo e tornar as superfícies mais translúcidas."
+                            text: i18n.tr("Usa a capa atual para colorir o fundo e tornar as superfícies mais translúcidas.")
                             opacity: 0.62
                             wrapMode: Text.WordWrap
                         }
@@ -143,14 +143,14 @@ Item {
                 Kirigami.InlineMessage {
                     Layout.fillWidth: true
                     type: Kirigami.MessageType.Information
-                    text: "No Plasma, cores e ícones seguem automaticamente o tema KDE."
+                    text: i18n.tr("No Plasma, cores e ícones seguem automaticamente o tema KDE.")
                 }
             }
 
             SettingsSection {
                 width: parent.width
-                title: "Streaming"
-                subtitle: "Qualidade, localização, rede e cache das capas."
+                title: i18n.tr("Streaming")
+                subtitle: i18n.tr("Qualidade, localização, rede e cache das capas.")
                 iconName: "network-connect"
 
                 Kirigami.FormLayout {
@@ -158,11 +158,11 @@ Item {
 
                     Controls.ComboBox {
                         id: qualityBox
-                        Kirigami.FormData.label: "Qualidade de áudio:"
+                        Kirigami.FormData.label: i18n.tr("Qualidade de áudio:")
                         model: [
-                            { "text": "Alta", "value": "high" },
-                            { "text": "Média", "value": "medium" },
-                            { "text": "Econômica", "value": "low" }
+                            { "text": i18n.tr("Alta"), "value": "high" },
+                            { "text": i18n.tr("Média"), "value": "medium" },
+                            { "text": i18n.tr("Econômica"), "value": "low" }
                         ]
                         textRole: "text"
                         Component.onCompleted: syncValue()
@@ -179,7 +179,7 @@ Item {
                     }
 
                     RowLayout {
-                        Kirigami.FormData.label: "Localização:"
+                        Kirigami.FormData.label: i18n.tr("Localização:")
 
                         Controls.TextField {
                             id: languageField
@@ -199,7 +199,7 @@ Item {
                         }
 
                         Controls.Button {
-                            text: "Salvar"
+                            text: i18n.tr("Salvar")
                             icon.name: "document-save"
                             onClicked: backend.setLocale(languageField.text, regionField.text)
                         }
@@ -207,16 +207,16 @@ Item {
 
                     Controls.TextField {
                         id: proxyField
-                        Kirigami.FormData.label: "Proxy HTTP(S):"
+                        Kirigami.FormData.label: i18n.tr("Proxy HTTP(S):")
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 18
                         text: backend.proxy
-                        placeholderText: "Sem proxy"
+                        placeholderText: i18n.tr("Sem proxy")
                         selectByMouse: true
                         onEditingFinished: backend.setProxy(text)
                     }
 
                     RowLayout {
-                        Kirigami.FormData.label: "Cache de capas:"
+                        Kirigami.FormData.label: i18n.tr("Cache de capas:")
 
                         Controls.Label {
                             text: backend.artworkCacheLabel
@@ -224,7 +224,7 @@ Item {
                         }
 
                         Controls.Button {
-                            text: "Limpar cache"
+                            text: i18n.tr("Limpar cache")
                             icon.name: "edit-clear-history"
                             onClicked: backend.clearArtworkCache()
                         }
@@ -234,8 +234,8 @@ Item {
 
             SettingsSection {
                 width: parent.width
-                title: "Áudio"
-                subtitle: "Ajustes processados pelo mesmo NativePlayer/GStreamer usado no frontend GTK."
+                title: i18n.tr("Áudio")
+                subtitle: i18n.tr("Ajustes processados pelo mesmo NativePlayer/GStreamer usado no frontend GTK.")
                 iconName: "audio-volume-high"
 
                 Kirigami.FormLayout {
@@ -243,12 +243,12 @@ Item {
 
                     Controls.ComboBox {
                         id: equalizerBox
-                        Kirigami.FormData.label: "Equalizador:"
+                        Kirigami.FormData.label: i18n.tr("Equalizador:")
                         model: [
-                            { "text": "Plano", "value": "flat" },
-                            { "text": "Graves", "value": "bass" },
-                            { "text": "Voz", "value": "vocal" },
-                            { "text": "Agudos", "value": "treble" }
+                            { "text": i18n.tr("Plano"), "value": "flat" },
+                            { "text": i18n.tr("Graves"), "value": "bass" },
+                            { "text": i18n.tr("Voz"), "value": "vocal" },
+                            { "text": i18n.tr("Agudos"), "value": "treble" }
                         ]
                         textRole: "text"
                         Component.onCompleted: syncValue()
@@ -265,19 +265,19 @@ Item {
                     }
 
                     Controls.Switch {
-                        Kirigami.FormData.label: "Normalização de volume:"
+                        Kirigami.FormData.label: i18n.tr("Normalização de volume:")
                         checked: backend.normalization
                         onToggled: backend.setNormalization(checked)
                     }
 
                     Controls.Switch {
-                        Kirigami.FormData.label: "Pular silêncio:"
+                        Kirigami.FormData.label: i18n.tr("Pular silêncio:")
                         checked: backend.skipSilence
                         onToggled: backend.setSkipSilence(checked)
                     }
 
                     RowLayout {
-                        Kirigami.FormData.label: "Velocidade:"
+                        Kirigami.FormData.label: i18n.tr("Velocidade:")
 
                         Controls.Slider {
                             id: speedSlider
@@ -296,7 +296,7 @@ Item {
                     }
 
                     RowLayout {
-                        Kirigami.FormData.label: "Tom:"
+                        Kirigami.FormData.label: i18n.tr("Tom:")
 
                         Controls.Slider {
                             id: pitchSlider
@@ -315,13 +315,13 @@ Item {
                     }
 
                     Controls.ComboBox {
-                        Kirigami.FormData.label: "Temporizador:"
+                        Kirigami.FormData.label: i18n.tr("Temporizador:")
                         model: [
-                            { "text": "Desligado", "value": 0 },
-                            { "text": "15 minutos", "value": 15 },
-                            { "text": "30 minutos", "value": 30 },
-                            { "text": "1 hora", "value": 60 },
-                            { "text": "1 hora e 30", "value": 90 }
+                            { "text": i18n.tr("Desligado"), "value": 0 },
+                            { "text": i18n.tr("15 minutos"), "value": 15 },
+                            { "text": i18n.tr("30 minutos"), "value": 30 },
+                            { "text": i18n.tr("1 hora"), "value": 60 },
+                            { "text": i18n.tr("1 hora e 30"), "value": 90 }
                         ]
                         textRole: "text"
                         onActivated: backend.setSleepTimer(model[currentIndex].value)
@@ -335,8 +335,8 @@ Item {
 
             SettingsSection {
                 width: parent.width
-                title: "Dados e backup"
-                subtitle: "Exporte ou restaure um pacote portátil com os dados do Harmonia."
+                title: i18n.tr("Dados e backup")
+                subtitle: i18n.tr("Exporte ou restaure um pacote portátil com os dados do Harmonia.")
                 iconName: "document-save"
 
                 RowLayout {
@@ -349,26 +349,26 @@ Item {
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: "Backup portátil"
+                            text: i18n.tr("Backup portátil")
                             font.weight: Font.DemiBold
                         }
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: "Use o mesmo arquivo para migrar dados entre instalações e frontends."
+                            text: i18n.tr("Use o mesmo arquivo para migrar dados entre instalações e frontends.")
                             opacity: 0.62
                             wrapMode: Text.WordWrap
                         }
                     }
 
                     Controls.Button {
-                        text: "Exportar"
+                        text: i18n.tr("Exportar")
                         icon.name: "document-save"
                         onClicked: exportDialog.open()
                     }
 
                     Controls.Button {
-                        text: "Restaurar"
+                        text: i18n.tr("Restaurar")
                         icon.name: "document-open"
                         onClicked: restoreDialog.open()
                     }
@@ -388,18 +388,18 @@ Item {
 
     Dialogs.FileDialog {
         id: exportDialog
-        title: "Exportar backup"
+        title: i18n.tr("Exportar backup")
         fileMode: Dialogs.FileDialog.SaveFile
         defaultSuffix: "harmonia-backup"
-        nameFilters: ["Backup do Harmonia (*.harmonia-backup)"]
+        nameFilters: [i18n.tr("Backup do Harmonia (*.harmonia-backup)")]
         onAccepted: backend.exportBackup(selectedFile.toString())
     }
 
     Dialogs.FileDialog {
         id: restoreDialog
-        title: "Restaurar backup"
+        title: i18n.tr("Restaurar backup")
         fileMode: Dialogs.FileDialog.OpenFile
-        nameFilters: ["Backup do Harmonia (*.harmonia-backup)", "Todos os arquivos (*)"]
+        nameFilters: [i18n.tr("Backup do Harmonia (*.harmonia-backup)"), i18n.tr("Todos os arquivos (*)")]
         onAccepted: {
             root.pendingRestoreUrl = selectedFile
             restoreConfirmDialog.open()
@@ -411,11 +411,11 @@ Item {
         parent: Controls.Overlay.overlay
         anchors.centerIn: parent
         modal: true
-        title: "Restaurar backup?"
+        title: i18n.tr("Restaurar backup?")
         standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
 
         contentItem: Controls.Label {
-            text: "A restauração substitui os dados atuais do Harmonia pelos dados do backup selecionado."
+            text: i18n.tr("A restauração substitui os dados atuais do Harmonia pelos dados do backup selecionado.")
             wrapMode: Text.WordWrap
             Layout.preferredWidth: Kirigami.Units.gridUnit * 24
         }

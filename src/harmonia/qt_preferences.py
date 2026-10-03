@@ -9,6 +9,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from .backup import BackupManager
 from .downloads import DownloadManager
+from .i18n import _
 from .preferences import Preferences
 from .qt_playback import QtPlaybackController
 from .services import YouTubeMusicService
@@ -31,7 +32,7 @@ class QtPreferencesController(QObject):
         downloads: DownloadManager,
         playback: QtPlaybackController,
         executor: ThreadPoolExecutor,
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         refresh_after_restore: Callable[[], None],
         parent: QObject | None = None,
     ) -> None:
@@ -82,7 +83,7 @@ class QtPreferencesController(QObject):
             return
         self.values.quality = value
         self.save()
-        self.set_status("Qualidade de áudio atualizada.")
+        self.set_status(_("Qualidade de áudio atualizada."))
 
     def set_locale(self, language: str, region: str) -> None:
         language = language.strip() or "pt-BR"
@@ -92,7 +93,7 @@ class QtPreferencesController(QObject):
         self.values.language = language
         self.values.region = region
         self.save()
-        self.set_status("Idioma e região salvos. Sincronize para atualizar o conteúdo.")
+        self.set_status(_("Idioma e região salvos. Sincronize para atualizar o conteúdo."))
 
     def set_proxy(self, value: str) -> None:
         value = value.strip()
@@ -100,7 +101,7 @@ class QtPreferencesController(QObject):
             return
         self.values.proxy = value
         self.save()
-        self.set_status("Proxy salvo. A próxima conexão usará esta configuração.")
+        self.set_status(_("Proxy salvo. A próxima conexão usará esta configuração."))
 
     def set_background_blur(self, enabled: bool) -> None:
         enabled = bool(enabled)
@@ -109,9 +110,9 @@ class QtPreferencesController(QObject):
         self.values.background_blur = enabled
         self.save()
         self.set_status(
-            "Fundo ambiente desfocado ativado."
+            _("Fundo ambiente desfocado ativado.")
             if enabled
-            else "Fundo ambiente desfocado desativado."
+            else _("Fundo ambiente desfocado desativado.")
         )
 
     def set_audio_value(self, name: str, value) -> None:
@@ -153,10 +154,12 @@ class QtPreferencesController(QObject):
     def clear_cache(self) -> None:
         removed = self.storage.clear_cache()
         self.cacheChanged.emit()
-        self.set_status(f"Cache limpo · {self.format_bytes(removed)} removidos.")
+        self.set_status(
+            _("Cache limpo · {size} removidos.").format(size=self.format_bytes(removed))
+        )
 
     def validate_account(self) -> None:
-        self.set_status("Validando sessão…")
+        self.set_status(_("Validando sessão…"))
 
         def worker() -> None:
             try:
@@ -164,7 +167,7 @@ class QtPreferencesController(QObject):
                 self._operationReady.emit(
                     "account",
                     bool(valid),
-                    "" if valid else "Sessão inválida ou expirada",
+                    "" if valid else _("Sessão inválida ou expirada"),
                 )
             except Exception as exc:
                 LOGGER.exception("Qt account validation failed")
@@ -173,7 +176,7 @@ class QtPreferencesController(QObject):
         self.executor.submit(worker)
 
     def validate_downloads(self) -> None:
-        self.set_status("Validando conta dos downloads…")
+        self.set_status(_("Validando conta dos downloads…"))
 
         def worker() -> None:
             try:
@@ -189,7 +192,7 @@ class QtPreferencesController(QObject):
         if not path:
             return
         target = Path(path)
-        self.set_status("Exportando backup…")
+        self.set_status(_("Exportando backup…"))
 
         def worker() -> None:
             try:
@@ -205,7 +208,7 @@ class QtPreferencesController(QObject):
         if not path:
             return
         source = Path(path)
-        self.set_status("Restaurando backup…")
+        self.set_status(_("Restaurando backup…"))
 
         def worker() -> None:
             try:
@@ -220,35 +223,34 @@ class QtPreferencesController(QObject):
     def set_sleep_timer(self, minutes: int) -> None:
         self._sleep_timer.stop()
         if minutes <= 0:
-            self.set_status("Temporizador desligado.")
+            self.set_status(_("Temporizador desligado."))
             return
         self._sleep_timer.start(minutes * 60 * 1000)
-        self.set_status(f"Temporizador definido para {minutes} minutos.")
+        self.set_status(_("Temporizador definido para {minutes} minutos.").format(minutes=minutes))
 
     def _sleep_elapsed(self) -> None:
         if self.playback.playing:
             self.playback.toggle_playback()
-        self.set_status("Reprodução pausada pelo temporizador.")
+        self.set_status(_("Reprodução pausada pelo temporizador."))
 
     def _operation_finished(self, operation: str, ok: bool, detail: str) -> None:
         if not ok:
             labels = {
-                "account": "Não foi possível validar a conta",
-                "downloads": "Não foi possível validar os downloads",
-                "backup-export": "Não foi possível exportar o backup",
-                "backup-restore": "Não foi possível restaurar o backup",
+                "account": _("Não foi possível validar a conta"),
+                "downloads": _("Não foi possível validar os downloads"),
+                "backup-export": _("Não foi possível exportar o backup"),
+                "backup-restore": _("Não foi possível restaurar o backup"),
             }
-            self.set_status(
-                f"{labels.get(operation, 'Não foi possível concluir a operação')}: {detail}"
-            )
+            label = labels.get(operation, _("Não foi possível concluir a operação"))
+            self.set_status(_("{label}: {error}").format(label=label, error=detail), error=True)
             return
         if operation == "account":
-            self.set_status("Conta conectada e válida.")
+            self.set_status(_("Conta conectada e válida."))
         elif operation == "downloads":
-            self.set_status("Conta dos downloads validada.")
+            self.set_status(_("Conta dos downloads validada."))
         elif operation == "backup-export":
-            self.set_status(f"Backup exportado para {detail}.")
+            self.set_status(_("Backup exportado para {path}.").format(path=detail))
         elif operation == "backup-restore":
             self.reload()
             self.refresh_after_restore()
-            self.set_status("Backup restaurado.")
+            self.set_status(_("Backup restaurado."))

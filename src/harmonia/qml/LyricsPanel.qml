@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 Controls.Dialog {
     id: root
 
-    title: "Letras"
+    title: i18n.tr("Letras")
     modal: false
     popupType: Controls.Popup.Item
     standardButtons: Controls.Dialog.Close

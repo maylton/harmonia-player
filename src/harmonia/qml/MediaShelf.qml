@@ -38,7 +38,7 @@ Column {
             display: Controls.AbstractButton.IconOnly
             onClicked: root.scrollBy(-1)
             Controls.ToolTip.visible: hovered
-            Controls.ToolTip.text: "Voltar em " + root.title
+            Controls.ToolTip.text: i18n.trf("Voltar em {title}", { title: root.title })
         }
 
         Controls.ToolButton {
@@ -47,7 +47,7 @@ Column {
             display: Controls.AbstractButton.IconOnly
             onClicked: root.scrollBy(1)
             Controls.ToolTip.visible: hovered
-            Controls.ToolTip.text: "Avançar em " + root.title
+            Controls.ToolTip.text: i18n.trf("Avançar em {title}", { title: root.title })
         }
     }
 

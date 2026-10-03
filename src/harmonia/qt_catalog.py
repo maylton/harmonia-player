@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, Signal
 
+from .i18n import _, ngettext
 from .models import ArtistPage, ExploreData, LibraryItem, LocalPlaylist, SearchResults
 from .qt_presenters import section_map, unique_items
 from .services import YouTubeMusicService
@@ -38,7 +39,7 @@ class QtCatalogController(QObject):
         youtube: YouTubeMusicService,
         executor: ThreadPoolExecutor,
         set_busy: Callable[[bool], None],
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         play_queue: Callable[[list[LibraryItem], int], None],
         parent: QObject | None = None,
     ) -> None:
@@ -54,7 +55,7 @@ class QtCatalogController(QObject):
         self.library = self.storage.load_library()
         self.explore = self.storage.load_explore()
         self.explore_display = self.explore
-        self.explore_title = "Explorar"
+        self.explore_title = _("Explorar")
         self.search_results = SearchResults("", [])
         self.search_suggestions: list[str] = []
 
@@ -89,7 +90,7 @@ class QtCatalogController(QObject):
 
     def sync_all(self) -> None:
         self.set_busy(True)
-        self.set_status("Sincronizando biblioteca, Início e Explorar…")
+        self.set_status(_("Sincronizando biblioteca, Início e Explorar…"))
 
         def worker() -> None:
             try:
@@ -106,13 +107,15 @@ class QtCatalogController(QObject):
     def _apply_sync(self, library, home, explore, error: str) -> None:
         self.set_busy(False)
         if error:
-            self.set_status(f"Não foi possível sincronizar: {error}")
+            self.set_status(
+                _("Não foi possível sincronizar: {error}").format(error=error), error=True
+            )
             return
         self.library = library or {}
         self.home = home or []
         self.explore = explore or ExploreData([], [], [])
         self.explore_display = self.explore
-        self.explore_title = "Explorar"
+        self.explore_title = _("Explorar")
         self.homeChanged.emit()
         self.libraryChanged.emit()
         self.exploreChanged.emit()
@@ -159,7 +162,7 @@ class QtCatalogController(QObject):
             self.searchChanged.emit()
             return
         self.set_busy(True)
-        self.set_status(f"Pesquisando por “{query}”…")
+        self.set_status(_("Pesquisando por “{query}”…").format(query=query))
 
         def worker() -> None:
             try:
@@ -176,12 +179,14 @@ class QtCatalogController(QObject):
             return
         self.set_busy(False)
         if error:
-            self.set_status(f"Não foi possível pesquisar: {error}")
+            self.set_status(
+                _("Não foi possível pesquisar: {error}").format(error=error), error=True
+            )
             return
         self.search_results = results or SearchResults("", [])
         self.searchChanged.emit()
         if self.search_results.errors:
-            self.set_status("Algumas categorias da busca não puderam ser carregadas.")
+            self.set_status(_("Algumas categorias da busca não puderam ser carregadas."))
         else:
             self.set_status("")
 
@@ -199,7 +204,7 @@ class QtCatalogController(QObject):
             return
         request_id = self._search_request
         query = self.search_results.query
-        self.set_status(f"Carregando mais {group.title.lower()}…")
+        self.set_status(_("Carregando mais {title}…").format(title=group.title.lower()))
 
         def worker() -> None:
             try:
@@ -223,7 +228,10 @@ class QtCatalogController(QObject):
         ):
             return
         if error or incoming is None:
-            self.set_status(f"Não foi possível carregar mais resultados: {error}")
+            self.set_status(
+                _("Não foi possível carregar mais resultados: {error}").format(error=error),
+                error=True,
+            )
             return
         group = self.search_results.groups[group_index]
         known = {item.id for item in group.items}
@@ -272,17 +280,20 @@ class QtCatalogController(QObject):
 
     def show_local_playlist(self, playlist: LocalPlaylist) -> None:
         self._detail_request += 1
+        count = len(playlist.items)
         self.detail_item = LibraryItem(
             f"local-playlist:{playlist.id}",
             playlist.title,
-            f"{len(playlist.items)} faixas · playlist local",
+            ngettext(
+                "{count} faixa · playlist local", "{count} faixas · playlist local", count
+            ).format(count=count),
             kind="local-playlists",
         )
         self.detail_tracks = list(playlist.items)
         self.detail_sections = []
         self.detail_section_items = []
         self.detail_artist_sections = []
-        self.detail_description = "Playlist armazenada somente neste computador."
+        self.detail_description = _("Playlist armazenada somente neste computador.")
         self.detail_subscribers = ""
         self.detail_is_artist = False
         self.detailChanged.emit()
@@ -301,7 +312,7 @@ class QtCatalogController(QObject):
         self.detail_is_artist = item.kind == "artists"
         self.detailChanged.emit()
         self.set_busy(True)
-        self.set_status(f"Carregando {item.title}…")
+        self.set_status(_("Carregando {title}…").format(title=item.title))
 
         def worker() -> None:
             try:
@@ -322,7 +333,10 @@ class QtCatalogController(QObject):
             return
         self.set_busy(False)
         if error or payload is None:
-            self.set_status(f"Não foi possível abrir {item.title}: {error}")
+            self.set_status(
+                _("Não foi possível abrir {title}: {error}").format(title=item.title, error=error),
+                error=True,
+            )
             self.detailChanged.emit()
             return
 
@@ -399,7 +413,7 @@ class QtCatalogController(QObject):
             return
         self._detail_section_request += 1
         request_id = self._detail_section_request
-        self.set_status(f"Carregando {section.title}…")
+        self.set_status(_("Carregando {title}…").format(title=section.title))
 
         def worker() -> None:
             try:
@@ -423,7 +437,9 @@ class QtCatalogController(QObject):
         ):
             return
         if error or items is None:
-            self.set_status(f"Não foi possível carregar a seção: {error}")
+            self.set_status(
+                _("Não foi possível carregar a seção: {error}").format(error=error), error=True
+            )
             return
         values = list(items)
         self.detail_section_items[section_index] = values
@@ -444,7 +460,7 @@ class QtCatalogController(QObject):
         self._discovery_request += 1
         request_id = self._discovery_request
         self.set_busy(True)
-        self.set_status(f"Carregando {destination.title}…")
+        self.set_status(_("Carregando {title}…").format(title=destination.title))
 
         def worker() -> None:
             try:
@@ -461,7 +477,12 @@ class QtCatalogController(QObject):
             return
         self.set_busy(False)
         if error or data is None:
-            self.set_status(f"Não foi possível abrir {destination.title}: {error}")
+            self.set_status(
+                _("Não foi possível abrir {title}: {error}").format(
+                    title=destination.title, error=error
+                ),
+                error=True,
+            )
             return
         self.explore_display = data
         self.explore_title = destination.title
@@ -472,7 +493,7 @@ class QtCatalogController(QObject):
         if self.explore_display is self.explore:
             return
         self.explore_display = self.explore
-        self.explore_title = "Explorar"
+        self.explore_title = _("Explorar")
         self.exploreChanged.emit()
 
     def explore_items(self, section_index: int) -> list[LibraryItem]:

@@ -48,13 +48,17 @@ def test_sidebar_keeps_liked_icon_at_the_native_navigation_size() -> None:
     assert "Layout.preferredHeight: root.iconSize" in component
     assert "isMask: root.monochromeIcon" in component
 
-    liked = navigation.split('text: "Músicas curtidas"', 1)[1].split("SidebarButton {", 1)[0]
+    liked = navigation.split('text: i18n.tr("Músicas curtidas")', 1)[1].split("SidebarButton {", 1)[
+        0
+    ]
     assert 'iconName: "love-symbolic"' in liked
     assert "monochromeIcon: true" in liked
     assert "iconSize:" not in liked
     assert "fallbackIcon:" not in liked
 
-    settings = navigation.split('text: "Preferências"', 1)[1].split("SidebarButton {", 1)[0]
+    settings = navigation.split('text: i18n.tr("Preferências")', 1)[1].split("SidebarButton {", 1)[
+        0
+    ]
     assert 'iconName: "settings-configure"' in settings
     assert 'fallbackIcon: "configure-symbolic"' in settings
     assert "iconSize:" not in settings

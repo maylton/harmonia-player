@@ -35,10 +35,10 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width * 0.8, Kirigami.Units.gridUnit * 18)
         visible: !videoBackend.outputReady && !videoBackend.loading
-        text: "Vídeo indisponível"
+        text: i18n.tr("Vídeo indisponível")
         explanation: videoBackend.outputError.length > 0
                      ? videoBackend.outputError
-                     : "A saída de vídeo do GStreamer não está disponível."
+                     : i18n.tr("A saída de vídeo do GStreamer não está disponível.")
         icon.name: "video-x-generic"
         z: 2
     }

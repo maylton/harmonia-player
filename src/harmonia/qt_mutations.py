@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, Signal
 
+from .i18n import _
 from .models import LibraryItem
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -24,7 +25,7 @@ class QtMutationController(QObject):
         storage: Storage,
         youtube: YouTubeMusicService,
         executor: ThreadPoolExecutor,
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         sync_library: Callable[[], None],
         parent: QObject | None = None,
     ) -> None:
@@ -50,7 +51,7 @@ class QtMutationController(QObject):
         token = f"{action}:{self._generation}"
         if on_success:
             self._success_callbacks[token] = on_success
-        self.set_status("Enviando alteração ao YouTube Music…")
+        self.set_status(_("Enviando alteração ao YouTube Music…"))
 
         def worker() -> None:
             try:
@@ -67,7 +68,7 @@ class QtMutationController(QObject):
     def _apply(self, token: str, success_message: str, ok: bool, error: str) -> None:
         callback = self._success_callbacks.pop(token, None)
         if not ok:
-            self.set_status(f"Alteração não aplicada: {error}")
+            self.set_status(_("Alteração não aplicada: {error}").format(error=error), error=True)
             return
         self.set_status(success_message)
         if callback:
@@ -79,7 +80,7 @@ class QtMutationController(QObject):
             "like-song" if liked else "unlike-song",
             item.id,
             lambda: self.youtube.mutate(lambda client: client.like_song(item.id, liked)),
-            "Música adicionada à biblioteca" if liked else "Música removida da biblioteca",
+            _("Música adicionada à biblioteca") if liked else _("Música removida da biblioteca"),
             self.sync_library,
         )
 
@@ -90,7 +91,7 @@ class QtMutationController(QObject):
             lambda: self.youtube.mutate(
                 lambda client: client.subscribe_artist(item.id, subscribed)
             ),
-            "Inscrição realizada" if subscribed else "Inscrição cancelada",
+            _("Inscrição realizada") if subscribed else _("Inscrição cancelada"),
             self.sync_library,
         )
 
@@ -107,13 +108,13 @@ class QtMutationController(QObject):
         if item.kind == "playlists":
             playlist_id = playlist_id or item.id
         if not playlist_id:
-            self.set_status("O YouTube Music não informou como salvar este item.")
+            self.set_status(_("O YouTube Music não informou como salvar este item."))
             return
         self._run(
             "like-collection" if saved else "unlike-collection",
             playlist_id,
             lambda: self.youtube.mutate(lambda client: client.like_playlist(playlist_id, saved)),
-            "Adicionado à biblioteca" if saved else "Removido da biblioteca",
+            _("Adicionado à biblioteca") if saved else _("Removido da biblioteca"),
             self.sync_library,
         )
 
@@ -125,7 +126,7 @@ class QtMutationController(QObject):
             "create-playlist",
             "",
             lambda: self.youtube.mutate(lambda client: client.create_playlist(title)),
-            "Playlist criada",
+            _("Playlist criada"),
             self.sync_library,
         )
 
@@ -148,7 +149,7 @@ class QtMutationController(QObject):
             "rename-playlist",
             item.id,
             lambda: self.youtube.mutate(lambda client: client.rename_playlist(item.id, title)),
-            "Playlist renomeada",
+            _("Playlist renomeada"),
             completed,
         )
 
@@ -161,7 +162,7 @@ class QtMutationController(QObject):
             "delete-playlist",
             item.id,
             lambda: self.youtube.mutate(lambda client: client.delete_playlist(item.id)),
-            "Playlist excluída",
+            _("Playlist excluída"),
             completed,
         )
 
@@ -172,7 +173,7 @@ class QtMutationController(QObject):
             lambda: self.youtube.mutate(
                 lambda client: client.add_to_playlist(playlist.id, song.id)
             ),
-            f"Adicionada a {playlist.title}",
+            _("Adicionada a {title}").format(title=playlist.title),
         )
 
     def remove_from_playlist(
@@ -191,6 +192,6 @@ class QtMutationController(QObject):
                     song.set_video_id or "",
                 )
             ),
-            "Faixa removida da playlist",
+            _("Faixa removida da playlist"),
             refresh_detail,
         )

@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from .downloads import DownloadManager
+from .i18n import _
 from .models import HistoryEntry, LibraryItem
 from .playback_state import (
     filter_new_recommendations,
@@ -48,7 +49,7 @@ class QtPlaybackController(QObject):
         downloads: DownloadManager,
         executor: ThreadPoolExecutor,
         set_busy: Callable[[bool], None],
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
@@ -265,7 +266,7 @@ class QtPlaybackController(QObject):
         if item.id.startswith("local:"):
             local_path = self.storage.local_media_path(item.id)
             if not local_path or not local_path.is_file():
-                self.set_status("O arquivo local não está mais disponível.")
+                self.set_status(_("O arquivo local não está mais disponível."))
                 return
             self._start_uri(request_id, local_path.as_uri(), None, None)
             return
@@ -276,7 +277,7 @@ class QtPlaybackController(QObject):
             return
 
         self.set_busy(True)
-        self.set_status(f"Preparando {item.title}…")
+        self.set_status(_("Preparando {title}…").format(title=item.title))
 
         def worker() -> None:
             try:
@@ -319,7 +320,9 @@ class QtPlaybackController(QObject):
             return
         if error or stream is None:
             self.set_busy(False)
-            self.set_status(f"Não foi possível reproduzir a faixa: {error}")
+            self.set_status(
+                _("Não foi possível reproduzir a faixa: {error}").format(error=error), error=True
+            )
             return
         self._start_uri(
             request_id,
@@ -456,7 +459,9 @@ class QtPlaybackController(QObject):
         if error:
             if self.waiting_for_autoplay:
                 self.waiting_for_autoplay = False
-                self.set_status(f"Não foi possível continuar a rádio: {error}")
+                self.set_status(
+                    _("Não foi possível continuar a rádio: {error}").format(error=error), error=True
+                )
             return
         self.related_items = filter_new_recommendations(self.queue, recommendations)
         self.queueChanged.emit()
@@ -467,7 +472,7 @@ class QtPlaybackController(QObject):
             self.set_current(self.queue_index + 1)
         elif self.waiting_for_autoplay:
             self.waiting_for_autoplay = False
-            self.set_status("A rádio não encontrou novas músicas.")
+            self.set_status(_("A rádio não encontrou novas músicas."))
 
     def _promote_related_index(self, index: int, play_next: bool) -> None:
         if not 0 <= index < len(self.related_items):
@@ -553,7 +558,7 @@ class QtPlaybackController(QObject):
         ):
             self._stream_recovery_attempts += 1
             request_id = self._stream_request
-            self.set_status("O stream falhou; renovando a conexão…")
+            self.set_status(_("O stream falhou; renovando a conexão…"))
 
             def recover() -> None:
                 try:
@@ -566,7 +571,10 @@ class QtPlaybackController(QObject):
             self.executor.submit(recover)
             return False
         if error_string:
-            self.set_status(f"Erro de reprodução: {error_string}")
+            self.set_status(
+                _("Erro de reprodução: {error}").format(error=error_string),
+                error=True,
+            )
         self.playbackChanged.emit()
         return False
 

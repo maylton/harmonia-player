@@ -8,7 +8,7 @@ Controls.Popup {
     id: root
 
     property bool manualMode: false
-    readonly property bool connectionError: backend.statusText.indexOf("Não foi possível conectar") === 0
+    readonly property bool connectionError: backend.statusIsError
     readonly property color separatorColor: Qt.rgba(
         Kirigami.Theme.textColor.r,
         Kirigami.Theme.textColor.g,
@@ -85,7 +85,7 @@ Controls.Popup {
 
             Controls.ToolButton {
                 icon.name: "go-previous"
-                text: "Voltar"
+                text: i18n.tr("Voltar")
                 display: Controls.AbstractButton.IconOnly
                 onClicked: {
                     if (root.manualMode) {
@@ -104,7 +104,7 @@ Controls.Popup {
 
                 Controls.Label {
                     Layout.fillWidth: true
-                    text: "Conectar ao YouTube Music"
+                    text: i18n.tr("Conectar ao YouTube Music")
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
@@ -112,8 +112,8 @@ Controls.Popup {
                 Controls.Label {
                     Layout.fillWidth: true
                     text: root.manualMode
-                          ? "Conexão manual por cookie"
-                          : "Login seguro na página do Google"
+                          ? i18n.tr("Conexão manual por cookie")
+                          : i18n.tr("Login seguro na página do Google")
                     opacity: 0.62
                     elide: Text.ElideRight
                 }
@@ -127,7 +127,7 @@ Controls.Popup {
             }
 
             Controls.Button {
-                text: root.manualMode ? "Login pelo Google" : "Usar cookie manualmente"
+                text: root.manualMode ? i18n.tr("Login pelo Google") : i18n.tr("Usar cookie manualmente")
                 icon.name: root.manualMode ? "internet-services" : "document-edit"
                 enabled: !backend.busy
                 onClicked: root.manualMode ? root.showWebLogin() : root.showManualLogin()
@@ -135,7 +135,7 @@ Controls.Popup {
 
             Controls.ToolButton {
                 icon.name: "window-close"
-                text: "Fechar"
+                text: i18n.tr("Fechar")
                 display: Controls.AbstractButton.IconOnly
                 onClicked: root.close()
             }
@@ -194,7 +194,7 @@ Controls.Popup {
 
                     Controls.Label {
                         Layout.fillWidth: true
-                        text: "Cole os cookies de music.youtube.com somente se o login pelo Google não funcionar. O Harmonia valida a sessão antes de salvá-la no Secret Service."
+                        text: i18n.tr("Cole os cookies de music.youtube.com somente se o login pelo Google não funcionar. O Harmonia valida a sessão antes de salvá-la no Secret Service.")
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -203,7 +203,7 @@ Controls.Popup {
                         id: cookieInput
                         Layout.fillWidth: true
                         Layout.preferredHeight: Kirigami.Units.gridUnit * 9
-                        placeholderText: "Cookie do music.youtube.com"
+                        placeholderText: i18n.tr("Cookie do music.youtube.com")
                         wrapMode: TextEdit.WrapAnywhere
                         selectByMouse: true
                         enabled: !backend.busy
@@ -211,7 +211,7 @@ Controls.Popup {
 
                     Controls.Button {
                         Layout.alignment: Qt.AlignHCenter
-                        text: backend.busy ? "Validando sessão…" : "Conectar"
+                        text: backend.busy ? i18n.tr("Validando sessão…") : i18n.tr("Conectar")
                         icon.name: "user-online"
                         highlighted: true
                         enabled: cookieInput.text.trim().length > 0 && !backend.busy
@@ -229,8 +229,8 @@ Controls.Popup {
             Layout.bottomMargin: Kirigami.Units.smallSpacing
             visible: !root.manualMode
             text: backend.busy
-                  ? "Login concluído. Validando a sessão do YouTube Music…"
-                  : "O Harmonia não lê sua senha: o formulário acima é renderizado pelo Google no Qt WebEngine."
+                  ? i18n.tr("Login concluído. Validando a sessão do YouTube Music…")
+                  : i18n.tr("O Harmonia não lê sua senha: o formulário acima é renderizado pelo Google no Qt WebEngine.")
             opacity: 0.62
             wrapMode: Text.WordWrap
         }

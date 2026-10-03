@@ -65,7 +65,7 @@ Rectangle {
                     cornerRadius: Math.max(5, Kirigami.Units.cornerRadius)
                 }
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: "Expandir player"
+                Controls.ToolTip.text: i18n.tr("Expandir player")
             }
 
             Controls.AbstractButton {
@@ -102,7 +102,7 @@ Rectangle {
                 enabled: backend.currentId.length > 0
                 onClicked: backend.toggleLike(backend.currentId)
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: backend.currentLiked ? "Remover das curtidas" : "Curtir"
+                Controls.ToolTip.text: backend.currentLiked ? i18n.tr("Remover das curtidas") : i18n.tr("Curtir")
             }
         }
 
@@ -131,7 +131,7 @@ Rectangle {
                         enabled: backend.currentId.length > 0
                         onClicked: backend.toggleShuffle()
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Ordem aleatória"
+                        Controls.ToolTip.text: i18n.tr("Ordem aleatória")
                     }
 
                     Controls.ToolButton {
@@ -139,7 +139,7 @@ Rectangle {
                         enabled: backend.currentId.length > 0 && (backend.canPrevious || backend.position > 5000)
                         onClicked: backend.previous()
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Anterior"
+                        Controls.ToolTip.text: i18n.tr("Anterior")
                     }
 
                     Controls.ToolButton {
@@ -147,7 +147,7 @@ Rectangle {
                         enabled: backend.currentId.length > 0
                         onClicked: backend.togglePlayback()
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: backend.playing ? "Pausar" : "Reproduzir"
+                        Controls.ToolTip.text: backend.playing ? i18n.tr("Pausar") : i18n.tr("Reproduzir")
                     }
 
                     Controls.ToolButton {
@@ -155,7 +155,7 @@ Rectangle {
                         enabled: backend.canNext
                         onClicked: backend.next()
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Próxima"
+                        Controls.ToolTip.text: i18n.tr("Próxima")
                     }
 
                     Controls.ToolButton {
@@ -165,7 +165,7 @@ Rectangle {
                         enabled: backend.currentId.length > 0
                         onClicked: backend.toggleRepeat()
                         Controls.ToolTip.visible: hovered
-                        Controls.ToolTip.text: "Repetir fila"
+                        Controls.ToolTip.text: i18n.tr("Repetir fila")
                     }
 
                     Controls.ToolButton {
@@ -179,10 +179,10 @@ Rectangle {
                         onClicked: backend.toggleAutoplay()
                         Controls.ToolTip.visible: hovered
                         Controls.ToolTip.text: backend.autoplayLoading
-                                               ? "Carregando reprodução automática…"
+                                               ? i18n.tr("Carregando reprodução automática…")
                                                : backend.autoplay
-                                                 ? "Reprodução automática ativada"
-                                                 : "Reprodução automática desativada"
+                                                 ? i18n.tr("Reprodução automática ativada")
+                                                 : i18n.tr("Reprodução automática desativada")
                     }
                 }
 
@@ -230,7 +230,7 @@ Rectangle {
             spacing: Kirigami.Units.largeSpacing
 
             Controls.ToolButton {
-                text: "Letras"
+                text: i18n.tr("Letras")
                 icon.name: "view-media-lyrics"
                 display: Controls.AbstractButton.IconOnly
                 enabled: backend.currentId.length > 0
@@ -240,7 +240,7 @@ Rectangle {
             }
 
             Controls.ToolButton {
-                text: "Fila de reprodução"
+                text: i18n.tr("Fila de reprodução")
                 icon.name: "view-media-playlist"
                 display: Controls.AbstractButton.IconOnly
                 enabled: backend.queueItems.length > 0
@@ -267,7 +267,7 @@ Rectangle {
             }
 
             Controls.ToolButton {
-                text: "Parar"
+                text: i18n.tr("Parar")
                 icon.name: "media-playback-stop"
                 enabled: backend.currentId.length > 0
                 onClicked: backend.stopPlayback()

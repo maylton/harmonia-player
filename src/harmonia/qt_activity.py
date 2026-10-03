@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QGuiApplication
 
+from .i18n import _
 from .lyrics import GoogleTranslationClient, LyricsResolver
 from .lyrics_state import (
     active_lyric_index,
@@ -35,7 +36,7 @@ class QtHistoryController(QObject):
         youtube: YouTubeMusicService,
         executor: ThreadPoolExecutor,
         logged_in: Callable[[], bool],
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         play_queue: Callable[[list[LibraryItem], int], None],
         parent: QObject | None = None,
     ) -> None:
@@ -99,7 +100,9 @@ class QtHistoryController(QObject):
         self.historyChanged.emit()
         if error:
             self.set_status(
-                f"O histórico local foi preservado; não foi possível carregar o remoto: {error}"
+                _(
+                    "O histórico local foi preservado; não foi possível carregar o remoto: {error}"
+                ).format(error=error)
             )
 
     def set_enabled(self, enabled: bool) -> None:
@@ -137,7 +140,9 @@ class QtHistoryController(QObject):
 
     def _apply_remote_removal(self, ok: bool, error: str) -> None:
         if not ok:
-            self.set_status(f"Não foi possível remover do histórico: {error}")
+            self.set_status(
+                _("Não foi possível remover do histórico: {error}").format(error=error), error=True
+            )
             return
         self.set_status("")
         self.refresh()
@@ -170,7 +175,7 @@ class QtLyricsController(QObject):
         current_item: Callable[[], LibraryItem | None],
         duration: Callable[[], int],
         position: Callable[[], int],
-        set_status: Callable[[str], None],
+        set_status: Callable[..., None],
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
@@ -249,7 +254,9 @@ class QtLyricsController(QObject):
         self.lyricsChanged.emit()
         self.update_position(self.position())
         if error:
-            self.set_status(f"Não foi possível carregar a letra: {error}")
+            self.set_status(
+                _("Não foi possível carregar a letra: {error}").format(error=error), error=True
+            )
 
     def set_provider(self, provider: str) -> None:
         if provider not in {"auto", "lrclib", "youtube"} or provider == self.provider:
@@ -285,7 +292,7 @@ class QtLyricsController(QObject):
         clipboard = QGuiApplication.clipboard()
         if clipboard:
             clipboard.setText(value)
-            self.set_status("Letra copiada.")
+            self.set_status(_("Letra copiada."))
 
     def translate(self) -> None:
         item = self.current_item()
@@ -302,7 +309,7 @@ class QtLyricsController(QObject):
             self.lyricsChanged.emit()
             return
 
-        self.set_status("Traduzindo letra…")
+        self.set_status(_("Traduzindo letra…"))
         request_id = self.request
         lines = [line.text for line in document.synced] or document.display_text.splitlines()
 
@@ -328,7 +335,10 @@ class QtLyricsController(QObject):
         if request_id != self.request or not item or item.id != video_id or document is None:
             return
         if error or not result or not any(result):
-            self.set_status(f"Não foi possível traduzir: {error or 'resposta vazia'}")
+            self.set_status(
+                _("Não foi possível traduzir: {error}").format(error=error or _("resposta vazia")),
+                error=True,
+            )
             return
         if document.synced:
             document.synced = [
@@ -344,7 +354,7 @@ class QtLyricsController(QObject):
         document.translation_language = "pt"
         self.storage.save_lyrics_document(item.id, document)
         self.lyricsChanged.emit()
-        self.set_status("Letra traduzida.")
+        self.set_status(_("Letra traduzida."))
 
     def update_position(self, position_ms: int, *, force: bool = False) -> None:
         lines = self.document.synced if self.document else []

@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QApplication
 from . import qt_backend as qt_backend_module
 from .qt_auth import QtAuthController
 from .qt_backend import HarmoniaQtBackend
+from .qt_i18n import QtI18n
 from .qt_integrated_playback import QtIntegratedPlaybackController
 from .qt_integrations import QtIntegrationsController
 from .qt_media_variants import OfficialVideoQtController
@@ -111,6 +112,8 @@ def main() -> int:
     context.setContextProperty("integrations", integrations)
     context.setContextProperty("videoBackend", video)
     context.setContextProperty("preferences", backend.settings)
+    i18n = QtI18n(engine)
+    context.setContextProperty("i18n", i18n)
 
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))

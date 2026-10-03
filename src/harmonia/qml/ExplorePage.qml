@@ -26,12 +26,12 @@ Item {
             PageHeader {
                 title: backend.exploreTitle
                 subtitle: backend.exploreCanGoBack
-                          ? "Seleção atualizada pelo YouTube Music."
-                          : "Lançamentos, paradas e sons para cada momento."
+                          ? i18n.tr("Seleção atualizada pelo YouTube Music.")
+                          : i18n.tr("Lançamentos, paradas e sons para cada momento.")
 
                 Controls.Button {
                     visible: backend.exploreCanGoBack
-                    text: "Voltar ao Explorar"
+                    text: i18n.tr("Voltar ao Explorar")
                     icon.name: "go-previous"
                     onClicked: backend.resetExplore()
                 }
@@ -43,7 +43,7 @@ Item {
                 visible: backend.exploreShortcuts.length > 0
 
                 Kirigami.Heading {
-                    text: "Descubra"
+                    text: i18n.tr("Descubra")
                     level: 2
                 }
 
@@ -118,7 +118,7 @@ Item {
                 visible: backend.exploreGenres.length > 0
 
                 Kirigami.Heading {
-                    text: "Momentos e gêneros"
+                    text: i18n.tr("Momentos e gêneros")
                     level: 2
                 }
 
@@ -146,7 +146,7 @@ Item {
                       && backend.exploreShortcuts.length === 0
                       && backend.exploreGenres.length === 0
                       && !backend.busy
-                text: "Sincronize para carregar o Explorar"
+                text: i18n.tr("Sincronize para carregar o Explorar")
                 icon.name: "view-refresh"
             }
         }

@@ -26,15 +26,15 @@ Item {
             PageHeader {
                 width: parent.width
                 title: backend.searchQuery.length > 0
-                       ? "Resultados para “" + backend.searchQuery + "”"
-                       : "Pesquisa"
+                       ? i18n.trf("Resultados para “{query}”", { query: backend.searchQuery })
+                       : i18n.tr("Pesquisa")
             }
 
             Kirigami.InlineMessage {
                 width: parent.width
                 visible: backend.searchHasPartialErrors
                 type: Kirigami.MessageType.Warning
-                text: "Algumas categorias não puderam ser carregadas; os resultados disponíveis foram preservados."
+                text: i18n.tr("Algumas categorias não puderam ser carregadas; os resultados disponíveis foram preservados.")
             }
 
             Repeater {
@@ -118,7 +118,7 @@ Item {
                     Controls.Button {
                         visible: modelData.canLoadMore
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Carregar mais " + modelData.title.toLowerCase()
+                        text: i18n.trf("Carregar mais {title}", { title: modelData.title.toLowerCase() })
                         icon.name: "view-more-horizontal"
                         flat: true
                         onClicked: backend.loadMoreSearch(groupIndex)
@@ -131,8 +131,8 @@ Item {
                 height: Kirigami.Units.gridUnit * 14
                 visible: backend.searchGroups.length === 0 && !backend.busy
                 text: backend.searchQuery.length > 0
-                      ? "Nenhum resultado para “" + backend.searchQuery + "”"
-                      : "Pesquise músicas, vídeos, álbuns, artistas e playlists"
+                      ? i18n.trf("Nenhum resultado para “{query}”", { query: backend.searchQuery })
+                      : i18n.tr("Pesquise músicas, vídeos, álbuns, artistas e playlists")
                 icon.name: "edit-find"
             }
         }
