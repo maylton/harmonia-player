@@ -98,7 +98,9 @@ class QtHistoryController(QObject):
         self.entries = [*list(remote or []), *local]
         self.historyChanged.emit()
         if error:
-            self.set_status(f"O histórico local foi preservado; o remoto falhou: {error}")
+            self.set_status(
+                f"O histórico local foi preservado; não foi possível carregar o remoto: {error}"
+            )
 
     def set_enabled(self, enabled: bool) -> None:
         self.storage.set_history_enabled(enabled)
@@ -326,7 +328,7 @@ class QtLyricsController(QObject):
         if request_id != self.request or not item or item.id != video_id or document is None:
             return
         if error or not result or not any(result):
-            self.set_status(f"Falha ao traduzir: {error or 'resposta vazia'}")
+            self.set_status(f"Não foi possível traduzir: {error or 'resposta vazia'}")
             return
         if document.synced:
             document.synced = [

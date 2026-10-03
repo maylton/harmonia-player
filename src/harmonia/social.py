@@ -120,7 +120,9 @@ class LastFmClient:
             with self._opener(request, timeout=15) as response:
                 payload = json.loads(response.read().decode())
         except (OSError, ValueError) as exc:
-            raise LastFmError(_("Falha ao acessar o Last.fm: {error}").format(error=exc)) from exc
+            raise LastFmError(
+                _("Não foi possível acessar o Last.fm: {error}").format(error=exc)
+            ) from exc
         if "error" in payload:
             raise LastFmError(str(payload.get("message") or f"Erro {payload['error']} do Last.fm"))
         return payload
@@ -225,7 +227,11 @@ class DiscordPresence:
                 candidate.sendall(self._frame(0, {"v": 1, "client_id": self.client_id}))
                 response = self._receive()
                 if response.get("evt") == "ERROR":
-                    raise OSError(response.get("data", {}).get("message", "Falha no Discord IPC"))
+                    raise OSError(
+                        response.get("data", {}).get(
+                            "message", _("Não foi possível falar com o Discord")
+                        )
+                    )
                 return
             except OSError as exc:
                 last_error = exc
@@ -244,7 +250,11 @@ class DiscordPresence:
             self._socket.sendall(self._frame(1, payload))
             response = self._receive()
             if response.get("evt") == "ERROR":
-                raise OSError(response.get("data", {}).get("message", "Falha no Discord IPC"))
+                raise OSError(
+                    response.get("data", {}).get(
+                        "message", _("Não foi possível falar com o Discord")
+                    )
+                )
         except OSError:
             self.close()
             raise

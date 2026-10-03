@@ -623,7 +623,9 @@ class WindowPlaybackMixin:
         self.expanded_play_button.set_sensitive(True)
         self.expanded_play_button.set_icon_name("media-playback-start-symbolic")
         self.toast_overlay.add_toast(
-            Adw.Toast(title=_("Falha na reprodução: {error}").format(error=error), timeout=6)
+            Adw.Toast(
+                title=_("Não foi possível reproduzir: {error}").format(error=error), timeout=6
+            )
         )
         return False
 
@@ -636,7 +638,9 @@ class WindowPlaybackMixin:
         self.expanded_play_button.set_icon_name("media-playback-start-symbolic")
         self.toast_overlay.add_toast(
             Adw.Toast(
-                title=_("Falha na reprodução após renovar o stream: {error}").format(error=error),
+                title=_("Não foi possível reproduzir mesmo após renovar o stream: {error}").format(
+                    error=error
+                ),
                 timeout=6,
             )
         )

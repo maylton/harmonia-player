@@ -337,7 +337,7 @@ class WindowLyricsMixin:
         if error or not result or not any(result):
             self.toast_overlay.add_toast(
                 Adw.Toast(
-                    title=_("Falha ao traduzir: {error}").format(
+                    title=_("Não foi possível traduzir: {error}").format(
                         error=error or _("resposta vazia")
                     ),
                     timeout=5,

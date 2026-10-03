@@ -171,7 +171,9 @@ class WindowAccountMixin:
     def _sync_done(self, sections, error):
         if error:
             self.toast_overlay.add_toast(
-                Adw.Toast(title=_("Falha na sincronização: {error}").format(error=error), timeout=6)
+                Adw.Toast(
+                    title=_("Não foi possível sincronizar: {error}").format(error=error), timeout=6
+                )
             )
             return False
         self.sections = sections

@@ -140,9 +140,9 @@ class WindowHistoryMixin:
         if error:
             self.toast_overlay.add_toast(
                 Adw.Toast(
-                    title=_("O histórico local foi preservado; o remoto falhou: {error}").format(
-                        error=error
-                    ),
+                    title=_(
+                        "O histórico local foi preservado; não foi possível carregar o remoto: {error}"
+                    ).format(error=error),
                     timeout=5,
                 )
             )

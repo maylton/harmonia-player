@@ -291,7 +291,9 @@ class WindowOptionalMixin:
         def completed(result, error):
             if error:
                 self.toast_overlay.add_toast(
-                    Adw.Toast(title=_("Reconhecimento falhou: {error}").format(error=error))
+                    Adw.Toast(
+                        title=_("Não foi possível reconhecer a música: {error}").format(error=error)
+                    )
                 )
             elif result is None:
                 self.toast_overlay.add_toast(Adw.Toast(title=_("Nenhuma música reconhecida")))
@@ -315,7 +317,9 @@ class WindowOptionalMixin:
 
         def completed(devices, error):
             if error:
-                row.set_subtitle(_("Falha na descoberta: {error}").format(error=error))
+                row.set_subtitle(
+                    _("Não foi possível procurar dispositivos: {error}").format(error=error)
+                )
                 return False
             if not devices:
                 row.set_subtitle(_("Nenhum dispositivo encontrado"))
