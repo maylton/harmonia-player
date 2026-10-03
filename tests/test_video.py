@@ -229,7 +229,7 @@ def test_progressive_video_prefers_highest_format_within_limit(monkeypatch):
         },
     }
 
-    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    PlayerClient.player_response = lambda *_args, **_kwargs: payload
     stream = resolve_video_stream(PlayerClient(), item, max_height=720, force=True)
     assert stream.height == 720
     assert stream.url.endswith("720.mp4")
@@ -276,7 +276,7 @@ def test_qt_video_layer_can_use_adaptive_video_only(monkeypatch):
         },
     }
 
-    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    PlayerClient.player_response = lambda *_args, **_kwargs: payload
     stream = resolve_video_stream(
         PlayerClient(),
         item,
@@ -330,7 +330,7 @@ def test_adaptive_video_rejects_otf_and_prefers_indexed_random_access(monkeypatc
         },
     }
 
-    monkeypatch.setattr("harmonia.video._player_payload", lambda *_args, **_kwargs: payload)
+    PlayerClient.player_response = lambda *_args, **_kwargs: payload
     stream = resolve_video_stream(
         PlayerClient(),
         item,
@@ -345,3 +345,21 @@ def test_adaptive_video_rejects_otf_and_prefers_indexed_random_access(monkeypatc
     assert stream.content_length == 12_345_678
     assert stream.init_range == (0, 739)
     assert stream.index_range == (740, 1515)
+
+
+def test_video_failures_name_each_client_and_its_reason():
+    item = LibraryItem("video-missing", "Song", "Artist", kind="videos")
+
+    class PlayerClient:
+        gl = "BR"
+
+        def _bootstrap(self):
+            return None
+
+        def player_response(self, _video_id, profile):
+            raise InnerTubeError(f"HTTP 4{len(profile['name'])}")
+
+    with pytest.raises(InnerTubeError) as error:
+        resolve_video_stream(PlayerClient(), item, force=True)
+    for profile in PLAYER_CLIENTS:
+        assert f"{profile['name']}: HTTP 4{len(profile['name'])}" in str(error.value)

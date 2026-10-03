@@ -859,3 +859,28 @@ def test_podcast_multirow_episode_is_playable():
     assert [(item.id, item.kind, item.title) for item in items] == [
         ("episode-id", "songs", "Episódio")
     ]
+
+
+def test_player_response_retries_transient_errors_and_reports_the_reason(monkeypatch):
+    import json
+    import urllib.error
+
+    import pytest
+
+    from harmonia import innertube
+
+    calls = []
+
+    def urlopen(request, **_kwargs):
+        calls.append(json.loads(request.data)["context"]["client"]["clientName"])
+        raise urllib.error.HTTPError(
+            request.full_url, 503 if len(calls) == 1 else 403, "", {}, None
+        )
+
+    client = innertube.InnerTubeClient("SAPISID=x")
+    monkeypatch.setattr(innertube.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(innertube.time, "sleep", lambda *_args: None)
+    profile = innertube.PLAYER_CLIENTS[0]
+    with pytest.raises(innertube.InnerTubeError, match="HTTP 403"):
+        client.player_response("abc", profile)
+    assert calls == [profile["name"], profile["name"]]  # 503 retried once, 403 final

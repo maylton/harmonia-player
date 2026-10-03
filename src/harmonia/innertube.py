@@ -607,6 +607,15 @@ def parse_remote_history(payload: dict[str, Any]) -> list[HistoryEntry]:
     return entries
 
 
+def stream_expiration(url: str) -> int | None:
+    """The Unix time a googlevideo stream URL stops working, from its expire= field."""
+    values = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("expire")
+    try:
+        return int(values[0]) if values else None
+    except (TypeError, ValueError):
+        return None
+
+
 class InnerTubeClient:
     def __init__(
         self,
@@ -953,13 +962,62 @@ class InnerTubeClient:
         unique = {item.id: item for item in result}
         return list(unique.values())
 
-    @staticmethod
-    def _stream_expiration(url: str) -> int | None:
-        values = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("expire")
-        try:
-            return int(values[0]) if values else None
-        except (TypeError, ValueError):
-            return None
+    def player_response(self, video_id: str, profile: dict[str, Any]) -> dict[str, Any]:
+        """POST /player as one of PLAYER_CLIENTS, retrying transient failures once.
+
+        Raises InnerTubeError with a short reason when no response is obtained.
+        """
+        version = self.client_version if profile.get("live_version") else profile["version"]
+        client = {
+            "clientName": profile["name"],
+            "clientVersion": version,
+            "userAgent": profile["user_agent"],
+            "hl": self.hl,
+            "gl": self.gl,
+            **profile.get("context", {}),
+            **({"visitorData": self.visitor_data} if self.visitor_data else {}),
+        }
+        body = {
+            "context": {"client": client, "user": {}},
+            "videoId": video_id,
+            "contentCheckOk": True,
+            "racyCheckOk": True,
+        }
+        request = urllib.request.Request(
+            f"{API_URL}/player?prettyPrint=false",
+            data=json.dumps(body).encode(),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": profile["user_agent"],
+                "X-YouTube-Client-Name": profile["id"],
+                "X-YouTube-Client-Version": version,
+                **({"X-Goog-Visitor-Id": self.visitor_data} if self.visitor_data else {}),
+                **(
+                    {
+                        "Cookie": self.cookie,
+                        "Authorization": sapisid_hash(self.cookie),
+                        "Origin": ORIGIN,
+                        "X-Origin": ORIGIN,
+                    }
+                    if profile.get("authenticated") and self.authenticated
+                    else {}
+                ),
+            },
+        )
+        for attempt in range(2):
+            try:
+                with self._open(request, timeout=30) as response:
+                    return json.load(response)
+            except urllib.error.HTTPError as exc:
+                if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 1:
+                    raise InnerTubeError(f"HTTP {exc.code}") from exc
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+                if attempt == 1:
+                    raise InnerTubeError(str(exc)) from exc
+            time.sleep(0.2 * (2**attempt))
+        raise AssertionError("unreachable")
 
     def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
         """Resolve audio with cache, transient retries and ordered client fallback."""
@@ -979,61 +1037,10 @@ class InnerTubeClient:
         with suppress(InnerTubeError):
             self._bootstrap()
         for profile in PLAYER_CLIENTS:
-            version = self.client_version if profile.get("live_version") else profile["version"]
-            client = {
-                "clientName": profile["name"],
-                "clientVersion": version,
-                "userAgent": profile["user_agent"],
-                "hl": self.hl,
-                "gl": self.gl,
-                **profile.get("context", {}),
-                **({"visitorData": self.visitor_data} if self.visitor_data else {}),
-            }
-            body = {
-                "context": {"client": client, "user": {}},
-                "videoId": video_id,
-                "contentCheckOk": True,
-                "racyCheckOk": True,
-            }
-            request = urllib.request.Request(
-                f"{API_URL}/player?prettyPrint=false",
-                data=json.dumps(body).encode(),
-                method="POST",
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "User-Agent": profile["user_agent"],
-                    "X-YouTube-Client-Name": profile["id"],
-                    "X-YouTube-Client-Version": version,
-                    **({"X-Goog-Visitor-Id": self.visitor_data} if self.visitor_data else {}),
-                    **(
-                        {
-                            "Cookie": self.cookie,
-                            "Authorization": sapisid_hash(self.cookie),
-                            "Origin": ORIGIN,
-                            "X-Origin": ORIGIN,
-                        }
-                        if profile.get("authenticated") and self.authenticated
-                        else {}
-                    ),
-                },
-            )
-            payload: dict[str, Any] | None = None
-            for attempt in range(2):
-                try:
-                    with self._open(request, timeout=30) as response:
-                        payload = json.load(response)
-                    break
-                except urllib.error.HTTPError as exc:
-                    if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 1:
-                        failures.append(f"{profile['name']}: HTTP {exc.code}")
-                        break
-                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-                    if attempt == 1:
-                        failures.append(f"{profile['name']}: {exc}")
-                        break
-                time.sleep(0.2 * (2**attempt))
-            if payload is None:
+            try:
+                payload = self.player_response(video_id, profile)
+            except InnerTubeError as exc:
+                failures.append(f"{profile['name']}: {exc}")
                 continue
             status = payload.get("playabilityStatus", {})
             formats = (payload.get("streamingData") or {}).get("adaptiveFormats") or []
@@ -1058,7 +1065,7 @@ class InnerTubeClient:
                     mime_type=str(selected.get("mimeType") or ""),
                     bitrate=int(selected.get("bitrate", 0) or 0),
                     itag=int(selected["itag"]) if selected.get("itag") is not None else None,
-                    expires_at=self._stream_expiration(url),
+                    expires_at=stream_expiration(url),
                     playback_tracking_url=(
                         (
                             (payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl")
