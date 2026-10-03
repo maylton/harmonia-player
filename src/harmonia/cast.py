@@ -115,6 +115,31 @@ class LocalMediaServer:
         self.server.server_close()
 
 
+class CastMediaHost:
+    """Make the current track reachable by a renderer on the LAN.
+
+    Remote streams are handed to the renderer as they are; local files
+    (downloads and the local library) are served by a LocalMediaServer, one at
+    a time, which is replaced on every track and closed when casting ends.
+    """
+
+    def __init__(self) -> None:
+        self._server: LocalMediaServer | None = None
+
+    def uri_for(self, uri: str) -> str:
+        """Return a URI the renderer can fetch; raises OSError or ValueError."""
+        self.close()
+        if uri.startswith("file:"):
+            self._server = LocalMediaServer.from_uri(uri)
+            return self._server.url
+        return uri
+
+    def close(self) -> None:
+        if self._server:
+            self._server.close()
+            self._server = None
+
+
 @dataclass(frozen=True, slots=True)
 class CastDevice:
     name: str

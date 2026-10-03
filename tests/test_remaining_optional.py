@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from harmonia.cast import CastDevice, LocalMediaServer, UpnpDiscovery, UpnpRenderer
+from harmonia.cast import CastDevice, CastMediaHost, LocalMediaServer, UpnpDiscovery, UpnpRenderer
 from harmonia.models import LibraryItem
 from harmonia.recognition import AuddRecognitionProvider, MusicRecognizer
 from harmonia.together import TogetherClient, TogetherHost, TogetherState
@@ -188,3 +188,25 @@ def test_window_shutdown_releases_services_and_quits_once(monkeypatch):
     assert window._shutdown_application() is False
     assert window._shutdown_application() is False
     assert events == ["optional", "social", "close", "close", "quit"]
+
+
+def test_cast_media_host_serves_local_files_and_passes_streams_through(tmp_path):
+    first, second = tmp_path / "um.m4a", tmp_path / "dois.m4a"
+    first.write_bytes(b"primeiro")
+    second.write_bytes(b"segundo")
+    host = CastMediaHost()
+    try:
+        remote = "https://rr1.googlevideo.com/videoplayback?id=1"
+        assert host.uri_for(remote) == remote
+        url = host.uri_for(first.as_uri())
+        with urllib.request.urlopen(url) as response:
+            assert response.read() == b"primeiro"
+        replacement = host.uri_for(second.as_uri())
+        with urllib.request.urlopen(replacement) as response:
+            assert response.read() == b"segundo"
+        # Only one file is exposed at a time: the previous server is gone.
+        with pytest.raises(urllib.error.URLError):
+            urllib.request.urlopen(url, timeout=2)
+    finally:
+        host.close()
+    host.close()  # idempotent, as both frontends call it on every stop
