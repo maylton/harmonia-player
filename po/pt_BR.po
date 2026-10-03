@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-03 08:19-0300\n"
+"POT-Creation-Date: 2026-10-03 08:36-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -144,7 +144,7 @@ msgstr "Reprodução automática ativada"
 #: src/harmonia/app.py:861 src/harmonia/app.py:958 src/harmonia/app.py:959
 #: src/harmonia/window_playback.py:399 src/harmonia/window_playback.py:400
 #: src/harmonia/window_playback.py:401 src/harmonia/window_playback.py:402
-#: src/harmonia/window_playback.py:664 src/harmonia/window_playback.py:665
+#: src/harmonia/window_playback.py:668 src/harmonia/window_playback.py:669
 msgid "0:00"
 msgstr "0:00"
 
@@ -312,70 +312,70 @@ msgstr "O YouTube Music não retornou o perfil da conta ativa."
 msgid "Artista"
 msgstr "Artista"
 
-#: src/harmonia/innertube.py:712
+#: src/harmonia/innertube.py:721
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 
-#: src/harmonia/innertube.py:716
+#: src/harmonia/innertube.py:725
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr "YouTube Music respondeu HTTP {code}: {detail}"
 
-#: src/harmonia/innertube.py:723
+#: src/harmonia/innertube.py:732
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr "Não foi possível conectar ao YouTube Music: {error}"
 
-#: src/harmonia/innertube.py:726
+#: src/harmonia/innertube.py:735
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr "Não foi possível concluir a requisição ao YouTube Music."
 
-#: src/harmonia/innertube.py:741
+#: src/harmonia/innertube.py:750
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
 
-#: src/harmonia/innertube.py:772
+#: src/harmonia/innertube.py:781
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Categoria de busca desconhecida: {category}"
 
-#: src/harmonia/innertube.py:845
+#: src/harmonia/innertube.py:854
 msgid "O artista não possui um identificador"
 msgstr "O artista não possui um identificador"
 
-#: src/harmonia/innertube.py:875
+#: src/harmonia/innertube.py:884
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "O YouTube Music não forneceu um token de remoção"
 
-#: src/harmonia/innertube.py:917
+#: src/harmonia/innertube.py:926
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Categoria desconhecida: {category}"
 
-#: src/harmonia/innertube.py:967
+#: src/harmonia/innertube.py:1025
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "A faixa não contém um identificador reproduzível."
 
-#: src/harmonia/innertube.py:1076
+#: src/harmonia/innertube.py:1083
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Não foi possível obter um stream reproduzível. {details}"
 
-#: src/harmonia/innertube.py:1133
+#: src/harmonia/innertube.py:1140
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Não foi possível registrar a reprodução: {error}"
 
-#: src/harmonia/innertube.py:1156
+#: src/harmonia/innertube.py:1163
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "O nome da playlist não pode ficar vazio"
 
-#: src/harmonia/innertube.py:1163
+#: src/harmonia/innertube.py:1170
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "O YouTube criou a playlist sem retornar o identificador"
 
-#: src/harmonia/innertube.py:1186
+#: src/harmonia/innertube.py:1193
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr ""
@@ -412,9 +412,9 @@ msgstr "Nenhum áudio foi capturado"
 msgid "Configure o token do AudD nas Preferências"
 msgstr "Configure o token do AudD nas Preferências"
 
-#: src/harmonia/recognition.py:124
-msgid "Falha no reconhecimento"
-msgstr "Falha no reconhecimento"
+#: src/harmonia/recognition.py:125
+msgid "Não foi possível reconhecer a música"
+msgstr "Não foi possível reconhecer a música"
 
 #: src/harmonia/social.py:102
 msgid "A chave e o segredo da API do Last.fm são obrigatórios"
@@ -424,18 +424,22 @@ msgstr "A chave e o segredo da API do Last.fm são obrigatórios"
 msgid "A conta do Last.fm ainda não foi autorizada"
 msgstr "A conta do Last.fm ainda não foi autorizada"
 
-#: src/harmonia/social.py:123
+#: src/harmonia/social.py:124
 #, python-brace-format
-msgid "Falha ao acessar o Last.fm: {error}"
-msgstr "Falha ao acessar o Last.fm: {error}"
+msgid "Não foi possível acessar o Last.fm: {error}"
+msgstr "Não foi possível acessar o Last.fm: {error}"
 
-#: src/harmonia/social.py:131
+#: src/harmonia/social.py:133
 msgid "O Last.fm não retornou um token de autorização"
 msgstr "O Last.fm não retornou um token de autorização"
 
-#: src/harmonia/social.py:143
+#: src/harmonia/social.py:145
 msgid "O Last.fm não retornou uma sessão válida"
 msgstr "O Last.fm não retornou uma sessão válida"
+
+#: src/harmonia/social.py:232 src/harmonia/social.py:255
+msgid "Não foi possível falar com o Discord"
+msgstr "Não foi possível falar com o Discord"
 
 #: src/harmonia/together.py:112 src/harmonia/together.py:120
 msgid "Link Listen Together inválido"
@@ -465,19 +469,19 @@ msgstr "Buscar {name}"
 msgid "Ir para o artista {name}"
 msgstr "Ir para o artista {name}"
 
-#: src/harmonia/video.py:154
+#: src/harmonia/video.py:152
 msgid "Esta faixa local não possui um vídeo do YouTube associado."
 msgstr "Esta faixa local não possui um vídeo do YouTube associado."
 
-#: src/harmonia/video.py:204
+#: src/harmonia/video.py:202
 msgid "O YouTube Music não encontrou um vídeo para esta faixa."
 msgstr "O YouTube Music não encontrou um vídeo para esta faixa."
 
-#: src/harmonia/video.py:229
+#: src/harmonia/video.py:227
 msgid "Nenhum vídeo correspondente foi encontrado para esta faixa."
 msgstr "Nenhum vídeo correspondente foi encontrado para esta faixa."
 
-#: src/harmonia/video.py:493
+#: src/harmonia/video.py:428
 #, python-brace-format
 msgid "Não foi possível obter o vídeo correspondente. {details}"
 msgstr "Não foi possível obter o vídeo correspondente. {details}"
@@ -509,7 +513,7 @@ msgstr "SAPISID=…; __Secure-3PAPISID=…"
 #: src/harmonia/window_actions.py:143 src/harmonia/window_actions.py:309
 #: src/harmonia/window_actions.py:335 src/harmonia/window_actions.py:370
 #: src/harmonia/window_library.py:726 src/harmonia/window_library.py:743
-#: src/harmonia/window_optional.py:327 src/harmonia/window_preferences.py:313
+#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:313
 msgid "Cancelar"
 msgstr "Cancelar"
 
@@ -541,12 +545,12 @@ msgstr "Não foi possível atualizar o início: {error}"
 msgid "Não foi possível atualizar o Explorar: {error}"
 msgstr "Não foi possível atualizar o Explorar: {error}"
 
-#: src/harmonia/window_account.py:174
+#: src/harmonia/window_account.py:175
 #, python-brace-format
-msgid "Falha na sincronização: {error}"
-msgstr "Falha na sincronização: {error}"
+msgid "Não foi possível sincronizar: {error}"
+msgstr "Não foi possível sincronizar: {error}"
 
-#: src/harmonia/window_account.py:189
+#: src/harmonia/window_account.py:191
 #, python-brace-format
 msgid "Biblioteca atualizada · {count} item"
 msgid_plural "Biblioteca atualizada · {count} itens"
@@ -781,9 +785,9 @@ msgstr "Salvo na biblioteca"
 msgid "Salvar na biblioteca"
 msgstr "Salvar na biblioteca"
 
-#: src/harmonia/window_detail.py:482
-msgid "Fazer download"
-msgstr "Fazer download"
+#: src/harmonia/window_detail.py:482 src/harmonia/window_home.py:350
+msgid "Baixar"
+msgstr "Baixar"
 
 #: src/harmonia/window_detail.py:487
 msgid "Mais opções"
@@ -935,10 +939,11 @@ msgstr "Reproduzir offline"
 msgid "Excluir download"
 msgstr "Excluir download"
 
-#: src/harmonia/window_history.py:143
+#: src/harmonia/window_history.py:144
 #, python-brace-format
-msgid "O histórico local foi preservado; o remoto falhou: {error}"
-msgstr "O histórico local foi preservado; o remoto falhou: {error}"
+msgid ""
+"O histórico local foi preservado; não foi possível carregar o remoto: {error}"
+msgstr "O histórico local foi preservado; não foi possível carregar o remoto: {error}"
 
 #: src/harmonia/window_history.py:157
 msgid "Limpar local"
@@ -1033,10 +1038,6 @@ msgstr "Carregando recomendações personalizadas"
 #: src/harmonia/window_home.py:343 src/harmonia/window_home.py:424
 msgid "Remover das curtidas"
 msgstr "Remover das curtidas"
-
-#: src/harmonia/window_home.py:350
-msgid "Baixar"
-msgstr "Baixar"
 
 #: src/harmonia/window_home.py:456
 msgid "Tocar tudo"
@@ -1389,8 +1390,8 @@ msgstr "Traduzindo letra…"
 
 #: src/harmonia/window_lyrics.py:340
 #, python-brace-format
-msgid "Falha ao traduzir: {error}"
-msgstr "Falha ao traduzir: {error}"
+msgid "Não foi possível traduzir: {error}"
+msgstr "Não foi possível traduzir: {error}"
 
 #: src/harmonia/window_lyrics.py:341
 msgid "resposta vazia"
@@ -1542,57 +1543,57 @@ msgstr "Configure o token do AudD primeiro"
 msgid "Ouvindo por 12 segundos…"
 msgstr "Ouvindo por 12 segundos…"
 
-#: src/harmonia/window_optional.py:294
+#: src/harmonia/window_optional.py:295
 #, python-brace-format
-msgid "Reconhecimento falhou: {error}"
-msgstr "Reconhecimento falhou: {error}"
+msgid "Não foi possível reconhecer a música: {error}"
+msgstr "Não foi possível reconhecer a música: {error}"
 
-#: src/harmonia/window_optional.py:297
+#: src/harmonia/window_optional.py:299
 msgid "Nenhuma música reconhecida"
 msgstr "Nenhuma música reconhecida"
 
-#: src/harmonia/window_optional.py:301
+#: src/harmonia/window_optional.py:303
 #, python-brace-format
 msgid "Encontrada: {title} — {artist}"
 msgstr "Encontrada: {title} — {artist}"
 
-#: src/harmonia/window_optional.py:314
+#: src/harmonia/window_optional.py:316
 msgid "Procurando na rede local…"
 msgstr "Procurando na rede local…"
 
-#: src/harmonia/window_optional.py:318
-#, python-brace-format
-msgid "Falha na descoberta: {error}"
-msgstr "Falha na descoberta: {error}"
-
 #: src/harmonia/window_optional.py:321
+#, python-brace-format
+msgid "Não foi possível procurar dispositivos: {error}"
+msgstr "Não foi possível procurar dispositivos: {error}"
+
+#: src/harmonia/window_optional.py:325
 msgid "Nenhum dispositivo encontrado"
 msgstr "Nenhum dispositivo encontrado"
 
-#: src/harmonia/window_optional.py:324
+#: src/harmonia/window_optional.py:328
 msgid "Escolha um dispositivo"
 msgstr "Escolha um dispositivo"
 
-#: src/harmonia/window_optional.py:325
+#: src/harmonia/window_optional.py:329
 msgid "A faixa atual será transferida para o dispositivo selecionado."
 msgstr "A faixa atual será transferida para o dispositivo selecionado."
 
-#: src/harmonia/window_optional.py:337
+#: src/harmonia/window_optional.py:341
 #, python-brace-format
 msgid "{count} dispositivo(s) encontrado(s)"
 msgstr "{count} dispositivo(s) encontrado(s)"
 
-#: src/harmonia/window_optional.py:345
+#: src/harmonia/window_optional.py:349
 msgid "Comece a reproduzir uma faixa antes de transmitir"
 msgstr "Comece a reproduzir uma faixa antes de transmitir"
 
-#: src/harmonia/window_optional.py:352 src/harmonia/window_optional.py:372
-#: src/harmonia/window_optional.py:411
+#: src/harmonia/window_optional.py:356 src/harmonia/window_optional.py:376
+#: src/harmonia/window_optional.py:415
 #, python-brace-format
 msgid "Não foi possível transmitir: {error}"
 msgstr "Não foi possível transmitir: {error}"
 
-#: src/harmonia/window_optional.py:377
+#: src/harmonia/window_optional.py:381
 #, python-brace-format
 msgid "Reproduzindo em {device}"
 msgstr "Reproduzindo em {device}"
@@ -1635,15 +1636,15 @@ msgstr "O arquivo local não está mais disponível"
 msgid "O stream falhou; renovando a conexão…"
 msgstr "O stream falhou; renovando a conexão…"
 
-#: src/harmonia/window_playback.py:626
+#: src/harmonia/window_playback.py:627
 #, python-brace-format
-msgid "Falha na reprodução: {error}"
-msgstr "Falha na reprodução: {error}"
+msgid "Não foi possível reproduzir: {error}"
+msgstr "Não foi possível reproduzir: {error}"
 
-#: src/harmonia/window_playback.py:639
+#: src/harmonia/window_playback.py:641
 #, python-brace-format
-msgid "Falha na reprodução após renovar o stream: {error}"
-msgstr "Falha na reprodução após renovar o stream: {error}"
+msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
+msgstr "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 
 #: src/harmonia/window_preferences.py:198
 msgid "0 B armazenados"
@@ -2061,8 +2062,8 @@ msgid "Buscando…"
 msgstr "Buscando…"
 
 #: src/harmonia/window_search.py:145
-msgid "A busca falhou"
-msgstr "A busca falhou"
+msgid "Não foi possível buscar"
+msgstr "Não foi possível buscar"
 
 #: src/harmonia/window_search.py:151
 msgid " Algumas categorias não puderam ser consultadas."

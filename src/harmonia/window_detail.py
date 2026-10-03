@@ -479,7 +479,7 @@ class WindowDetailMixin:
         )
         actions.append(save)
 
-        download = icon_button("folder-download-symbolic", _("Fazer download"), size="lg")
+        download = icon_button("folder-download-symbolic", _("Baixar"), size="lg")
         download.set_sensitive(bool(tracks))
         download.connect("clicked", lambda *_: self._download_items(tracks))
         actions.append(download)

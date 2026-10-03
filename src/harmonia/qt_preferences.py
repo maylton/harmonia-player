@@ -238,7 +238,9 @@ class QtPreferencesController(QObject):
                 "backup-export": "Não foi possível exportar o backup",
                 "backup-restore": "Não foi possível restaurar o backup",
             }
-            self.set_status(f"{labels.get(operation, 'Operação falhou')}: {detail}")
+            self.set_status(
+                f"{labels.get(operation, 'Não foi possível concluir a operação')}: {detail}"
+            )
             return
         if operation == "account":
             self.set_status("Conta conectada e válida.")

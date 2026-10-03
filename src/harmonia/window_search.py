@@ -142,7 +142,7 @@ class WindowSearchMixin:
         if error:
             page = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
-                title=_("A busca falhou"),
+                title=_("Não foi possível buscar"),
                 description=escape(error),
             )
         elif not results or not results.groups:

@@ -121,7 +121,9 @@ class AuddRecognitionProvider:
         with self._opener(request, timeout=30) as response:
             payload = json.loads(response.read())
         if payload.get("status") != "success":
-            error = payload.get("error", {}).get("error_message", _("Falha no reconhecimento"))
+            error = payload.get("error", {}).get(
+                "error_message", _("Não foi possível reconhecer a música")
+            )
             raise RuntimeError(error)
         result = payload.get("result")
         if not result:

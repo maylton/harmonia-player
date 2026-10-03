@@ -176,7 +176,7 @@ class QtCatalogController(QObject):
             return
         self.set_busy(False)
         if error:
-            self.set_status(f"Falha na pesquisa: {error}")
+            self.set_status(f"Não foi possível pesquisar: {error}")
             return
         self.search_results = results or SearchResults("", [])
         self.searchChanged.emit()

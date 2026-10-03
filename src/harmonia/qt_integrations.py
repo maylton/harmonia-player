@@ -668,12 +668,14 @@ class QtIntegrationsController(QObject):
                     "lastfm-begin": "Não foi possível iniciar o Last.fm",
                     "lastfm-finish": "Não foi possível conectar ao Last.fm",
                     "together-join": "Não foi possível entrar na sessão",
-                    "recognition": "Reconhecimento falhou",
-                    "cast-discovery": "Falha ao procurar dispositivos",
+                    "recognition": "Não foi possível reconhecer a música",
+                    "cast-discovery": "Não foi possível procurar dispositivos",
                     "cast-connect": "Não foi possível transmitir",
                     "cast-track": "Não foi possível trocar a faixa no dispositivo",
                 }
-                self.backend._set_status(f"{labels.get(name, 'Operação falhou')}: {error}")
+                self.backend._set_status(
+                    f"{labels.get(name, 'Não foi possível concluir a operação')}: {error}"
+                )
             return
 
         if name == "lastfm-begin":
