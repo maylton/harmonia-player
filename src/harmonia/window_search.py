@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from html import escape
 
 import gi
 
@@ -108,7 +109,7 @@ class WindowSearchMixin:
         self._search_request += 1
         request_id = self._search_request
         status = Adw.StatusPage(
-            icon_name="system-search-symbolic", title=_("Buscando…"), description=query
+            icon_name="system-search-symbolic", title=_("Buscando…"), description=escape(query)
         )
         old = self.stack.get_child_by_name("search")
         if old:
@@ -140,7 +141,9 @@ class WindowSearchMixin:
         query = results.query if results else self.search_entry.get_text().strip()
         if error:
             page = Adw.StatusPage(
-                icon_name="dialog-error-symbolic", title=_("A busca falhou"), description=error
+                icon_name="dialog-error-symbolic",
+                title=_("A busca falhou"),
+                description=escape(error),
             )
         elif not results or not results.groups:
             detail = ""
@@ -149,7 +152,7 @@ class WindowSearchMixin:
             page = Adw.StatusPage(
                 icon_name="system-search-symbolic",
                 title=_("Nenhum resultado"),
-                description=_("Nada encontrado para “{query}”").format(query=query),
+                description=_("Nada encontrado para “{query}”").format(query=escape(query)),
             )
             if detail:
                 page.set_description(page.get_description() + detail)

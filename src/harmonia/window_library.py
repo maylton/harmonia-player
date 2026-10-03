@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 import urllib.request
+from html import escape
 from pathlib import Path
 
 import gi
@@ -596,7 +597,7 @@ class WindowLibraryMixin:
         status = Adw.StatusPage(
             icon_name="view-refresh-symbolic",
             title=_("Carregando…"),
-            description=_("Buscando {title}").format(title=item.title),
+            description=_("Buscando {title}").format(title=escape(item.title)),
         )
         old = self.stack.get_child_by_name("detail")
         if old:

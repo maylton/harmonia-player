@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 import urllib.request
+from html import escape
 from pathlib import Path
 
 import gi
@@ -1017,7 +1018,9 @@ class HarmoniaWindow(
             return
         while child := self.expanded_lyrics_container.get_first_child():
             self.expanded_lyrics_container.remove(child)
-        status = Adw.StatusPage(icon_name=icon, title=title, description=description)
+        # The description is Pango markup; callers pass plain text such as a
+        # track title, which may hold a bare "&".
+        status = Adw.StatusPage(icon_name=icon, title=title, description=escape(description))
         status.set_vexpand(True)
         self.expanded_lyrics_container.append(status)
 

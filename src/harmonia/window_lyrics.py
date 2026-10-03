@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from html import escape
 
 import gi
 
@@ -40,7 +41,7 @@ class WindowLyricsMixin:
     def _set_lyrics_message(
         self, icon: str, title: str, description: str, retry: bool = False
     ) -> None:
-        page = Adw.StatusPage(icon_name=icon, title=title, description=description)
+        page = Adw.StatusPage(icon_name=icon, title=title, description=escape(description))
         page.set_size_request(410, 430)
         if retry:
             button = action_button(_("Tentar novamente"), role="accent")
