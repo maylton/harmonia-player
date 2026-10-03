@@ -78,6 +78,12 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 .sidebar-create { margin: 10px 8px 0; background: @harmonia_hover_bg; border-radius: 8px; }
 .compact-menu { padding: 8px; min-width: 190px; }
 .compact-menu button { padding: 8px 12px; }
+/* Navigation icons all follow the text colour. Some icon themes mark parts of
+   a symbolic icon as success/warning/error (elementary's starred-symbolic is a
+   "warning" star), which GTK would paint yellow, green or red. */
+.sidebar-item image, .compact-menu image {
+  -gtk-icon-palette: success currentColor, warning currentColor, error currentColor;
+}
 .hero { padding: 26px 0 10px; }
 .hero-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
 .hero-subtitle { color: @harmonia_fg_dim; font-size: 14px; }

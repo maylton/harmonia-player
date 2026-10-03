@@ -231,3 +231,12 @@ def test_elementary_shadow_moves_first_when_gtk_prefers_earlier_paths():
     theme = FirstWinsTheme()
     install_elementary_shadow(theme, (4, 22))
     assert theme.paths == [ELEMENTARY_SHADOW_PATH, "/run/host/share/icons"]
+
+
+def test_navigation_icons_ignore_icon_theme_status_colours():
+    # elementary's starred-symbolic is a "warning" star that GTK paints yellow;
+    # in the sidebar and compact menu it must match the other icons.
+    css = (Path(__file__).resolve().parents[1] / "src" / "harmonia" / "style.css").read_text()
+    rule = css.split(".sidebar-item image, .compact-menu image {", 1)[1].split("}", 1)[0]
+    for status in ("success", "warning", "error"):
+        assert f"{status} currentColor" in rule
