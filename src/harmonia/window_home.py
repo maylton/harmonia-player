@@ -123,15 +123,22 @@ class WindowHomeMixin:
         def worker():
             try:
                 data = self.youtube.discovery(destination)
-                GLib.idle_add(self._destination_loaded, destination, data, None)
+                GLib.idle_add(self._destination_loaded, destination, data, None, status)
             except Exception as exc:
-                GLib.idle_add(self._destination_loaded, destination, None, str(exc))
+                GLib.idle_add(self._destination_loaded, destination, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True).start()
 
     def _destination_loaded(
-        self, destination: ExploreDestination, data: ExploreData | None, error: str | None
+        self,
+        destination: ExploreDestination,
+        data: ExploreData | None,
+        error: str | None,
+        placeholder: Gtk.Widget | None = None,
     ):
+        show = self._loaded_page_visible("discovery", placeholder)
+        if show is None:
+            return False
         old = self.stack.get_child_by_name("discovery")
         if old:
             self.stack.remove(old)
@@ -149,7 +156,8 @@ class WindowHomeMixin:
                 full_sections=True,
             )
         self.stack.add_named(page, "discovery")
-        self.stack.set_visible_child_name("discovery")
+        if show:
+            self.stack.set_visible_child_name("discovery")
         return False
 
     def _render_home(self) -> None:

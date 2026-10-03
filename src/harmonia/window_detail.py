@@ -48,6 +48,20 @@ def radio_queue(seed: LibraryItem, items: list[LibraryItem]) -> list[LibraryItem
 
 
 class WindowDetailMixin:
+    def _loaded_page_visible(self, name: str, placeholder: Gtk.Widget | None) -> bool | None:
+        """Decide what an asynchronous page load may do when its result arrives.
+
+        None: a newer load replaced the placeholder, so this result is stale.
+        False: the user moved to another page; update this one without
+        switching to it, so a late reply never pulls them back.
+        True: the placeholder is still on screen; show the result.
+        """
+        if placeholder is None:
+            return True
+        if self.stack.get_child_by_name(name) is not placeholder:
+            return None
+        return self.stack.get_visible_child() is placeholder
+
     def _open_artist(self, item: LibraryItem) -> None:
         self.main_view = "artist"
         self._artist_current_item = item
@@ -67,9 +81,9 @@ class WindowDetailMixin:
         def worker() -> None:
             try:
                 page = self.youtube.artist(item.id)
-                GLib.idle_add(self._show_artist, item, page, None)
+                GLib.idle_add(self._show_artist, item, page, None, status)
             except Exception as exc:
-                GLib.idle_add(self._show_artist, item, None, str(exc))
+                GLib.idle_add(self._show_artist, item, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True, name="artist-page").start()
 
@@ -78,7 +92,11 @@ class WindowDetailMixin:
         item: LibraryItem,
         artist: ArtistPage | None,
         error: str | None,
+        placeholder: Gtk.Widget | None = None,
     ) -> bool:
+        show = self._loaded_page_visible("artist", placeholder)
+        if show is None:
+            return False
         old = self.stack.get_child_by_name("artist")
         if old:
             self.stack.remove(old)
@@ -179,7 +197,8 @@ class WindowDetailMixin:
             scroll.set_child(surface)
             page = scroll
         self.stack.add_named(page, "artist")
-        self.stack.set_visible_child_name("artist")
+        if show:
+            self.stack.set_visible_child_name("artist")
         return False
 
     def _toggle_artist_page_subscription(
@@ -226,15 +245,22 @@ class WindowDetailMixin:
         def worker() -> None:
             try:
                 items = self.youtube.artist_section(section)
-                GLib.idle_add(self._show_artist_section, section, items, None)
+                GLib.idle_add(self._show_artist_section, section, items, None, status)
             except Exception as exc:
-                GLib.idle_add(self._show_artist_section, section, None, str(exc))
+                GLib.idle_add(self._show_artist_section, section, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True, name="artist-section").start()
 
     def _show_artist_section(
-        self, section: ArtistSection, items: list[LibraryItem] | None, error: str | None
+        self,
+        section: ArtistSection,
+        items: list[LibraryItem] | None,
+        error: str | None,
+        placeholder: Gtk.Widget | None = None,
     ) -> bool:
+        show = self._loaded_page_visible("artist-section", placeholder)
+        if show is None:
+            return False
         old = self.stack.get_child_by_name("artist-section")
         if old:
             self.stack.remove(old)
@@ -253,7 +279,8 @@ class WindowDetailMixin:
             )
             page = scroll
         self.stack.add_named(page, "artist-section")
-        self.stack.set_visible_child_name("artist-section")
+        if show:
+            self.stack.set_visible_child_name("artist-section")
         return False
 
     def _open_home_item(self, item: LibraryItem, section_items: list[LibraryItem]) -> None:
@@ -263,7 +290,16 @@ class WindowDetailMixin:
         playable = [candidate for candidate in section_items if candidate.kind == "songs"]
         self.set_queue(playable, playable.index(item) if item in playable else 0)
 
-    def _show_detail(self, item: LibraryItem, tracks: list[LibraryItem] | None, error: str | None):
+    def _show_detail(
+        self,
+        item: LibraryItem,
+        tracks: list[LibraryItem] | None,
+        error: str | None,
+        placeholder: Gtk.Widget | None = None,
+    ):
+        show = self._loaded_page_visible("detail", placeholder)
+        if show is None:
+            return False
         old = self.stack.get_child_by_name("detail")
         if old:
             self.stack.remove(old)
@@ -368,7 +404,8 @@ class WindowDetailMixin:
             scroll.set_child(surface)
             page = scroll
         self.stack.add_named(page, "detail")
-        self.stack.set_visible_child_name("detail")
+        if show:
+            self.stack.set_visible_child_name("detail")
         self._refresh_detail_track_states()
         return False
 

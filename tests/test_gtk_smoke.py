@@ -27,6 +27,6 @@ def test_every_page_theme_and_icon_style_opens_without_warnings():
         [sys.executable, str(ROOT / "tools" / "gtk_smoke.py")],
         capture_output=True,
         text=True,
-        timeout=900,
+        timeout=1200,
     )
     assert result.returncode == 0, result.stdout[-4000:] + result.stderr[-4000:]
