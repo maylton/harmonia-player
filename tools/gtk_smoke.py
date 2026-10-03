@@ -99,7 +99,7 @@ def _child(verbose: bool) -> int:
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
     gi.require_version("Gst", "1.0")
-    from gi.repository import Adw, GLib, Gst
+    from gi.repository import Adw, Gio, GLib, Gst
 
     if (Adw.MAJOR_VERSION, Adw.MINOR_VERSION) < (1, 7):
         print(f"SMOKE-FAIL libadwaita {Adw.MAJOR_VERSION}.{Adw.MINOR_VERSION} < 1.7")
@@ -159,9 +159,14 @@ def _child(verbose: bool) -> int:
             GLib.timeout_add(300, advance)
 
     application = SmokeApplication()
+    # Never hand the run over to a Harmonia instance that is already open on
+    # this session bus: it would just present that window and exit at once.
+    application.set_flags(application.get_flags() | Gio.ApplicationFlags.NON_UNIQUE)
     status = application.run([])
     for error in errors:
         print(f"SMOKE-FAIL {error}")
+    if steps == 0:
+        print("SMOKE-FAIL a janela não foi criada; nenhum passo executado", flush=True)
     print(f"SMOKE-DONE {steps} passos, {len(icons_seen)} ícones verificados", flush=True)
     return status or (1 if errors else 0)
 
