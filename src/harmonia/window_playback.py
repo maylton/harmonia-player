@@ -400,9 +400,6 @@ class WindowPlaybackMixin:
         self.expanded_elapsed_label.set_label(_("0:00"))
         self.duration_label.set_label(_("0:00"))
         self.expanded_duration_label.set_label(_("0:00"))
-        self.toast_overlay.add_toast(
-            Adw.Toast(title=_("Preparando {title}…").format(title=item.title), timeout=2)
-        )
         if self.lyrics_button.get_active() or (
             self.expanded_revealer.get_reveal_child()
             and self.expanded_stack.get_visible_child_name() == "lyrics"

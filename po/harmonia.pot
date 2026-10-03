@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-03 08:45-0300\n"
+"POT-Creation-Date: 2026-10-03 08:52-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -151,7 +151,7 @@ msgstr ""
 #: src/harmonia/app.py:861 src/harmonia/app.py:958 src/harmonia/app.py:959
 #: src/harmonia/window_playback.py:399 src/harmonia/window_playback.py:400
 #: src/harmonia/window_playback.py:401 src/harmonia/window_playback.py:402
-#: src/harmonia/window_playback.py:668 src/harmonia/window_playback.py:669
+#: src/harmonia/window_playback.py:665 src/harmonia/window_playback.py:666
 msgid "0:00"
 msgstr ""
 
@@ -862,11 +862,6 @@ msgstr ""
 msgid "O arquivo local não está mais disponível."
 msgstr ""
 
-#: src/harmonia/qt_playback.py:280 src/harmonia/window_playback.py:404
-#, python-brace-format
-msgid "Preparando {title}…"
-msgstr ""
-
 #: src/harmonia/qt_playback.py:324
 #, python-brace-format
 msgid "Não foi possível reproduzir a faixa: {error}"
@@ -881,7 +876,7 @@ msgstr ""
 msgid "A rádio não encontrou novas músicas."
 msgstr ""
 
-#: src/harmonia/qt_playback.py:561 src/harmonia/window_playback.py:601
+#: src/harmonia/qt_playback.py:561 src/harmonia/window_playback.py:598
 msgid "O stream falhou; renovando a conexão…"
 msgstr ""
 
@@ -2045,16 +2040,16 @@ msgstr ""
 msgid "As recomendações aparecem conforme a fila avança."
 msgstr ""
 
-#: src/harmonia/window_playback.py:417
+#: src/harmonia/window_playback.py:414
 msgid "O arquivo local não está mais disponível"
 msgstr ""
 
-#: src/harmonia/window_playback.py:627
+#: src/harmonia/window_playback.py:624
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr ""
 
-#: src/harmonia/window_playback.py:641
+#: src/harmonia/window_playback.py:638
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr ""
