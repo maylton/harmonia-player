@@ -277,7 +277,7 @@ class QtPlaybackController(QObject):
             return
 
         self.set_busy(True)
-        self.set_status(_("Preparando {title}…").format(title=item.title))
+        self.set_status("")
 
         def worker() -> None:
             try:

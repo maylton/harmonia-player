@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-03 08:45-0300\n"
+"POT-Creation-Date: 2026-10-03 08:52-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -150,7 +150,7 @@ msgstr "Reprodução automática ativada"
 #: src/harmonia/app.py:861 src/harmonia/app.py:958 src/harmonia/app.py:959
 #: src/harmonia/window_playback.py:399 src/harmonia/window_playback.py:400
 #: src/harmonia/window_playback.py:401 src/harmonia/window_playback.py:402
-#: src/harmonia/window_playback.py:668 src/harmonia/window_playback.py:669
+#: src/harmonia/window_playback.py:665 src/harmonia/window_playback.py:666
 msgid "0:00"
 msgstr "0:00"
 
@@ -866,11 +866,6 @@ msgstr "Faixa removida da playlist"
 msgid "O arquivo local não está mais disponível."
 msgstr "O arquivo local não está mais disponível."
 
-#: src/harmonia/qt_playback.py:280 src/harmonia/window_playback.py:404
-#, python-brace-format
-msgid "Preparando {title}…"
-msgstr "Preparando {title}…"
-
 #: src/harmonia/qt_playback.py:324
 #, python-brace-format
 msgid "Não foi possível reproduzir a faixa: {error}"
@@ -885,7 +880,7 @@ msgstr "Não foi possível continuar a rádio: {error}"
 msgid "A rádio não encontrou novas músicas."
 msgstr "A rádio não encontrou novas músicas."
 
-#: src/harmonia/qt_playback.py:561 src/harmonia/window_playback.py:601
+#: src/harmonia/qt_playback.py:561 src/harmonia/window_playback.py:598
 msgid "O stream falhou; renovando a conexão…"
 msgstr "O stream falhou; renovando a conexão…"
 
@@ -2057,16 +2052,16 @@ msgstr "Tocar em seguida"
 msgid "As recomendações aparecem conforme a fila avança."
 msgstr "As recomendações aparecem conforme a fila avança."
 
-#: src/harmonia/window_playback.py:417
+#: src/harmonia/window_playback.py:414
 msgid "O arquivo local não está mais disponível"
 msgstr "O arquivo local não está mais disponível"
 
-#: src/harmonia/window_playback.py:627
+#: src/harmonia/window_playback.py:624
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Não foi possível reproduzir: {error}"
 
-#: src/harmonia/window_playback.py:641
+#: src/harmonia/window_playback.py:638
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Não foi possível reproduzir mesmo após renovar o stream: {error}"
