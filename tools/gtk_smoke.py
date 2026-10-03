@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 from pathlib import Path
 
 CHILD_FLAG = "--child"
@@ -44,26 +45,14 @@ def main(argv: list[str]) -> int:
     if CHILD_FLAG in argv:
         return _child(verbose="--verbose" in argv)
     with tempfile.TemporaryDirectory(prefix="harmonia-smoke-") as home:
-        env = dict(os.environ)
-        env.update(
-            XDG_CONFIG_HOME=f"{home}/config",
-            XDG_CACHE_HOME=f"{home}/cache",
-            XDG_DATA_HOME=f"{home}/data",
-            HARMONIA_DISABLE_SECRET_SERVICE="1",
-            GSETTINGS_BACKEND="memory",
-            GTK_A11Y="none",
-            # Keep the run identical on any desktop.
-            XDG_CURRENT_DESKTOP="GNOME",
-            LANGUAGE="pt_BR",
-        )
-        env.pop("GTK_THEME", None)
+        env = dict(os.environ, HARMONIA_SMOKE_HOME=home)
         started = time.monotonic()
         process = subprocess.run(
             [sys.executable, __file__, *argv, CHILD_FLAG],
             env=env,
             capture_output=True,
             text=True,
-            timeout=600,
+            timeout=900,
         )
     output = process.stdout + process.stderr
     failures = [
@@ -90,7 +79,30 @@ def main(argv: list[str]) -> int:
 # Child process: builds the window and walks through the app.
 
 
+def _isolate(home: str) -> None:
+    """Point every per-user location at the scratch home, inside this process.
+
+    Set here rather than by the caller: `flatpak run --env=XDG_CACHE_HOME=…`
+    is silently overridden by Flatpak with the app's real directories, which
+    would seed the sample data into the user's own Harmonia profile.
+    """
+    os.environ.update(
+        XDG_CONFIG_HOME=f"{home}/config",
+        XDG_CACHE_HOME=f"{home}/cache",
+        XDG_DATA_HOME=f"{home}/data",
+        HARMONIA_DISABLE_SECRET_SERVICE="1",
+        GSETTINGS_BACKEND="memory",
+        GTK_A11Y="none",
+        # Keep the run identical on any desktop.
+        XDG_CURRENT_DESKTOP="GNOME",
+        LANGUAGE="pt_BR",
+    )
+    os.environ.pop("GTK_THEME", None)
+
+
 def _child(verbose: bool) -> int:
+    home = os.environ.get("HARMONIA_SMOKE_HOME") or tempfile.mkdtemp(prefix="harmonia-smoke-")
+    _isolate(home)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     _refuse_network()
 
@@ -115,7 +127,11 @@ def _child(verbose: bool) -> int:
     install_gtk_media_variants(gtk_app.HarmoniaWindow)
     samples = _Samples(Path(os.environ["XDG_CACHE_HOME"]) / "smoke-media")
     gtk_app.YouTubeMusicService = lambda storage: _FakeService(storage, samples)
-    _seed_storage(Storage(), samples)
+    storage = Storage()
+    if not storage.database_file.resolve().is_relative_to(Path(home).resolve()):
+        print(f"SMOKE-FAIL o perfil não está isolado: {storage.database_file}", flush=True)
+        return 2
+    _seed_storage(storage, samples)
 
     errors: list[str] = []
 
@@ -184,7 +200,15 @@ def _refuse_network() -> None:
             "::1",
             "localhost",
         ):
-            print(f"SMOKE-FAIL acesso à rede: {address}", flush=True)
+            caller = next(
+                (
+                    f"{frame.filename.rsplit('/', 1)[-1]}:{frame.lineno} {frame.name}"
+                    for frame in reversed(traceback.extract_stack())
+                    if "/harmonia/" in frame.filename
+                ),
+                "?",
+            )
+            print(f"SMOKE-FAIL acesso à rede em {caller}: {address}", flush=True)
             raise OSError("rede desativada no smoke")
         return original(self, address)
 
@@ -262,23 +286,33 @@ def _drive(window, themes, log):
         yield 60
 
 
-def _expect_page(window, name: str) -> None:
-    """Fail when a page did not open or shows an error or a stuck loading state."""
+def _page_problem(window, name: str) -> str | None:
+    """Why the page is not ready: not open, an error or still loading."""
     from gi.repository import Adw
 
     visible = window.stack.get_visible_child_name()
     if visible != name:
-        print(f"SMOKE-FAIL página {name!r} esperada, aberta {visible!r}", flush=True)
-        return
+        return f"página {name!r} esperada, aberta {visible!r}"
     page = window.stack.get_visible_child()
-    if isinstance(page, Adw.StatusPage) and page.get_icon_name() in (
-        "dialog-error-symbolic",
-        "view-refresh-symbolic",
+    if isinstance(page, Adw.StatusPage) and (
+        page.get_icon_name() in ("view-refresh-symbolic", "dialog-error-symbolic")
+        or page.get_title() == "Buscando…"  # the search placeholder
     ):
-        print(
-            f"SMOKE-FAIL página {name!r} mostra {page.get_title()!r}: {page.get_description()!r}",
-            flush=True,
-        )
+        return f"página {name!r} mostra {page.get_title()!r}: {page.get_description()!r}"
+    return None
+
+
+def _expect_page(window, name: str, timeout: float = 15.0):
+    """Wait for a page to finish loading; fail if it never does.
+
+    Pages load in worker threads, and CI renders in software on two CPUs, so a
+    fixed delay is either too short there or wastes time everywhere else.
+    """
+    deadline = time.monotonic() + timeout
+    while (problem := _page_problem(window, name)) and time.monotonic() < deadline:
+        yield 50
+    if problem:
+        print(f"SMOKE-FAIL {problem}", flush=True)
 
 
 def _visit_pages(window, log, full: bool):
@@ -288,14 +322,14 @@ def _visit_pages(window, log, full: bool):
     log("início")
     window.show_home()
     yield 80
-    _expect_page(window, "home")
+    yield from _expect_page(window, "home")
     log("explorar")
     window.show_explore()
     yield 80
-    _expect_page(window, "explore")
+    yield from _expect_page(window, "explore")
     window.open_destination(ExploreDestination("Lançamentos", "FEmusic_new_releases"))
     yield 120
-    _expect_page(window, "discovery")
+    yield from _expect_page(window, "discovery")
     for origin in ("youtube", "uploads", "downloads", "local", "podcasts"):
         window.show_library()
         window._set_library_origin(origin)
@@ -304,7 +338,7 @@ def _visit_pages(window, log, full: bool):
             log(f"biblioteca {origin}/{key}")
             window._set_library_filter(key)
             yield 50
-            _expect_page(window, "library")
+            yield from _expect_page(window, "library")
     if full:
         window._set_library_sort("title")
         yield 50
@@ -312,23 +346,23 @@ def _visit_pages(window, log, full: bool):
     log("álbum")
     window.open_item(samples.album)
     yield 150
-    _expect_page(window, "detail")
+    yield from _expect_page(window, "detail")
     log("playlist")
     window.open_item(samples.playlist)
     yield 150
-    _expect_page(window, "detail")
+    yield from _expect_page(window, "detail")
     log("artista")
     window._open_artist(samples.artist)
     yield 150
-    _expect_page(window, "artist")
+    yield from _expect_page(window, "artist")
     window._open_artist_section(ArtistSection("Singles", samples.songs, "UCartist", "params"))
     yield 150
-    _expect_page(window, "artist-section")
+    yield from _expect_page(window, "artist-section")
     log("busca")
     window.search_entry.set_text("elis & tom")
     window.search("elis & tom")
     yield 200
-    _expect_page(window, "search")
+    yield from _expect_page(window, "search")
     log("sugestões")
     window.search_entry.grab_focus()
     window._show_search_suggestions(window._suggestion_request, "elis & tom", samples.suggestions)
@@ -337,19 +371,19 @@ def _visit_pages(window, log, full: bool):
     log("histórico")
     window.show_history()
     yield 150
-    _expect_page(window, "history")
+    yield from _expect_page(window, "history")
     log("estatísticas")
     window.show_insights()
     yield 100
-    _expect_page(window, "insights")
+    yield from _expect_page(window, "insights")
     log("downloads")
     window.show_downloads()
     yield 100
-    _expect_page(window, "downloads")
+    yield from _expect_page(window, "downloads")
     log("configurações")
     window.show_settings()
     yield 120
-    _expect_page(window, "settings")
+    yield from _expect_page(window, "settings")
     if not full:
         return
     log("fila e player expandido")
@@ -518,6 +552,13 @@ class _FakeService:
     def __init__(self, storage, samples: _Samples) -> None:
         self.storage = storage
         self.samples = samples
+        # HARMONIA_SMOKE_DELAY=1.5 makes page loads as slow as a busy network
+        # (or a CI runner), to exercise the loading states.
+        self.delay = float(os.environ.get("HARMONIA_SMOKE_DELAY", "0"))
+
+    def _slow(self) -> None:
+        if self.delay:
+            time.sleep(self.delay)
 
     def connect(self, cookie: str) -> bool:
         self.storage.save_cookie(cookie)
@@ -558,15 +599,19 @@ class _FakeService:
         return self.samples.explore
 
     def discovery(self, _destination):
+        self._slow()
         return self.samples.explore
 
     def browse(self, _item):
+        self._slow()
         return self.samples.songs
 
     def artist(self, _artist_id):
+        self._slow()
         return self.samples.artist_page
 
     def artist_section(self, _section):
+        self._slow()
         return self.samples.albums
 
     def mutate(self, _operation):
@@ -596,6 +641,7 @@ class _FakeService:
         return None
 
     def universal_search(self, query):
+        self._slow()
         from harmonia.models import SearchResults
 
         return SearchResults(query, list(self.samples.search_groups))

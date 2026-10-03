@@ -109,3 +109,31 @@ def test_expanded_player_uses_a_supported_gtk_revealer_transition() -> None:
 
     assert "Gtk.RevealerTransitionType.FADE_SLIDE_UP" not in source
     assert "Gtk.RevealerTransitionType.SLIDE_UP" in source
+
+
+class StackStub:
+    def __init__(self):
+        self.children = {}
+        self.visible = None
+
+    def get_child_by_name(self, name):
+        return self.children.get(name)
+
+    def get_visible_child(self):
+        return self.visible
+
+
+def test_late_page_loads_never_pull_the_user_back():
+    from harmonia.window_detail import WindowDetailMixin
+
+    window = type("Window", (), {"stack": StackStub()})()
+    loading, newer, library = object(), object(), object()
+    window.stack.children["detail"] = loading
+    window.stack.visible = loading
+    assert WindowDetailMixin._loaded_page_visible(window, "detail", loading) is True
+    # The user went to another page while the album loaded: update it quietly.
+    window.stack.visible = library
+    assert WindowDetailMixin._loaded_page_visible(window, "detail", loading) is False
+    # Another album was opened meanwhile: this reply is stale.
+    window.stack.children["detail"] = newer
+    assert WindowDetailMixin._loaded_page_visible(window, "detail", loading) is None

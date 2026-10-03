@@ -136,6 +136,9 @@ class WindowSearchMixin:
         if request_id != self._search_request:
             return False
         old = self.stack.get_child_by_name("search")
+        # Results that arrive after the user left the search page update it
+        # without pulling them back.
+        show = old is None or self.stack.get_visible_child() is old
         if old:
             self.stack.remove(old)
         query = results.query if results else self.search_entry.get_text().strip()
@@ -174,7 +177,8 @@ class WindowSearchMixin:
             for search_group in results.groups:
                 box.append(self._search_group_widget(results, search_group))
         self.stack.add_named(page, "search")
-        self.stack.set_visible_child_name("search")
+        if show:
+            self.stack.set_visible_child_name("search")
         return False
 
     def _search_group_widget(self, results: SearchResults, search_group: SearchGroup) -> Gtk.Widget:
