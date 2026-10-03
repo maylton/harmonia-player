@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import threading
 import time
@@ -15,12 +14,11 @@ from typing import Any
 
 from .i18n import _
 from .innertube import (
-    API_URL,
     ORIGIN,
     PLAYER_CLIENTS,
     InnerTubeClient,
     InnerTubeError,
-    sapisid_hash,
+    stream_expiration,
 )
 from .models import LibraryItem
 
@@ -233,70 +231,6 @@ def find_video_variant(client: InnerTubeClient, item: LibraryItem, *, force: boo
     return selected.id
 
 
-def _stream_expiration(url: str) -> int | None:
-    values = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("expire")
-    try:
-        return int(values[0]) if values else None
-    except (TypeError, ValueError):
-        return None
-
-
-def _player_payload(
-    client: InnerTubeClient, video_id: str, profile: dict[str, Any]
-) -> dict[str, Any] | None:
-    version = client.client_version if profile.get("live_version") else profile["version"]
-    yt_client = {
-        "clientName": profile["name"],
-        "clientVersion": version,
-        "userAgent": profile["user_agent"],
-        "hl": client.hl,
-        "gl": client.gl,
-        **profile.get("context", {}),
-        **({"visitorData": client.visitor_data} if client.visitor_data else {}),
-    }
-    body = {
-        "context": {"client": yt_client, "user": {}},
-        "videoId": video_id,
-        "contentCheckOk": True,
-        "racyCheckOk": True,
-    }
-    request = urllib.request.Request(
-        f"{API_URL}/player?prettyPrint=false",
-        data=json.dumps(body).encode(),
-        method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": profile["user_agent"],
-            "X-YouTube-Client-Name": profile["id"],
-            "X-YouTube-Client-Version": version,
-            **({"X-Goog-Visitor-Id": client.visitor_data} if client.visitor_data else {}),
-            **(
-                {
-                    "Cookie": client.cookie,
-                    "Authorization": sapisid_hash(client.cookie),
-                    "Origin": ORIGIN,
-                    "X-Origin": ORIGIN,
-                }
-                if profile.get("authenticated") and client.authenticated
-                else {}
-            ),
-        },
-    )
-    for attempt in range(2):
-        try:
-            with client._open(request, timeout=30) as response:
-                return json.load(response)
-        except urllib.error.HTTPError as exc:
-            if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 1:
-                return None
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-            if attempt == 1:
-                return None
-        time.sleep(0.2 * (2**attempt))
-    return None
-
-
 def _stream_request_headers(profile: dict[str, Any]) -> dict[str, str]:
     """Return headers required by a media URL for one client profile."""
     headers = {
@@ -394,9 +328,10 @@ def resolve_video_stream(
         client._bootstrap()
 
     for profile in PLAYER_CLIENTS:
-        payload = _player_payload(client, video_id, profile)
-        if not payload:
-            failures.append(f"{profile['name']}: sem resposta")
+        try:
+            payload = client.player_response(video_id, profile)
+        except InnerTubeError as exc:
+            failures.append(f"{profile['name']}: {exc}")
             continue
         status = payload.get("playabilityStatus") or {}
         streaming = payload.get("streamingData") or {}
@@ -482,7 +417,7 @@ def resolve_video_stream(
             content_length=int(content_length) if content_length else None,
             init_range=_byte_range(selected, "initRange"),
             index_range=_byte_range(selected, "indexRange"),
-            expires_at=_stream_expiration(url),
+            expires_at=stream_expiration(url),
             request_headers=request_headers,
         )
         with _VIDEO_CACHE_LOCK:
