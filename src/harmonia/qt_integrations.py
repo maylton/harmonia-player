@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
-from .cast import LocalMediaServer, UpnpDiscovery, UpnpRenderer
+from .cast import CastMediaHost, UpnpDiscovery, UpnpRenderer
 from .recognition import AuddRecognitionProvider, MusicRecognizer, RecognitionTokenStore
 from .social import (
     DiscordPresence,
@@ -65,7 +65,7 @@ class QtIntegrationsController(QObject):
         self.cast_renderer: UpnpRenderer | None = None
         self.cast_device = None
         self._cast_devices = []
-        self._cast_media_server: LocalMediaServer | None = None
+        self.cast_media = CastMediaHost()
         self._cast_stream_uri = ""
         self._cast_position_ms = 0
         self._cast_started = 0.0
@@ -515,7 +515,7 @@ class QtIntegrationsController(QObject):
         uri = self.playback.current_stream_uri
         title = self.playback.current_item.title
         try:
-            cast_uri = self._castable_uri(uri)
+            cast_uri = self.cast_media.uri_for(uri)
         except (OSError, ValueError) as exc:
             self.backend._set_status(f"Não foi possível transmitir: {exc}")
             return
@@ -574,7 +574,7 @@ class QtIntegrationsController(QObject):
         self._cast_started = time.monotonic()
         self._cast_playing = True
         try:
-            cast_uri = self._castable_uri(uri)
+            cast_uri = self.cast_media.uri_for(uri)
         except (OSError, ValueError) as exc:
             self.backend._set_status(f"Não foi possível transmitir: {exc}")
             self._disconnect_cast(resume=False)
@@ -629,25 +629,13 @@ class QtIntegrationsController(QObject):
         self._cast_playing = False
         self._cast_stream_uri = ""
         self._run("cast-stop", renderer.stop, report_error=False)
-        self._close_cast_media_server()
+        self.cast_media.close()
         self.castChanged.emit()
         if resume and stream_uri and self.playback.current_item is not None:
             self.playback.player.play(stream_uri)
             QTimer.singleShot(500, lambda: self.playback.seek(position_ms))
             self.backend._set_status("Reprodução devolvida a este computador.")
         self.playback.playbackChanged.emit()
-
-    def _castable_uri(self, uri: str) -> str:
-        self._close_cast_media_server()
-        if uri.startswith("file:"):
-            self._cast_media_server = LocalMediaServer.from_uri(uri)
-            return self._cast_media_server.url
-        return uri
-
-    def _close_cast_media_server(self) -> None:
-        if self._cast_media_server:
-            self._cast_media_server.close()
-            self._cast_media_server = None
 
     # Workers / lifecycle --------------------------------------------
 
@@ -750,7 +738,7 @@ class QtIntegrationsController(QObject):
             renderer = self.cast_renderer
             self.cast_renderer = None
             self._run("cast-stop", renderer.stop, report_error=False)
-        self._close_cast_media_server()
+        self.cast_media.close()
         if self.discord_presence:
             try:
                 self.discord_presence.clear()

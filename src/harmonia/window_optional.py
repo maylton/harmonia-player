@@ -10,7 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
-from .cast import LocalMediaServer, UpnpDiscovery, UpnpRenderer
+from .cast import CastMediaHost, UpnpDiscovery, UpnpRenderer
 from .i18n import _
 from .recognition import AuddRecognitionProvider, MusicRecognizer, RecognitionTokenStore
 from .together import TogetherClient, TogetherHost, TogetherState
@@ -34,7 +34,7 @@ class WindowOptionalMixin:
         self._cast_position_ms = 0
         self._cast_started = 0.0
         self._current_stream_url = ""
-        self._cast_media_server = None
+        self.cast_media = CastMediaHost()
         self._shutdown_started = False
         self._optional_tick_source = GLib.timeout_add_seconds(1, self._optional_tick)
 
@@ -346,8 +346,8 @@ class WindowOptionalMixin:
             )
             return
         try:
-            cast_uri = self._castable_uri(self._current_stream_url)
-        except OSError as exc:
+            cast_uri = self.cast_media.uri_for(self._current_stream_url)
+        except (OSError, ValueError) as exc:
             self.toast_overlay.add_toast(
                 Adw.Toast(title=_("Não foi possível transmitir: {error}").format(error=exc))
             )
@@ -388,7 +388,7 @@ class WindowOptionalMixin:
         self.cast_renderer = None
         self.cast_device = None
         self._cast_playing = False
-        self._close_cast_media_server()
+        self.cast_media.close()
         if resume and self._current_stream_url:
             self.player.play(self._current_stream_url)
             GLib.timeout_add(500, self._apply_pending_seek, self._play_request, position_ms)
@@ -405,8 +405,8 @@ class WindowOptionalMixin:
         item = self.current_item
         renderer = self.cast_renderer
         try:
-            cast_uri = self._castable_uri(url)
-        except OSError as exc:
+            cast_uri = self.cast_media.uri_for(url)
+        except (OSError, ValueError) as exc:
             self.toast_overlay.add_toast(
                 Adw.Toast(title=_("Não foi possível transmitir: {error}").format(error=exc))
             )
@@ -463,19 +463,7 @@ class WindowOptionalMixin:
             self._cast_playing = False
             self._optional_worker("cast-stop", renderer.stop)
         self._current_stream_url = ""
-        self._close_cast_media_server()
-
-    def _castable_uri(self, uri: str) -> str:
-        self._close_cast_media_server()
-        if uri.startswith("file:"):
-            self._cast_media_server = LocalMediaServer.from_uri(uri)
-            return self._cast_media_server.url
-        return uri
-
-    def _close_cast_media_server(self) -> None:
-        if self._cast_media_server:
-            self._cast_media_server.close()
-            self._cast_media_server = None
+        self.cast_media.close()
 
     def _optional_worker(self, name: str, operation, completed=None) -> None:
         def worker():
