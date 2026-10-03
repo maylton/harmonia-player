@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from html import escape
 
 import gi
 
@@ -138,7 +139,7 @@ class WindowHomeMixin:
             page = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
                 title=_("Não foi possível abrir"),
-                description=error,
+                description=escape(error),
             )
         else:
             page = self._explore_page(

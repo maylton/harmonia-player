@@ -5,6 +5,7 @@ import random
 import re
 import threading
 from dataclasses import replace
+from html import escape
 
 import gi
 
@@ -85,7 +86,7 @@ class WindowDetailMixin:
             page: Gtk.Widget = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
                 title=_("Não foi possível abrir o artista"),
-                description=error or "Resposta vazia do YouTube Music",
+                description=escape(error or _("Resposta vazia do YouTube Music")),
             )
         else:
             scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
@@ -241,7 +242,7 @@ class WindowDetailMixin:
             page: Gtk.Widget = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
                 title=_("Não foi possível carregar"),
-                description=error,
+                description=escape(error),
             )
         else:
             shell = page_shell("content", spacing=20)
@@ -271,7 +272,7 @@ class WindowDetailMixin:
             page = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
                 title=_("Não foi possível abrir"),
-                description=error,
+                description=escape(error),
             )
         else:
             tracks = tracks or []

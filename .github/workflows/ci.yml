@@ -82,6 +82,18 @@ jobs:
             exit 1
           fi
 
+      # The Ubuntu job has libadwaita 1.5 and the window needs 1.7, so the full
+      # GTK smoke (every page, theme and icon style, failing on any GTK warning)
+      # runs on the checked-out sources inside the GNOME runtime.
+      - name: Smoke completo da janela GTK no runtime oficial
+        run: |
+          xvfb-run -a dbus-run-session -- \
+            flatpak run \
+              --command=python3 \
+              --filesystem="$PWD" \
+              --env=PYTHONPATH="$PWD/src" \
+              io.github.harmonia.Harmonia "$PWD/tools/gtk_smoke.py"
+
       - name: Construir variante KDE no runtime oficial
         run: |
           flatpak-builder build-kde \
