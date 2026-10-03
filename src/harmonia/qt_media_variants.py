@@ -6,6 +6,7 @@ from contextlib import suppress
 import shiboken6
 from gi.repository import Gst
 
+from .i18n import _
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
 from .qt_video import QtVideoController, _set_foreign_pointer_property
 
@@ -33,15 +34,15 @@ class OfficialVideoQtController(QtVideoController):
         if self._sink_prepared:
             return True
         if self._sink is None:
-            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
+            self._sink_error = _("O plugin GStreamer qml6glsink não está disponível.")
             self.availabilityChanged.emit()
             return False
         if self._video_player is None:
-            self._sink_error = "O GStreamer playbin para vídeo não está disponível."
+            self._sink_error = _("O GStreamer playbin para vídeo não está disponível.")
             self.availabilityChanged.emit()
             return False
         if self._surface is None:
-            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
+            self._sink_error = _("A superfície de vídeo Qt ainda não foi inicializada.")
             self.availabilityChanged.emit()
             return False
         if not self._surface_window or not self._scene_graph_ready(self._surface_window):
@@ -54,13 +55,15 @@ class OfficialVideoQtController(QtVideoController):
             LOGGER.debug("Preparing Qt GL video sink")
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
             if not pointer:
-                raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
+                raise RuntimeError(_("A superfície GstGLQt6VideoItem não possui ponteiro nativo"))
             _set_foreign_pointer_property(self._sink, "widget", pointer)
 
             # Initialize qml6glsink first so downstream GL elements reuse Qt's display.
             sink_state = self._sink.set_state(Gst.State.READY)
             if sink_state == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
+                raise RuntimeError(
+                    _("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
+                )
 
             video_output = self._sink
             glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
@@ -69,7 +72,7 @@ class OfficialVideoQtController(QtVideoController):
                 video_output = glsinkbin
                 bin_state = glsinkbin.set_state(Gst.State.READY)
                 if bin_state == Gst.StateChangeReturn.FAILURE:
-                    raise RuntimeError("glsinkbin não conseguiu inicializar")
+                    raise RuntimeError(_("glsinkbin não conseguiu inicializar"))
             else:
                 LOGGER.warning(
                     "glsinkbin unavailable; falling back to direct qml6glsink negotiation"
@@ -80,7 +83,7 @@ class OfficialVideoQtController(QtVideoController):
                 self._video_player.set_property("audio-sink", self._fake_audio_sink)
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("A camada de vídeo recusou o estado READY")
+                raise RuntimeError(_("A camada de vídeo recusou o estado READY"))
         except Exception as exc:
             self._log_sink_prepare_failure(exc)
             with suppress(Exception):
@@ -204,7 +207,9 @@ class OfficialVideoQtController(QtVideoController):
         primary_uri = str(getattr(self.playback, "current_stream_uri", "") or "")
         if not primary_uri:
             self._set_loading(False)
-            self.backend._set_status("Não foi possível preservar o áudio original da música.")
+            self.backend._set_status(
+                _("Não foi possível preservar o áudio original da música."), error=True
+            )
             return
 
         primary_duration_ms = max(0, int(self.playback.duration or 0))

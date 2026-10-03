@@ -25,11 +25,11 @@ Item {
 
             PageHeader {
                 Layout.fillWidth: true
-                title: "Histórico"
-                subtitle: "Reproduções da conta e deste dispositivo"
+                title: i18n.tr("Histórico")
+                subtitle: i18n.tr("Reproduções da conta e deste dispositivo")
 
                 Controls.ToolButton {
-                    text: "Atualizar"
+                    text: i18n.tr("Atualizar")
                     icon.name: "view-refresh"
                     display: Controls.AbstractButton.IconOnly
                     enabled: !backend.historyLoading
@@ -39,7 +39,7 @@ Item {
                 }
 
                 Controls.Button {
-                    text: "Limpar local"
+                    text: i18n.tr("Limpar local")
                     icon.name: "edit-clear-history"
                     enabled: backend.hasLocalHistory
                     onClicked: backend.clearLocalHistory()
@@ -62,13 +62,13 @@ Item {
                         spacing: 0
 
                         Controls.Label {
-                            text: "Registrar neste dispositivo"
+                            text: i18n.tr("Registrar neste dispositivo")
                             font.weight: Font.DemiBold
                         }
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: "Quando desativado, o Harmonia não grava novas reproduções localmente."
+                            text: i18n.tr("Quando desativado, o Harmonia não grava novas reproduções localmente.")
                             opacity: 0.68
                             wrapMode: Text.WordWrap
                         }
@@ -137,7 +137,7 @@ Item {
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: modelData.subtitle || (modelData.source === "remote" ? "YouTube Music" : "Neste dispositivo")
+                            text: modelData.subtitle || (modelData.source === "remote" ? "YouTube Music" : i18n.tr("Neste dispositivo"))
                             opacity: 0.68
                             elide: Text.ElideRight
                         }
@@ -149,7 +149,7 @@ Item {
                     }
 
                     Controls.ToolButton {
-                        text: "Remover do histórico"
+                        text: i18n.tr("Remover do histórico")
                         icon.name: "edit-delete"
                         display: Controls.AbstractButton.IconOnly
                         enabled: modelData.canRemove
@@ -165,8 +165,8 @@ Item {
             anchors.centerIn: parent
             width: Math.min(parent.width, Kirigami.Units.gridUnit * 28)
             visible: backend.historyItems.length === 0 && !backend.historyLoading
-            text: "Nenhuma reprodução"
-            explanation: "As músicas tocadas por pelo menos 30 segundos aparecerão aqui."
+            text: i18n.tr("Nenhuma reprodução")
+            explanation: i18n.tr("As músicas tocadas por pelo menos 30 segundos aparecerão aqui.")
             icon.name: "edit-clear-history"
         }
     }

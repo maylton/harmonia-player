@@ -51,7 +51,7 @@ Controls.ToolBar {
             Controls.ToolButton {
                 id: navigationButton
                 visible: !root.wideLayout
-                text: "Navegação"
+                text: i18n.tr("Navegação")
                 display: Controls.AbstractButton.IconOnly
                 onClicked: root.navigationRequested()
                 Controls.ToolTip.visible: hovered
@@ -68,7 +68,7 @@ Controls.ToolBar {
 
             Controls.ToolButton {
                 visible: root.currentView === 4
-                text: "Voltar"
+                text: i18n.tr("Voltar")
                 icon.name: "go-previous"
                 display: Controls.AbstractButton.IconOnly
                 onClicked: root.backRequested()
@@ -91,7 +91,7 @@ Controls.ToolBar {
                         - Kirigami.Units.gridUnit * 4
                 )
             )
-            placeholderText: "Pesquisar músicas, álbuns, artistas…"
+            placeholderText: i18n.tr("Pesquisar músicas, álbuns, artistas…")
             selectByMouse: true
 
             onAccepted: {
@@ -169,7 +169,7 @@ Controls.ToolBar {
             spacing: Kirigami.Units.smallSpacing
 
             Controls.ToolButton {
-                text: "Sincronizar"
+                text: i18n.tr("Sincronizar")
                 icon.name: "view-refresh"
                 display: Controls.AbstractButton.IconOnly
                 enabled: backend.loggedIn && !backend.busy
@@ -182,9 +182,9 @@ Controls.ToolBar {
                 id: accountButton
                 text: backend.loggedIn
                       ? (backend.accountName.length > 0
-                         ? "Conta — " + backend.accountName
-                         : "Conta conectada")
-                      : "Conectar conta"
+                         ? i18n.trf("Conta — {name}", { name: backend.accountName })
+                         : i18n.tr("Conta conectada"))
+                      : i18n.tr("Conectar conta")
                 display: Controls.AbstractButton.IconOnly
                 padding: Kirigami.Units.smallSpacing
                 onClicked: backend.loggedIn ? accountMenu.open() : root.connectRequested()
@@ -219,20 +219,20 @@ Controls.ToolBar {
 
                     Controls.MenuItem {
                         enabled: backend.accountName.length > 0
-                        text: backend.accountName.length > 0 ? backend.accountName : "Conta conectada"
+                        text: backend.accountName.length > 0 ? backend.accountName : i18n.tr("Conta conectada")
                         icon.name: "user-identity"
                     }
 
                     Controls.MenuSeparator {}
 
                     Controls.MenuItem {
-                        text: "Validar conta"
+                        text: i18n.tr("Validar conta")
                         icon.name: "emblem-ok"
                         onTriggered: backend.validateAccount()
                     }
 
                     Controls.MenuItem {
-                        text: "Desconectar conta"
+                        text: i18n.tr("Desconectar conta")
                         icon.name: "system-log-out"
                         onTriggered: backend.disconnectAccount()
                     }

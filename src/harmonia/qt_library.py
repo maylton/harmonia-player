@@ -5,22 +5,23 @@ from urllib.parse import unquote, urlparse
 
 from PySide6.QtCore import QObject, Signal
 
+from .i18n import _, ngettext
 from .models import LibraryItem, LocalPlaylist
 from .qt_catalog import QtCatalogController
 from .storage import Storage
 
 ORIGINS = (
-    ("youtube", "YouTube Music"),
-    ("uploads", "Uploads"),
-    ("downloads", "Downloads"),
-    ("local", "Arquivos locais"),
-    ("podcasts", "Podcasts"),
+    ("youtube", _("YouTube Music")),
+    ("uploads", _("Uploads")),
+    ("downloads", _("Downloads")),
+    ("local", _("Arquivos locais")),
+    ("podcasts", _("Podcasts")),
 )
 FILTERS = (
-    ("albums", "Álbuns"),
-    ("artists", "Artistas"),
-    ("songs", "Músicas"),
-    ("playlists", "Playlists"),
+    ("albums", _("Álbuns")),
+    ("artists", _("Artistas")),
+    ("songs", _("Músicas")),
+    ("playlists", _("Playlists")),
 )
 
 
@@ -74,16 +75,16 @@ class QtLibraryController(QObject):
     def description(self) -> str:
         if self.origin != "youtube":
             return {
-                "uploads": "Músicas enviadas à sua conta do YouTube Music.",
-                "downloads": "Conteúdo disponível para reprodução offline.",
-                "local": "Arquivos e playlists armazenados neste computador.",
-                "podcasts": "Programas e episódios salvos na sua conta.",
+                "uploads": _("Músicas enviadas à sua conta do YouTube Music."),
+                "downloads": _("Conteúdo disponível para reprodução offline."),
+                "local": _("Arquivos e playlists armazenados neste computador."),
+                "podcasts": _("Programas e episódios salvos na sua conta."),
             }[self.origin]
         return {
-            "albums": "Álbuns e EPs salvos na sua coleção.",
-            "artists": "Artistas que você acompanha.",
-            "songs": "Todas as músicas marcadas como favoritas.",
-            "playlists": "Playlists salvas na sua conta.",
+            "albums": _("Álbuns e EPs salvos na sua coleção."),
+            "artists": _("Artistas que você acompanha."),
+            "songs": _("Todas as músicas marcadas como favoritas."),
+            "playlists": _("Playlists salvas na sua conta."),
         }[self.category]
 
     def _normalize_category(self) -> None:
@@ -153,10 +154,11 @@ class QtLibraryController(QObject):
 
     @staticmethod
     def _playlist_item(playlist: LocalPlaylist) -> LibraryItem:
+        count = len(playlist.items)
         return LibraryItem(
             f"local-playlist:{playlist.id}",
             playlist.title,
-            f"{len(playlist.items)} faixas",
+            ngettext("{count} faixa", "{count} faixas", count).format(count=count),
             kind="local-playlists",
         )
 

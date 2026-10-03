@@ -17,7 +17,7 @@ Item {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.gridUnit * 1.5
             Layout.bottomMargin: Kirigami.Units.smallSpacing
-            title: "Biblioteca"
+            title: i18n.tr("Biblioteca")
             subtitle: backend.libraryDescription
 
             Controls.ComboBox {
@@ -44,8 +44,8 @@ Item {
                 id: sortBox
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 9
                 model: [
-                    { "label": "Mais recentes", "value": "recent" },
-                    { "label": "A-Z", "value": "title" }
+                    { "label": i18n.tr("Mais recentes"), "value": "recent" },
+                    { "label": i18n.tr("A-Z"), "value": "title" }
                 ]
                 textRole: "label"
 
@@ -88,7 +88,7 @@ Item {
 
             Controls.Button {
                 visible: backend.libraryIsLocal
-                text: "Adicionar arquivos"
+                text: i18n.tr("Adicionar arquivos")
                 icon.name: "document-open"
                 flat: true
                 onClicked: localFilesDialog.open()
@@ -96,7 +96,7 @@ Item {
 
             Controls.Button {
                 visible: backend.libraryIsLocal
-                text: "Nova playlist local"
+                text: i18n.tr("Nova playlist local")
                 icon.name: "list-add"
                 onClicked: localPlaylistDialog.open()
             }
@@ -169,7 +169,7 @@ Item {
                             icon.name: "edit-delete"
                             onClicked: backend.toggleLike(modelData.id)
                             Controls.ToolTip.visible: hovered
-                            Controls.ToolTip.text: "Remover das músicas curtidas"
+                            Controls.ToolTip.text: i18n.tr("Remover das músicas curtidas")
                         }
 
                         Controls.ToolButton {
@@ -177,7 +177,7 @@ Item {
                             icon.name: "edit-delete"
                             onClicked: backend.removeDownload(modelData.id)
                             Controls.ToolTip.visible: hovered
-                            Controls.ToolTip.text: "Excluir download"
+                            Controls.ToolTip.text: i18n.tr("Excluir download")
                         }
 
                         Controls.ToolButton {
@@ -185,7 +185,7 @@ Item {
                             icon.name: "edit-delete"
                             onClicked: backend.removeLocalItem(modelData.id)
                             Controls.ToolTip.visible: hovered
-                            Controls.ToolTip.text: "Remover da biblioteca local"
+                            Controls.ToolTip.text: i18n.tr("Remover da biblioteca local")
                         }
 
                         Kirigami.Icon {
@@ -200,8 +200,8 @@ Item {
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
                     visible: backend.libraryItems.length === 0 && !backend.busy
-                    text: "Nada nesta visualização"
-                    explanation: "Altere a origem ou adicione conteúdo à biblioteca."
+                    text: i18n.tr("Nada nesta visualização")
+                    explanation: i18n.tr("Altere a origem ou adicione conteúdo à biblioteca.")
                     icon.name: "folder-music"
                 }
             }
@@ -294,8 +294,8 @@ Item {
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
                     visible: backend.libraryItems.length === 0 && !backend.busy
-                    text: "Nada nesta visualização"
-                    explanation: "Altere a origem ou adicione conteúdo à biblioteca."
+                    text: i18n.tr("Nada nesta visualização")
+                    explanation: i18n.tr("Altere a origem ou adicione conteúdo à biblioteca.")
                     icon.name: "folder-music"
                 }
             }
@@ -304,11 +304,11 @@ Item {
 
     Dialogs.FileDialog {
         id: localFilesDialog
-        title: "Adicionar arquivos de áudio"
+        title: i18n.tr("Adicionar arquivos de áudio")
         fileMode: Dialogs.FileDialog.OpenFiles
         nameFilters: [
-            "Arquivos de áudio (*.mp3 *.m4a *.aac *.ogg *.opus *.flac *.wav *.wma)",
-            "Todos os arquivos (*)"
+            i18n.tr("Arquivos de áudio (*.mp3 *.m4a *.aac *.ogg *.opus *.flac *.wav *.wma)"),
+            i18n.tr("Todos os arquivos (*)")
         ]
         onAccepted: backend.addLocalFiles(selectedFiles.map(function(value) { return value.toString() }))
     }
@@ -316,7 +316,7 @@ Item {
     Controls.Dialog {
         id: localPlaylistDialog
         parent: root
-        title: "Nova playlist local"
+        title: i18n.tr("Nova playlist local")
         modal: true
         standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
         onAccepted: {
@@ -327,7 +327,7 @@ Item {
 
         contentItem: Controls.TextField {
             id: localPlaylistName
-            placeholderText: "Nome da playlist"
+            placeholderText: i18n.tr("Nome da playlist")
             selectByMouse: true
         }
     }

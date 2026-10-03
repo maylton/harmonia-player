@@ -6,7 +6,7 @@ import org.kde.kirigami as Kirigami
 Controls.Dialog {
     id: root
 
-    title: "Fila de reprodução"
+    title: i18n.tr("Fila de reprodução")
     modal: false
     popupType: Controls.Popup.Item
     standardButtons: Controls.Dialog.Close
@@ -32,17 +32,17 @@ Controls.Dialog {
                 spacing: 0
 
                 Controls.Label {
-                    text: backend.queueItems.length + (backend.queueItems.length === 1 ? " faixa" : " faixas")
+                    text: i18n.ntr("{count} faixa", "{count} faixas", backend.queueItems.length)
                     font.weight: Font.DemiBold
                 }
 
                 Controls.Label {
-                    text: "A fila é preservada entre sessões do Harmonia"
+                    text: i18n.tr("A fila é preservada entre sessões do Harmonia")
                     opacity: 0.65
                 }
             }
 
-            Controls.Label { text: "Autoplay" }
+            Controls.Label { text: i18n.tr("Autoplay") }
 
             Controls.Switch {
                 checked: backend.autoplay
@@ -56,12 +56,12 @@ Controls.Dialog {
             Layout.fillWidth: true
 
             Controls.TabButton {
-                text: "Fila"
+                text: i18n.tr("Fila")
                 icon.name: "view-media-playlist"
             }
 
             Controls.TabButton {
-                text: "Relacionadas"
+                text: i18n.tr("Relacionadas")
                 icon.name: "view-media-playlist"
             }
         }
@@ -142,7 +142,7 @@ Controls.Dialog {
                             }
 
                             Controls.ToolButton {
-                                text: "Mover para cima"
+                                text: i18n.tr("Mover para cima")
                                 icon.name: "go-up"
                                 display: Controls.AbstractButton.IconOnly
                                 enabled: index > 0
@@ -152,7 +152,7 @@ Controls.Dialog {
                             }
 
                             Controls.ToolButton {
-                                text: "Mover para baixo"
+                                text: i18n.tr("Mover para baixo")
                                 icon.name: "go-down"
                                 display: Controls.AbstractButton.IconOnly
                                 enabled: index + 1 < backend.queueItems.length
@@ -162,7 +162,7 @@ Controls.Dialog {
                             }
 
                             Controls.ToolButton {
-                                text: "Remover da fila"
+                                text: i18n.tr("Remover da fila")
                                 icon.name: "edit-delete"
                                 display: Controls.AbstractButton.IconOnly
                                 onClicked: backend.removeQueueItem(queueDelegate.index)
@@ -176,8 +176,8 @@ Controls.Dialog {
                         anchors.centerIn: parent
                         width: Math.min(parent.width, Kirigami.Units.gridUnit * 24)
                         visible: backend.queueItems.length === 0
-                        text: "A fila está vazia"
-                        explanation: "Escolha uma música ou use “Tocar tudo” em uma seção."
+                        text: i18n.tr("A fila está vazia")
+                        explanation: i18n.tr("Escolha uma música ou use “Tocar tudo” em uma seção.")
                         icon.name: "view-media-playlist"
                     }
                 }
@@ -229,7 +229,7 @@ Controls.Dialog {
                             }
 
                             Controls.ToolButton {
-                                text: "Tocar em seguida"
+                                text: i18n.tr("Tocar em seguida")
                                 icon.name: "go-next"
                                 display: Controls.AbstractButton.IconOnly
                                 onClicked: backend.promoteRelated(relatedDelegate.index, true)
@@ -238,7 +238,7 @@ Controls.Dialog {
                             }
 
                             Controls.ToolButton {
-                                text: "Adicionar ao fim"
+                                text: i18n.tr("Adicionar ao fim")
                                 icon.name: "list-add"
                                 display: Controls.AbstractButton.IconOnly
                                 onClicked: backend.promoteRelated(relatedDelegate.index, false)
@@ -252,10 +252,10 @@ Controls.Dialog {
                         anchors.centerIn: parent
                         width: Math.min(parent.width, Kirigami.Units.gridUnit * 24)
                         visible: backend.relatedItems.length === 0 && !backend.autoplayLoading
-                        text: "Sem recomendações ainda"
+                        text: i18n.tr("Sem recomendações ainda")
                         explanation: backend.autoplay
-                                     ? "As recomendações aparecem conforme a fila avança."
-                                     : "Ative o Autoplay para carregar músicas relacionadas."
+                                     ? i18n.tr("As recomendações aparecem conforme a fila avança.")
+                                     : i18n.tr("Ative o Autoplay para carregar músicas relacionadas.")
                         icon.name: "view-media-playlist"
                     }
 

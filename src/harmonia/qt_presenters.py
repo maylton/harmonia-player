@@ -3,20 +3,34 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from .i18n import _
 from .insights import PlaybackInsights
 from .models import ExploreDestination, HistoryEntry, LibraryItem
 
 CATEGORY_LABELS = {
-    "songs": "Músicas curtidas",
-    "albums": "Álbuns",
-    "artists": "Artistas",
-    "playlists": "Playlists",
-    "uploads": "Uploads",
-    "uploaded-albums": "Álbuns enviados",
-    "podcasts": "Podcasts",
-    "podcast-episodes": "Episódios",
+    "songs": _("Músicas curtidas"),
+    "albums": _("Álbuns"),
+    "artists": _("Artistas"),
+    "playlists": _("Playlists"),
+    "uploads": _("Uploads"),
+    "uploaded-albums": _("Álbuns enviados"),
+    "podcasts": _("Podcasts"),
+    "podcast-episodes": _("Episódios"),
 }
-MONTH_NAMES = ("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+MONTH_NAMES = (
+    _("Jan"),
+    _("Fev"),
+    _("Mar"),
+    _("Abr"),
+    _("Mai"),
+    _("Jun"),
+    _("Jul"),
+    _("Ago"),
+    _("Set"),
+    _("Out"),
+    _("Nov"),
+    _("Dez"),
+)
 
 
 def item_map(item: LibraryItem, *, index: int = -1, liked: bool = False) -> dict[str, Any]:
@@ -84,8 +98,8 @@ def history_map(entries: list[HistoryEntry], liked_ids: set[str]) -> list[dict[s
             group = played.strftime("%d/%m/%Y")
             played_label = played.strftime("%H:%M")
         else:
-            group = entry.group or "YouTube Music"
-            played_label = "YouTube Music" if entry.source == "remote" else ""
+            group = entry.group or _("YouTube Music")
+            played_label = _("YouTube Music") if entry.source == "remote" else ""
         result.append(
             {
                 **item_map(entry.item, index=index, liked=entry.item.id in liked_ids),

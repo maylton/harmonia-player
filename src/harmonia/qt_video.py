@@ -13,6 +13,8 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst  # noqa: E402
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot  # noqa: E402
 
+from .i18n import _  # noqa: E402
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ def _capsule_pointer(capsule) -> int:
     get_pointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
     pointer = get_pointer(capsule, name)
     if not pointer:
-        raise RuntimeError("Não foi possível obter o ponteiro nativo do objeto GStreamer")
+        raise RuntimeError(_("Não foi possível obter o ponteiro nativo do objeto GStreamer"))
     return int(pointer)
 
 
@@ -41,7 +43,7 @@ def _set_foreign_pointer_property(gobject, property_name: str, pointer: int) -> 
     """Set qml6glsink's raw QQuickItem* property across PyGObject/PySide."""
     capsule = getattr(gobject, "__gpointer__", None)
     if capsule is None:
-        raise RuntimeError("O objeto GStreamer não expõe o ponteiro nativo")
+        raise RuntimeError(_("O objeto GStreamer não expõe o ponteiro nativo"))
     object_pointer = _capsule_pointer(capsule)
 
     library_name = ctypes.util.find_library("gobject-2.0") or "libgobject-2.0.so.0"
@@ -85,7 +87,7 @@ class QtVideoController(QObject):
         self._sink = sink
         self._sink_prepared = False
         self._sink_error = (
-            "" if sink is not None else "O plugin GStreamer qml6glsink não está disponível."
+            "" if sink is not None else _("O plugin GStreamer qml6glsink não está disponível.")
         )
 
         self._video_player = Gst.ElementFactory.make("playbin", "harmonia-video-layer")
@@ -93,7 +95,7 @@ class QtVideoController(QObject):
         if self._fake_audio_sink is not None:
             self._fake_audio_sink.set_property("sync", True)
         if self._video_player is None:
-            self._sink_error = "O GStreamer playbin para vídeo não está disponível."
+            self._sink_error = _("O GStreamer playbin para vídeo não está disponível.")
 
         self._video_bus = self._video_player.get_bus() if self._video_player is not None else None
         if self._video_bus is not None:
@@ -151,15 +153,15 @@ class QtVideoController(QObject):
         if self._sink_prepared:
             return True
         if self._sink is None:
-            self._sink_error = "O plugin GStreamer qml6glsink não está disponível."
+            self._sink_error = _("O plugin GStreamer qml6glsink não está disponível.")
             self.availabilityChanged.emit()
             return False
         if self._video_player is None:
-            self._sink_error = "O GStreamer playbin para vídeo não está disponível."
+            self._sink_error = _("O GStreamer playbin para vídeo não está disponível.")
             self.availabilityChanged.emit()
             return False
         if self._surface is None:
-            self._sink_error = "A superfície de vídeo Qt ainda não foi inicializada."
+            self._sink_error = _("A superfície de vídeo Qt ainda não foi inicializada.")
             self.availabilityChanged.emit()
             return False
         if not self._surface_window or not self._scene_graph_ready(self._surface_window):
@@ -173,14 +175,14 @@ class QtVideoController(QObject):
         try:
             pointer = int(shiboken6.getCppPointer(self._surface)[0])
             if not pointer:
-                raise RuntimeError("A superfície GstGLQt6VideoItem não possui ponteiro nativo")
+                raise RuntimeError(_("A superfície GstGLQt6VideoItem não possui ponteiro nativo"))
             _set_foreign_pointer_property(self._sink, "widget", pointer)
             self._video_player.set_property("video-sink", self._sink)
             if self._fake_audio_sink is not None:
                 self._video_player.set_property("audio-sink", self._fake_audio_sink)
             result = self._video_player.set_state(Gst.State.READY)
             if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("A camada de vídeo recusou o estado READY")
+                raise RuntimeError(_("A camada de vídeo recusou o estado READY"))
         except Exception as exc:
             self._log_sink_prepare_failure(exc)
             with suppress(Exception):
@@ -346,13 +348,16 @@ class QtVideoController(QObject):
             return
         if not self.available:
             self.backend._set_status(
-                "O vídeo não está disponível para esta faixa neste dispositivo."
+                _("O vídeo não está disponível para esta faixa neste dispositivo.")
             )
             self.availabilityChanged.emit()
             return
         if not self._sink_prepared:
-            detail = self._sink_error or "saída de vídeo indisponível"
-            self.backend._set_status(f"Não foi possível preparar a saída de vídeo: {detail}")
+            detail = self._sink_error or _("saída de vídeo indisponível")
+            self.backend._set_status(
+                _("Não foi possível preparar a saída de vídeo: {detail}").format(detail=detail),
+                error=True,
+            )
             return
 
         self._request += 1
@@ -393,8 +398,10 @@ class QtVideoController(QObject):
             if self._mode != previous_mode:
                 self._mode = previous_mode
                 self.modeChanged.emit()
-            detail = error or "nenhum vídeo correspondente foi encontrado"
-            self.backend._set_status(f"Não foi possível abrir o vídeo: {detail}")
+            detail = error or _("nenhum vídeo correspondente foi encontrado")
+            self.backend._set_status(
+                _("Não foi possível abrir o vídeo: {error}").format(error=detail), error=True
+            )
             return
 
         LOGGER.debug(
@@ -411,7 +418,7 @@ class QtVideoController(QObject):
 
     def _start_video_layer(self, stream) -> None:
         if self._video_player is None:
-            self._video_failed("A camada de vídeo do GStreamer não está disponível.")
+            self._video_failed(_("A camada de vídeo do GStreamer não está disponível."))
             return
 
         self._video_generation += 1
@@ -426,7 +433,7 @@ class QtVideoController(QObject):
             self._video_player.set_property("uri", source_uri)
             result = self._video_player.set_state(Gst.State.PAUSED)
             if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("A camada de vídeo não conseguiu iniciar o preroll")
+                raise RuntimeError(_("A camada de vídeo não conseguiu iniciar o preroll"))
         except Exception as exc:
             self._video_failed(str(exc))
             return
@@ -441,13 +448,13 @@ class QtVideoController(QObject):
 
         result, state, _pending = self._video_player.get_state(0)
         if result == Gst.StateChangeReturn.FAILURE:
-            self._video_failed("O GStreamer falhou ao preparar os frames do vídeo.")
+            self._video_failed(_("O GStreamer falhou ao preparar os frames do vídeo."))
             return GLib.SOURCE_REMOVE
         if state not in (Gst.State.PAUSED, Gst.State.PLAYING):
             if attempt < 100:
                 GLib.timeout_add(40, self._finish_video_preroll, generation, attempt + 1)
             else:
-                self._video_failed("O vídeo demorou demais para iniciar.")
+                self._video_failed(_("O vídeo demorou demais para iniciar."))
             return GLib.SOURCE_REMOVE
 
         target_ms = max(0, int(self.playback.position))
@@ -456,7 +463,7 @@ class QtVideoController(QObject):
             return GLib.SOURCE_REMOVE
 
         if not self._seek_video_position(target_ms, accurate=True):
-            self._video_failed("O fluxo de vídeo não ficou disponível para sincronização.")
+            self._video_failed(_("O fluxo de vídeo não ficou disponível para sincronização."))
             return GLib.SOURCE_REMOVE
 
         GLib.timeout_add(60, self._finish_video_seek, generation, target_ms, 0)
@@ -505,7 +512,7 @@ class QtVideoController(QObject):
 
         result, _state, _pending = self._video_player.get_state(0)
         if result == Gst.StateChangeReturn.FAILURE:
-            self._video_failed("O GStreamer falhou durante a sincronização do vídeo.")
+            self._video_failed(_("O GStreamer falhou durante a sincronização do vídeo."))
             return GLib.SOURCE_REMOVE
 
         ok, video_ns = self._video_player.query_position(Gst.Format.TIME)
@@ -544,7 +551,7 @@ class QtVideoController(QObject):
             audio_ms,
             video_ms,
         )
-        self._video_failed("Não foi possível sincronizar o vídeo com a música.")
+        self._video_failed(_("Não foi possível sincronizar o vídeo com a música."))
         return GLib.SOURCE_REMOVE
 
     def _complete_video_start(self, generation: int) -> None:
@@ -610,7 +617,9 @@ class QtVideoController(QObject):
         if self._mode != "audio":
             self._mode = "audio"
             self.modeChanged.emit()
-        self.backend._set_status(f"Não foi possível exibir o vídeo: {detail}")
+        self.backend._set_status(
+            _("Não foi possível exibir o vídeo: {detail}").format(detail=detail), error=True
+        )
 
     def _on_video_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
@@ -632,7 +641,7 @@ class QtVideoController(QObject):
             if self._mode == "video":
                 self._video_failed(str(error))
         elif message.type == Gst.MessageType.EOS and self._mode == "video":
-            self._video_failed("O vídeo terminou antes da faixa de áudio.")
+            self._video_failed(_("O vídeo terminou antes da faixa de áudio."))
 
     def _on_track_changed(self) -> None:
         self._request += 1

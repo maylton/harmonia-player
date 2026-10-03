@@ -7,11 +7,11 @@ QML = ROOT / "src" / "harmonia" / "qml"
 def test_settings_page_uses_grouped_reusable_sections() -> None:
     source = (QML / "SettingsPage.qml").read_text(encoding="utf-8")
     assert source.count("SettingsSection {") == 5
-    assert 'title: "Conta"' in source
-    assert 'title: "Aparência"' in source
-    assert 'title: "Streaming"' in source
-    assert 'title: "Áudio"' in source
-    assert 'title: "Dados e backup"' in source
+    assert 'title: i18n.tr("Conta")' in source
+    assert 'title: i18n.tr("Aparência")' in source
+    assert 'title: i18n.tr("Streaming")' in source
+    assert 'title: i18n.tr("Áudio")' in source
+    assert 'title: i18n.tr("Dados e backup")' in source
     assert "Kirigami.Separator { width: parent.width }" not in source
 
 
@@ -42,7 +42,7 @@ def test_backup_restore_requires_confirmation_before_destructive_action() -> Non
     assert "root.pendingRestoreUrl = selectedFile" in restore_dialog
     assert "restoreConfirmDialog.open()" in restore_dialog
     assert "id: restoreConfirmDialog" in source
-    assert 'title: "Restaurar backup?"' in source
+    assert 'title: i18n.tr("Restaurar backup?")' in source
     assert "Controls.Dialog.Ok | Controls.Dialog.Cancel" in source
     assert "backend.restoreBackup(root.pendingRestoreUrl.toString())" in source
     assert "onAccepted: backend.restoreBackup(selectedFile.toString())" not in source
@@ -51,7 +51,7 @@ def test_backup_restore_requires_confirmation_before_destructive_action() -> Non
 def test_listen_together_share_link_has_explicit_copy_action() -> None:
     source = (QML / "IntegrationsSettings.qml").read_text(encoding="utf-8")
     assert "id: sessionLinkField" in source
-    assert 'text: "Copiar"' in source
+    assert 'text: i18n.tr("Copiar")' in source
     assert 'icon.name: "edit-copy"' in source
     assert "sessionLinkField.selectAll()" in source
     assert "sessionLinkField.copy()" in source

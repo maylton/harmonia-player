@@ -44,14 +44,14 @@ Rectangle {
 
             Kirigami.Heading {
                 Layout.fillWidth: true
-                text: "Harmonia"
+                text: i18n.tr("Harmonia")
                 level: 2
             }
         }
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Início"
+            text: i18n.tr("Início")
             iconName: "go-home"
             selected: root.currentView === 0
             onClicked: root.viewRequested(0)
@@ -59,7 +59,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Explorar"
+            text: i18n.tr("Explorar")
             iconName: "find-location"
             fallbackIcon: "edit-find"
             selected: root.currentView === 1
@@ -68,7 +68,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Biblioteca"
+            text: i18n.tr("Biblioteca")
             iconName: "folder-music"
             fallbackIcon: "folder"
             selected: root.currentView === 2
@@ -79,14 +79,14 @@ Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.largeSpacing
             Layout.leftMargin: Kirigami.Units.smallSpacing
-            text: "SUAS MÚSICAS"
+            text: i18n.tr("SUAS MÚSICAS")
             opacity: 0.58
             font.weight: Font.DemiBold
         }
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Músicas curtidas"
+            text: i18n.tr("Músicas curtidas")
             iconName: "love-symbolic"
             monochromeIcon: true
             selected: root.currentView === 2 && root.currentCategory === "songs"
@@ -95,7 +95,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Playlists"
+            text: i18n.tr("Playlists")
             iconName: "view-list"
             fallbackIcon: "view-media-playlist"
             selected: root.currentView === 2 && root.currentCategory === "playlists"
@@ -104,7 +104,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Artistas"
+            text: i18n.tr("Artistas")
             iconName: "user-identity"
             fallbackIcon: "avatar-default"
             selected: root.currentView === 2 && root.currentCategory === "artists"
@@ -115,14 +115,14 @@ Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.largeSpacing
             Layout.leftMargin: Kirigami.Units.smallSpacing
-            text: "ATIVIDADE"
+            text: i18n.tr("ATIVIDADE")
             opacity: 0.58
             font.weight: Font.DemiBold
         }
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Histórico"
+            text: i18n.tr("Histórico")
             iconName: "document-open-recent"
             fallbackIcon: "view-history"
             selected: root.currentView === 7
@@ -131,7 +131,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Estatísticas"
+            text: i18n.tr("Estatísticas")
             iconName: "office-chart-line"
             fallbackIcon: "view-statistics"
             selected: root.currentView === 8
@@ -142,7 +142,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Downloads"
+            text: i18n.tr("Downloads")
             iconName: "folder-download"
             fallbackIcon: "download"
             selected: root.currentView === 5
@@ -151,7 +151,7 @@ Rectangle {
 
         SidebarButton {
             Layout.fillWidth: true
-            text: "Preferências"
+            text: i18n.tr("Preferências")
             iconName: "settings-configure"
             fallbackIcon: "configure-symbolic"
             selected: root.currentView === 6
@@ -161,7 +161,7 @@ Rectangle {
         SidebarButton {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
-            text: "Nova playlist"
+            text: i18n.tr("Nova playlist")
             iconName: "list-add"
             onClicked: root.createPlaylistRequested()
         }

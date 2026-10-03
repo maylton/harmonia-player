@@ -70,23 +70,25 @@ def test_device_descriptions_reject_entities_and_oversized_replies():
         assert discovery._device("http://192.168.0.9/desc.xml") is None
 
 
-def test_every_translatable_string_is_in_the_catalogs():
-    if not shutil.which("xgettext"):
-        pytest.skip("xgettext indisponível")
-    files = (ROOT / "po" / "POTFILES").read_text().split()
-    fresh = subprocess.run(
-        ["xgettext", "--from-code=UTF-8", "--language=Python", "--keyword=_",
-         "--keyword=ngettext:1,2", "-o", "-", *files],
-        cwd=ROOT, capture_output=True, text=True, check=True,
-    ).stdout  # fmt: skip
-    used = {m for m in re.findall(r'^msgid "(.+)"$', fresh, re.M)}
+def test_every_translatable_string_is_in_the_catalogs(tmp_path):
+    if not all(shutil.which(tool) for tool in ("xgettext", "msgcat", "msgcmp")):
+        pytest.skip("gettext-tools indisponível")
+    from tools.update_translations import extract
+
+    template = tmp_path / "harmonia.pot"
+    extract(template)  # Python and QML, each with its own parser
     for catalog in ("en.po", "pt_BR.po"):
-        text = (ROOT / "po" / catalog).read_text(encoding="utf-8")
-        known = set(re.findall(r'^msgid "(.+)"$', text, re.M))
-        assert not used - known, f"{catalog}: faltando {sorted(used - known)[:5]}"
+        path = ROOT / "po" / catalog
+        # msgcmp fails on any message of the fresh template that is missing or
+        # untranslated in the catalog, plural forms included.
+        result = subprocess.run(
+            ["msgcmp", str(path), str(template)], capture_output=True, text=True
+        )
+        assert result.returncode == 0, f"{catalog}: {result.stderr[-2000:]}"
+        text = path.read_text(encoding="utf-8")
         assert "#~" not in text, f"{catalog}: entradas obsoletas"
-        empty = re.findall(r'^msgid "(.+)"\nmsgstr ""\n\n', text, re.M)
-        assert not empty, f"{catalog}: sem tradução {empty[:5]}"
+        # msgcmp accepts a plural with only some forms translated.
+        assert not re.search(r'^msgstr\[\d\] ""$', text, re.M), f"{catalog}: plural incompleto"
 
 
 def test_every_python_file_with_strings_is_listed_for_extraction():
@@ -94,4 +96,11 @@ def test_every_python_file_with_strings_is_listed_for_extraction():
     for path in sorted((ROOT / "src" / "harmonia").glob("*.py")):
         source = path.read_text(encoding="utf-8")
         if re.search(r'(?<![\w.])_\(\s*["\']', source) or "ngettext(" in source:
+            assert str(path.relative_to(ROOT)) in listed, path.name
+
+
+def test_every_qml_file_with_strings_is_listed_for_extraction():
+    listed = set((ROOT / "po" / "POTFILES.qml").read_text().split())
+    for path in sorted((ROOT / "src" / "harmonia" / "qml").glob("*.qml")):
+        if re.search(r"\bi18n\.n?trf?\(", path.read_text(encoding="utf-8")):
             assert str(path.relative_to(ROOT)) in listed, path.name

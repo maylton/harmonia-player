@@ -10,6 +10,7 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
 from .downloads import DownloadManager
+from .i18n import _
 from .models import ExploreData, LibraryItem
 from .mpris import MprisService
 from .qt_activity import QtHistoryController, QtLyricsController
@@ -78,6 +79,7 @@ class HarmoniaQtBackend(QObject):
         )
         self._busy = False
         self._status = ""
+        self._status_error = False
 
         self.downloads = DownloadManager(
             self.storage,
@@ -258,10 +260,12 @@ class HarmoniaQtBackend(QObject):
         self._busy = value
         self.busyChanged.emit()
 
-    def _set_status(self, value: str) -> None:
-        if self._status == value:
+    def _set_status(self, value: str, *, error: bool = False) -> None:
+        """Show a status message; error=True styles it as a failure in QML."""
+        if self._status == value and self._status_error == error:
             return
         self._status = value
+        self._status_error = error
         self.statusChanged.emit()
 
     def _refresh_account_profile(self) -> None:
@@ -301,7 +305,7 @@ class HarmoniaQtBackend(QObject):
         self.catalog.home = self.storage.load_home()
         self.catalog.explore = self.storage.load_explore()
         self.catalog.explore_display = self.catalog.explore
-        self.catalog.explore_title = "Explorar"
+        self.catalog.explore_title = _("Explorar")
         self._downloads = self.storage.load_downloads()
         self.catalog.libraryChanged.emit()
         self.catalog.homeChanged.emit()
@@ -679,6 +683,10 @@ class HarmoniaQtBackend(QObject):
     def statusText(self) -> str:
         return self._status
 
+    @Property(bool, notify=statusChanged)
+    def statusIsError(self) -> bool:
+        return self._status_error
+
     @Property(str, notify=nowPlayingChanged)
     def currentId(self) -> str:
         return self.playback.current_item.id if self.playback.current_item else ""
@@ -688,7 +696,7 @@ class HarmoniaQtBackend(QObject):
         return (
             self.playback.current_item.title
             if self.playback.current_item
-            else "Nenhuma música reproduzindo"
+            else _("Nenhuma música reproduzindo")
         )
 
     @Property(str, notify=nowPlayingChanged)
@@ -696,7 +704,7 @@ class HarmoniaQtBackend(QObject):
         return (
             self.playback.current_item.subtitle
             if self.playback.current_item
-            else "Escolha uma faixa para começar"
+            else _("Escolha uma faixa para começar")
         )
 
     @Property(str, notify=nowPlayingChanged)
@@ -744,7 +752,7 @@ class HarmoniaQtBackend(QObject):
     @Slot()
     def syncAll(self) -> None:
         if not self._logged_in:
-            self._set_status("Conecte sua conta para sincronizar o Harmonia.")
+            self._set_status(_("Conecte sua conta para sincronizar o Harmonia."))
             return
         self.catalog.sync_all()
 
@@ -920,7 +928,7 @@ class HarmoniaQtBackend(QObject):
             playlist.items.append(item)
             self.storage.save_local_playlist(playlist)
             self.libraryChanged.emit()
-            self._set_status(f"Adicionada a {playlist.title}.")
+            self._set_status(_("Adicionada a {title}.").format(title=playlist.title))
 
     @Slot(int)
     def removeDetailTrackFromPlaylist(self, index: int) -> None:
@@ -1082,7 +1090,7 @@ class HarmoniaQtBackend(QObject):
         item = self._find_item(item_id)
         if item:
             self.downloads.start(item)
-            self._set_status(f"Download de {item.title} iniciado.")
+            self._set_status(_("Download de {title} iniciado.").format(title=item.title))
 
     @Slot()
     def downloadDetail(self) -> None:
@@ -1094,7 +1102,7 @@ class HarmoniaQtBackend(QObject):
         for item in playable:
             self.downloads.start(item)
         if playable:
-            self._set_status("Downloads da coleção iniciados.")
+            self._set_status(_("Downloads da coleção iniciados."))
 
     @Slot(int)
     def playDownload(self, index: int) -> None:
@@ -1191,14 +1199,14 @@ class HarmoniaQtBackend(QObject):
         if not cookie:
             return
         self._set_busy(True)
-        self._set_status("Validando sessão…")
+        self._set_status(_("Validando sessão…"))
 
         def worker() -> None:
             try:
                 ok = self.youtube.connect(cookie)
                 self._sessionReady.emit(
                     bool(ok),
-                    "" if ok else "Cookie inválido ou incompleto",
+                    "" if ok else _("Cookie inválido ou incompleto"),
                 )
             except Exception as exc:
                 LOGGER.exception("Qt session connection failed")
@@ -1210,7 +1218,9 @@ class HarmoniaQtBackend(QObject):
     def _apply_session(self, ok: bool, error: str) -> None:
         self._set_busy(False)
         if not ok:
-            self._set_status(f"Não foi possível conectar: {error}")
+            self._set_status(
+                _("Não foi possível conectar: {error}").format(error=error), error=True
+            )
             return
         self._logged_in = True
         self.sessionChanged.emit()
@@ -1233,11 +1243,11 @@ class HarmoniaQtBackend(QObject):
         self.catalog.home = []
         self.catalog.explore = ExploreData([], [], [])
         self.catalog.explore_display = self.catalog.explore
-        self.catalog.explore_title = "Explorar"
+        self.catalog.explore_title = _("Explorar")
         self.catalog.libraryChanged.emit()
         self.catalog.homeChanged.emit()
         self.catalog.exploreChanged.emit()
-        self._set_status("Conta desconectada.")
+        self._set_status(_("Conta desconectada."))
 
     @Slot()
     def shutdown(self) -> None:

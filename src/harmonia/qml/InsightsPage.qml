@@ -28,8 +28,8 @@ Item {
 
             PageHeader {
                 width: parent.width
-                title: "Sua retrospectiva de " + backend.insights.year
-                subtitle: "Estatísticas privadas calculadas somente neste dispositivo"
+                title: i18n.trf("Sua retrospectiva de {year}", { year: backend.insights.year })
+                subtitle: i18n.tr("Estatísticas privadas calculadas somente neste dispositivo")
             }
 
             RowLayout {
@@ -38,9 +38,9 @@ Item {
 
                 Repeater {
                     model: [
-                        { label: "Reproduções qualificadas", value: backend.insights.totalPlays },
-                        { label: "Músicas diferentes", value: backend.insights.uniqueTracks },
-                        { label: "Tempo registrado", value: backend.insights.listenedLabel }
+                        { label: i18n.tr("Reproduções qualificadas"), value: backend.insights.totalPlays },
+                        { label: i18n.tr("Músicas diferentes"), value: backend.insights.uniqueTracks },
+                        { label: i18n.tr("Tempo registrado"), value: backend.insights.listenedLabel }
                     ]
 
                     delegate: Rectangle {
@@ -75,8 +75,8 @@ Item {
             Kirigami.PlaceholderMessage {
                 width: parent.width
                 visible: backend.insights.totalPlays === 0
-                text: "Ainda não há estatísticas"
-                explanation: "Reproduza músicas por pelo menos 30 segundos para formar sua retrospectiva."
+                text: i18n.tr("Ainda não há estatísticas")
+                explanation: i18n.tr("Reproduza músicas por pelo menos 30 segundos para formar sua retrospectiva.")
                 icon.name: "office-chart-line"
             }
 
@@ -86,7 +86,7 @@ Item {
                 spacing: Kirigami.Units.smallSpacing
 
                 Kirigami.Heading {
-                    text: "Mais ouvidas"
+                    text: i18n.tr("Mais ouvidas")
                     level: 2
                 }
 
@@ -140,7 +140,7 @@ Item {
                             }
 
                             Controls.Label {
-                                text: modelData.plays + (modelData.plays === 1 ? " reprodução" : " reproduções")
+                                text: i18n.ntr("{count} reprodução", "{count} reproduções", modelData.plays)
                                 opacity: 0.7
                             }
                         }
@@ -159,7 +159,7 @@ Item {
                     spacing: Kirigami.Units.smallSpacing
 
                     Kirigami.Heading {
-                        text: "Artistas mais ouvidos"
+                        text: i18n.tr("Artistas mais ouvidos")
                         level: 2
                     }
 
@@ -200,7 +200,7 @@ Item {
                     spacing: Kirigami.Units.smallSpacing
 
                     Kirigami.Heading {
-                        text: "Atividade mensal"
+                        text: i18n.tr("Atividade mensal")
                         level: 2
                     }
 

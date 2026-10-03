@@ -11,14 +11,12 @@ Kirigami.ApplicationWindow {
     minimumWidth: 720
     minimumHeight: 520
     visible: true
-    title: "Harmonia"
+    title: i18n.tr("Harmonia")
 
     property int currentView: 0
     property int previousView: 0
     readonly property bool wideLayout: width >= 900
-    readonly property bool statusIsError: backend.statusText.indexOf("Não foi possível") >= 0
-                                          || backend.statusText.indexOf("Erro") >= 0
-                                          || backend.statusText.indexOf("Falha") >= 0
+    readonly property bool statusIsError: backend.statusIsError
 
     pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.None
 
@@ -52,7 +50,7 @@ Kirigami.ApplicationWindow {
 
     Kirigami.Action {
         id: connectAction
-        text: "Conectar"
+        text: i18n.tr("Conectar")
         icon.name: "user-online"
         onTriggered: loginDialog.openLogin()
     }
@@ -124,7 +122,7 @@ Kirigami.ApplicationWindow {
                         Layout.topMargin: visible ? Kirigami.Units.smallSpacing : 0
                         visible: !backend.loggedIn || root.statusIsError
                         text: !backend.loggedIn
-                              ? "Conecte sua conta do YouTube Music para sincronizar."
+                              ? i18n.tr("Conecte sua conta do YouTube Music para sincronizar.")
                               : backend.statusText
                         type: root.statusIsError
                               ? Kirigami.MessageType.Error
@@ -243,7 +241,7 @@ Kirigami.ApplicationWindow {
     Controls.Dialog {
         id: remotePlaylistDialog
         parent: root.contentItem
-        title: "Nova playlist"
+        title: i18n.tr("Nova playlist")
         modal: true
         standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
 
@@ -257,14 +255,14 @@ Kirigami.ApplicationWindow {
 
             Controls.Label {
                 Layout.fillWidth: true
-                text: "A playlist será criada como privada na sua conta do YouTube Music."
+                text: i18n.tr("A playlist será criada como privada na sua conta do YouTube Music.")
                 wrapMode: Text.WordWrap
             }
 
             Controls.TextField {
                 id: remotePlaylistName
                 Layout.fillWidth: true
-                placeholderText: "Nome da playlist"
+                placeholderText: i18n.tr("Nome da playlist")
                 selectByMouse: true
             }
         }

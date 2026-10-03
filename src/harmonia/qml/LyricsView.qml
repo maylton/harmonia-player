@@ -45,7 +45,7 @@ Item {
             }
 
             Controls.ToolButton {
-                text: "Recarregar letra"
+                text: i18n.tr("Recarregar letra")
                 icon.name: "view-refresh"
                 display: Controls.AbstractButton.IconOnly
                 enabled: backend.currentId.length > 0 && !backend.lyricsLoading
@@ -67,7 +67,7 @@ Item {
                                             ? "LRCLIB"
                                             : backend.selectedLyricsProvider === "youtube"
                                               ? "YouTube"
-                                              : "Automática"
+                                              : i18n.tr("Automática")
                 hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
@@ -80,7 +80,7 @@ Item {
                 )
                 onClicked: backend.cycleLyricsProvider()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: "Alterar fonte da letra"
+                Controls.ToolTip.text: i18n.tr("Alterar fonte da letra")
 
                 background: Rectangle {
                     radius: Math.max(5, Kirigami.Units.cornerRadius)
@@ -112,7 +112,7 @@ Item {
 
             Controls.AbstractButton {
                 id: translateButton
-                property string actionText: "Traduzir"
+                property string actionText: i18n.tr("Traduzir")
                 hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
@@ -126,7 +126,7 @@ Item {
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: "Traduzir para português"
+                Controls.ToolTip.text: i18n.tr("Traduzir para português")
 
                 background: Rectangle {
                     radius: Math.max(5, Kirigami.Units.cornerRadius)
@@ -159,7 +159,7 @@ Item {
 
             Controls.AbstractButton {
                 id: copyButton
-                property string actionText: "Copiar"
+                property string actionText: i18n.tr("Copiar")
                 hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
@@ -173,7 +173,7 @@ Item {
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.copyLyrics()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: "Copiar letra"
+                Controls.ToolTip.text: i18n.tr("Copiar letra")
 
                 background: Rectangle {
                     radius: Math.max(5, Kirigami.Units.cornerRadius)
@@ -208,11 +208,11 @@ Item {
                 spacing: Math.max(2, Kirigami.Units.smallSpacing / 2)
 
                 Controls.ToolButton {
-                    text: "−250 ms"
+                    text: i18n.tr("−250 ms")
                     display: Controls.AbstractButton.TextOnly
                     onClicked: backend.changeLyricsOffset(-250)
                     Controls.ToolTip.visible: hovered
-                    Controls.ToolTip.text: "Adiantar letra em 250 ms"
+                    Controls.ToolTip.text: i18n.tr("Adiantar letra em 250 ms")
                 }
 
                 Controls.ToolButton {
@@ -222,15 +222,15 @@ Item {
                     display: Controls.AbstractButton.TextOnly
                     onClicked: backend.setLyricsOffset(0)
                     Controls.ToolTip.visible: hovered
-                    Controls.ToolTip.text: "Zerar ajuste de sincronia"
+                    Controls.ToolTip.text: i18n.tr("Zerar ajuste de sincronia")
                 }
 
                 Controls.ToolButton {
-                    text: "+250 ms"
+                    text: i18n.tr("+250 ms")
                     display: Controls.AbstractButton.TextOnly
                     onClicked: backend.changeLyricsOffset(250)
                     Controls.ToolTip.visible: hovered
-                    Controls.ToolTip.text: "Atrasar letra em 250 ms"
+                    Controls.ToolTip.text: i18n.tr("Atrasar letra em 250 ms")
                 }
             }
         }
@@ -358,10 +358,10 @@ Item {
             visible: !backend.lyricsLoading
                      && backend.lyricLines.length === 0
                      && backend.lyricsPlain.length === 0
-            text: backend.currentId.length > 0 ? "Letra não encontrada" : "Nenhuma música reproduzindo"
+            text: backend.currentId.length > 0 ? i18n.tr("Letra não encontrada") : i18n.tr("Nenhuma música reproduzindo")
             explanation: backend.currentId.length > 0
-                         ? "Tente recarregar ou altere o provedor de letras."
-                         : "Escolha uma faixa para ver a letra."
+                         ? i18n.tr("Tente recarregar ou altere o provedor de letras.")
+                         : i18n.tr("Escolha uma faixa para ver a letra.")
             icon.name: "view-media-lyrics"
         }
     }
