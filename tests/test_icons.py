@@ -43,3 +43,20 @@ def test_launcher_icon_has_standard_hicolor_sizes_and_transparency():
     assert "Exec=@BINDIR@/harmonia\n" in desktop_entry
     assert f"Icon={APP_ID}\n" in desktop_entry
     assert f"StartupWMClass={APP_ID}\n" in desktop_entry
+
+
+def test_elementary_shadow_detects_hidden_guide_layers():
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    from sync_elementary_icons import misdrawn_by_gtk, without_hidden
+
+    guide = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">'
+        '<path d="M 2 2 L 14 14" style="fill:#555761"/>'
+        '<g style="display:none"><rect x="0" y="0" width="16" height="16"/></g></svg>'
+    )
+    assert misdrawn_by_gtk(guide)  # GTK draws the hidden rect: a solid square
+    cleaned = without_hidden(guide)
+    assert "rect" not in cleaned and "M 2 2" in cleaned
+    assert not misdrawn_by_gtk(cleaned)

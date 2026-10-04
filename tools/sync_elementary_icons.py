@@ -7,9 +7,14 @@ that only use its symbolic subset with its own renderer, which ignores group
 transforms, so those icons are drawn off-canvas and appear blank in apps built
 on the GNOME 50 runtime. elementary icons 9.x rewrote them without transforms.
 
+Hidden Inkscape guide layers are the other failure: that renderer ignores
+display:none, so 8.x's system-log-out-symbolic, which hides a 16x16 rect,
+renders as a solid square.
+
 This script compares two tags of a local elementary/icons checkout, finds the
-icons used by Harmonia that are broken in OLD and fixed in NEW, and writes the
-NEW versions to ``src/harmonia/icons-compat/elementary/<dir>/`` for every
+icons used by Harmonia that GTK misdraws in OLD, and writes the NEW version
+when it is fixed there, or else OLD without its hidden layers, to
+``src/harmonia/icons-compat/elementary/<dir>/`` for every
 directory (and HiDPI @Nx alias) where OLD installs them. The tree has no
 index.theme: GTK merges it into whichever installed theme inherits from
 elementary (elementary itself or accent variants such as elementary-grape),
@@ -53,7 +58,33 @@ def used_icon_names() -> set[str]:
     return names
 
 
-def drawn_off_canvas_by_gtk(svg: str) -> bool:
+def _hidden(element: ET.Element) -> bool:
+    style = element.get("style", "").replace(" ", "")
+    return (
+        element.get("display") == "none"
+        or element.get("visibility") == "hidden"
+        or "display:none" in style
+        or "visibility:hidden" in style
+    )
+
+
+def _hidden_shapes(root: ET.Element) -> bool:
+    return any(
+        child.tag in GRAPHICS - {SVG + "g"}
+        for element in root.iter()
+        if _hidden(element)
+        for child in element.iter()
+    )
+
+
+def misdrawn_by_gtk(svg: str) -> bool:
+    """Whether GTK 4.21+'s symbolic renderer draws this file wrongly.
+
+    Only files limited to its subset reach that renderer. It ignores group
+    transforms (paths land off-canvas, the icon is blank) and display:none or
+    visibility:hidden (Inkscape guide layers are drawn; elementary 8's
+    system-log-out-symbolic hides a 16x16 rect and renders as a square).
+    """
     root = ET.fromstring(svg)
     transformed = any(e.get("transform") for e in root.iter() if e.tag in GRAPHICS)
     foreign = any(
@@ -61,7 +92,26 @@ def drawn_off_canvas_by_gtk(svg: str) -> bool:
         or any(a.startswith("{") or a not in SUBSET_ATTRIBUTES for a in element.attrib)
         for element in root.iter()
     )
-    return transformed and not foreign
+    return (transformed or _hidden_shapes(root)) and not foreign
+
+
+def without_hidden(svg: str) -> str:
+    """The same icon with its hidden elements removed."""
+    ET.register_namespace("", SVG[1:-1])
+    root = ET.fromstring(svg)
+    for parent in list(root.iter()):
+        for child in list(parent):
+            if _hidden(child):
+                parent.remove(child)
+    return ET.tostring(root, encoding="unicode")
+
+
+def with_notice(svg: str, notice: str) -> str:
+    body = svg.lstrip()
+    if body.startswith("<?xml"):  # the XML declaration must stay first
+        declaration, body = body.split("?>", 1)
+        return f"{declaration}?>\n{notice}{body.lstrip()}"
+    return notice + body
 
 
 class Checkout:
@@ -112,15 +162,18 @@ def main(argv: list[str]) -> int:
         before, after = old.icon(name), new.icon(name)
         if not before or not after:
             continue
-        if not drawn_off_canvas_by_gtk(before) or "transform" in after:
+        if not misdrawn_by_gtk(before):
             continue
-        notice = f"<!-- Source: elementary/icons {new_tag} (GPL-3.0-or-later) -->\n"
-        body = after.lstrip()
-        if body.startswith("<?xml"):  # the XML declaration must stay first
-            declaration, body = body.split("?>", 1)
-            body = f"{declaration}?>\n{notice}{body.lstrip()}"
+        if not misdrawn_by_gtk(after):
+            source = f"elementary/icons {new_tag}"
+            fixed = after
+        elif "transform" not in before:
+            # Still broken upstream, but only by hidden layers: drop them.
+            source = f"elementary/icons {old_tag}, hidden layers removed"
+            fixed = without_hidden(before)
         else:
-            body = notice + body
+            continue
+        body = with_notice(fixed, f"<!-- Source: {source} (GPL-3.0-or-later) -->\n")
         ET.fromstring(body)
         for directory in old.directories(name):
             context, size = directory.split("/")
@@ -129,7 +182,7 @@ def main(argv: list[str]) -> int:
                 target.mkdir(parents=True, exist_ok=True)
                 (target / f"{name}.svg").write_text(body, encoding="utf-8")
         copied.append(name)
-    print(f"icons-compat: {len(copied)} icons from {new_tag}: {', '.join(copied)}")
+    print(f"icons-compat: {len(copied)} icons: {', '.join(copied)}")
     return 0
 
 

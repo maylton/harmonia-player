@@ -78,3 +78,89 @@ list.boxed-list { border-radius: 6px; box-shadow: 0 0 0 1px alpha(#000000, .1), 
   color: @harmonia_fg;
   box-shadow: inset 0 1px 2px alpha(#000000, .2);
 }
+
+/* Sliders, after Granite: a thin bordered trough, a neutral fill (not the
+   accent colour) and a raised round knob that never grows on hover. */
+scale trough {
+  min-height: 3px;
+  margin: 6px 0;
+  border: 1px solid alpha(@harmonia_shadow, .3);
+  border-radius: 12px;
+  background-color: alpha(@harmonia_shadow, .05);
+  background-image: none;
+  box-shadow: inset 0 0 0 1px alpha(@harmonia_shadow, .03), 0 1px alpha(#ffffff, .06);
+}
+scale highlight {
+  border-radius: 12px;
+  background-color: alpha(@harmonia_fg, .7);
+  background-image: none;
+  box-shadow: none;
+}
+scale fill { background-color: alpha(@harmonia_shadow, .25); }
+scale slider {
+  min-width: 14px;
+  min-height: 14px;
+  margin: -6px -1px;
+  border: none;
+  border-radius: 9999px;
+  background-color: @harmonia_chip_bg;
+  background-image: none;
+  box-shadow: inset 0 1px alpha(#ffffff, .3), 0 0 0 1px alpha(@harmonia_shadow, .3),
+    0 1px 1px 1px alpha(@harmonia_shadow, .1);
+  transform: none;
+  transition: background 100ms cubic-bezier(.4, 0, .2, 1);
+}
+scale slider:hover { background-color: @harmonia_chip_hover_bg; transform: none; }
+scale:focus-visible slider {
+  box-shadow: inset 0 1px alpha(#ffffff, .3), 0 0 0 1px alpha(@harmonia_shadow, .3),
+    0 0 0 3px alpha(@accent_bg_color, .3);
+}
+
+/* Switches: a sunken pill that fills with the accent, and a raised knob. */
+switch {
+  border: 1px solid alpha(@harmonia_shadow, .2);
+  border-radius: 16px;
+  background-color: alpha(@harmonia_shadow, .05);
+  box-shadow: inset 0 1px 1px alpha(#000000, .05), 0 1px alpha(#ffffff, .06);
+}
+switch:checked { background-color: @accent_bg_color; border-color: alpha(#000000, .3); }
+switch slider {
+  border-radius: 9999px;
+  background-color: @harmonia_chip_bg;
+  box-shadow: inset 0 1px alpha(#ffffff, .3), 0 0 0 1px alpha(@harmonia_shadow, .2),
+    0 1px 3px alpha(#000000, .12), 0 1px 2px alpha(#000000, .24);
+}
+
+/* Progress bars (downloads): bordered 3px trough, accent progress. */
+progressbar trough {
+  min-height: 6px;
+  border: 1px solid alpha(@harmonia_shadow, .3);
+  border-radius: 3px;
+  background-color: @harmonia_chip_bg;
+}
+progressbar progress {
+  min-height: 6px;
+  border: 1px solid alpha(#000000, .3);
+  border-radius: 3px;
+  background-color: @accent_bg_color;
+  box-shadow: inset 0 1px alpha(#ffffff, .3);
+}
+
+/* Popovers and menus: Granite's dark-edged sheet with an inner highlight, and
+   denser rows than GNOME's while keeping the YouTube Music item order. */
+popover.background > contents {
+  border: 1px solid alpha(@harmonia_shadow, .55);
+  border-radius: 6px;
+  box-shadow: inset 0 1px alpha(#ffffff, .06), 0 3px 4px alpha(#000000, .25),
+    0 3px 3px -3px alpha(#000000, .45);
+}
+popover.item-menu > contents { padding: 6px 0; border-radius: 6px; }
+.item-menu-list .app-menu-action,
+.icons-material .item-menu-list .app-menu-action { min-height: 34px; padding: 0 16px 0 12px; }
+.item-menu-list .app-menu-action > box { border-spacing: 12px; }
+.item-menu-list .app-menu-action image { -gtk-icon-size: 16px; }
+.item-menu-list .app-menu-action:hover { background: alpha(@harmonia_overlay, .12); }
+
+/* Check boxes: 3px corners, accent when checked. */
+check { border-radius: 3px; }
+check:checked, radio:checked { background-color: @accent_bg_color; color: @accent_fg_color; }
