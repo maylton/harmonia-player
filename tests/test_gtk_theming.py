@@ -237,6 +237,7 @@ def test_navigation_icons_ignore_icon_theme_status_colours():
     # elementary's starred-symbolic is a "warning" star that GTK paints yellow;
     # in the sidebar and compact menu it must match the other icons.
     css = (Path(__file__).resolve().parents[1] / "src" / "harmonia" / "style.css").read_text()
-    rule = css.split(".sidebar-item image, .compact-menu image {", 1)[1].split("}", 1)[0]
+    rule = css.split(".sidebar-item image, .compact-menu image, .item-menu-list image {", 1)[1]
+    rule = rule.split("}", 1)[0]
     for status in ("success", "warning", "error"):
         assert f"{status} currentColor" in rule

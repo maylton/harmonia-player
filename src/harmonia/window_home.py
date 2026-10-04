@@ -18,10 +18,8 @@ from .models import (
 )
 from .ui import (
     CreditsLabel,
-    menu_action_button,
     page_header,
     page_shell,
-    set_menu_action_content,
     style_icon_button,
 )
 from .window_constants import EXPLORE_ICON
@@ -292,6 +290,10 @@ class WindowHomeMixin:
         cover.set_size_request(48, 48)
         cover.set_halign(Gtk.Align.START)
         cover.set_valign(Gtk.Align.CENTER)
+        # The artwork overlay expands; without this the cover inherits that and
+        # takes a share of the row's spare width that differs per title, so the
+        # titles of consecutive rows started at different x positions.
+        cover.set_hexpand(False)
         cover.set_overflow(Gtk.Overflow.HIDDEN)
         cover.add_css_class("home-song-cover")
         artwork = Gtk.Overlay(hexpand=True, vexpand=True)
@@ -344,21 +346,8 @@ class WindowHomeMixin:
         options = Gtk.MenuButton(icon_name="view-more-symbolic", tooltip_text=_("Opções da faixa"))
         style_icon_button(options, "sm")
         options.add_css_class("home-song-options")
-        popover = Gtk.Popover()
-        menu = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        menu.add_css_class("detail-menu")
-        like = menu_action_button(
-            _("Remover das curtidas") if liked else _("Curtir música"),
-            "starred-symbolic" if liked else "non-starred-symbolic",
-        )
-        add = menu_action_button(_("Adicionar à playlist"), "list-add-symbolic")
-        add.connect("clicked", lambda *_: (popover.popdown(), self.add_to_playlist_dialog(track)))
-        menu.append(like)
-        menu.append(add)
-        download = menu_action_button(_("Baixar"), "folder-download-symbolic")
-        download.connect("clicked", lambda *_: (popover.popdown(), self._download_items([track])))
-        menu.append(download)
-        popover.set_child(menu)
+        popover = Gtk.Popover(has_arrow=False)
+        popover.add_css_class("item-menu")
         options.set_popover(popover)
         row.append(options)
 
@@ -371,12 +360,21 @@ class WindowHomeMixin:
             "title": name,
             "liked": liked,
             "liked_icon": liked_icon,
-            "like_button": like,
             "options": options,
             "hovered": False,
         }
         self.home_song_rows.append(state)
-        like.connect("clicked", lambda *_: self._toggle_home_song_like(state, popover))
+        popover.connect(
+            "show",
+            lambda *_: popover.set_child(
+                self.item_menu(
+                    track,
+                    popover,
+                    liked=state["liked"],
+                    on_like=lambda: self._toggle_home_song_like(state, popover),
+                )
+            ),
+        )
         options.connect("notify::active", lambda *_: self._update_home_song_row(state))
         motion = Gtk.EventControllerMotion()
         motion.connect("enter", lambda *_: self._set_home_song_hover(state, True))
@@ -427,11 +425,6 @@ class WindowHomeMixin:
         )
         state["play_hint"].set_opacity(1.0 if hovered or active else 0.0)
         state["liked_icon"].set_opacity(1.0 if state["liked"] else 0.0)
-        set_menu_action_content(
-            state["like_button"],
-            _("Remover das curtidas") if state["liked"] else _("Curtir música"),
-            "starred-symbolic" if state["liked"] else "non-starred-symbolic",
-        )
         show_options = hovered or state["options"].get_active()
         state["options"].set_opacity(1.0 if show_options else 0.0)
         state["options"].set_can_target(show_options)

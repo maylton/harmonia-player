@@ -26,6 +26,7 @@ from .ui import (
     page_header,
     page_shell,
     section_link,
+    style_icon_button,
 )
 from .window_constants import ICONS, LABELS, LIKED_ICON
 
@@ -372,21 +373,56 @@ class WindowLibraryMixin:
         else:
             subtitle = None
         button.set_child(card)
-        hover = Gtk.EventControllerMotion()
-        hover.connect("enter", lambda *_args: self._home_card_hover(cover, hint, True))
-        hover.connect("leave", lambda *_args: self._home_card_hover(cover, hint, False))
-        button.add_controller(hover)
         button.connect("clicked", lambda *_: activate())
+        # The options button overlays the card instead of living inside it,
+        # because GtkButton would swallow its clicks. Hover is tracked on the
+        # overlay, so moving onto the options button keeps the card hovered.
+        surface = Gtk.Overlay(halign=Gtk.Align.START, valign=Gtk.Align.START)
+        surface.set_child(button)
+        options = self._media_card_options(item)
+        if options:
+            surface.add_overlay(options)
+
+        def hovered(state: bool) -> None:
+            active = bool(options and options.get_active())
+            self._home_card_hover(cover, hint, state or active)
+            if options:
+                options.set_opacity(1.0 if state or active else 0.0)
+                options.set_can_target(state or active)
+
+        hover = Gtk.EventControllerMotion()
+        hover.connect("enter", lambda *_args: hovered(True))
+        hover.connect("leave", lambda *_args: hovered(False))
+        surface.add_controller(hover)
+        if options:
+            options.connect("notify::active", lambda *_: hovered(hover.contains_pointer()))
+            hovered(False)
         shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=7)
         shell.add_css_class("media-card-shell")
         shell.set_halign(Gtk.Align.START)
         shell.set_valign(Gtk.Align.START)
         shell.set_hexpand(False)
         shell.set_size_request(size, -1)
-        shell.append(button)
+        shell.append(surface)
         if subtitle:
             shell.append(subtitle)
         return shell
+
+    def _media_card_options(self, item: LibraryItem, *, on_cover: bool = True):
+        """The shared item menu as a card overlay or as a list-row suffix."""
+        options = self.item_options_button(item)
+        if options is None:
+            return None
+        if on_cover:
+            options.set_halign(Gtk.Align.END)
+            options.set_valign(Gtk.Align.START)
+            options.set_margin_top(8)
+            options.set_margin_end(8)
+            options.add_css_class("media-card-menu")
+        else:
+            options.set_valign(Gtk.Align.CENTER)
+            style_icon_button(options, "sm")
+        return options
 
     def _square_cover(self, item: LibraryItem, size: int = 140, fixed: bool = False) -> Gtk.Widget:
         """Create conventional 1:1 music artwork, circular only for artists."""

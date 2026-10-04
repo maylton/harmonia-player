@@ -4,7 +4,8 @@ import pytest
 
 from harmonia.innertube import _linked_pages, parse_library_items, parse_watch_queue
 from harmonia.models import LibraryItem
-from harmonia.window_detail import radio_queue, track_artist, track_byline
+from harmonia.ui import track_artist
+from harmonia.window_detail import radio_queue, track_byline
 
 
 def run(text, browse_id=None, page_type=None):
@@ -121,9 +122,12 @@ class Downloads:
 def menu_labels(collection, track, offline=()):
     Gtk = gtk_or_skip()
     from harmonia.window_detail import WindowDetailMixin
+    from harmonia.window_item_menu import WindowItemMenuMixin
+    from harmonia.window_playback import WindowPlaybackMixin
 
-    class Window(WindowDetailMixin):
+    class Window(WindowDetailMixin, WindowItemMenuMixin, WindowPlaybackMixin):
         downloads = Downloads(offline)
+        sections = {"songs": []}
 
     box = Window()._track_menu(collection, track, Gtk.Popover())
     labels, stack = [], [box]
@@ -145,8 +149,9 @@ def test_track_menu_offers_navigation_radio_playlist_and_download():
         artist="Elis Regina", artist_id="UCelis", album="Elis & Tom", album_id="MPREb_elis",
     )  # fmt: skip
     assert menu_labels(playlist, track) == [
-        "Iniciar rádio", "Ir para o artista", "Ir para o álbum", "Adicionar à playlist",
-        "Baixar para ouvir offline", "Remover desta playlist",
+        "Iniciar rádio", "Tocar a seguir", "Adicionar à fila", "Curtir música",
+        "Salvar na playlist", "Baixar", "Remover desta playlist", "Compartilhar",
+        "Ir para o artista", "Ir para o álbum",
     ]  # fmt: skip
 
 
@@ -156,7 +161,7 @@ def test_track_menu_adapts_to_album_pages_cached_tracks_and_downloads():
     labels = menu_labels(album, cached, offline={"vid1"})
     assert "Ir para o álbum" not in labels  # already on it
     assert "Buscar o artista" in labels  # no artist id in cached rows
-    assert "Disponível offline" in labels and "Baixar para ouvir offline" not in labels
+    assert "Disponível offline" in labels and "Baixar" not in labels
 
 
 def test_search_focus_is_detected_inside_the_entry():
@@ -211,3 +216,66 @@ def test_suggestions_do_not_reopen_for_the_query_just_searched():
     window._search_text_changed(Entry())
     assert window.search_suggestions.hidden == 1
     assert window._suggestion_timeout == 0
+
+
+class QueueWindow:
+    """Just enough of the window for the queue operations."""
+
+    def __init__(self, queue, index):
+        from harmonia.models import LibraryItem as Item
+
+        self.queue = [Item(f"q{n}", f"Fila {n}", kind="songs") for n in range(queue)]
+        self.queue_index = index
+        self.current_item = self.queue[index] if self.queue else None
+        self.started, self.toasts = [], []
+        self.toast_overlay = type(
+            "Toasts", (), {"add_toast": lambda _s, t: self.toasts.append(t)}
+        )()
+
+    def set_queue(self, items, index):
+        self.started.append([item.id for item in items])
+
+    def _render_queue(self):
+        pass
+
+    def _save_playback_state(self):
+        pass
+
+
+def test_play_next_goes_after_the_current_track_and_add_to_queue_at_the_end():
+    gtk_or_skip()
+    from harmonia.window_playback import WindowPlaybackMixin
+
+    window = QueueWindow(4, 1)
+    new = [LibraryItem("a", "A", kind="songs"), LibraryItem("b", "B", kind="songs")]
+    WindowPlaybackMixin.enqueue(window, new, next_up=True)
+    assert [item.id for item in window.queue] == ["q0", "q1", "a", "b", "q2", "q3"]
+    WindowPlaybackMixin.enqueue(window, [LibraryItem("c", "C", kind="songs")], next_up=False)
+    assert [item.id for item in window.queue][-1] == "c"
+    assert window.started == [] and len(window.toasts) == 2
+
+
+def test_queueing_with_nothing_playing_starts_playback_and_skips_non_tracks():
+    gtk_or_skip()
+    from harmonia.window_playback import WindowPlaybackMixin
+
+    window = QueueWindow(0, -1)
+    album = LibraryItem("MPRE1", "Álbum", kind="albums")
+    WindowPlaybackMixin.enqueue(window, [album, LibraryItem("a", "A", kind="songs")], next_up=False)
+    assert window.started == [["a"]]
+
+
+def test_collection_menu_follows_youtube_music_and_share_links_point_to_it():
+    from harmonia.window_item_menu import share_url
+
+    album = LibraryItem("MPREb_x", "Álbum", kind="albums", playlist_id="OLAK5uy_x")
+    playlist = LibraryItem("VLPLabc", "Playlist", kind="playlists")
+    labels = menu_labels(album, album)
+    assert labels == [
+        "Aleatório", "Tocar a seguir", "Adicionar à fila", "Salvar na biblioteca", "Baixar",
+        "Compartilhar",
+    ]  # fmt: skip
+    assert share_url(album) == "https://music.youtube.com/playlist?list=OLAK5uy_x"
+    assert share_url(playlist) == "https://music.youtube.com/playlist?list=PLabc"
+    assert share_url(LibraryItem("v1", "T", kind="songs")) == "https://music.youtube.com/watch?v=v1"
+    assert share_url(LibraryItem("local:1", "T", kind="songs")) is None

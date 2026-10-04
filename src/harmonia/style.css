@@ -78,10 +78,11 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 .sidebar-create { margin: 10px 8px 0; background: @harmonia_hover_bg; border-radius: 8px; }
 .compact-menu { padding: 8px; min-width: 190px; }
 .compact-menu button { padding: 8px 12px; }
-/* Navigation icons all follow the text colour. Some icon themes mark parts of
-   a symbolic icon as success/warning/error (elementary's starred-symbolic is a
-   "warning" star), which GTK would paint yellow, green or red. */
-.sidebar-item image, .compact-menu image {
+/* Navigation and item-menu icons all follow the text colour. Some icon themes
+   mark parts of a symbolic icon as success/warning/error (elementary's
+   starred-symbolic is a "warning" star), which GTK would paint yellow, green
+   or red. */
+.sidebar-item image, .compact-menu image, .item-menu-list image {
   -gtk-icon-palette: success currentColor, warning currentColor, error currentColor;
 }
 .hero { padding: 26px 0 10px; }
@@ -291,6 +292,25 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 .detail-menu { padding: 7px; min-width: 210px; }
 .detail-menu button { padding: 8px 10px; }
 .detail-menu-note { padding: 10px; color: @harmonia_fg_dim; font-size: 12px; }
+/* Item menu, after YouTube Music: one flat list of full-width rows, the icon
+   first and well apart from the label, no separators or rounded pills. */
+popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }
+.item-menu-list { min-width: 248px; }
+.item-menu-list .app-menu-action,
+.icons-material .item-menu-list .app-menu-action {
+  min-height: 44px;
+  padding: 0 20px 0 18px;
+  border-radius: 0;
+  border: none;
+  color: @harmonia_fg;
+}
+.item-menu-list .app-menu-action > box { border-spacing: 16px; }
+.item-menu-list .app-menu-action image { -gtk-icon-size: 20px; }
+.item-menu-list .app-menu-action:hover,
+.icons-material .item-menu-list .app-menu-action:hover {
+  background: alpha(@harmonia_overlay, .10);
+  border-color: transparent;
+}
 .player-bar { min-height: 72px; padding: 8px 16px; border-top: 1px solid @harmonia_border; background: @harmonia_sidebar_bg; }
 .player-track { min-width: 190px; }
 .player-secondary { min-width: 190px; }
@@ -666,6 +686,18 @@ menubutton.app-icon-button > button:checked {
 .media-card-button:hover .media-card-cover { opacity: .68; }
 .media-card-button:hover .media-card-action { opacity: 1; }
 .media-card-action { transition: 150ms ease; }
+/* Options over the artwork: the dark disc keeps it legible on any cover. */
+.media-card-menu > button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9999px;
+  background: alpha(#111111, .78);
+  color: #ffffff;
+  border: 1px solid alpha(#ffffff, .12);
+  box-shadow: 0 3px 10px alpha(#000000, .35);
+}
+.media-card-menu > button:hover { background: alpha(#111111, .92); }
 .media-row {
   min-height: 64px;
   border-radius: 8px;
