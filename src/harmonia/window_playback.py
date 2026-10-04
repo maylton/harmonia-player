@@ -10,7 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from .i18n import _
+from .i18n import _, ngettext
 from .models import (
     LibraryItem,
     PlaybackState,
@@ -351,6 +351,55 @@ class WindowPlaybackMixin:
         self.queue.insert(position, item)
         self._render_queue()
         self._save_playback_state()
+
+    def enqueue(self, tracks: list[LibraryItem], *, next_up: bool) -> None:
+        """Queue tracks after the current one (next_up) or at the end.
+
+        With nothing playing yet, the tracks simply start playing.
+        """
+        tracks = [track for track in tracks if track.kind in ("songs", "videos")]
+        if not tracks:
+            self.toast_overlay.add_toast(Adw.Toast(title=_("Nenhuma faixa para adicionar à fila")))
+            return
+        if not self.queue or getattr(self, "current_item", None) is None:
+            self.set_queue(tracks, 0)
+            return
+        position = min(len(self.queue), self.queue_index + 1) if next_up else len(self.queue)
+        self.queue[position:position] = tracks
+        self._render_queue()
+        self._save_playback_state()
+        if len(tracks) == 1:
+            message = (
+                _("“{title}” tocará a seguir") if next_up else _("“{title}” adicionada à fila")
+            ).format(title=tracks[0].title)
+        elif next_up:
+            message = ngettext(
+                "{count} faixa tocará a seguir", "{count} faixas tocarão a seguir", len(tracks)
+            ).format(count=len(tracks))
+        else:
+            message = ngettext(
+                "{count} faixa adicionada à fila", "{count} faixas adicionadas à fila", len(tracks)
+            ).format(count=len(tracks))
+        self.toast_overlay.add_toast(Adw.Toast(title=message, timeout=3))
+
+    def enqueue_item(self, item: LibraryItem, *, next_up: bool) -> None:
+        """Queue a track, or every track of an album or playlist."""
+        if item.kind in ("songs", "videos"):
+            self.enqueue([item], next_up=next_up)
+        else:
+            self.with_collection_tracks(item, lambda tracks: self.enqueue(tracks, next_up=next_up))
+
+    def queue_menu_entries(self, item: LibraryItem, add_entry) -> None:
+        """Add "Tocar a seguir" and "Adicionar à fila" to a track or collection menu.
+
+        add_entry(label, icon, callback) appends one menu button.
+        """
+        if item.kind not in ("songs", "videos", "albums", "playlists", "local-playlists"):
+            return
+        add_entry(_("Tocar a seguir"), "media-skip-forward-symbolic",
+                  lambda: self.enqueue_item(item, next_up=True))  # fmt: skip
+        add_entry(_("Adicionar à fila"), "view-list-symbolic",
+                  lambda: self.enqueue_item(item, next_up=False))  # fmt: skip
 
     def _select_queue_item(self, position: int) -> None:
         self.queue_index = position

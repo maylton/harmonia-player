@@ -29,6 +29,7 @@ ICONS: dict[str, tuple[str, str]] = {
     "document-save-symbolic": ("device-floppy", "save-rounded"),
     "edit-copy-symbolic": ("copy", "content-copy-rounded"),
     "emblem-ok-symbolic": ("circle-check", "check-circle-rounded"),
+    "emblem-shared-symbolic": ("share", "share-rounded"),
     "find-location-symbolic": ("compass", "explore-rounded"),
     "folder-download-symbolic": ("folder-down", "download-for-offline-rounded"),
     "folder-music-symbolic": ("library", "library-music-rounded"),

@@ -32,7 +32,6 @@ from .ui import (
     set_action_role,
     set_icon_selected,
     style_icon_button,
-    track_artist,
     track_byline,
 )
 
@@ -526,7 +525,19 @@ class WindowDetailMixin:
         menu = Gtk.Popover()
         menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         menu_box.add_css_class("detail-menu")
+        if tracks and item.kind in ("albums", "playlists"):
+            for label, icon, next_up in (
+                (_("Tocar a seguir"), "media-skip-forward-symbolic", True),
+                (_("Adicionar à fila"), "view-list-symbolic", False),
+            ):
+                queue = menu_action_button(label, icon)
+                queue.connect(
+                    "clicked",
+                    lambda *_, first=next_up: (menu.popdown(), self.enqueue(tracks, next_up=first)),
+                )
+                menu_box.append(queue)
         if item.kind == "playlists":
+            menu_box.append(Gtk.Separator())
             rename = menu_action_button(_("Renomear playlist"), "document-edit-symbolic")
             rename.connect(
                 "clicked", lambda *_: (menu.popdown(), self.rename_playlist_dialog(item))
@@ -545,12 +556,9 @@ class WindowDetailMixin:
                 "clicked", lambda *_: (menu.popdown(), self._toggle_artist(item, False))
             )
             menu_box.append(unsubscribe)
-        else:
-            info = Gtk.Label(label=_("Mais ações para álbuns em breve"), xalign=0)
-            info.add_css_class("detail-menu-note")
-            menu_box.append(info)
         menu.set_child(menu_box)
         more.set_popover(menu)
+        more.set_visible(menu_box.get_first_child() is not None)
         actions.append(more)
         return actions
 
@@ -561,6 +569,20 @@ class WindowDetailMixin:
         button: Gtk.Button,
         state: dict,
     ) -> None:
+        save = not state["saved"]
+
+        def completed() -> None:
+            state["saved"] = save
+            button.set_icon_name("object-select-symbolic" if save else "bookmark-new-symbolic")
+            button.set_tooltip_text(_("Salvo na biblioteca") if save else _("Salvar na biblioteca"))
+            set_icon_selected(button, save)
+
+        self.save_collection(item, tracks, save, completed)
+
+    def save_collection(
+        self, item: LibraryItem, tracks: list[LibraryItem], save: bool, completed=None
+    ) -> None:
+        """Save an album or playlist to the library, or remove it."""
         playlist_id = item.playlist_id or next(
             (track.playlist_id for track in tracks if track.playlist_id), None
         )
@@ -574,15 +596,11 @@ class WindowDetailMixin:
                 )
             )
             return
-
-        save = not state["saved"]
         message = _("Adicionado à biblioteca") if save else _("Removido da biblioteca")
 
-        def completed(_result) -> None:
-            state["saved"] = save
-            button.set_icon_name("object-select-symbolic" if save else "bookmark-new-symbolic")
-            button.set_tooltip_text(_("Salvo na biblioteca") if save else _("Salvar na biblioteca"))
-            set_icon_selected(button, save)
+        def done(_result) -> None:
+            if completed:
+                completed()
             self.sync()
 
         self._mutate(
@@ -590,7 +608,7 @@ class WindowDetailMixin:
             playlist_id,
             lambda client: client.like_playlist(playlist_id, save),
             message,
-            completed,
+            done,
         )
 
     def _play_shuffled(self, tracks: list[LibraryItem]) -> None:
@@ -708,7 +726,8 @@ class WindowDetailMixin:
         options = Gtk.MenuButton(icon_name="view-more-symbolic", tooltip_text=_("Opções da faixa"))
         style_icon_button(options, "sm")
         options.add_css_class("detail-track-action")
-        popover = Gtk.Popover()
+        popover = Gtk.Popover(has_arrow=False)
+        popover.add_css_class("item-menu")
         options.set_popover(popover)
         # Built when opened, so the offline state is always current.
         options.set_create_popup_func(
@@ -811,45 +830,8 @@ class WindowDetailMixin:
     def _track_menu(
         self, collection: LibraryItem, track: LibraryItem, popover: Gtk.Popover
     ) -> Gtk.Widget:
-        """Per-track actions: navigation, radio, playlists and offline download."""
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        box.add_css_class("detail-menu")
-
-        def entry(label: str, icon: str, callback, sensitive: bool = True) -> None:
-            button = menu_action_button(label, icon)
-            button.set_sensitive(sensitive)
-            button.connect("clicked", lambda *_: (popover.popdown(), callback()))
-            box.append(button)
-
-        playable = track.kind in ("songs", "videos") and not track.id.startswith("local:")
-        if playable:
-            entry(_("Iniciar rádio"), "media-playlist-consecutive-symbolic",
-                  lambda: self._start_track_radio(track))  # fmt: skip
-        artist = track_artist(track)
-        if track.artist_id:
-            entry(_("Ir para o artista"), "avatar-default-symbolic",
-                  lambda: self.open_item(LibraryItem(track.artist_id, artist, kind="artists")))  # fmt: skip
-        elif artist:
-            entry(_("Buscar o artista"), "system-search-symbolic",
-                  lambda: self._search_for(artist))  # fmt: skip
-        album_id = track.album_id or (collection.id if collection.kind == "albums" else None)
-        if album_id and album_id != collection.id:
-            entry(_("Ir para o álbum"), "media-optical-symbolic",
-                  lambda: self.open_item(LibraryItem(album_id, track.album, kind="albums")))  # fmt: skip
-        box.append(Gtk.Separator())
-        entry(_("Adicionar à playlist"), "list-add-symbolic",
-              lambda: self.add_to_playlist_dialog(track))  # fmt: skip
-        if playable:
-            offline = self.downloads.offline_path(track.id) is not None
-            if offline:
-                entry(_("Disponível offline"), "emblem-ok-symbolic", lambda: None, sensitive=False)
-            else:
-                entry(_("Baixar para ouvir offline"), "folder-download-symbolic",
-                      lambda: self._download_items([track]))  # fmt: skip
-        if collection.kind == "playlists" and track.set_video_id:
-            entry(_("Remover desta playlist"), "list-remove-symbolic",
-                  lambda: self._remove_track(collection, track))  # fmt: skip
-        return box
+        """Per-track actions: the shared item menu, aware of the open collection."""
+        return self.item_menu(track, popover, collection=collection)
 
     def _search_for(self, query: str) -> None:
         self.search_entry.set_text(query)

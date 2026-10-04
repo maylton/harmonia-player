@@ -42,6 +42,7 @@ from .window_detail import WindowDetailMixin
 from .window_history import WindowHistoryMixin
 from .window_home import WindowHomeMixin
 from .window_insights import WindowInsightsMixin
+from .window_item_menu import WindowItemMenuMixin
 from .window_library import WindowLibraryMixin
 from .window_lyrics import WindowLyricsMixin
 from .window_optional import WindowOptionalMixin
@@ -62,6 +63,7 @@ class HarmoniaWindow(
     WindowLibraryMixin,
     WindowDetailMixin,
     WindowSearchMixin,
+    WindowItemMenuMixin,
     WindowActionsMixin,
     WindowLyricsMixin,
     WindowPlaybackMixin,

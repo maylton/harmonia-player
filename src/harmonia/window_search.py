@@ -198,6 +198,9 @@ class WindowSearchMixin:
                 if item.kind in ("songs", "videos")
                 else "go-next-symbolic"
             )
+            options = self._media_card_options(item, on_cover=False)
+            if options:
+                row.add_suffix(options)
             row.add_suffix(Gtk.Image.new_from_icon_name(icon))
             if item.kind in ("songs", "videos"):
                 row.connect(
