@@ -30,7 +30,10 @@ CHILD_FLAG = "--child"
 # GLib prints "<domain>-WARNING **" and "<domain>-CRITICAL **" (and the
 # structured "(prog:pid): Gtk-WARNING **:" form); Python callbacks that raise
 # inside the main loop only print their traceback.
-FAILURE = re.compile(r"-(WARNING|CRITICAL|ERROR) \*\*|^Traceback |^SMOKE-FAIL ", re.M)
+# Theme stylesheets report parse errors through Python logging.
+FAILURE = re.compile(
+    r"-(WARNING|CRITICAL|ERROR) \*\*|^Traceback |^SMOKE-FAIL |CSS do tema, linha", re.M
+)
 # Noise from the session around the app, not from Harmonia: portals and the
 # accessibility bus are absent or half-started under xvfb and dbus-run-session,
 # and GTK warns about entries of the system Compose table it cannot represent.
