@@ -97,6 +97,10 @@ scale highlight {
   box-shadow: none;
 }
 scale fill { background-color: alpha(@harmonia_shadow, .25); }
+/* The player sliders (position and volume) keep the system accent, like
+   Granite's scale.accent; other sliders stay neutral. */
+scale.player-scale highlight { background-color: @accent_bg_color; }
+scale.player-scale fill { background-color: alpha(@accent_bg_color, .33); }
 scale slider {
   min-width: 14px;
   min-height: 14px;
