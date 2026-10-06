@@ -64,10 +64,10 @@ def test_material_waits_for_the_native_window_then_reapplies(monkeypatch):
     assert calls == ["mica"]
 
 
-def test_returning_to_the_window_sets_the_material_again(monkeypatch):
+def test_returning_to_the_window_sets_the_material_again():
     from harmonia.gtk_backdrop import GtkWindowBackdrops
 
-    applied, kept = [], []
+    applied = []
 
     class WindowStub:
         active = True
@@ -75,26 +75,50 @@ def test_returning_to_the_window_sets_the_material_again(monkeypatch):
         def is_active(self):
             return self.active
 
-        def has_css_class(self, name):
-            return True
-
     backdrops = GtkWindowBackdrops.__new__(GtkWindowBackdrops)
-    backdrops.kind = "acrylic"
+    backdrops.kind = "mica"
     backdrops._apply = applied.append
-    backdrops._hwnd = lambda window: 42
-    monkeypatch.setattr("harmonia.windows_backdrop.keep_active", kept.append)
 
     window = WindowStub()
     backdrops._activation_changed(window, None)
-    assert applied == [window] and kept == []
+    assert applied == [window]
 
-    window.active = False
+    window.active = False  # Windows shows the inactive colour by itself
     backdrops._activation_changed(window, None)
-    assert kept == [42]  # Acrylic stays frosted in the background
+    backdrops.kind = "none"
+    window.active = True
+    backdrops._activation_changed(window, None)
+    assert applied == [window]
 
-    backdrops.kind = "mica"
-    backdrops._activation_changed(window, None)
-    assert kept == [42]  # Mica follows Windows and turns solid there
+
+@windows_only
+def test_material_replaces_gdk_blur_behind_transparency(monkeypatch):
+    from harmonia import windows_backdrop
+
+    calls = []
+    monkeypatch.setattr(
+        windows_backdrop, "_blur_behind", lambda hwnd, enable: calls.append(("blur", enable))
+    )
+    monkeypatch.setattr(
+        windows_backdrop,
+        "_attribute",
+        lambda hwnd, attribute, value: calls.append(("attribute", attribute)) or True,
+    )
+
+    class Dwm:
+        def DwmExtendFrameIntoClientArea(self, hwnd, margins):
+            calls.append(("extend", margins._obj.left))
+            return 0
+
+    monkeypatch.setattr(windows_backdrop.ctypes, "windll", type("W", (), {"dwmapi": Dwm()})())
+    assert windows_backdrop.apply(1, "mica", dark=True) is True
+    # Blur-behind goes off before the frame and the material are set.
+    order = [call for call in calls if call[0] != "attribute" or call[1] == 38]
+    assert order == [("blur", False), ("extend", -1), ("attribute", 38)]
+
+    calls.clear()
+    windows_backdrop.remove(1)
+    assert ("blur", True) in calls and ("extend", 0) in calls
 
 
 def test_material_names_match_the_preference_values():

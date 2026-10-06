@@ -84,19 +84,11 @@ class GtkWindowBackdrops:
         return applied
 
     def _activation_changed(self, window: Gtk.Window, _pspec) -> None:
-        from . import windows_backdrop
-
-        if self.kind == "none":
-            return
-        if window.is_active():
-            # Set the material again whenever the window comes back to the
-            # front, so nothing that reset it in the meantime sticks.
+        # Set the material again whenever the window comes back to the front:
+        # GDK re-enables its blur-behind transparency when DWM restarts, and
+        # that would hide the material again.
+        if self.kind != "none" and window.is_active():
             self._apply(window)
-            return
-        if self.kind in windows_backdrop.KEEP_WHEN_INACTIVE and window.has_css_class(CSS_CLASS):
-            hwnd = self._hwnd(window)
-            if hwnd is not None:
-                windows_backdrop.keep_active(hwnd)
 
     def _update_dark(self) -> None:
         from . import windows_backdrop
