@@ -210,7 +210,9 @@ def test_every_theme_renders_complete_css(css_variables):
         for dark in (True, False):
             css = render_gtk_css(theme, dark=dark, base_css=BASE_CSS, css_variables=css_variables)
             defined = set(re.findall(r"@define-color harmonia_([a-z_]+) ", css))
-            assert defined == set(TOKENS)
+            fallbacks = {name for name in defined if name.startswith("opaque_")}
+            assert defined - fallbacks == set(TOKENS)
+            assert {name.removeprefix("opaque_") for name in fallbacks} <= set(TOKENS)
             assert css.count("{") == css.count("}")
 
 
@@ -351,10 +353,30 @@ def test_structural_layers_exist_and_only_use_known_colors():
     for theme in layered:
         css = (THEMES_DIR / theme.stylesheet).read_text(encoding="utf-8")
         assert css.count("{") == css.count("}"), theme.id
-        for name in re.findall(r"@([a-z_]+)", css):
-            assert name.removeprefix("harmonia_") in named, (theme.id, name)
         rendered = render_gtk_css(theme, dark=True, base_css=BASE_CSS, css_variables=False)
+        # Themes with a window material also get the opaque colours of their
+        # translucent tokens, for the out-of-focus fallback.
+        opaque = set(re.findall(r"@define-color harmonia_(opaque_[a-z_]+) ", rendered))
+        for name in re.findall(r"@([a-z_]+)", css):
+            assert name.removeprefix("harmonia_") in named | opaque, (theme.id, name)
         assert rendered.index("structural layer") > rendered.index("window { background:")
+
+
+def test_window_material_falls_back_to_opaque_colours_out_of_focus():
+    windows = theme_catalog()["windows11"]
+    solid = windows.palette(dark=True)
+    rendered = render_gtk_css(
+        windows, dark=True, base_css="", css_variables=False, translucent=True
+    )
+    for token in ("bg", "sidebar_bg", "headerbar_bg"):
+        assert f"@define-color harmonia_opaque_{token} {solid[token]};" in rendered
+    css = (THEMES_DIR / "windows11.css").read_text(encoding="utf-8")
+    assert "window.harmonia-backdrop:backdrop .sidebar" in css
+    assert "transition: background-color 250ms" in css
+    # Themes without a material define no fallback colours.
+    assert "harmonia_opaque_" not in render_gtk_css(
+        get_theme("breeze"), dark=True, base_css="", css_variables=False
+    )
 
 
 def test_elementary_layer_follows_the_flat_elementary_os_8_style():

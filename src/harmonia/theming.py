@@ -322,6 +322,11 @@ def render_gtk_css(
     palette = theme.palette(dark, translucent=translucent)
     lines = [f"/* Harmonia theme: {theme.id} ({'dark' if dark else 'light'}) */"]
     lines += [f"@define-color harmonia_{token} {palette[token]};" for token in TOKENS]
+    if theme.backdrop:
+        # The opaque colours a window falls back to while it is out of focus,
+        # as Fluent's acrylic and Mica brushes do (see windows11.css).
+        see_through = sorted({token for colors in theme.translucent.values() for token in colors})
+        lines += [f"@define-color harmonia_opaque_{token} {solid[token]};" for token in see_through]
 
     overrides: dict[str, str] = {}
     if theme.restyle_adwaita:
