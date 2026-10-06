@@ -23,6 +23,11 @@ pyinstaller --noconfirm --clean \
   --distpath "$STAGING/dist" --workpath "$STAGING/work" \
   packaging/windows/harmonia.spec
 
+# Every bundled typelib must find the typelibs it depends on in the bundle:
+# the build machine has all of them installed, so a missing one only shows
+# up on the user's machine, when its namespace is first imported.
+python packaging/windows/check_typelibs.py "$STAGING/dist/Harmonia/_internal/gi_typelibs"
+
 # Inno Setup wants a numeric x.y.z.w file version; "0.1.0-beta.1" -> "0.1.0.1".
 NUMERIC="$(python - "$VERSION" <<'EOF'
 import re, sys
