@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
-from gi.repository import Adw, Gtk  # noqa: E402
+from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from . import host  # noqa: E402
 
@@ -53,7 +53,7 @@ class GtkWindowBackdrops:
                 continue
             self._windows.add(id(window))
             window.connect("realize", self._apply)
-            window.connect("notify::is-active", self._activation_changed)
+            window.connect("unrealize", self._unwatch)
             window.connect("destroy", lambda window: self._windows.discard(id(window)))
             if window.get_realized():
                 self._apply(window)
@@ -79,16 +79,35 @@ class GtkWindowBackdrops:
             windows_backdrop.remove(hwnd)
         if applied:
             window.add_css_class(CSS_CLASS)
+            windows_backdrop.watch(hwnd, lambda: self._schedule_restore(window))
         else:
             window.remove_css_class(CSS_CLASS)
         return applied
 
-    def _activation_changed(self, window: Gtk.Window, _pspec) -> None:
-        # Set the material again whenever the window comes back to the front:
-        # GDK re-enables its blur-behind transparency when DWM restarts, and
-        # that would hide the material again.
-        if self.kind != "none" and window.is_active():
-            self._apply(window)
+    def _schedule_restore(self, window: Gtk.Window) -> None:
+        """Queue one restore for a burst of messages (focus, display, composition)."""
+        if self.kind == "none" or getattr(window, "_harmonia_restore_queued", False):
+            return
+        window._harmonia_restore_queued = True
+        GLib.idle_add(self._restore, window)
+
+    def _restore(self, window: Gtk.Window) -> bool:
+        """Set the material again and refresh the frame, as minimize and restore would."""
+        from . import windows_backdrop
+
+        window._harmonia_restore_queued = False
+        if self.kind != "none" and self._apply(window):
+            hwnd = self._hwnd(window)
+            if hwnd is not None:
+                windows_backdrop.refresh_frame(hwnd)
+        return GLib.SOURCE_REMOVE
+
+    def _unwatch(self, window: Gtk.Window) -> None:
+        from . import windows_backdrop
+
+        hwnd = self._hwnd(window)
+        if hwnd is not None:
+            windows_backdrop.unwatch(hwnd)
 
     def _update_dark(self) -> None:
         from . import windows_backdrop

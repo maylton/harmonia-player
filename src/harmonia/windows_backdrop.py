@@ -89,6 +89,86 @@ def apply(hwnd: int, kind: str, dark: bool) -> bool:
     return False
 
 
+# Messages after which Windows or GDK may have dropped the material: the
+# window coming back to the front, a desktop composition or display mode
+# change (fullscreen games cause both), a theme change and a DPI change.
+# GDK, for one, turns blur-behind back on when composition changes.
+WM_ACTIVATE = 0x0006
+WM_DISPLAYCHANGE = 0x007E
+WM_DPICHANGED = 0x02E0
+WM_THEMECHANGED = 0x031A
+WM_DWMCOMPOSITIONCHANGED = 0x031E
+RESET_MESSAGES = {WM_DISPLAYCHANGE, WM_DPICHANGED, WM_THEMECHANGED, WM_DWMCOMPOSITIONCHANGED}
+SWP_REFRESH_FRAME = (
+    0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020
+)  # no move/size/z/activate + framechanged
+
+_SUBCLASS_PROC = ctypes.WINFUNCTYPE(
+    ctypes.c_ssize_t,  # LRESULT
+    wintypes.HWND,
+    wintypes.UINT,
+    wintypes.WPARAM,
+    wintypes.LPARAM,
+    ctypes.c_size_t,  # UINT_PTR id
+    ctypes.c_size_t,  # DWORD_PTR data
+)
+_watchers: dict[int, object] = {}
+
+
+def needs_reapply(message: int, wparam: int) -> bool:
+    """Whether the material should be set again after ``message``."""
+    if message == WM_ACTIVATE:
+        return (wparam & 0xFFFF) != 0  # WA_ACTIVE or WA_CLICKACTIVE
+    return message in RESET_MESSAGES
+
+
+def refresh_frame(hwnd: int) -> None:
+    """Make DWM recompute the frame, as minimizing and restoring does."""
+    ctypes.windll.user32.SetWindowPos(wintypes.HWND(hwnd), None, 0, 0, 0, 0, SWP_REFRESH_FRAME)
+
+
+def watch(hwnd: int, callback) -> None:
+    """Call ``callback()`` after the window handled a message that may reset the material.
+
+    A Win32 subclass sees each message after GDK's own window procedure, so
+    the material is set once GDK is done with it.
+    """
+    if hwnd in _watchers:
+        return
+    comctl32 = ctypes.windll.comctl32
+    comctl32.DefSubclassProc.restype = ctypes.c_ssize_t
+    comctl32.DefSubclassProc.argtypes = (
+        wintypes.HWND,
+        wintypes.UINT,
+        wintypes.WPARAM,
+        wintypes.LPARAM,
+    )
+
+    def procedure(window, message, wparam, lparam, _id, _data):
+        result = comctl32.DefSubclassProc(window, message, wparam, lparam)
+        if needs_reapply(message, wparam):
+            callback()
+        return result
+
+    native = _SUBCLASS_PROC(procedure)
+    comctl32.SetWindowSubclass.argtypes = (
+        wintypes.HWND,
+        _SUBCLASS_PROC,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    )
+    if comctl32.SetWindowSubclass(wintypes.HWND(hwnd), native, 1, 0):
+        _watchers[hwnd] = native  # keeps the callback alive
+
+
+def unwatch(hwnd: int) -> None:
+    native = _watchers.pop(hwnd, None)
+    if native is not None:
+        comctl32 = ctypes.windll.comctl32
+        comctl32.RemoveWindowSubclass.argtypes = (wintypes.HWND, _SUBCLASS_PROC, ctypes.c_size_t)
+        comctl32.RemoveWindowSubclass(wintypes.HWND(hwnd), native, 1)
+
+
 def remove(hwnd: int) -> None:
     _attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, DWMSBT_NONE)
     margins = _Margins(0, 0, 0, 0)
