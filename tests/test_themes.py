@@ -137,6 +137,25 @@ def test_windows_material_turns_only_the_window_surfaces_translucent():
     assert breeze.palette(dark=True, translucent=True) == breeze.palette(dark=True)
 
 
+def test_windows_material_reaches_cards_and_controls_but_not_floating_surfaces():
+    css = (THEMES_DIR / "windows11.css").read_text(encoding="utf-8")
+    rules = {
+        selectors.strip(): body
+        for selectors, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
+        if "harmonia-backdrop" in selectors
+    }
+    translucent = next(body for selectors, body in rules.items() if "list.boxed-list" in selectors)
+    assert "alpha(@harmonia_chip_bg" in translucent
+    covered = next(selectors for selectors in rules if "list.boxed-list" in selectors)
+    for control in ("entry", ".sidebar-create", "dropdown > button", "button.app-action"):
+        assert control in covered
+    # Accent buttons keep their fill; floating surfaces stay solid.
+    assert ":not(.app-action-primary):not(.app-action-accent)" in covered
+    floating = next(selectors for selectors in rules if "popover.background" in selectors)
+    assert "tooltip.background" in floating and "toast" in floating
+    assert rules[floating].strip() == "background-color: @harmonia_chip_bg;"
+
+
 def test_translucent_colours_require_a_backdrop_and_known_tokens():
     data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
     with pytest.raises(ThemeError):
