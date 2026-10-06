@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from types import ModuleType
 
 from harmonia.app import HarmoniaWindow
 from harmonia.models import LyricLine, LyricsDocument
@@ -36,7 +37,43 @@ def test_unknown_library_category_is_ignored():
     assert (window.library_origin, window.library_filter) == ("local", "songs")
 
 
-def test_login_skips_the_embedded_browser_where_webkitgtk_is_missing(monkeypatch):
+def test_login_opens_the_platform_browser_module(monkeypatch):
+    import harmonia.window_account as window_account
+
+    opened = []
+
+    class FakeLoginWindow:
+        def __init__(self, parent, data_dir, on_success, on_manual):
+            opened.append((parent, data_dir, on_success, on_manual))
+
+        def present(self):
+            opened.append("presented")
+
+    class Storage:
+        web_data_dir = Path("web-auth")
+
+    class LoginStub:
+        storage = Storage()
+
+        def _integrated_login_done(self, cookie):
+            pass
+
+        def manual_login_dialog(self):
+            raise AssertionError("the platform browser should have opened")
+
+    module = ModuleType("harmonia.fake_login")
+    module.LoginWindow = FakeLoginWindow
+    monkeypatch.setitem(sys.modules, "harmonia.fake_login", module)
+    monkeypatch.setattr(window_account.host, "INTEGRATED_LOGIN", True)
+    monkeypatch.setattr(window_account.host, "LOGIN_MODULE", "fake_login")
+    window = LoginStub()
+    HarmoniaWindow.login_dialog(window)
+
+    assert opened[0][0] is window and opened[0][1] == Path("web-auth")
+    assert opened[-1] == "presented"
+
+
+def test_login_skips_the_embedded_browser_where_none_exists(monkeypatch):
     import harmonia.window_account as window_account
 
     class LoginStub:

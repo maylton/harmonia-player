@@ -16,8 +16,10 @@ IS_LINUX = sys.platform.startswith("linux")
 # Matched against the "platforms" list of platform-specific themes.
 PLATFORM = "windows" if IS_WINDOWS else "linux" if IS_LINUX else sys.platform
 
-# The integrated Google login embeds WebKitGTK, which only exists on Linux.
-INTEGRATED_LOGIN = IS_LINUX
+# The integrated Google login embeds the platform's web engine: WebKitGTK on
+# Linux (auth.py), the Edge WebView2 runtime on Windows (auth_webview2.py).
+LOGIN_MODULE = "auth_webview2" if IS_WINDOWS else "auth" if IS_LINUX else ""
+INTEGRATED_LOGIN = bool(LOGIN_MODULE)
 # MPRIS media controls are exported on the D-Bus session bus.
 MPRIS = IS_LINUX
 

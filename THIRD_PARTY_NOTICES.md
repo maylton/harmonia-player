@@ -29,6 +29,19 @@ installed elementary theme (and themes inheriting from it, such as accent
 variants) only on GTK 4.21 or newer, where the 8.x versions of these icons
 render blank. All other icons keep coming from the installed theme.
 
+## Microsoft WebView2 Loader
+
+- Project: WebView2 Loader from the Microsoft.Web.WebView2 SDK, as packaged by
+  MSYS2 (`mingw-w64-ucrt-x86_64-webview2-loader`)
+- Source: https://learn.microsoft.com/microsoft-edge/webview2/
+- License: BSD 3-Clause (Copyright Microsoft Corporation)
+- Used by: the Windows build only, for the embedded Google login
+  (`src/harmonia/auth_webview2.py`); the license ships in the installer under
+  `licenses/webview2-loader`
+
+The browser itself is the Microsoft Edge WebView2 runtime installed with
+Windows; it is not bundled.
+
 ## Iconify
 
 Iconify provides the development-time API used to retrieve and normalize the

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import logging
 import threading
 
@@ -24,15 +25,14 @@ class WindowAccountMixin:
             self.manual_login_dialog()
             return
         try:
-            from .auth import LoginWindow
-
-            LoginWindow(
+            login = importlib.import_module(f".{host.LOGIN_MODULE}", __package__)
+            login.LoginWindow(
                 self,
                 self.storage.web_data_dir,
                 self._integrated_login_done,
                 self.manual_login_dialog,
             ).present()
-        except (ImportError, ValueError) as exc:
+        except (ImportError, ValueError, OSError) as exc:
             self.toast_overlay.add_toast(
                 Adw.Toast(
                     title=_("Navegador integrado indisponível: {error}").format(error=exc),

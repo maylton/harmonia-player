@@ -1,5 +1,6 @@
 src/harmonia/app.py
 src/harmonia/auth.py
+src/harmonia/auth_webview2.py
 src/harmonia/gtk_video.py
 src/harmonia/innertube.py
 src/harmonia/player.py

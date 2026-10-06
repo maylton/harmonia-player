@@ -10,9 +10,7 @@ gi.require_version("WebKit", "6.0")
 from gi.repository import Adw, Gtk, WebKit
 
 from .i18n import _
-from .innertube import parse_cookie
-
-LOGIN_URL = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
+from .login import LOGIN_URL, MUSIC_ORIGIN, session_cookie_header
 
 
 class LoginWindow(Adw.Window):
@@ -58,17 +56,18 @@ class LoginWindow(Adw.Window):
         if event != WebKit.LoadEvent.FINISHED or self.completing:
             return
         uri = view.get_uri() or ""
-        if uri.startswith("https://music.youtube.com"):
-            self.cookies.get_cookies("https://music.youtube.com", None, self._cookies_ready)
+        if uri.startswith(MUSIC_ORIGIN):
+            self.cookies.get_cookies(MUSIC_ORIGIN, None, self._cookies_ready)
 
     def _cookies_ready(self, manager, result):
         try:
             cookies = manager.get_cookies_finish(result)
-            raw = "; ".join(f"{cookie.get_name()}={cookie.get_value()}" for cookie in cookies)
+            raw = session_cookie_header(
+                (cookie.get_name(), cookie.get_value()) for cookie in cookies
+            )
         except Exception:
             return
-        parsed = parse_cookie(raw)
-        if "SAPISID" not in parsed and "__Secure-3PAPISID" not in parsed:
+        if raw is None:
             return
         self.completing = True
         self.on_success(raw)

@@ -5,6 +5,7 @@
 # packaging/windows/build.sh prepares the icon and the compiled catalogs first.
 # ruff: noqa
 
+import sys
 from pathlib import Path
 
 ROOT = Path(SPECPATH).resolve().parents[1]
@@ -54,7 +55,16 @@ def tree(source: Path, target: str, skip=()):
     ]
 
 
+MSYS_PREFIX = Path(sys.base_prefix)
+
 datas = harmonia_data()
+# The WebView2 login loads these at runtime (ctypes and a lazy gi import), so
+# PyInstaller cannot see them; GdkWin32 also has no PyInstaller hook.
+datas += [
+    (str(MSYS_PREFIX / "lib/girepository-1.0/GdkWin32-4.0.typelib"), "gi_typelibs"),
+    (str(MSYS_PREFIX / "share/licenses/webview2-loader/LICENSE"), "licenses/webview2-loader"),
+]
+binaries = [(str(MSYS_PREFIX / "bin/WebView2Loader.dll"), ".")]
 datas += tree(ROOT / "data" / "icons" / "hicolor", "share/icons/hicolor", skip={"1024x1024"})
 datas += tree(STAGING / "locale", "share/locale")
 datas += [
@@ -65,8 +75,14 @@ datas += [
 a = Analysis(
     [str(SPECPATH + "/launcher.py")],
     pathex=[str(ROOT / "src")],
+    binaries=binaries,
     datas=datas,
-    hiddenimports=["harmonia.app", "harmonia.gtk_video", "harmonia.gtk_media_variants"],
+    hiddenimports=[
+        "harmonia.app",
+        "harmonia.gtk_video",
+        "harmonia.gtk_media_variants",
+        "harmonia.auth_webview2",
+    ],
     hookspath=[SPECPATH + "/hooks"],
     hooksconfig={
         "gi": {
@@ -78,7 +94,7 @@ a = Analysis(
         "gstreamer": {"include_plugins": GSTREAMER_PLUGINS},
     },
     excludes=[
-        # Linux-only or Qt frontend modules (loaded lazily and never on Windows).
+        # Linux-only (WebKitGTK login) or Qt frontend modules, never loaded on Windows.
         "harmonia.auth",
         "harmonia.qt_app",
         "PySide6",
