@@ -13,6 +13,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, GLib, Gst, Gtk  # noqa: E402
 
 from .i18n import _  # noqa: E402
+from .ui import deliver_to_main  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
@@ -252,9 +253,9 @@ def install_gtk_video(window_class) -> None:
                     force=force,
                     allow_video_only=True,
                 )
-                GLib.idle_add(self._apply_media_mode, request_id, item_id, stream, "")
+                deliver_to_main(self._apply_media_mode, request_id, item_id, stream, "")
             except Exception as exc:
-                GLib.idle_add(self._apply_media_mode, request_id, item_id, None, str(exc))
+                deliver_to_main(self._apply_media_mode, request_id, item_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="media-mode-video").start()
 
