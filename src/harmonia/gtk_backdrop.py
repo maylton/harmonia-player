@@ -81,12 +81,41 @@ class GtkWindowBackdrops:
             window.add_css_class(CSS_CLASS)
             windows_backdrop.watch(
                 hwnd,
-                lambda: self._schedule_restore(window),
+                lambda message, wparam: self._on_message(window, message, wparam),
                 LOGGER.debug if LOGGER.isEnabledFor(logging.DEBUG) else None,
             )
         else:
             window.remove_css_class(CSS_CLASS)
         return applied
+
+    def _on_message(self, window: Gtk.Window, message: int, wparam: int) -> None:
+        from . import windows_backdrop
+
+        if message in windows_backdrop.RESET_MESSAGES:
+            # Composition or display changes (fullscreen games) leave DWM's
+            # material stuck until the window's visual is rebuilt.
+            window._harmonia_needs_rebuild = True
+        if windows_backdrop.needs_reapply(message, wparam):
+            self._schedule_restore(window)
+        elif message == windows_backdrop.WM_ACTIVATE:
+            self._watch_cloaking(window)
+
+    def _watch_cloaking(self, window: Gtk.Window) -> None:
+        """While out of focus, notice if Windows hides the window (another desktop)."""
+        from . import windows_backdrop
+
+        def check() -> bool:
+            hwnd = self._hwnd(window)
+            if hwnd is None or window.is_active():
+                return GLib.SOURCE_REMOVE
+            if windows_backdrop.is_cloaked(hwnd):
+                window._harmonia_needs_rebuild = True
+            return GLib.SOURCE_CONTINUE
+
+        if not getattr(window, "_harmonia_cloak_watch", 0):
+            window._harmonia_cloak_watch = GLib.timeout_add(
+                700, lambda: check() or setattr(window, "_harmonia_cloak_watch", 0)
+            )
 
     def _schedule_restore(self, window: Gtk.Window) -> None:
         """Queue one restore for a burst of messages (focus, display, composition)."""
@@ -103,6 +132,10 @@ class GtkWindowBackdrops:
         if self.kind != "none" and self._apply(window):
             hwnd = self._hwnd(window)
             if hwnd is not None:
+                if getattr(window, "_harmonia_needs_rebuild", False):
+                    window._harmonia_needs_rebuild = False
+                    windows_backdrop.rebuild(hwnd)
+                    LOGGER.debug("visual da janela recriado (tela cheia ou outra área de trabalho)")
                 windows_backdrop.refresh_frame(hwnd)
                 window.queue_draw()
                 if LOGGER.isEnabledFor(logging.DEBUG):

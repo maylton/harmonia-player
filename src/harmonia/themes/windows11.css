@@ -319,6 +319,25 @@ window.harmonia-backdrop .player-bar { background: transparent; }
 window.harmonia-backdrop .sidebar-active,
 window.harmonia-backdrop .sidebar-active:hover { background-color: alpha(@harmonia_overlay, .08); }
 
+/* Out of focus the material gives way to opaque colours and comes back when
+   the window is focused again, fading both ways, as Fluent's Mica and
+   acrylic brushes swap to their fallback colour. GTK marks the unfocused
+   window :backdrop; the spread shadow covers GTK's 12px resize band. */
+window.harmonia-backdrop,
+window.harmonia-backdrop .app-root,
+window.harmonia-backdrop headerbar,
+window.harmonia-backdrop .sidebar,
+window.harmonia-backdrop .player-bar,
+window.harmonia-backdrop .sidebar ~ stack {
+  transition: background-color 250ms ease-out, box-shadow 250ms ease-out;
+}
+window.harmonia-backdrop.csd:backdrop { box-shadow: 0 0 0 12px @harmonia_opaque_sidebar_bg; }
+window.harmonia-backdrop:backdrop .app-root,
+window.harmonia-backdrop:backdrop .sidebar,
+window.harmonia-backdrop:backdrop .player-bar { background-color: @harmonia_opaque_sidebar_bg; }
+window.harmonia-backdrop:backdrop headerbar { background-color: @harmonia_opaque_headerbar_bg; }
+window.harmonia-backdrop:backdrop .sidebar ~ stack { background-color: @harmonia_opaque_bg; }
+
 /* Type ramp: Segoe UI Variable Display, semibold, for titles. */
 .hero-title, .section-title, .artist-title, .detail-title, .expanded-title,
 .lyrics-title, .expanded-lyrics-title, .expanded-related-title, .title-1, .title-2, .title-3, .title-4 {

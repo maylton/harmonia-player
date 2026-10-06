@@ -81,6 +81,10 @@ def apply(hwnd: int, kind: str, dark: bool) -> bool:
     # leaves the window black, so it goes first.
     _blur_behind(hwnd, False)
     margins = _Margins(-1, -1, -1, -1)
+    # DWM ignores a backdrop type equal to the current one, which leaves a
+    # material stuck in its dull state; switching through "none" rebuilds it,
+    # as choosing another material or minimizing and restoring does.
+    _attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, DWMSBT_NONE)
     if not ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(
         wintypes.HWND(hwnd), ctypes.byref(margins)
     ) and _attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, BACKDROPS[kind]):
@@ -194,12 +198,38 @@ MESSAGE_NAMES = {
 }
 
 
+DWMWA_CLOAK = 13
+DWMWA_CLOAKED = 14
+
+
+def is_cloaked(hwnd: int) -> bool:
+    """Whether DWM hides the window, as on another virtual desktop."""
+    cloaked = ctypes.c_int(0)
+    ctypes.windll.dwmapi.DwmGetWindowAttribute(
+        wintypes.HWND(hwnd), DWMWA_CLOAKED, ctypes.byref(cloaked), 4
+    )
+    return cloaked.value != 0
+
+
+def rebuild(hwnd: int) -> None:
+    """Have DWM drop and recreate the window's visual, as minimize and restore do.
+
+    Cloaking hides the window from composition without changing its state;
+    uncloaking in the same frame brings it back with a fresh material.
+    """
+    for value in (1, 0):
+        data = ctypes.c_int(value)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            wintypes.HWND(hwnd), DWMWA_CLOAK, ctypes.byref(data), 4
+        )
+
+
 def watch(hwnd: int, callback, log=None) -> None:
-    """Call ``callback()`` after the window handled a message that may reset the material.
+    """Call ``callback(message, wparam)`` after activation and display messages.
 
     A Win32 subclass sees each message after GDK's own window procedure, so
     the material is set once GDK is done with it. ``log``, when given,
-    receives the activation and display messages for the diagnostic log.
+    receives those messages for the diagnostic log.
     """
     if hwnd in _watchers:
         return
@@ -216,8 +246,8 @@ def watch(hwnd: int, callback, log=None) -> None:
         result = comctl32.DefSubclassProc(window, message, wparam, lparam)
         if log is not None and message in MESSAGE_NAMES:
             log(f"{MESSAGE_NAMES[message]} wparam={wparam:#x}")
-        if needs_reapply(message, wparam):
-            callback()
+        if message == WM_ACTIVATE or message in RESET_MESSAGES:
+            callback(message, wparam)
         return result
 
     native = _SUBCLASS_PROC(procedure)

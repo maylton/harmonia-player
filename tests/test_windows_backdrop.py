@@ -117,6 +117,43 @@ def test_a_burst_of_messages_restores_the_material_once(monkeypatch):
     assert len(queued) == 2
 
 
+def test_messages_route_to_restore_rebuild_or_cloak_watch(monkeypatch):
+    from harmonia import windows_backdrop
+    from harmonia.gtk_backdrop import GtkWindowBackdrops
+
+    restores, watched, rebuilt = [], [], []
+    monkeypatch.setattr(
+        "harmonia.gtk_backdrop.GLib.idle_add", lambda callback, window: restores.append(window)
+    )
+    monkeypatch.setattr(windows_backdrop, "rebuild", rebuilt.append)
+    monkeypatch.setattr(windows_backdrop, "refresh_frame", lambda hwnd: None)
+
+    class WindowStub:
+        def queue_draw(self):
+            pass
+
+    backdrops = GtkWindowBackdrops.__new__(GtkWindowBackdrops)
+    backdrops.kind = "mica"
+    backdrops._apply = lambda window: True
+    backdrops._hwnd = lambda window: 42
+    backdrops._watch_cloaking = watched.append
+    window = WindowStub()
+
+    backdrops._on_message(window, windows_backdrop.WM_ACTIVATE, 0)  # focus lost
+    assert watched == [window] and restores == []
+
+    backdrops._on_message(window, windows_backdrop.WM_ACTIVATE, 1)  # focus back
+    assert restores == [window]
+    backdrops._restore(window)
+    assert rebuilt == []  # an ordinary focus switch needs no rebuild
+
+    backdrops._on_message(window, windows_backdrop.WM_DWMCOMPOSITIONCHANGED, 0)
+    backdrops._restore(window)
+    assert rebuilt == [42]  # after a fullscreen game the visual is recreated once
+    backdrops._restore(window)
+    assert rebuilt == [42]
+
+
 @windows_only
 def test_subclass_sees_messages_after_gdk_and_does_not_loop():
     from gi.repository import Gtk
@@ -129,14 +166,20 @@ def test_subclass_sees_messages_after_gdk_and_does_not_loop():
     hwnd = window_handle(window)
     seen = []
     try:
-        windows_backdrop.watch(hwnd, lambda: seen.append("restore"))
-        windows_backdrop.watch(hwnd, lambda: seen.append("second watcher"))  # ignored
+        windows_backdrop.watch(hwnd, lambda message, wparam: seen.append((message, wparam)))
+        windows_backdrop.watch(hwnd, lambda *_: seen.append("second watcher"))  # ignored
         send = ctypes.windll.user32.SendMessageW
         send(hwnd, windows_backdrop.WM_DWMCOMPOSITIONCHANGED, 0, 0)
-        send(hwnd, windows_backdrop.WM_ACTIVATE, 0, 0)  # inactive: nothing to do
-        assert seen == ["restore"]
-        windows_backdrop.refresh_frame(hwnd)  # must not trigger another restore
-        assert seen == ["restore"]
+        send(hwnd, windows_backdrop.WM_ACTIVATE, 0, 0)
+        expected = [
+            (windows_backdrop.WM_DWMCOMPOSITIONCHANGED, 0),
+            (windows_backdrop.WM_ACTIVATE, 0),
+        ]
+        assert seen == expected
+        windows_backdrop.refresh_frame(hwnd)  # must not report anything new
+        windows_backdrop.rebuild(hwnd)
+        assert seen == expected
+        assert windows_backdrop.is_cloaked(hwnd) is False  # uncloaked again
         state = windows_backdrop.backdrop_state(hwnd)
         assert state["composition"] is True and state["foreground"] is False
     finally:
@@ -166,9 +209,10 @@ def test_material_replaces_gdk_blur_behind_transparency(monkeypatch):
 
     monkeypatch.setattr(windows_backdrop.ctypes, "windll", type("W", (), {"dwmapi": Dwm()})())
     assert windows_backdrop.apply(1, "mica", dark=True) is True
-    # Blur-behind goes off before the frame and the material are set.
+    # Blur-behind goes off first, then the material passes through "none" so
+    # DWM rebuilds it even when the type did not change.
     order = [call for call in calls if call[0] != "attribute" or call[1] == 38]
-    assert order == [("blur", False), ("extend", -1), ("attribute", 38)]
+    assert order == [("blur", False), ("attribute", 38), ("extend", -1), ("attribute", 38)]
 
     calls.clear()
     windows_backdrop.remove(1)
