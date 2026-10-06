@@ -283,7 +283,38 @@ window.harmonia-backdrop.csd:backdrop {
   border-radius: 0;
   outline: none;
 }
-window.harmonia-backdrop list.boxed-list { background: alpha(@harmonia_chip_bg, .72); }
+/* Cards, text boxes and standard buttons use translucent fills over the
+   material, as Fluent's CardBackground and ControlFill colours do, so they
+   carry its tint. Accent buttons keep their solid accent fill. */
+window.harmonia-backdrop list.boxed-list,
+window.harmonia-backdrop entry,
+window.harmonia-backdrop spinbutton,
+window.harmonia-backdrop button.app-action:not(.app-action-primary):not(.app-action-accent),
+window.harmonia-backdrop row button:not(.flat):not(.suggested-action),
+window.harmonia-backdrop .sidebar-create,
+window.harmonia-backdrop .genre-chip,
+window.harmonia-backdrop dropdown > button,
+window.harmonia-backdrop button.home-play-all {
+  background-color: alpha(@harmonia_chip_bg, .5);
+}
+window.harmonia-backdrop entry:hover,
+window.harmonia-backdrop button.app-action:not(.app-action-primary):not(.app-action-accent):hover,
+window.harmonia-backdrop row button:not(.flat):not(.suggested-action):hover,
+window.harmonia-backdrop .sidebar-create:hover,
+window.harmonia-backdrop .genre-chip:hover,
+window.harmonia-backdrop dropdown > button:hover,
+window.harmonia-backdrop button.home-play-all:hover {
+  background-color: alpha(@harmonia_chip_hover_bg, .7);
+}
+window.harmonia-backdrop entry:focus-within { background-color: alpha(@harmonia_chip_bg, .8); }
+/* Menus, tooltips and toasts float over the window with no material behind
+   them, so they keep a solid fill. */
+window.harmonia-backdrop popover.background > contents,
+window.harmonia-backdrop popover.menu > contents,
+window.harmonia-backdrop tooltip.background,
+window.harmonia-backdrop toast {
+  background-color: @harmonia_chip_bg;
+}
 window.harmonia-backdrop .player-bar { background: transparent; }
 window.harmonia-backdrop .sidebar-active,
 window.harmonia-backdrop .sidebar-active:hover { background-color: alpha(@harmonia_overlay, .08); }
