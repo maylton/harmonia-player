@@ -119,7 +119,11 @@ def test_windows_material_turns_only_the_window_surfaces_translucent():
     see_through = windows.palette(dark=True, translucent=True)
     assert see_through["sidebar_bg"] == "transparent"
     assert see_through["bg"].startswith("rgba(")
-    assert see_through["chip_bg"] == solid["chip_bg"]  # cards and buttons stay opaque
+    # Cards and buttons lighten the material with white, as Fluent's fills do,
+    # so they keep its tint instead of greying it out.
+    assert see_through["chip_bg"] == "rgba(255, 255, 255, 0.0605)"
+    assert windows.palette(dark=False, translucent=True)["chip_bg"] == "rgba(255, 255, 255, 0.7)"
+    assert see_through["fg"] == solid["fg"]
 
     for css_variables in (False, True):
         css = render_gtk_css(
@@ -140,20 +144,29 @@ def test_windows_material_turns_only_the_window_surfaces_translucent():
 def test_windows_material_reaches_cards_and_controls_but_not_floating_surfaces():
     css = (THEMES_DIR / "windows11.css").read_text(encoding="utf-8")
     rules = {
-        selectors.strip(): body
+        selectors.strip(): body.strip()
         for selectors, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
-        if "harmonia-backdrop" in selectors
     }
-    translucent = next(body for selectors, body in rules.items() if "list.boxed-list" in selectors)
-    assert "alpha(@harmonia_chip_bg" in translucent
-    covered = next(selectors for selectors in rules if "list.boxed-list" in selectors)
-    for control in ("entry", ".sidebar-create", "dropdown > button", "button.app-action"):
-        assert control in covered
-    # Accent buttons keep their fill; floating surfaces stay solid.
-    assert ":not(.app-action-primary):not(.app-action-accent)" in covered
-    floating = next(selectors for selectors in rules if "popover.background" in selectors)
+    # Cards, the playlist button, drop-downs and text boxes use the chip
+    # token, which turns translucent with the material.
+    filled = [selectors for selectors, body in rules.items() if "@harmonia_chip_bg" in body]
+    for control in ("list.boxed-list", ".sidebar-create", "dropdown > button", "entry"):
+        assert any(control in selectors for selectors in filled), control
+    # Floating surfaces have no material behind them and keep the opaque chip.
+    floating = next(
+        selectors
+        for selectors in rules
+        if "popover.background" in selectors and "harmonia-backdrop" in selectors
+    )
     assert "tooltip.background" in floating and "toast" in floating
-    assert rules[floating].strip() == "background-color: @harmonia_chip_bg;"
+    assert rules[floating] == "background-color: @harmonia_opaque_chip_bg;"
+    windows = theme_catalog()["windows11"]
+    rendered = render_gtk_css(
+        windows, dark=True, base_css="", css_variables=False, translucent=True
+    )
+    assert f"@define-color harmonia_opaque_chip_bg {windows.palette(dark=True)['chip_bg']};" in (
+        rendered
+    )
 
 
 def test_translucent_colours_require_a_backdrop_and_known_tokens():
