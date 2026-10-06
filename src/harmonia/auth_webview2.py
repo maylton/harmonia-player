@@ -21,10 +21,10 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-gi.require_version("GdkWin32", "4.0")
 gi.require_version("Graphene", "1.0")
-from gi.repository import Adw, GdkWin32, GLib, Graphene, Gtk  # noqa: E402
+from gi.repository import Adw, GLib, Graphene, Gtk  # noqa: E402
 
+from .gtk_win32 import window_handle  # noqa: E402
 from .i18n import _  # noqa: E402
 from .login import LOGIN_URL, MUSIC_ORIGIN, session_cookie_header  # noqa: E402
 
@@ -240,7 +240,9 @@ class LoginWindow(Adw.Window):
 
     def _start(self) -> bool:
         try:
-            hwnd = GdkWin32.Win32Surface.get_handle(self.get_surface())
+            hwnd = window_handle(self)
+            if hwnd is None:
+                raise WebView2Error(0, "a janela de login ainda não tem uma superfície nativa")
             check(
                 self._create_environment(
                     None,
