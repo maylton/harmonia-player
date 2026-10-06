@@ -11,7 +11,14 @@ gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk  # noqa: E402
 
-from .theming import DEFAULT_THEME, Theme, get_theme, render_gtk_css  # noqa: E402
+from . import host  # noqa: E402
+from .theming import (  # noqa: E402
+    DEFAULT_THEME,
+    Theme,
+    fluent_accent,
+    get_theme,
+    render_gtk_css,
+)
 
 LOGGER = logging.getLogger(__name__)
 STYLESHEET = Path(__file__).with_name("style.css")
@@ -42,8 +49,10 @@ class GtkThemeController:
         self.theme: Theme = get_theme(DEFAULT_THEME)
         self.variant = "theme"
         self.accent = "theme"
-        self._rendered: tuple[str, bool, str] | None = None
+        self._rendered: tuple | None = None
         self.style_manager.connect("notify::dark", lambda *_: self._render())
+        # Fires when the desktop accent changes (Windows reports it to libadwaita).
+        self.style_manager.connect("notify::accent-color", lambda *_: self._render())
 
     def apply(self, theme_id: str, variant: str = "theme", accent: str = "theme") -> None:
         self.theme = get_theme(theme_id)
@@ -55,7 +64,14 @@ class GtkThemeController:
 
     def _render(self) -> None:
         dark = self.style_manager.get_dark()
+        system_accent = (
+            fluent_accent(host.windows_accent_palette(), dark=dark)
+            if self.theme.system_accent
+            else None
+        )
         key = (self.theme.id, dark, self.accent)
+        if system_accent:
+            key += (system_accent["accent_bg"],)
         if key == self._rendered:
             return
         css = render_gtk_css(
@@ -64,6 +80,7 @@ class GtkThemeController:
             base_css=self.base_css,
             css_variables=supports_css_variables(),
             accent=self.accent,
+            system_accent=system_accent,
         )
         if hasattr(self.provider, "load_from_string"):
             self.provider.load_from_string(css)
