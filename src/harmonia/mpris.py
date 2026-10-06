@@ -7,6 +7,8 @@ import gi
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
 
+from . import host
+
 XML = """<node>
 <interface name="org.mpris.MediaPlayer2">
   <method name="Raise"/><method name="Quit"/>
@@ -53,6 +55,11 @@ class MprisService:
         self.duration_us = 0
         self.connection = None
         self.registrations = []
+        self.owner = 0
+        if not host.MPRIS:
+            # Without a session bus the service stays disconnected and every
+            # update is a no-op, so callers never need to check the platform.
+            return
         self.node = Gio.DBusNodeInfo.new_for_xml(XML)
         self.owner = Gio.bus_own_name(
             Gio.BusType.SESSION,

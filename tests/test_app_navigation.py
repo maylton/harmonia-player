@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from harmonia.app import HarmoniaWindow
@@ -33,6 +34,24 @@ def test_unknown_library_category_is_ignored():
     HarmoniaWindow.show_category(window, "unknown")
     assert window.rendered == 0
     assert (window.library_origin, window.library_filter) == ("local", "songs")
+
+
+def test_login_skips_the_embedded_browser_where_webkitgtk_is_missing(monkeypatch):
+    import harmonia.window_account as window_account
+
+    class LoginStub:
+        manual = 0
+
+        def manual_login_dialog(self):
+            self.manual += 1
+
+    monkeypatch.setattr(window_account.host, "INTEGRATED_LOGIN", False)
+    # Importing auth.py would fail, and the fallback path needs a toast overlay
+    # the stub lacks, so only the direct route to the manual dialog passes.
+    monkeypatch.setitem(sys.modules, "harmonia.auth", None)
+    window = LoginStub()
+    HarmoniaWindow.login_dialog(window)
+    assert window.manual == 1
 
 
 def test_lyrics_scroll_targets_differ_between_footer_and_expanded_player():

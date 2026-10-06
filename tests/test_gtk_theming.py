@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from harmonia import app, window_preferences
+from harmonia.host import slash_path
 from harmonia.storage import Storage
 from harmonia.window_preferences import (
     BUNDLED_ICON_THEME,
@@ -185,13 +186,13 @@ def test_elementary_shadow_reaches_accent_variants_on_new_gtk(tmp_path):
 
     def resolved(name):
         icon = theme.lookup_icon(name, None, 16, 1, Gtk.TextDirection.LTR, Gtk.IconLookupFlags(0))
-        return icon.get_file().get_path()
+        return slash_path(icon.get_file().get_path())
 
     assert install_elementary_shadow(theme, (4, 20)) is False
     assert theme.get_search_path() == [str(host)]
     assert install_elementary_shadow(theme, (4, 22)) is True
-    assert resolved("go-home-symbolic").startswith(ELEMENTARY_SHADOW_PATH)
-    assert resolved("find-location-symbolic").startswith(str(host))  # untouched icons
+    assert resolved("go-home-symbolic").startswith(slash_path(ELEMENTARY_SHADOW_PATH))
+    assert resolved("find-location-symbolic").startswith(slash_path(str(host)))  # untouched
     install_elementary_shadow(theme, (4, 22))  # idempotent
     assert theme.get_search_path().count(ELEMENTARY_SHADOW_PATH) == 1
 

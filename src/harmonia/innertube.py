@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import locale
 import re
 import secrets
 import threading
@@ -21,6 +20,7 @@ from collections.abc import Iterator
 from contextlib import suppress
 from typing import Any
 
+from . import host
 from .i18n import _
 from .models import (
     AccountProfile,
@@ -626,7 +626,7 @@ class InnerTubeClient:
         proxy: str = "",
     ):
         self.cookie = cookie.strip()
-        language, _ = locale.getlocale()
+        language = host.user_locale()
         language = language if language and language not in ("C", "POSIX") else "pt_BR"
         self.hl = hl or language.replace("_", "-")
         self.gl = gl or (language.split("_")[-1] if "_" in language else "BR")

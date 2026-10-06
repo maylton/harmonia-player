@@ -66,10 +66,26 @@ def test_qt_startup_failure_falls_back_to_gtk_when_not_forced(monkeypatch):
     monkeypatch.setitem(sys.modules, "harmonia.qt_app", qt_module)
     monkeypatch.setitem(sys.modules, "harmonia.app", gtk_module)
     monkeypatch.setattr(frontend, "selected_frontend", lambda: "qt")
+    monkeypatch.setattr(frontend.host, "claim_single_instance", lambda: True)
     monkeypatch.setattr(sys, "argv", ["harmonia"])
     monkeypatch.delenv("HARMONIA_FRONTEND", raising=False)
 
     assert frontend.main() == 17
+
+
+def test_second_gtk_launch_defers_to_the_running_window(monkeypatch):
+    gtk_module = ModuleType("harmonia.app")
+
+    def start_gtk() -> int:
+        raise AssertionError("a second instance must not build another window")
+
+    gtk_module.main = start_gtk
+    monkeypatch.setitem(sys.modules, "harmonia.app", gtk_module)
+    monkeypatch.setattr(frontend, "selected_frontend", lambda: "gtk")
+    monkeypatch.setattr(frontend.host, "claim_single_instance", lambda: False)
+    monkeypatch.setattr(sys, "argv", ["harmonia"])
+
+    assert frontend.main() == 0
 
 
 def test_forced_qt_startup_failure_is_not_hidden(monkeypatch):

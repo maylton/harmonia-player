@@ -410,7 +410,7 @@ def test_native_player_keeps_local_files_out_of_http_relay():
 def test_posix_locale_falls_back_to_valid_youtube_locale(monkeypatch):
     from harmonia import innertube
 
-    monkeypatch.setattr(innertube.locale, "getlocale", lambda: ("C", None))
+    monkeypatch.setattr(innertube.host, "user_locale", lambda: "C")
     client = innertube.InnerTubeClient("SAPISID=x")
     assert (client.hl, client.gl) == ("pt-BR", "BR")
 

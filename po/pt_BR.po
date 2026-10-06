@@ -2199,7 +2199,11 @@ msgstr "Backup restaurado"
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr "Não foi possível restaurar o backup: {error}"
 
-#: src/harmonia/window_preferences.py:355
+#: src/harmonia/window_preferences.py:360
+msgid "Sessão protegida pelo Gerenciador de Credenciais do Windows."
+msgstr "Sessão protegida pelo Gerenciador de Credenciais do Windows."
+
+#: src/harmonia/window_preferences.py:362
 msgid "Sessão protegida pelo chaveiro Secret Service do sistema."
 msgstr "Sessão protegida pelo chaveiro Secret Service do sistema."
 

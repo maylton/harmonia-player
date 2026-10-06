@@ -1,4 +1,8 @@
-"""Session storage backed by the desktop Secret Service."""
+"""Session storage backed by the desktop keyring.
+
+Linux uses the Secret Service through libsecret; Windows uses the Credential
+Manager through an object that mimics the same libsecret calls.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,28 @@ import logging
 import os
 import threading
 
+from . import host
+
 LOGGER = logging.getLogger(__name__)
+
+
+def keyring_backend(schema_name: str, attribute_names: tuple[str, ...]):
+    """Return the (api, schema) pair used by the password_*_sync calls."""
+    if host.IS_WINDOWS:
+        from .wincred import CredentialManager
+
+        return CredentialManager(), schema_name
+    import gi
+
+    gi.require_version("Secret", "1")
+    from gi.repository import Secret
+
+    schema = Secret.Schema.new(
+        schema_name,
+        Secret.SchemaFlags.NONE,
+        {name: Secret.SchemaAttributeType.STRING for name in attribute_names},
+    )
+    return Secret, schema
 
 
 class SessionSecret:
@@ -17,19 +42,11 @@ class SessionSecret:
         if os.environ.get("HARMONIA_DISABLE_SECRET_SERVICE") == "1":
             return
         try:
-            import gi
-
-            gi.require_version("Secret", "1")
-            from gi.repository import Secret
-
-            self._secret = Secret
-            self._schema = Secret.Schema.new(
-                "io.github.harmonia.Harmonia.Session",
-                Secret.SchemaFlags.NONE,
-                {"application": Secret.SchemaAttributeType.STRING},
+            self._secret, self._schema = keyring_backend(
+                "io.github.harmonia.Harmonia.Session", ("application",)
             )
             self.available = True
-        except (ImportError, ValueError):
+        except (ImportError, ValueError, OSError):
             LOGGER.debug("Secret Service indisponível; usando armazenamento local restrito")
 
     @property
@@ -103,22 +120,11 @@ class NamedSecret(SessionSecret):
         if os.environ.get("HARMONIA_DISABLE_SECRET_SERVICE") == "1":
             return
         try:
-            import gi
-
-            gi.require_version("Secret", "1")
-            from gi.repository import Secret
-
-            self._secret = Secret
-            self._schema = Secret.Schema.new(
-                "io.github.harmonia.Harmonia.Credential",
-                Secret.SchemaFlags.NONE,
-                {
-                    "application": Secret.SchemaAttributeType.STRING,
-                    "service": Secret.SchemaAttributeType.STRING,
-                },
+            self._secret, self._schema = keyring_backend(
+                "io.github.harmonia.Harmonia.Credential", ("application", "service")
             )
             self.available = True
-        except (ImportError, ValueError):
+        except (ImportError, ValueError, OSError):
             LOGGER.debug("Secret Service indisponível para %s", service)
 
     @property

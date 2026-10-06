@@ -6,6 +6,7 @@ import json
 import struct
 import urllib.parse
 
+from harmonia import host
 from harmonia.models import LibraryItem
 from harmonia.social import (
     DiscordPresence,
@@ -13,6 +14,7 @@ from harmonia.social import (
     LastFmCredentials,
     LastFmCredentialStore,
     LastFmSession,
+    NamedPipeChannel,
     media_artist,
     scrobble_ready,
 )
@@ -86,7 +88,9 @@ def test_lastfm_credentials_fallback_is_private(monkeypatch, tmp_path):
     store.save(credentials)
 
     assert store.load() == credentials
-    assert oct(store._fallback.stat().st_mode & 0o777) == "0o600"
+    if not host.IS_WINDOWS:
+        # Windows has no POSIX modes; the profile folder's ACL keeps it private.
+        assert oct(store._fallback.stat().st_mode & 0o777) == "0o600"
     store.clear_session()
     assert store.load() == LastFmCredentials("secret")
 
@@ -126,6 +130,28 @@ class FakeDiscordSocket:
 
     def close(self):
         self.closed = True
+
+
+def test_discord_uses_named_pipes_on_windows(monkeypatch, tmp_path):
+    from harmonia import social
+
+    monkeypatch.setattr(host, "IS_WINDOWS", True)
+    assert isinstance(social.ipc_channel(), NamedPipeChannel)
+    assert DiscordPresence.candidate_paths()[0] == r"\\.\pipe\discord-ipc-0"
+
+    # A regular file stands in for the pipe: frames written are read back.
+    pipe = tmp_path / "discord-ipc-0"
+    pipe.write_bytes(b"")
+    channel = NamedPipeChannel()
+    channel.settimeout(1.5)
+    channel.connect(str(pipe))
+    channel.sendall(b"frame")
+    channel.close()
+    assert pipe.read_bytes() == b"frame"
+    channel.connect(str(pipe))
+    assert channel.recv(5) == b"frame"
+    assert channel.recv(5) == b""
+    channel.close()
 
 
 def test_discord_presence_uses_local_ipc(monkeypatch):

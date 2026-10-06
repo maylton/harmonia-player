@@ -6,6 +6,8 @@ import logging
 import os
 import sys
 
+from . import host
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -70,6 +72,9 @@ def main() -> int:
                 raise
             LOGGER.exception("Qt/Kirigami frontend failed to start; falling back to GTK")
 
+    if not host.claim_single_instance():
+        LOGGER.info("O Harmonia já está aberto; trazendo a janela existente para a frente")
+        return 0
     ignored = ignore_foreign_gtk_theme()
     if ignored is not None:
         LOGGER.info("Ignorando GTK_THEME=%r; o frontend GTK usa o estilo do libadwaita", ignored)
