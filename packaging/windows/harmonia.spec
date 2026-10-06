@@ -62,6 +62,8 @@ datas = harmonia_data()
 # PyInstaller cannot see them; GdkWin32 also has no PyInstaller hook.
 datas += [
     (str(MSYS_PREFIX / "lib/girepository-1.0/GdkWin32-4.0.typelib"), "gi_typelibs"),
+    # GdkWin32 declares HWND through gobject-introspection's win32 namespace.
+    (str(MSYS_PREFIX / "lib/girepository-1.0/win32-1.0.typelib"), "gi_typelibs"),
     (str(MSYS_PREFIX / "share/licenses/webview2-loader/LICENSE"), "licenses/webview2-loader"),
 ]
 binaries = [(str(MSYS_PREFIX / "bin/WebView2Loader.dll"), ".")]
