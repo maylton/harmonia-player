@@ -122,16 +122,84 @@ def needs_reapply(message: int, wparam: int) -> bool:
     return message in RESET_MESSAGES
 
 
+RDW_REPAINT_ALL = (
+    0x0001 | 0x0004 | 0x0080 | 0x0100 | 0x0400
+)  # invalidate, erase, children, now, frame
+
+
 def refresh_frame(hwnd: int) -> None:
-    """Make DWM recompute the frame, as minimizing and restoring does."""
-    ctypes.windll.user32.SetWindowPos(wintypes.HWND(hwnd), None, 0, 0, 0, 0, SWP_REFRESH_FRAME)
+    """Make DWM recompute the frame and repaint the window, as minimize and restore do.
+
+    GTK's Cairo renderer, used on Windows, only repaints regions that
+    changed; a full repaint replaces pixels drawn while the material was off.
+    """
+    user32 = ctypes.windll.user32
+    user32.SetWindowPos(wintypes.HWND(hwnd), None, 0, 0, 0, 0, SWP_REFRESH_FRAME)
+    user32.RedrawWindow(wintypes.HWND(hwnd), None, None, RDW_REPAINT_ALL)
 
 
-def watch(hwnd: int, callback) -> None:
+def backdrop_state(hwnd: int) -> dict:
+    """What DWM reports for the window, for the diagnostic log."""
+    dwm, user32 = ctypes.windll.dwmapi, ctypes.windll.user32
+    backdrop = ctypes.c_int(-1)
+    dwm.DwmGetWindowAttribute(
+        wintypes.HWND(hwnd), DWMWA_SYSTEMBACKDROP_TYPE, ctypes.byref(backdrop), 4
+    )
+    composition = wintypes.BOOL()
+    dwm.DwmIsCompositionEnabled(ctypes.byref(composition))
+    return {
+        "backdrop": backdrop.value,
+        "composition": bool(composition.value),
+        "foreground": user32.GetForegroundWindow() == hwnd,
+        "iconic": bool(user32.IsIconic(wintypes.HWND(hwnd))),
+        "exstyle": hex(user32.GetWindowLongPtrW(wintypes.HWND(hwnd), -20) & 0xFFFFFFFF),
+    }
+
+
+def sample_window(hwnd: int, points: tuple[tuple[float, float], ...]) -> list[str]:
+    """Colours on screen at fractions of the window's own rectangle (diagnostics).
+
+    Only read while the window is in the foreground, so the pixels are its own.
+    """
+    user32, gdi32 = ctypes.windll.user32, ctypes.windll.gdi32
+    rect = wintypes.RECT()
+    ctypes.windll.dwmapi.DwmGetWindowAttribute(
+        wintypes.HWND(hwnd), 9, ctypes.byref(rect), ctypes.sizeof(rect)
+    )
+    screen = user32.GetDC(None)
+    try:
+        colors = []
+        for fx, fy in points:
+            x = int(rect.left + (rect.right - rect.left) * fx)
+            y = int(rect.top + (rect.bottom - rect.top) * fy)
+            value = gdi32.GetPixel(screen, x, y)
+            colors.append(f"#{value & 0xFF:02x}{(value >> 8) & 0xFF:02x}{(value >> 16) & 0xFF:02x}")
+        return colors
+    finally:
+        user32.ReleaseDC(None, screen)
+
+
+MESSAGE_NAMES = {
+    0x0006: "WM_ACTIVATE",
+    0x0018: "WM_SHOWWINDOW",
+    0x001C: "WM_ACTIVATEAPP",
+    0x001A: "WM_SETTINGCHANGE",
+    0x007E: "WM_DISPLAYCHANGE",
+    0x0086: "WM_NCACTIVATE",
+    0x02E0: "WM_DPICHANGED",
+    0x031A: "WM_THEMECHANGED",
+    0x031E: "WM_DWMCOMPOSITIONCHANGED",
+    0x031F: "WM_DWMNCRENDERINGCHANGED",
+    0x0320: "WM_DWMCOLORIZATIONCOLORCHANGED",
+}
+
+
+def watch(hwnd: int, callback, log=None) -> None:
     """Call ``callback()`` after the window handled a message that may reset the material.
 
     A Win32 subclass sees each message after GDK's own window procedure, so
-    the material is set once GDK is done with it.
+    the material is set once GDK is done with it. ``log``, when given,
+    receives the activation and display messages for the diagnostic log.
     """
     if hwnd in _watchers:
         return
@@ -146,6 +214,8 @@ def watch(hwnd: int, callback) -> None:
 
     def procedure(window, message, wparam, lparam, _id, _data):
         result = comctl32.DefSubclassProc(window, message, wparam, lparam)
+        if log is not None and message in MESSAGE_NAMES:
+            log(f"{MESSAGE_NAMES[message]} wparam={wparam:#x}")
         if needs_reapply(message, wparam):
             callback()
         return result
