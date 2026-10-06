@@ -3,7 +3,7 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from tools.sync_icons import ICONS, THEMES
+from tools.sync_icons import ICONS, THEME_EXTRAS, THEMES, theme_icons
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_ID = "io.github.harmonia.Harmonia"
@@ -18,13 +18,37 @@ def test_every_icon_referenced_by_python_has_bundled_variants():
 
 
 def test_bundled_icon_packs_are_valid_and_record_provenance():
-    assert set(THEMES) == {"HarmoniaMaterial"}
-    for theme, (prefix, mapping_index, _upstream, _license) in THEMES.items():
-        directory = ROOT / "src" / "harmonia" / "icons" / theme / "scalable" / "actions"
-        for semantic_name, upstream_names in ICONS.items():
+    assert set(THEMES) == {"HarmoniaMaterial", "HarmoniaFluent"}
+    for theme, (prefix, _mapping_index, _upstream, _license) in THEMES.items():
+        folder = ROOT / "src" / "harmonia" / "icons" / theme
+        assert (folder / "index.theme").is_file()
+        directory = folder / "scalable" / "actions"
+        icons = theme_icons(theme)
+        assert {path.stem for path in directory.glob("*.svg")} == set(icons)
+        for semantic_name, upstream_name in icons.items():
             path = directory / f"{semantic_name}.svg"
             ET.parse(path)
-            assert f"Source: Iconify {prefix}:{upstream_names[mapping_index]}" in path.read_text()
+            assert f"Source: Iconify {prefix}:{upstream_name}" in path.read_text(encoding="utf-8")
+
+
+def test_fluent_icons_also_replace_the_windows_caption_buttons():
+    extras = THEME_EXTRAS["HarmoniaFluent"]
+    assert set(extras) == {
+        "window-minimize-symbolic",
+        "window-maximize-symbolic",
+        "window-restore-symbolic",
+    }
+    # Material keeps GTK's caption buttons, so nothing changes for it.
+    assert "HarmoniaMaterial" not in THEME_EXTRAS
+    assert all(len(names) == 3 for names in ICONS.values())
+
+
+def test_windows_uses_the_bundled_fluent_icons_as_its_system_theme():
+    from harmonia import host
+
+    assert host.SYSTEM_ICON_THEME in {"", "HarmoniaFluent"}
+    assert ("HarmoniaFluent" if host.IS_WINDOWS else "") == host.SYSTEM_ICON_THEME
+    assert not host.SYSTEM_ICON_THEME or host.SYSTEM_ICON_THEME in THEMES
 
 
 def test_launcher_icon_has_standard_hicolor_sizes_and_transparency():

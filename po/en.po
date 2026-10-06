@@ -2307,6 +2307,30 @@ msgstr "Blurred ambient background"
 msgid "Usa as cores da capa atual atrás da interface"
 msgstr "Uses colors from the current cover behind the interface"
 
+#: src/harmonia/window_preferences.py:491
+msgid "Efeito de fundo"
+msgstr "Background effect"
+
+#: src/harmonia/window_preferences.py:493
+msgid "Mica"
+msgstr "Mica"
+
+#: src/harmonia/window_preferences.py:494
+msgid "Acrílico (fosco)"
+msgstr "Acrylic (frosted)"
+
+#: src/harmonia/window_preferences.py:495
+msgid "Nenhum"
+msgstr "None"
+
+#: src/harmonia/window_preferences.py:501
+msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
+msgstr "Windows 11 transparency behind the window, in the Windows 11 theme"
+
+#: src/harmonia/window_preferences.py:510
+msgid "Windows — ícones Fluent"
+msgstr "Windows — Fluent icons"
+
 #: src/harmonia/window_preferences.py:460
 msgid "Estilo dos ícones"
 msgstr "Icon style"

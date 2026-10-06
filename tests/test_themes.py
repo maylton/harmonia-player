@@ -112,6 +112,51 @@ def test_fluent_accent_follows_the_windows_palette():
     assert fluent_accent(palette[:3], dark=True) is None
 
 
+def test_windows_material_turns_only_the_window_surfaces_translucent():
+    windows = theme_catalog()["windows11"]
+    assert windows.backdrop
+    solid = windows.palette(dark=True)
+    see_through = windows.palette(dark=True, translucent=True)
+    assert see_through["sidebar_bg"] == "transparent"
+    assert see_through["bg"].startswith("rgba(")
+    assert see_through["chip_bg"] == solid["chip_bg"]  # cards and buttons stay opaque
+
+    for css_variables in (False, True):
+        css = render_gtk_css(
+            windows, dark=True, base_css="", css_variables=css_variables, translucent=True
+        )
+        assert "@define-color harmonia_sidebar_bg transparent;" in css
+        # Menus and dialogs float over the window without any material behind.
+        assert f"@define-color popover_bg_color {solid['headerbar_bg']};" in css
+        assert f"@define-color dialog_bg_color {solid['bg']};" in css
+    opaque = render_gtk_css(windows, dark=True, base_css="", css_variables=False)
+    assert "transparent;" not in opaque.split("\n\n")[0]
+
+    # Themes without a material ignore the request.
+    breeze = get_theme("breeze")
+    assert breeze.palette(dark=True, translucent=True) == breeze.palette(dark=True)
+
+
+def test_translucent_colours_require_a_backdrop_and_known_tokens():
+    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    with pytest.raises(ThemeError):
+        Theme.from_dict({**data, "backdrop": False})
+    with pytest.raises(ThemeError):
+        Theme.from_dict({**data, "translucent": {"dark": {"nope": "transparent"}}})
+    with pytest.raises(ThemeError):
+        Theme.from_dict({**data, "translucent": {"dark": {"bg": "url(evil)"}}})
+
+
+def test_backdrop_preference_round_trips_and_validates():
+    storage = MemoryStorage()
+    assert Preferences.load(storage).backdrop == "mica"
+    preferences = Preferences.load(storage)
+    preferences.backdrop = "acrylic"
+    preferences.save(storage)
+    assert Preferences.load(storage).backdrop == "acrylic"
+    assert Preferences.load(MemoryStorage({"backdrop": "glass"})).backdrop == "mica"
+
+
 def test_system_accent_applies_only_to_themes_that_follow_it():
     system = {"accent_bg": "#4cc2ff", "accent_fg": "#000000", "accent": "#99ebff"}
     windows = theme_catalog()["windows11"]

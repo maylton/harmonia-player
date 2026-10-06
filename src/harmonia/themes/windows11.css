@@ -272,6 +272,22 @@ progressbar progress { min-height: 3px; border-radius: 2px; background-color: @a
 /* Player bar on Mica, separated from the content by a hairline. */
 .player-bar { background: @harmonia_sidebar_bg; border-top: 1px solid alpha(@harmonia_shadow, .1); }
 
+/* With Mica or Acrylic behind the window (Preferences > Efeito de fundo):
+   the translucent palette lets the title bar, navigation pane and player bar
+   show the material and tints the content layer. GTK's own shadow and corner
+   rounding give way to DWM's native ones, which follow the window outline. */
+window.harmonia-backdrop.csd,
+window.harmonia-backdrop.csd:backdrop {
+  box-shadow: none;
+  margin: 0;
+  border-radius: 0;
+  outline: none;
+}
+window.harmonia-backdrop list.boxed-list { background: alpha(@harmonia_chip_bg, .72); }
+window.harmonia-backdrop .player-bar { background: transparent; }
+window.harmonia-backdrop .sidebar-active,
+window.harmonia-backdrop .sidebar-active:hover { background-color: alpha(@harmonia_overlay, .08); }
+
 /* Type ramp: Segoe UI Variable Display, semibold, for titles. */
 .hero-title, .section-title, .artist-title, .detail-title, .expanded-title,
 .lyrics-title, .expanded-lyrics-title, .expanded-related-title, .title-1, .title-2, .title-3, .title-4 {

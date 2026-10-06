@@ -22,6 +22,8 @@ class Preferences:
     theme: str = DEFAULT_THEME
     theme_variant: str = "theme"
     accent: str = "theme"
+    # Window material for themes that support one (Windows 11 only).
+    backdrop: str = "mica"
     lastfm_enabled: bool = False
     lastfm_api_key: str = ""
     discord_enabled: bool = False
@@ -29,6 +31,7 @@ class Preferences:
     recognition_provider: str = "audd"
     recognition_endpoint: str = "https://api.audd.io/"
 
+    BACKDROPS: ClassVar[tuple[str, ...]] = ("mica", "acrylic", "none")
     QUALITY_BITRATES: ClassVar[dict[str, int]] = {
         "low": 70_000,
         "medium": 160_000,
@@ -52,6 +55,7 @@ class Preferences:
         theme = storage.get_setting("theme", DEFAULT_THEME)
         theme_variant = storage.get_setting("theme_variant", "theme")
         accent = storage.get_setting("accent", "theme")
+        backdrop = storage.get_setting("backdrop", "mica")
         return cls(
             language=storage.get_setting("language", "pt-BR"),
             region=storage.get_setting("region", "BR"),
@@ -67,6 +71,7 @@ class Preferences:
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
             accent=accent if accent in ACCENTS else "theme",
+            backdrop=backdrop if backdrop in cls.BACKDROPS else "mica",
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
@@ -97,6 +102,7 @@ class Preferences:
             "theme": self.theme,
             "theme_variant": self.theme_variant,
             "accent": self.accent,
+            "backdrop": self.backdrop,
             "lastfm_enabled": "1" if self.lastfm_enabled else "0",
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",

@@ -2312,6 +2312,30 @@ msgstr "Fundo ambiente desfocado"
 msgid "Usa as cores da capa atual atrás da interface"
 msgstr "Usa as cores da capa atual atrás da interface"
 
+#: src/harmonia/window_preferences.py:491
+msgid "Efeito de fundo"
+msgstr "Efeito de fundo"
+
+#: src/harmonia/window_preferences.py:493
+msgid "Mica"
+msgstr "Mica"
+
+#: src/harmonia/window_preferences.py:494
+msgid "Acrílico (fosco)"
+msgstr "Acrílico (fosco)"
+
+#: src/harmonia/window_preferences.py:495
+msgid "Nenhum"
+msgstr "Nenhum"
+
+#: src/harmonia/window_preferences.py:501
+msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
+msgstr "Transparência do Windows 11 por trás da janela, no tema Windows 11"
+
+#: src/harmonia/window_preferences.py:510
+msgid "Windows — ícones Fluent"
+msgstr "Windows — ícones Fluent"
+
 #: src/harmonia/window_preferences.py:460
 msgid "Estilo dos ícones"
 msgstr "Estilo dos ícones"

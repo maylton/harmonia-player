@@ -15,7 +15,7 @@ from . import host
 from .backup import BackupError, BackupManager
 from .i18n import _, ngettext
 from .preferences import Preferences
-from .theming import builtin_themes
+from .theming import builtin_themes, get_theme
 from .ui import (
     style_icon_button,
 )
@@ -129,9 +129,14 @@ class WindowPreferencesMixin:
         application = self.get_application() if hasattr(self, "get_application") else None
         controller = getattr(application, "theme_controller", None)
         if controller:
-            controller.apply(
-                self.preferences.theme, self.preferences.theme_variant, self.preferences.accent
+            theme_args = (
+                self.preferences.theme,
+                self.preferences.theme_variant,
+                self.preferences.accent,
             )
+            # The colour scheme comes first: the window material is tinted for it.
+            controller.apply(*theme_args)
+            controller.apply(*theme_args, translucent=self._apply_window_backdrop())
         blurred = self.preferences.background_blur
         if blurred:
             self.root.add_css_class("appearance-blur")
@@ -143,6 +148,20 @@ class WindowPreferencesMixin:
         if self.preferences.icon_style != "gtk":
             self.root.add_css_class(f"icons-{self.preferences.icon_style}")
         self._apply_icon_theme()
+
+    def _apply_window_backdrop(self) -> bool:
+        """Put the chosen material behind the windows; True if the theme may go translucent."""
+        if not host.WINDOW_BACKDROPS:
+            return False
+        if getattr(self, "_window_backdrops", None) is None:
+            from .gtk_backdrop import GtkWindowBackdrops
+
+            self._window_backdrops = GtkWindowBackdrops()
+        supported = get_theme(self.preferences.theme).backdrop
+        kind = self.preferences.backdrop if supported else "none"
+        if getattr(self, "_backdrop_row", None) is not None:
+            self._backdrop_row.set_sensitive(supported)
+        return self._window_backdrops.set_kind(kind, self)
 
     def _apply_icon_theme(self) -> None:
         """Select the icon theme without pinning the system one.
@@ -167,6 +186,10 @@ class WindowPreferencesMixin:
             )
         if self.preferences.icon_style == "material":
             settings.set_property("gtk-icon-theme-name", BUNDLED_ICON_THEME)
+            return
+        if host.SYSTEM_ICON_THEME:
+            # Windows has no icon theme of its own; its icons ship with Harmonia.
+            settings.set_property("gtk-icon-theme-name", host.SYSTEM_ICON_THEME)
             return
         settings.reset_property("gtk-icon-theme-name")
         self._ensure_icon_theme_available()
@@ -463,11 +486,32 @@ class WindowPreferencesMixin:
             lambda row, _pspec: self._appearance_changed("background_blur", row.get_active()),
         )
         appearance.add(blur)
+        if host.WINDOW_BACKDROPS:
+            self._backdrop_row = combo(
+                _("Efeito de fundo"),
+                [
+                    (_("Mica"), "mica"),
+                    (_("Acrílico (fosco)"), "acrylic"),
+                    (_("Nenhum"), "none"),
+                ],
+                self.preferences.backdrop,
+                lambda value: self._appearance_changed("backdrop", value),
+            )
+            self._backdrop_row.set_subtitle(
+                _("Transparência do Windows 11 por trás da janela, no tema Windows 11")
+            )
+            self._backdrop_row.set_sensitive(get_theme(self.preferences.theme).backdrop)
+            appearance.add(self._backdrop_row)
         appearance.add(
             combo(
                 _("Estilo dos ícones"),
                 [
-                    (_("GTK — padrão do sistema"), "gtk"),
+                    (
+                        _("Windows — ícones Fluent")
+                        if host.SYSTEM_ICON_THEME
+                        else _("GTK — padrão do sistema"),
+                        "gtk",
+                    ),
                     (_("Material Expressive"), "material"),
                 ],
                 self.preferences.icon_style,
