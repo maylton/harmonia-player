@@ -6,6 +6,7 @@ import threading
 from gi.repository import GLib, Gst
 
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -130,7 +131,7 @@ def install_gtk_media_variants(window_class) -> None:
             try:
                 audio = self.youtube.resolve_stream(stream.video_id)
                 playback = IndependentVideoPlayback(stream, audio)
-                GLib.idle_add(
+                deliver_to_main(
                     self._apply_independent_video,
                     request_id,
                     item_id,
@@ -138,7 +139,7 @@ def install_gtk_media_variants(window_class) -> None:
                     "",
                 )
             except Exception as exc:
-                GLib.idle_add(
+                deliver_to_main(
                     self._apply_independent_video,
                     request_id,
                     item_id,

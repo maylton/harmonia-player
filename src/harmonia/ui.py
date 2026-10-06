@@ -11,7 +11,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GLib, Gtk
 
 from .i18n import _
 from .models import LibraryItem
@@ -19,6 +19,17 @@ from .models import LibraryItem
 ACTION_ROLES = {"primary", "accent", "secondary", "destructive"}
 ICON_SIZES = {"sm", "md", "lg"}
 PAGE_WIDTHS = {"content": 1280, "reading": 980}
+
+
+def deliver_to_main(callback: Callable, *args) -> int:
+    """Hand a worker thread's result to the main loop ahead of redraws.
+
+    GLib.idle_add runs below the frame clock's priority. While a Gtk.Spinner
+    spins, a frame that takes longer than the refresh interval keeps the frame
+    clock busy (seen on Windows), so a result posted at idle priority never
+    runs and the spinner waiting for it never stops.
+    """
+    return GLib.idle_add(callback, *args, priority=GLib.PRIORITY_DEFAULT)
 
 
 def set_action_role(widget: Gtk.Widget, role: str) -> Gtk.Widget:

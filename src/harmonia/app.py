@@ -31,6 +31,7 @@ from .storage import Storage
 from .theming import DEFAULT_THEME
 from .ui import (
     CreditsLabel,
+    deliver_to_main,
     menu_action_button,
     set_icon_selected,
     style_icon_button,
@@ -1148,9 +1149,9 @@ class HarmoniaWindow(
         def worker() -> None:
             try:
                 remote = self.youtube.history() if self.storage.load_cookie() else []
-                GLib.idle_add(self._history_loaded, remote, None)
+                deliver_to_main(self._history_loaded, remote, None)
             except Exception as exc:
-                GLib.idle_add(self._history_loaded, [], str(exc))
+                deliver_to_main(self._history_loaded, [], str(exc))
 
         threading.Thread(target=worker, daemon=True, name="account-history").start()
 
