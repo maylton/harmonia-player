@@ -104,7 +104,8 @@ class LocalMediaServer:
         parsed = urllib.parse.urlsplit(uri)
         if parsed.scheme != "file":
             raise ValueError("A URI não aponta para um arquivo local")
-        return cls(Path(urllib.parse.unquote(parsed.path)))
+        # url2pathname also turns Windows' "/C:/Music/a.m4a" into "C:\Music\a.m4a".
+        return cls(Path(urllib.request.url2pathname(parsed.path)))
 
     @property
     def url(self) -> str:
