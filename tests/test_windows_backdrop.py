@@ -64,31 +64,80 @@ def test_material_waits_for_the_native_window_then_reapplies(monkeypatch):
     assert calls == ["mica"]
 
 
-def test_returning_to_the_window_sets_the_material_again():
+def test_material_is_restored_after_focus_display_and_composition_changes():
+    from harmonia.windows_backdrop import (
+        WM_ACTIVATE,
+        WM_DISPLAYCHANGE,
+        WM_DWMCOMPOSITIONCHANGED,
+        needs_reapply,
+    )
+
+    assert needs_reapply(WM_ACTIVATE, 1)  # WA_ACTIVE
+    assert needs_reapply(WM_ACTIVATE, 2 | (1 << 16))  # WA_CLICKACTIVE, high word set
+    assert not needs_reapply(WM_ACTIVATE, 0)  # WA_INACTIVE: Windows shows its colour
+    assert needs_reapply(WM_DWMCOMPOSITIONCHANGED, 0)  # fullscreen games
+    assert needs_reapply(WM_DISPLAYCHANGE, 0)
+    assert not needs_reapply(0x0005, 0)  # WM_SIZE
+
+
+def test_a_burst_of_messages_restores_the_material_once(monkeypatch):
     from harmonia.gtk_backdrop import GtkWindowBackdrops
 
-    applied = []
+    queued, applied, refreshed = [], [], []
+    monkeypatch.setattr(
+        "harmonia.gtk_backdrop.GLib.idle_add",
+        lambda callback, window: queued.append((callback, window)),
+    )
+    monkeypatch.setattr("harmonia.windows_backdrop.refresh_frame", refreshed.append)
 
     class WindowStub:
-        active = True
-
-        def is_active(self):
-            return self.active
+        pass
 
     backdrops = GtkWindowBackdrops.__new__(GtkWindowBackdrops)
     backdrops.kind = "mica"
-    backdrops._apply = applied.append
+    backdrops._apply = lambda window: applied.append(window) or True
+    backdrops._hwnd = lambda window: 42
 
     window = WindowStub()
-    backdrops._activation_changed(window, None)
-    assert applied == [window]
+    for _ in range(3):
+        backdrops._schedule_restore(window)
+    assert len(queued) == 1
+    callback, target = queued[0]
+    callback(target)
+    assert applied == [window] and refreshed == [42]
+    backdrops._schedule_restore(window)  # a later message queues again
+    assert len(queued) == 2
 
-    window.active = False  # Windows shows the inactive colour by itself
-    backdrops._activation_changed(window, None)
     backdrops.kind = "none"
-    window.active = True
-    backdrops._activation_changed(window, None)
-    assert applied == [window]
+    window._harmonia_restore_queued = False
+    backdrops._schedule_restore(window)
+    assert len(queued) == 2
+
+
+@windows_only
+def test_subclass_sees_messages_after_gdk_and_does_not_loop():
+    from gi.repository import Gtk
+
+    from harmonia import windows_backdrop
+    from harmonia.gtk_win32 import window_handle
+
+    window = Gtk.Window()
+    window.realize()
+    hwnd = window_handle(window)
+    seen = []
+    try:
+        windows_backdrop.watch(hwnd, lambda: seen.append("restore"))
+        windows_backdrop.watch(hwnd, lambda: seen.append("second watcher"))  # ignored
+        send = ctypes.windll.user32.SendMessageW
+        send(hwnd, windows_backdrop.WM_DWMCOMPOSITIONCHANGED, 0, 0)
+        send(hwnd, windows_backdrop.WM_ACTIVATE, 0, 0)  # inactive: nothing to do
+        assert seen == ["restore"]
+        windows_backdrop.refresh_frame(hwnd)  # must not trigger another restore
+        assert seen == ["restore"]
+    finally:
+        windows_backdrop.unwatch(hwnd)
+        window.destroy()
+    assert hwnd not in windows_backdrop._watchers
 
 
 @windows_only
