@@ -161,7 +161,20 @@ class WindowPreferencesMixin:
         kind = self.preferences.backdrop if supported else "none"
         if getattr(self, "_backdrop_row", None) is not None:
             self._backdrop_row.set_sensitive(supported)
+        if kind != "none" and not self.get_realized():
+            # The window first applies its preferences before it has a native
+            # window, so the material (and the translucent palette that goes
+            # with it) can only be set once it is realized.
+            if not getattr(self, "_backdrop_realize_handler", 0):
+                self._backdrop_realize_handler = self.connect_after(
+                    "realize", lambda *_: GLib.idle_add(self._reapply_appearance)
+                )
+            return False
         return self._window_backdrops.set_kind(kind, self)
+
+    def _reapply_appearance(self) -> bool:
+        self._apply_appearance_preferences()
+        return GLib.SOURCE_REMOVE
 
     def _apply_icon_theme(self) -> None:
         """Select the icon theme without pinning the system one.
