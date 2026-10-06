@@ -3,13 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
 import sqlite3
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from . import host
 from .insights import (
     PlaybackInsights,
     RankedArtist,
@@ -36,8 +36,8 @@ LOGGER = logging.getLogger(__name__)
 
 class Storage:
     def __init__(self) -> None:
-        config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "harmonia"
-        cache = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "harmonia"
+        config = host.config_dir()
+        cache = host.cache_dir()
         config.mkdir(parents=True, exist_ok=True)
         cache.mkdir(parents=True, exist_ok=True)
         self.cookie_file = config / "session"

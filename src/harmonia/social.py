@@ -11,8 +11,8 @@ import urllib.request
 import uuid
 from contextlib import suppress
 from dataclasses import dataclass
-from pathlib import Path
 
+from . import host
 from .i18n import _
 from .models import LibraryItem
 from .secrets import NamedSecret
@@ -173,26 +173,51 @@ def media_artist(item: LibraryItem) -> str:
     return parts[0] if parts else "YouTube Music"
 
 
+class NamedPipeChannel:
+    """The subset of the socket API DiscordPresence uses, over a Windows named pipe.
+
+    Discord listens on \\\\.\\pipe\\discord-ipc-N on Windows instead of a Unix socket.
+    """
+
+    def __init__(self) -> None:
+        self._pipe = None
+
+    def settimeout(self, _timeout: float) -> None:
+        # Pipe handles opened through open() block; Discord answers each frame.
+        pass
+
+    def connect(self, path: str) -> None:
+        self._pipe = open(path, "r+b", buffering=0)  # noqa: SIM115 - closed by close()
+
+    def sendall(self, data: bytes) -> None:
+        self._pipe.write(data)
+
+    def recv(self, length: int) -> bytes:
+        return self._pipe.read(length) or b""
+
+    def close(self) -> None:
+        if self._pipe is not None:
+            self._pipe.close()
+            self._pipe = None
+
+
+def ipc_channel():
+    if host.IS_WINDOWS:
+        return NamedPipeChannel()
+    return socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+
 class DiscordPresence:
     """Minimal Discord IPC client; no remote Discord API or background service."""
 
-    def __init__(self, client_id: str, socket_factory=socket.socket) -> None:
+    def __init__(self, client_id: str, socket_factory=ipc_channel) -> None:
         self.client_id = client_id.strip()
         self._socket_factory = socket_factory
         self._socket = None
 
     @staticmethod
-    def candidate_paths() -> list[Path]:
-        roots = [
-            Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")),
-            Path(os.environ.get("TMPDIR", "/tmp")),
-        ]
-        candidates: list[Path] = []
-        for root in roots:
-            for index in range(10):
-                candidates.append(root / f"discord-ipc-{index}")
-                candidates.append(root / "app/com.discordapp.Discord" / f"discord-ipc-{index}")
-        return candidates
+    def candidate_paths() -> list[str]:
+        return host.discord_ipc_paths()
 
     @staticmethod
     def _frame(operation: int, payload: dict) -> bytes:
@@ -219,7 +244,7 @@ class DiscordPresence:
             raise OSError("O Client ID do Discord não foi configurado")
         last_error = None
         for path in self.candidate_paths():
-            candidate = self._socket_factory(socket.AF_UNIX, socket.SOCK_STREAM)
+            candidate = self._socket_factory()
             candidate.settimeout(1.5)
             try:
                 candidate.connect(str(path))

@@ -69,6 +69,21 @@ def test_mpris_clear_removes_stale_track_metadata():
     assert service.duration_us == 0
 
 
+def test_mpris_stays_disconnected_without_a_session_bus(monkeypatch):
+    owned = []
+    monkeypatch.setattr("harmonia.mpris.host.MPRIS", False)
+    monkeypatch.setattr("harmonia.mpris.Gio.bus_own_name", lambda *args: owned.append(args) or 5)
+
+    service = MprisService(None, PlayerStub(), {})
+    service.update(object(), 42_000_000)
+    service.clear()
+    service.close()
+
+    assert owned == []
+    assert service.connection is None
+    assert service.owner == 0
+
+
 def test_mpris_close_releases_registered_objects_and_name(monkeypatch):
     service = service_stub()
     unregistered = []

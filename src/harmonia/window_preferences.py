@@ -11,6 +11,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
+from . import host
 from .backup import BackupError, BackupManager
 from .i18n import _, ngettext
 from .preferences import Preferences
@@ -36,7 +37,10 @@ ELEMENTARY_SHADOW_PROBE = "go-home-symbolic"
 
 def shadow_resolves(path: str | None) -> bool:
     """Whether a looked-up icon file is not an unshadowed elementary icon."""
-    if not path or path.startswith(ELEMENTARY_SHADOW_PATH):
+    if not path:
+        return True
+    path = host.slash_path(path)
+    if path.startswith(host.slash_path(ELEMENTARY_SHADOW_PATH)):
         return True
     return "/elementary" not in path
 
@@ -352,7 +356,11 @@ class WindowPreferencesMixin:
 
         account_group = Adw.PreferencesGroup(
             title=_("Conta"),
-            description=_("Sessão protegida pelo chaveiro Secret Service do sistema."),
+            description=(
+                _("Sessão protegida pelo Gerenciador de Credenciais do Windows.")
+                if host.IS_WINDOWS
+                else _("Sessão protegida pelo chaveiro Secret Service do sistema.")
+            ),
         )
         account = Adw.ActionRow(
             title=_("YouTube Music"),

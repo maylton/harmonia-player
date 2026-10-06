@@ -9,6 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
+from . import host
 from .i18n import _, ngettext
 from .models import (
     ExploreData,
@@ -19,6 +20,9 @@ LOGGER = logging.getLogger(__name__)
 
 class WindowAccountMixin:
     def login_dialog(self) -> None:
+        if not host.INTEGRATED_LOGIN:
+            self.manual_login_dialog()
+            return
         try:
             from .auth import LoginWindow
 
