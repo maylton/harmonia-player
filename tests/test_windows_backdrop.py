@@ -97,6 +97,8 @@ def test_a_burst_of_messages_restores_the_material_once(monkeypatch):
     backdrops.kind = "mica"
     backdrops._apply = lambda window: applied.append(window) or True
     backdrops._hwnd = lambda window: 42
+    drawn = []
+    WindowStub.queue_draw = lambda self: drawn.append(self)
 
     window = WindowStub()
     for _ in range(3):
@@ -104,7 +106,8 @@ def test_a_burst_of_messages_restores_the_material_once(monkeypatch):
     assert len(queued) == 1
     callback, target = queued[0]
     callback(target)
-    assert applied == [window] and refreshed == [42]
+    # Cairo only repaints damaged regions: the whole window is redrawn.
+    assert applied == [window] and refreshed == [42] and drawn == [window]
     backdrops._schedule_restore(window)  # a later message queues again
     assert len(queued) == 2
 
@@ -134,6 +137,8 @@ def test_subclass_sees_messages_after_gdk_and_does_not_loop():
         assert seen == ["restore"]
         windows_backdrop.refresh_frame(hwnd)  # must not trigger another restore
         assert seen == ["restore"]
+        state = windows_backdrop.backdrop_state(hwnd)
+        assert state["composition"] is True and state["foreground"] is False
     finally:
         windows_backdrop.unwatch(hwnd)
         window.destroy()

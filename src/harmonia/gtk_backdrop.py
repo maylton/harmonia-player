@@ -79,7 +79,11 @@ class GtkWindowBackdrops:
             windows_backdrop.remove(hwnd)
         if applied:
             window.add_css_class(CSS_CLASS)
-            windows_backdrop.watch(hwnd, lambda: self._schedule_restore(window))
+            windows_backdrop.watch(
+                hwnd,
+                lambda: self._schedule_restore(window),
+                LOGGER.debug if LOGGER.isEnabledFor(logging.DEBUG) else None,
+            )
         else:
             window.remove_css_class(CSS_CLASS)
         return applied
@@ -100,6 +104,26 @@ class GtkWindowBackdrops:
             hwnd = self._hwnd(window)
             if hwnd is not None:
                 windows_backdrop.refresh_frame(hwnd)
+                window.queue_draw()
+                if LOGGER.isEnabledFor(logging.DEBUG):
+                    LOGGER.debug("material restaurado: %s", windows_backdrop.backdrop_state(hwnd))
+                    GLib.timeout_add(500, self._log_appearance, window)
+        return GLib.SOURCE_REMOVE
+
+    def _log_appearance(self, window: Gtk.Window) -> bool:
+        """Diagnostics: DWM state and the window's own colours after a restore."""
+        from . import windows_backdrop
+
+        hwnd = self._hwnd(window)
+        if hwnd is None:
+            return GLib.SOURCE_REMOVE
+        state = windows_backdrop.backdrop_state(hwnd)
+        colors = (
+            windows_backdrop.sample_window(hwnd, ((0.06, 0.5), (0.5, 0.03), (0.6, 0.55)))
+            if state["foreground"]
+            else "fora do primeiro plano"
+        )
+        LOGGER.debug("500 ms depois: %s cores (lateral, título, conteúdo)=%s", state, colors)
         return GLib.SOURCE_REMOVE
 
     def _unwatch(self, window: Gtk.Window) -> None:
