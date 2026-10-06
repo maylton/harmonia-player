@@ -6,6 +6,7 @@ import sqlite3
 import tempfile
 import time
 import zipfile
+from contextlib import closing
 from pathlib import Path
 
 BACKUP_FORMAT = 1
@@ -25,7 +26,9 @@ class BackupManager:
         destination.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="harmonia-backup-") as temporary:
             database = Path(temporary) / "library.db"
-            with self.storage._connect() as source, sqlite3.connect(database) as target:
+            # sqlite3's context manager does not close the connection, and Windows
+            # cannot delete the temporary directory while the file is still open.
+            with self.storage._connect() as source, closing(sqlite3.connect(database)) as target:
                 source.backup(target)
             manifest = {
                 "format": BACKUP_FORMAT,
@@ -65,7 +68,7 @@ class BackupManager:
     @staticmethod
     def _validate_database(path: Path) -> None:
         try:
-            with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as database:
+            with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True)) as database:
                 if database.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise BackupError("O banco de dados do backup está corrompido")
                 tables = {
