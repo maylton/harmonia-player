@@ -53,6 +53,7 @@ class GtkWindowBackdrops:
                 continue
             self._windows.add(id(window))
             window.connect("realize", self._apply)
+            window.connect("notify::is-active", self._activation_changed)
             window.connect("destroy", lambda window: self._windows.discard(id(window)))
             if window.get_realized():
                 self._apply(window)
@@ -81,6 +82,21 @@ class GtkWindowBackdrops:
         else:
             window.remove_css_class(CSS_CLASS)
         return applied
+
+    def _activation_changed(self, window: Gtk.Window, _pspec) -> None:
+        from . import windows_backdrop
+
+        if self.kind == "none":
+            return
+        if window.is_active():
+            # Set the material again whenever the window comes back to the
+            # front, so nothing that reset it in the meantime sticks.
+            self._apply(window)
+            return
+        if self.kind in windows_backdrop.KEEP_WHEN_INACTIVE and window.has_css_class(CSS_CLASS):
+            hwnd = self._hwnd(window)
+            if hwnd is not None:
+                windows_backdrop.keep_active(hwnd)
 
     def _update_dark(self) -> None:
         from . import windows_backdrop

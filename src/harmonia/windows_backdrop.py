@@ -17,6 +17,11 @@ DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMWCP_ROUND = 2
 DWMSBT_NONE = 1
 BACKDROPS = {"mica": 2, "acrylic": 3}
+# Materials kept while the window is in the background. Windows replaces both
+# with a solid colour there; for Mica that is subtle, for frosted Acrylic it
+# reads as the effect switching off.
+KEEP_WHEN_INACTIVE = {"acrylic"}
+WM_NCACTIVATE = 0x0086
 
 
 class _Margins(ctypes.Structure):
@@ -54,6 +59,17 @@ def apply(hwnd: int, kind: str, dark: bool) -> bool:
         return True
     remove(hwnd)
     return False
+
+
+def keep_active(hwnd: int) -> None:
+    """Have DWM keep drawing the material after the window loses focus.
+
+    DWM swaps a material for a solid colour while the frame is inactive.
+    Marking the frame active again (WM_NCACTIVATE, which GDK leaves to
+    DefWindowProc) keeps it; keyboard focus is tracked through WM_ACTIVATE
+    and WM_SETFOCUS, so GTK still knows the window is in the background.
+    """
+    ctypes.windll.user32.SendMessageW(wintypes.HWND(hwnd), WM_NCACTIVATE, True, 0)
 
 
 def remove(hwnd: int) -> None:
