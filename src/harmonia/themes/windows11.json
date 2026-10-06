@@ -1,0 +1,78 @@
+{
+  "id": "windows11",
+  "name": "Windows 11",
+  "description": "Inspirado no Fluent do Windows 11: Segoe UI Variable, cantos de 4 e 8 px, cor de destaque do sistema e botões de janela retangulares.",
+  "platforms": ["windows"],
+  "default_variant": "system",
+  "restyle_adwaita": true,
+  "system_accent": true,
+  "font_family": "Segoe UI Variable Text",
+  "corner_scale": 0.5,
+  "accent": {
+    "dark": {
+      "accent_bg": "#60cdff",
+      "accent_fg": "#000000",
+      "accent": "#99ebff"
+    },
+    "light": {
+      "accent_bg": "#005fb8",
+      "accent_fg": "#ffffff",
+      "accent": "#003e92"
+    }
+  },
+  "palettes": {
+    "dark": {
+      "bg": "#272727",
+      "sidebar_bg": "#202020",
+      "headerbar_bg": "#202020",
+      "border": "#1c1c1c",
+      "hover_bg": "#2d2d2d",
+      "selected_bg": "#323232",
+      "chip_bg": "#2d2d2d",
+      "chip_hover_bg": "#323232",
+      "fg": "#ffffff",
+      "fg_secondary": "#d6d6d6",
+      "fg_tertiary": "#cccccc",
+      "fg_muted": "#c5c5c5",
+      "fg_subtle": "#ababab",
+      "fg_dim": "#9d9d9d",
+      "overlay": "#ffffff",
+      "shadow": "#000000",
+      "inverse_bg": "#ffffff",
+      "inverse_fg": "#1a1a1a",
+      "inverse_hover_bg": "#e6e6e6",
+      "destructive_fg": "#ff99a4",
+      "destructive_bg": "#c42b1c",
+      "destructive_border": "#ff99a4",
+      "warning_bg": "#fce100",
+      "warning_fg": "#fce100"
+    },
+    "light": {
+      "bg": "#f9f9f9",
+      "sidebar_bg": "#f3f3f3",
+      "headerbar_bg": "#f3f3f3",
+      "border": "#e5e5e5",
+      "hover_bg": "#eaeaea",
+      "selected_bg": "#e4e4e4",
+      "chip_bg": "#fbfbfb",
+      "chip_hover_bg": "#f6f6f6",
+      "fg": "#1a1a1a",
+      "fg_secondary": "#2b2b2b",
+      "fg_tertiary": "#3d3d3d",
+      "fg_muted": "#5d5d5d",
+      "fg_subtle": "#616161",
+      "fg_dim": "#727272",
+      "overlay": "#000000",
+      "shadow": "#000000",
+      "inverse_bg": "#1a1a1a",
+      "inverse_fg": "#ffffff",
+      "inverse_hover_bg": "#333333",
+      "destructive_fg": "#c42b1c",
+      "destructive_bg": "#c42b1c",
+      "destructive_border": "#c42b1c",
+      "warning_bg": "#9d5d00",
+      "warning_fg": "#9d5d00"
+    }
+  },
+  "stylesheet": "windows11.css"
+}

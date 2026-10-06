@@ -14,9 +14,12 @@ from dataclasses import dataclass, field
 from functools import cache, lru_cache
 from pathlib import Path
 
+from . import host
+
 THEMES_DIR = Path(__file__).with_name("themes")
 DEFAULT_THEME = "harmonia"
 VARIANTS = ("theme", "system", "light", "dark")
+PLATFORMS = ("linux", "windows")
 
 # Semantic colour roles used by style.css as @harmonia_<token>.
 TOKENS = (
@@ -116,6 +119,21 @@ ACCENT_PRESETS: dict[str, dict[str, str]] = {
 ACCENTS = ("theme", *ACCENT_PRESETS)
 
 
+def fluent_accent(palette: list[str] | None, *, dark: bool) -> dict[str, str] | None:
+    """Map the Windows accent palette to accent tokens the way Fluent does.
+
+    ``palette`` lists the system shades from lightest to darkest (Light3,
+    Light2, Light1, base, Dark1, Dark2, Dark3). Dark mode fills controls with
+    Light2 under black text and writes accent text in Light3; light mode fills
+    with Dark1 under white text and writes in Dark2.
+    """
+    if not palette or len(palette) < 7:
+        return None
+    if dark:
+        return {"accent_bg": palette[1], "accent_fg": "#000000", "accent": palette[0]}
+    return {"accent_bg": palette[4], "accent_fg": "#ffffff", "accent": palette[5]}
+
+
 def accent_preset(name: str, *, dark: bool) -> dict[str, str] | None:
     preset = ACCENT_PRESETS.get(name)
     if not preset:
@@ -148,6 +166,12 @@ class Theme:
     corner_scale: float = 1.0
     font_family: str = ""
     stylesheet: str = ""  # optional structural layer in themes/, applied after style.css
+    platforms: tuple[str, ...] = ()  # empty: offered everywhere
+    system_accent: bool = False  # follow the desktop's exact accent palette when known
+
+    @property
+    def available(self) -> bool:
+        return not self.platforms or host.PLATFORM in self.platforms
 
     @classmethod
     def from_dict(cls, data: dict) -> Theme:
@@ -163,6 +187,8 @@ class Theme:
                 corner_scale=float(data.get("corner_scale", 1.0)),
                 font_family=str(data.get("font_family", "")),
                 stylesheet=str(data.get("stylesheet", "")),
+                platforms=tuple(str(name) for name in data.get("platforms", ())),
+                system_accent=bool(data.get("system_accent", False)),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ThemeError(f"tema inválido: {exc}") from exc
@@ -190,6 +216,8 @@ class Theme:
             raise ThemeError(f"{self.id}: stylesheet inválido")
         if not 0 <= self.corner_scale <= 2:
             raise ThemeError(f"{self.id}: corner_scale fora de 0 a 2")
+        if set(self.platforms) - set(PLATFORMS):
+            raise ThemeError(f"{self.id}: plataformas válidas são {PLATFORMS}")
 
     def palette(self, dark: bool) -> dict[str, str]:
         return self.palettes["dark" if dark else "light"]
@@ -202,19 +230,25 @@ class Theme:
 
 
 @lru_cache(maxsize=1)
-def builtin_themes() -> dict[str, Theme]:
+def theme_catalog() -> dict[str, Theme]:
+    """Every bundled theme, including those meant for another platform."""
     themes = {}
     for path in sorted(THEMES_DIR.glob("*.json")):
         theme = Theme.from_dict(json.loads(path.read_text(encoding="utf-8")))
         if theme.id != path.stem:
             raise ThemeError(f"{path.name}: id {theme.id!r} difere do nome do arquivo")
         themes[theme.id] = theme
-    if DEFAULT_THEME not in themes:
+    if DEFAULT_THEME not in themes or themes[DEFAULT_THEME].platforms:
         raise ThemeError("o tema padrão não foi encontrado")
     # Keep the default first, then alphabetical, for stable menus.
     return {DEFAULT_THEME: themes[DEFAULT_THEME]} | {
         key: value for key, value in sorted(themes.items()) if key != DEFAULT_THEME
     }
+
+
+def builtin_themes() -> dict[str, Theme]:
+    """The themes offered on this platform; a saved theme missing here falls back."""
+    return {key: theme for key, theme in theme_catalog().items() if theme.available}
 
 
 @cache
@@ -244,13 +278,20 @@ def scale_corners(css: str, scale: float) -> str:
 
 
 def render_gtk_css(
-    theme: Theme, *, dark: bool, base_css: str, css_variables: bool, accent: str = "theme"
+    theme: Theme,
+    *,
+    dark: bool,
+    base_css: str,
+    css_variables: bool,
+    accent: str = "theme",
+    system_accent: dict[str, str] | None = None,
 ) -> str:
     """Return the full stylesheet for ``theme``.
 
     ``css_variables`` selects how libadwaita colours are overridden: GTK 4.16+
     with libadwaita 1.6+ reads CSS custom properties, older versions read
-    @define-color named colours.
+    @define-color named colours. ``system_accent`` replaces the theme's own
+    accent when the theme follows the desktop accent and none was chosen.
     """
     palette = theme.palette(dark)
     lines = [f"/* Harmonia theme: {theme.id} ({'dark' if dark else 'light'}) */"]
@@ -259,8 +300,10 @@ def render_gtk_css(
     overrides: dict[str, str] = {}
     if theme.restyle_adwaita:
         overrides |= {name: f"@harmonia_{token}" for name, token in ADWAITA_SURFACES.items()}
-    accent_colors = accent_preset(accent, dark=dark) or theme.accent.get(
-        "dark" if dark else "light"
+    accent_colors = (
+        accent_preset(accent, dark=dark)
+        or (system_accent if theme.system_accent else None)
+        or theme.accent.get("dark" if dark else "light")
     )
     if accent_colors:
         overrides |= {name: accent_colors[token] for name, token in ADWAITA_ACCENT.items()}

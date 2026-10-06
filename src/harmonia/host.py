@@ -13,6 +13,8 @@ from pathlib import Path
 
 IS_WINDOWS = sys.platform == "win32"
 IS_LINUX = sys.platform.startswith("linux")
+# Matched against the "platforms" list of platform-specific themes.
+PLATFORM = "windows" if IS_WINDOWS else "linux" if IS_LINUX else sys.platform
 
 # The integrated Google login embeds WebKitGTK, which only exists on Linux.
 INTEGRATED_LOGIN = IS_LINUX
@@ -90,6 +92,34 @@ def translation_languages() -> list[str] | None:
         return None
     name = user_locale()
     return [name] if name else None
+
+
+ACCENT_KEY = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent"
+
+
+def accent_palette_colors(data: bytes) -> list[str] | None:
+    """Decode AccentPalette: eight RGBA shades, Light3 first; the eighth is unused."""
+    if len(data) < 28:
+        return None
+    return [f"#{data[i]:02x}{data[i + 1]:02x}{data[i + 2]:02x}" for i in range(0, 28, 4)]
+
+
+def windows_accent_palette() -> list[str] | None:
+    """The user's Windows accent shades, lightest first, or None elsewhere.
+
+    libadwaita reads the system accent too, but rounds it to its nine presets;
+    the Windows 11 theme wants the exact colour the rest of the desktop uses.
+    """
+    if not IS_WINDOWS:
+        return None
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, ACCENT_KEY) as key:
+            data, _kind = winreg.QueryValueEx(key, "AccentPalette")
+    except OSError:
+        return None
+    return accent_palette_colors(bytes(data))
 
 
 def _raise_running_window(title: str) -> None:

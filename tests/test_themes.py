@@ -16,9 +16,11 @@ from harmonia.theming import (
     ThemeError,
     accent_preset,
     builtin_themes,
+    fluent_accent,
     get_theme,
     render_gtk_css,
     scale_corners,
+    theme_catalog,
 )
 
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "harmonia"
@@ -59,7 +61,7 @@ def contrast(a: str, b: str) -> float:
 
 
 def literal_palettes():
-    for theme in builtin_themes().values():
+    for theme in theme_catalog().values():
         for variant, palette in theme.palettes.items():
             if all(re.fullmatch(r"#[0-9a-f]{6}", value) for value in palette.values()):
                 yield theme, variant, palette
@@ -70,6 +72,62 @@ def test_builtin_themes_load_with_the_default_first():
     assert next(iter(themes)) == DEFAULT_THEME
     assert {"harmonia", "adwaita", "elementary", "breeze"} <= set(themes)
     assert get_theme("does-not-exist").id == DEFAULT_THEME
+
+
+def test_windows_11_theme_is_offered_only_on_windows(monkeypatch):
+    from harmonia import host
+
+    assert theme_catalog()["windows11"].platforms == ("windows",)
+    monkeypatch.setattr(host, "PLATFORM", "linux")
+    assert "windows11" not in builtin_themes()
+    assert get_theme("windows11").id == DEFAULT_THEME
+    saved = Preferences.load(MemoryStorage({"theme": "windows11"}))
+    assert saved.theme == DEFAULT_THEME
+
+    monkeypatch.setattr(host, "PLATFORM", "windows")
+    assert "windows11" in builtin_themes()
+    assert get_theme("windows11").id == "windows11"
+    assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "windows11"
+
+
+def test_platform_names_are_validated():
+    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    with pytest.raises(ThemeError):
+        Theme.from_dict({**data, "platforms": ["macos"]})
+
+
+def test_fluent_accent_follows_the_windows_palette():
+    palette = ["#99ebff", "#4cc2ff", "#0091f8", "#0078d4", "#0067c0", "#003e92", "#001a68"]
+    assert fluent_accent(palette, dark=True) == {
+        "accent_bg": "#4cc2ff",
+        "accent_fg": "#000000",
+        "accent": "#99ebff",
+    }
+    assert fluent_accent(palette, dark=False) == {
+        "accent_bg": "#0067c0",
+        "accent_fg": "#ffffff",
+        "accent": "#003e92",
+    }
+    assert fluent_accent(None, dark=True) is None
+    assert fluent_accent(palette[:3], dark=True) is None
+
+
+def test_system_accent_applies_only_to_themes_that_follow_it():
+    system = {"accent_bg": "#4cc2ff", "accent_fg": "#000000", "accent": "#99ebff"}
+    windows = theme_catalog()["windows11"]
+    css = render_gtk_css(windows, dark=True, base_css="", css_variables=False, system_accent=system)
+    assert "@define-color accent_bg_color #4cc2ff;" in css
+    # An explicit accent choice still wins, and without the palette the theme's own is used.
+    chosen = render_gtk_css(
+        windows, dark=True, base_css="", css_variables=False, accent="green", system_accent=system
+    )
+    assert "@define-color accent_bg_color #3a9104;" in chosen
+    fallback = render_gtk_css(windows, dark=True, base_css="", css_variables=False)
+    assert "@define-color accent_bg_color #60cdff;" in fallback
+    breeze = render_gtk_css(
+        get_theme("breeze"), dark=True, base_css="", css_variables=False, system_accent=system
+    )
+    assert "#4cc2ff" not in breeze
 
 
 def test_default_theme_keeps_the_original_palette():
@@ -84,7 +142,7 @@ def test_stylesheet_only_uses_known_tokens():
 
 @pytest.mark.parametrize("css_variables", [False, True])
 def test_every_theme_renders_complete_css(css_variables):
-    for theme in builtin_themes().values():
+    for theme in theme_catalog().values():
         for dark in (True, False):
             css = render_gtk_css(theme, dark=dark, base_css=BASE_CSS, css_variables=css_variables)
             defined = set(re.findall(r"@define-color harmonia_([a-z_]+) ", css))
@@ -108,7 +166,7 @@ def test_readable_contrast_in_every_literal_palette():
 
 def test_themes_that_restyle_libadwaita_use_literal_colors():
     # CSS custom properties cannot reference GTK named colours.
-    for theme in builtin_themes().values():
+    for theme in theme_catalog().values():
         if not theme.restyle_adwaita:
             continue
         for palette in theme.palettes.values():
@@ -224,8 +282,8 @@ def test_structural_layers_exist_and_only_use_known_colors():
         "window_bg_color", "window_fg_color", "view_bg_color", "headerbar_bg_color",
         "sidebar_bg_color", "accent_bg_color", "accent_fg_color", "accent_color",
     }  # fmt: skip
-    layered = [theme for theme in builtin_themes().values() if theme.stylesheet]
-    assert {theme.id for theme in layered} == {"adwaita", "elementary", "breeze"}
+    layered = [theme for theme in theme_catalog().values() if theme.stylesheet]
+    assert {theme.id for theme in layered} == {"adwaita", "elementary", "breeze", "windows11"}
     for theme in layered:
         css = (THEMES_DIR / theme.stylesheet).read_text(encoding="utf-8")
         assert css.count("{") == css.count("}"), theme.id

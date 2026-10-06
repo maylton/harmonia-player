@@ -81,6 +81,19 @@ def test_gettext_languages_come_from_windows_only_without_posix_variables(monkey
     assert host.translation_languages() is None
 
 
+def test_accent_palette_registry_value_decodes_to_seven_shades():
+    data = bytes.fromhex("99ebff004cc2ff000091f8000078d4000067c000003e9200001a6800f7630c00")
+    assert host.accent_palette_colors(data) == [
+        "#99ebff", "#4cc2ff", "#0091f8", "#0078d4", "#0067c0", "#003e92", "#001a68",
+    ]  # fmt: skip
+    assert host.accent_palette_colors(b"\x00" * 8) is None
+
+
+def test_accent_palette_is_windows_only(monkeypatch):
+    monkeypatch.setattr(host, "IS_WINDOWS", False)
+    assert host.windows_accent_palette() is None
+
+
 def test_linux_leaves_single_instance_to_gtk_application(monkeypatch):
     monkeypatch.setattr(host, "IS_WINDOWS", False)
     assert host.claim_single_instance() is True

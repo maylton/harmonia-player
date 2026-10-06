@@ -170,6 +170,9 @@ class HarmoniaWindow(
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
+        # Pages paint their own backgrounds; clipping keeps a theme's rounded
+        # content corner (Windows 11) visible over them.
+        self.stack.set_overflow(Gtk.Overflow.HIDDEN)
         self.main_shell.append(self.stack)
         self.root.append(self.main_shell)
         self.player = NativePlayer(self._player_state, self._player_error, self._play_next)

@@ -1,0 +1,284 @@
+/* Windows 11, after the Fluent 2 (WinUI 3) control styles: the title bar and
+   navigation pane share the Mica base colour, content sits on a lighter layer
+   with a rounded top-left corner, controls have 4px corners and a subtle
+   stroke, cards and flyouts 8px, the selected navigation item carries a short
+   accent bar, and the caption buttons are flat 46x32 rectangles. */
+window.csd { border-radius: 8px; }
+window, .app-root { background: @harmonia_sidebar_bg; }
+.appearance-blur { background: alpha(@harmonia_sidebar_bg, .80); }
+
+/* Title bar on Mica: no separator, Display face for the window title. */
+headerbar {
+  background: @harmonia_headerbar_bg;
+  border-bottom: none;
+  box-shadow: none;
+  min-height: 48px;
+}
+.appearance-blur headerbar { background: transparent; }
+
+/* Caption buttons: flat rectangles at the top edge; close turns red. */
+/* The controls sit centred in the title bar; a bottom margin lifts them to
+   the top edge and a negative end margin removes the bar's end padding. */
+windowcontrols { border-spacing: 0; margin: -6px -6px 20px 0; }
+windowcontrols > button {
+  min-width: 46px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: @harmonia_fg;
+}
+windowcontrols > button > image,
+windowcontrols > button:hover > image,
+windowcontrols > button:active > image {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  -gtk-icon-size: 12px;
+}
+windowcontrols > button:hover { background: alpha(@harmonia_overlay, .06); }
+windowcontrols > button:active { background: alpha(@harmonia_overlay, .04); color: @harmonia_fg_muted; }
+windowcontrols > button.close:hover { background: #c42b1c; color: #ffffff; }
+windowcontrols > button.close:active { background: alpha(#c42b1c, .9); color: alpha(#ffffff, .7); }
+window:backdrop windowcontrols > button { color: @harmonia_fg_dim; }
+
+/* Text boxes (search included): 4px, filled, with a bottom stroke that turns
+   into a 2px accent line on focus. */
+entry, headerbar entry, spinbutton {
+  min-height: 32px;
+  border-radius: 4px;
+  border: 1px solid alpha(@harmonia_overlay, .07);
+  background: @harmonia_chip_bg;
+  box-shadow: inset 0 -1px alpha(@harmonia_overlay, .45);
+  outline: none;
+}
+entry:hover, headerbar entry:hover { background: @harmonia_chip_hover_bg; }
+entry:focus-within, headerbar entry:focus-within {
+  background: @harmonia_bg;
+  border-color: alpha(@harmonia_overlay, .07);
+  box-shadow: inset 0 -2px @accent_bg_color;
+  outline: none;
+}
+
+/* Navigation pane. */
+.sidebar { background: @harmonia_sidebar_bg; border: none; padding: 4px 4px 12px; }
+/* The content layer's own outline replaces the pane separator. */
+.sidebar ~ separator.vertical { min-width: 0; margin: 0; opacity: 0; }
+.sidebar-brand { padding: 6px 12px 14px; }
+.sidebar-brand-title { font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif; font-size: 16px; font-weight: 600; }
+.sidebar-heading { padding: 18px 12px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: @harmonia_fg_dim; }
+.sidebar-item {
+  min-height: 36px;
+  margin: 1px 0;
+  padding: 0 12px;
+  border-radius: 4px;
+  color: @harmonia_fg;
+}
+.sidebar-item label { font-weight: 400; }
+.sidebar-item:hover { background-color: alpha(@harmonia_overlay, .06); }
+.sidebar-item:active { background-color: alpha(@harmonia_overlay, .04); color: @harmonia_fg_muted; }
+.sidebar-active, .sidebar-active:hover {
+  background-color: alpha(@harmonia_overlay, .06);
+  background-image: linear-gradient(@accent_bg_color, @accent_bg_color);
+  background-size: 3px 16px;
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  color: @harmonia_fg;
+}
+.sidebar-create { margin: 8px 4px 0; border-radius: 4px; }
+
+/* Content layer: lighter than Mica, outlined, rounded where it meets the
+   title bar and the navigation pane. */
+.sidebar ~ stack {
+  background: @harmonia_bg;
+  border-top-left-radius: 8px;
+  border-top: 1px solid alpha(@harmonia_shadow, .1);
+  border-left: 1px solid alpha(@harmonia_shadow, .1);
+}
+
+/* Buttons: 4px, filled, with a hairline stroke; accent buttons are filled
+   with the system accent. */
+button.app-action, row button:not(.flat), .sidebar-create, .genre-chip, dropdown > button,
+button.home-play-all {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid alpha(@harmonia_overlay, .07);
+  background-color: @harmonia_chip_bg;
+  background-image: none;
+  box-shadow: inset 0 -1px alpha(@harmonia_overlay, .05);
+  color: @harmonia_fg;
+  font-weight: 400;
+}
+button.app-action:hover, row button:not(.flat):hover, .sidebar-create:hover, .genre-chip:hover, dropdown > button:hover,
+button.home-play-all:hover {
+  background-color: @harmonia_chip_hover_bg;
+}
+button.app-action:active, row button:not(.flat):active, .sidebar-create:active, dropdown > button:active {
+  background-color: alpha(@harmonia_chip_bg, .6);
+  box-shadow: none;
+  color: @harmonia_fg_muted;
+}
+button.app-action-primary, button.app-action-accent, button.suggested-action, row button.suggested-action {
+  border-color: alpha(@harmonia_overlay, .08);
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  box-shadow: inset 0 -1px alpha(@harmonia_shadow, .14);
+}
+button.app-action-primary:hover, button.app-action-accent:hover, button.suggested-action:hover { background-color: alpha(@accent_bg_color, .9); }
+button.app-action-primary:active, button.app-action-accent:active, button.suggested-action:active {
+  background-color: alpha(@accent_bg_color, .8);
+  color: alpha(@accent_fg_color, .7);
+  box-shadow: none;
+}
+button.app-action-destructive { color: @harmonia_destructive_fg; }
+
+/* The play button keeps its round shape and takes the accent. */
+.app-media-play, .app-media-play:hover, .app-media-play:active {
+  border-radius: 9999px;
+  border: 1px solid alpha(@harmonia_overlay, .08);
+  background-color: @accent_bg_color;
+  background-image: none;
+  color: @accent_fg_color;
+  box-shadow: inset 0 -1px alpha(@harmonia_shadow, .14);
+}
+.app-media-play:hover { background-color: alpha(@accent_bg_color, .9); }
+.app-media-play:active { background-color: alpha(@accent_bg_color, .8); }
+
+/* Subtle (flat) buttons. */
+button.app-icon-button:hover, button.flat:hover { background: alpha(@harmonia_overlay, .06); }
+button.app-icon-button:active, button.flat:active { background: alpha(@harmonia_overlay, .04); }
+
+/* Selector bar: plain labels, the selected one bold over a short accent bar. */
+.segmented-control { background: transparent; border: none; padding: 0; }
+.segmented-control button {
+  border-radius: 4px;
+  background-color: transparent;
+  color: @harmonia_fg_muted;
+}
+.segmented-control button:hover { background-color: alpha(@harmonia_overlay, .06); color: @harmonia_fg; }
+.segmented-control button:checked, .segmented-control button:checked:hover {
+  background-color: transparent;
+  background-image: linear-gradient(@accent_bg_color, @accent_bg_color);
+  background-size: 16px 3px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
+  color: @harmonia_fg;
+  font-weight: 600;
+}
+
+/* Cards and lists. */
+list.boxed-list {
+  border-radius: 8px;
+  background: @harmonia_chip_bg;
+  box-shadow: 0 0 0 1px alpha(@harmonia_shadow, .1);
+}
+list.boxed-list > row { min-height: 52px; }
+list.boxed-list > row:not(:last-child) { border-bottom: 1px solid alpha(@harmonia_shadow, .18); }
+.media-row, .song-row, .detail-track-row, .home-song-row { border-radius: 4px; }
+.square-cover, .player-cover, .row-cover { border-radius: 4px; }
+.media-card-button { border-radius: 8px; }
+
+/* Flyouts, menus, tooltips and toasts. */
+popover.background > contents, popover.menu > contents {
+  border-radius: 8px;
+  border: 1px solid alpha(@harmonia_shadow, .2);
+  background-color: @harmonia_chip_bg;
+  box-shadow: 0 8px 16px alpha(#000000, .26);
+}
+popover.item-menu > contents { padding: 4px 0; border-radius: 8px; }
+.item-menu-list .app-menu-action,
+.icons-material .item-menu-list .app-menu-action { min-height: 32px; margin: 0 4px; padding: 0 12px; border-radius: 4px; }
+.item-menu-list .app-menu-action > box { border-spacing: 12px; }
+.item-menu-list .app-menu-action image { -gtk-icon-size: 16px; }
+.item-menu-list .app-menu-action:hover { background: alpha(@harmonia_overlay, .06); }
+tooltip.background {
+  border-radius: 4px;
+  border: 1px solid alpha(@harmonia_shadow, .2);
+  background-color: @harmonia_chip_bg;
+  color: @harmonia_fg;
+  box-shadow: 0 4px 8px alpha(#000000, .14);
+}
+toast {
+  border-radius: 8px;
+  border: 1px solid alpha(@harmonia_shadow, .2);
+  background-color: @harmonia_chip_bg;
+  color: @harmonia_fg;
+  box-shadow: 0 8px 16px alpha(#000000, .26);
+}
+
+/* Slider: a 4px track filled with the accent and a ringed round thumb. */
+scale trough {
+  min-height: 4px;
+  border: none;
+  border-radius: 2px;
+  background-color: alpha(@harmonia_overlay, .45);
+  background-image: none;
+  box-shadow: none;
+}
+scale highlight {
+  border-radius: 2px;
+  background-color: @accent_bg_color;
+  background-image: none;
+  box-shadow: none;
+}
+scale fill { background-color: alpha(@harmonia_overlay, .25); }
+scale slider {
+  min-width: 20px;
+  min-height: 20px;
+  margin: -8px;
+  border: none;
+  border-radius: 9999px;
+  background-color: @harmonia_chip_hover_bg;
+  background-image: radial-gradient(circle closest-side, @accent_bg_color 58%, transparent 64%);
+  box-shadow: 0 0 0 1px alpha(@harmonia_shadow, .12), 0 1px 2px alpha(#000000, .2);
+  transform: none;
+}
+scale slider:hover { background-image: radial-gradient(circle closest-side, @accent_bg_color 70%, transparent 76%); transform: none; }
+scale slider:active { background-image: radial-gradient(circle closest-side, @accent_bg_color 50%, transparent 56%); }
+
+/* Toggle switch: an outlined pill with a small knob; on, it fills with the
+   accent and the knob takes the text-on-accent colour. */
+switch {
+  border-radius: 9999px;
+  border: 1px solid alpha(@harmonia_overlay, .6);
+  padding: 2px;
+  background-color: alpha(@harmonia_overlay, .03);
+  box-shadow: none;
+}
+switch:hover { background-color: alpha(@harmonia_overlay, .06); }
+switch slider {
+  min-width: 12px;
+  min-height: 12px;
+  margin: 2px;
+  border-radius: 9999px;
+  background-color: alpha(@harmonia_fg, .8);
+  box-shadow: none;
+}
+switch:checked { border-color: @accent_bg_color; background-color: @accent_bg_color; }
+switch:checked slider { background-color: @accent_fg_color; }
+
+/* Check boxes and radios. */
+check, radio { border: 1px solid alpha(@harmonia_overlay, .6); background-color: alpha(@harmonia_overlay, .03); box-shadow: none; }
+check { border-radius: 4px; }
+check:checked, radio:checked { border-color: @accent_bg_color; background-color: @accent_bg_color; color: @accent_fg_color; }
+
+/* Progress bar: a hairline track under a 3px accent bar. */
+progressbar trough { min-height: 3px; border-radius: 2px; background-color: alpha(@harmonia_overlay, .25); }
+progressbar progress { min-height: 3px; border-radius: 2px; background-color: @accent_bg_color; }
+
+/* Player bar on Mica, separated from the content by a hairline. */
+.player-bar { background: @harmonia_sidebar_bg; border-top: 1px solid alpha(@harmonia_shadow, .1); }
+
+/* Type ramp: Segoe UI Variable Display, semibold, for titles. */
+.hero-title, .section-title, .artist-title, .detail-title, .expanded-title,
+.lyrics-title, .expanded-lyrics-title, .expanded-related-title, .title-1, .title-2, .title-3, .title-4 {
+  font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.hero-title { font-size: 28px; }
+.section-title { font-size: 20px; }
+window { font-size: 10.5pt; }
