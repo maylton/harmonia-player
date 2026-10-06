@@ -16,6 +16,17 @@ Copyright Google LLC. Licensed under the Apache License, Version 2.0. You may
 obtain a copy of the license at:
 https://www.apache.org/licenses/LICENSE-2.0
 
+## Fluent UI System Icons
+
+- Project: Fluent UI System Icons by Microsoft
+- Source: https://github.com/microsoft/fluentui-system-icons
+- Retrieved through: https://api.iconify.design
+- License: MIT (`licenses/Fluent-UI-System-Icons-MIT.txt`)
+- Used by: Harmonia Fluent icon theme (`src/harmonia/icons/HarmoniaFluent`),
+  the system icons on Windows
+
+Copyright (c) 2020 Microsoft Corporation.
+
 ## elementary icons
 
 - Project: elementary icons

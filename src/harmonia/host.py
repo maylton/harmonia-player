@@ -22,6 +22,11 @@ LOGIN_MODULE = "auth_webview2" if IS_WINDOWS else "auth" if IS_LINUX else ""
 INTEGRATED_LOGIN = bool(LOGIN_MODULE)
 # MPRIS media controls are exported on the D-Bus session bus.
 MPRIS = IS_LINUX
+# Windows has no GTK icon theme of its own; its icons are Microsoft's Fluent
+# System Icons, which Harmonia bundles. Elsewhere the desktop's theme is used.
+SYSTEM_ICON_THEME = "HarmoniaFluent" if IS_WINDOWS else ""
+# Mica and Acrylic window materials (DWM on Windows 11).
+WINDOW_BACKDROPS = IS_WINDOWS
 
 DISCORD_IPC_SLOTS = 10
 SINGLE_INSTANCE_NAME = r"Local\io.github.harmonia.Harmonia"

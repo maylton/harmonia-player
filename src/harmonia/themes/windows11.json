@@ -6,6 +6,19 @@
   "default_variant": "system",
   "restyle_adwaita": true,
   "system_accent": true,
+  "backdrop": true,
+  "translucent": {
+    "dark": {
+      "bg": "rgba(58, 58, 58, 0.3)",
+      "sidebar_bg": "transparent",
+      "headerbar_bg": "transparent"
+    },
+    "light": {
+      "bg": "rgba(255, 255, 255, 0.5)",
+      "sidebar_bg": "transparent",
+      "headerbar_bg": "transparent"
+    }
+  },
   "font_family": "Segoe UI Variable Text",
   "corner_scale": 0.5,
   "accent": {

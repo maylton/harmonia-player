@@ -49,15 +49,25 @@ class GtkThemeController:
         self.theme: Theme = get_theme(DEFAULT_THEME)
         self.variant = "theme"
         self.accent = "theme"
+        self.translucent = False
         self._rendered: tuple | None = None
         self.style_manager.connect("notify::dark", lambda *_: self._render())
         # Fires when the desktop accent changes (Windows reports it to libadwaita).
         self.style_manager.connect("notify::accent-color", lambda *_: self._render())
 
-    def apply(self, theme_id: str, variant: str = "theme", accent: str = "theme") -> None:
+    def apply(
+        self,
+        theme_id: str,
+        variant: str = "theme",
+        accent: str = "theme",
+        *,
+        translucent: bool = False,
+    ) -> None:
+        """``translucent``: a window material (Mica, Acrylic) is behind the windows."""
         self.theme = get_theme(theme_id)
         self.variant = variant
         self.accent = accent
+        self.translucent = translucent and self.theme.backdrop
         scheme = self.theme.color_scheme(variant)
         self.style_manager.set_color_scheme(COLOR_SCHEMES[scheme])
         self._render()
@@ -72,6 +82,8 @@ class GtkThemeController:
         key = (self.theme.id, dark, self.accent)
         if system_accent:
             key += (system_accent["accent_bg"],)
+        if self.translucent:
+            key += ("translucent",)
         if key == self._rendered:
             return
         css = render_gtk_css(
@@ -81,6 +93,7 @@ class GtkThemeController:
             css_variables=supports_css_variables(),
             accent=self.accent,
             system_accent=system_accent,
+            translucent=self.translucent,
         )
         if hasattr(self.provider, "load_from_string"):
             self.provider.load_from_string(css)

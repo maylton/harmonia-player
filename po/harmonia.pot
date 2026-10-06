@@ -2298,6 +2298,30 @@ msgstr ""
 msgid "Usa as cores da capa atual atrás da interface"
 msgstr ""
 
+#: src/harmonia/window_preferences.py:491
+msgid "Efeito de fundo"
+msgstr ""
+
+#: src/harmonia/window_preferences.py:493
+msgid "Mica"
+msgstr ""
+
+#: src/harmonia/window_preferences.py:494
+msgid "Acrílico (fosco)"
+msgstr ""
+
+#: src/harmonia/window_preferences.py:495
+msgid "Nenhum"
+msgstr ""
+
+#: src/harmonia/window_preferences.py:501
+msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
+msgstr ""
+
+#: src/harmonia/window_preferences.py:510
+msgid "Windows — ícones Fluent"
+msgstr ""
+
 #: src/harmonia/window_preferences.py:460
 msgid "Estilo dos ícones"
 msgstr ""

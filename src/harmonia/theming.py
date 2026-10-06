@@ -66,6 +66,12 @@ ADWAITA_SURFACES = {
     "dialog_bg_color": "bg",
     "dialog_fg_color": "fg",
 }
+# Floating surfaces get no window material behind them, so they keep the
+# opaque palette even when the window itself is translucent.
+OPAQUE_SURFACES = ("popover_bg_color", "dialog_bg_color")
+TRANSLUCENT_VALUE = re.compile(
+    r"#[0-9a-f]{6}|transparent|rgba\(\s*\d+,\s*\d+,\s*\d+,\s*[0-9.]+\s*\)"
+)
 ADWAITA_ACCENT = {
     "accent_bg_color": "accent_bg",
     "accent_fg_color": "accent_fg",
@@ -168,6 +174,10 @@ class Theme:
     stylesheet: str = ""  # optional structural layer in themes/, applied after style.css
     platforms: tuple[str, ...] = ()  # empty: offered everywhere
     system_accent: bool = False  # follow the desktop's exact accent palette when known
+    # A window material (Mica, Acrylic) may sit behind the window; "translucent"
+    # holds the tokens that turn see-through while it does, per variant.
+    backdrop: bool = False
+    translucent: dict[str, dict[str, str]] = field(default_factory=dict)
 
     @property
     def available(self) -> bool:
@@ -189,6 +199,8 @@ class Theme:
                 stylesheet=str(data.get("stylesheet", "")),
                 platforms=tuple(str(name) for name in data.get("platforms", ())),
                 system_accent=bool(data.get("system_accent", False)),
+                backdrop=bool(data.get("backdrop", False)),
+                translucent={k: dict(v) for k, v in data.get("translucent", {}).items()},
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ThemeError(f"tema inválido: {exc}") from exc
@@ -218,9 +230,20 @@ class Theme:
             raise ThemeError(f"{self.id}: corner_scale fora de 0 a 2")
         if set(self.platforms) - set(PLATFORMS):
             raise ThemeError(f"{self.id}: plataformas válidas são {PLATFORMS}")
+        if self.translucent and not self.backdrop:
+            raise ThemeError(f"{self.id}: translucent exige backdrop")
+        for variant, colors in self.translucent.items():
+            if variant not in self.palettes or set(colors) - set(TOKENS):
+                raise ThemeError(f"{self.id}/{variant}: tokens translúcidos inválidos")
+            if not all(TRANSLUCENT_VALUE.fullmatch(value) for value in colors.values()):
+                raise ThemeError(f"{self.id}/{variant}: cor translúcida inválida")
 
-    def palette(self, dark: bool) -> dict[str, str]:
-        return self.palettes["dark" if dark else "light"]
+    def palette(self, dark: bool, *, translucent: bool = False) -> dict[str, str]:
+        variant = "dark" if dark else "light"
+        palette = self.palettes[variant]
+        if translucent and self.backdrop:
+            return palette | self.translucent.get(variant, {})
+        return palette
 
     def color_scheme(self, variant: str) -> str:
         """Resolve a user variant preference to 'system', 'light' or 'dark'."""
@@ -285,6 +308,7 @@ def render_gtk_css(
     css_variables: bool,
     accent: str = "theme",
     system_accent: dict[str, str] | None = None,
+    translucent: bool = False,
 ) -> str:
     """Return the full stylesheet for ``theme``.
 
@@ -292,14 +316,18 @@ def render_gtk_css(
     with libadwaita 1.6+ reads CSS custom properties, older versions read
     @define-color named colours. ``system_accent`` replaces the theme's own
     accent when the theme follows the desktop accent and none was chosen.
+    ``translucent`` is set while a window material sits behind the window.
     """
-    palette = theme.palette(dark)
+    solid = theme.palette(dark)
+    palette = theme.palette(dark, translucent=translucent)
     lines = [f"/* Harmonia theme: {theme.id} ({'dark' if dark else 'light'}) */"]
     lines += [f"@define-color harmonia_{token} {palette[token]};" for token in TOKENS]
 
     overrides: dict[str, str] = {}
     if theme.restyle_adwaita:
         overrides |= {name: f"@harmonia_{token}" for name, token in ADWAITA_SURFACES.items()}
+        if palette != solid:
+            overrides |= {name: solid[ADWAITA_SURFACES[name]] for name in OPAQUE_SURFACES}
     accent_colors = (
         accent_preset(accent, dark=dark)
         or (system_accent if theme.system_accent else None)
