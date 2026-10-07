@@ -741,6 +741,8 @@ class HarmoniaWindow(
         shade.set_can_target(False)
         shade.add_css_class("expanded-backdrop-shade")
         surface.add_overlay(shade)
+        self.expanded_surface = surface
+        self.expanded_backdrop_shade = shade
 
         shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
         shell.add_css_class("expanded-shell")

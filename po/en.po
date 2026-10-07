@@ -2327,6 +2327,14 @@ msgstr "None"
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr "Windows 11 transparency behind the window, in the Windows 11 theme"
 
+#: src/harmonia/window_preferences.py:580
+msgid "Capa desfocada no player expandido"
+msgstr "Blurred cover in the expanded player"
+
+#: src/harmonia/window_preferences.py:581
+msgid "Desligada, o player expandido mostra o efeito de fundo"
+msgstr "When off, the expanded player shows the background effect"
+
 #: src/harmonia/window_preferences.py:510
 msgid "Windows — ícones Fluent"
 msgstr "Windows — Fluent icons"

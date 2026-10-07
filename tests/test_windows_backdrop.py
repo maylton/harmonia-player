@@ -288,6 +288,82 @@ def test_windows_material_replaces_the_cover_on_detail_pages():
     assert "popover.background.harmonia-backdrop-popover" in css
 
 
+def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
+    from harmonia.preferences import Preferences
+    from harmonia.window_preferences import WindowPreferencesMixin
+
+    class Widget:
+        def __init__(self):
+            self.visible, self.opacity, self.classes, self.handlers = True, 1.0, set(), {}
+
+        def set_visible(self, value):
+            self.visible = value
+
+        def set_opacity(self, value):
+            self.opacity = value
+
+        def add_css_class(self, name):
+            self.classes.add(name)
+
+        def remove_css_class(self, name):
+            self.classes.discard(name)
+
+        def has_css_class(self, name):
+            return name in self.classes
+
+        def connect(self, signal, callback):
+            self.handlers[signal] = callback
+
+    class Revealer(Widget):
+        reveal = revealed = False
+
+        def get_reveal_child(self):
+            return self.reveal
+
+        def get_child_revealed(self):
+            return self.revealed
+
+    class Style(Widget):
+        def get_dark(self):
+            return True
+
+    class WindowStub(WindowPreferencesMixin):
+        def __init__(self):
+            self.preferences = Preferences(theme="windows11")
+            self.expanded_surface = Widget()
+            self.expanded_backdrop_base = Widget()
+            self.expanded_backdrop = Widget()
+            self.expanded_backdrop_shade = Widget()
+            self.expanded_revealer = Revealer()
+            self.root = Widget()
+            self.ambient_background = Widget()
+
+    monkeypatch.setattr(host, "WINDOW_BACKDROPS", True)
+    monkeypatch.setattr("harmonia.window_preferences.Adw.StyleManager.get_default", Style)
+    window = WindowStub()
+    window._apply_expanded_material(True)
+    assert not window.expanded_backdrop.visible
+    assert "expanded-material" in window.expanded_surface.classes
+
+    # Sliding in: still opaque over the pages.
+    window.expanded_revealer.reveal = True
+    window._update_expanded_reveal()
+    assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
+    # Revealed: the pages are hidden and only the material shows.
+    window.expanded_revealer.revealed = True
+    window._update_expanded_reveal()
+    assert window.root.opacity == 0 and "expanded-revealed" in window.expanded_surface.classes
+    # Hiding: opaque again at once.
+    window.expanded_revealer.reveal = False
+    window._update_expanded_reveal()
+    assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
+
+    window.preferences.expanded_cover = True
+    window._apply_expanded_material(True)
+    assert window.expanded_backdrop.visible
+    assert "expanded-material" not in window.expanded_surface.classes
+
+
 def test_material_names_match_the_preference_values():
     from harmonia.preferences import Preferences
     from harmonia.windows_backdrop import BACKDROPS
