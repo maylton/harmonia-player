@@ -111,7 +111,9 @@ SWP_REFRESH_FRAME = (
     0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020
 )  # no move/size/z/activate + framechanged
 
-_SUBCLASS_PROC = ctypes.WINFUNCTYPE(
+# WINFUNCTYPE (stdcall) only exists on Windows; elsewhere the module is only
+# imported for its constants and pure helpers and never calls Win32.
+_SUBCLASS_PROC = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)(
     ctypes.c_ssize_t,  # LRESULT
     wintypes.HWND,
     wintypes.UINT,
