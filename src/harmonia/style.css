@@ -708,3 +708,6 @@ menubutton.app-icon-button > button:checked {
 /* Clickable artist and album names keep the subtitle colour; GTK shows the
    pointer cursor and a "Ir para…" tooltip over them. */
 .credits link, .credits link:visited { color: inherit; text-decoration-line: none; }
+/* Backdrops whose artwork was blurred ahead of time (blur_textures.py, used
+   when GTK renders in software) must not be blurred again on every frame. */
+picture.prerendered-blur { filter: none; }
