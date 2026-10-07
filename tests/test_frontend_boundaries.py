@@ -19,7 +19,8 @@ QT_MODULES = (
 SHARED_MODULES = (
     "models.py",
     "services.py",
-    "storage.py",
+    "storage",
+    "innertube",
     "preferences.py",
     "downloads.py",
     "lyrics.py",
@@ -31,6 +32,9 @@ SHARED_MODULES = (
 
 
 def _source(path: Path) -> str:
+    """A module's source, or every module of a package."""
+    if path.is_dir():
+        return "\n".join(_source(module) for module in sorted(path.rglob("*.py")))
     return path.read_text(encoding="utf-8")
 
 
