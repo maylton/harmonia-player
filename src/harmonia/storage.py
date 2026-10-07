@@ -32,6 +32,8 @@ from .models import (
 from .secrets import SessionSecret
 
 LOGGER = logging.getLogger(__name__)
+# Columns of every table that stores a LibraryItem, in _item_values order.
+ITEM_COLUMNS = "item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id"
 
 
 class Storage:
@@ -206,11 +208,10 @@ class Storage:
 
     def clear_cache(self) -> int:
         removed = 0
-        for directory in (self.artwork_dir,):
-            for path in directory.iterdir():
-                if path.is_file():
-                    removed += path.stat().st_size
-                    path.unlink(missing_ok=True)
+        for path in self.artwork_dir.iterdir():
+            if path.is_file():
+                removed += path.stat().st_size
+                path.unlink(missing_ok=True)
         return removed
 
     def save_library(self, sections: dict[str, list[LibraryItem]]) -> None:
@@ -219,22 +220,11 @@ class Storage:
             for category, items in sections.items():
                 db.execute("DELETE FROM library_items WHERE category = ?", (category,))
                 db.executemany(
-                    """INSERT INTO library_items
-                    (category,item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,position,synced_at)
+                    f"""INSERT INTO library_items
+                    (category,{ITEM_COLUMNS},position,synced_at)
                     VALUES (?,?,?,?,?,?,?,?,?,?)""",
                     [
-                        (
-                            category,
-                            item.id,
-                            item.title,
-                            item.subtitle,
-                            item.thumbnail,
-                            item.kind,
-                            item.playlist_id,
-                            item.set_video_id,
-                            position,
-                            now,
-                        )
+                        (category, *self._item_values(item), position, now)
                         for position, item in enumerate(items)
                     ],
                 )
@@ -244,17 +234,7 @@ class Storage:
         with self._connect() as db:
             rows = db.execute("SELECT * FROM library_items ORDER BY category, position").fetchall()
         for row in rows:
-            result.setdefault(row["category"], []).append(
-                LibraryItem(
-                    row["item_id"],
-                    row["title"],
-                    row["subtitle"],
-                    row["thumbnail"],
-                    row["kind"],
-                    row["playlist_id"],
-                    row["set_video_id"],
-                )
-            )
+            result.setdefault(row["category"], []).append(self._item_from_row(row))
         return result
 
     def log_action(
@@ -266,73 +246,41 @@ class Storage:
                 (action, target_id, status, error, int(time.time())),
             )
 
+    def _save_sections(
+        self, db: sqlite3.Connection, table: str, sections: list[HomeSection], now: int
+    ) -> None:
+        """Rows of ``home_items`` or ``explore_items``: one per item, by section."""
+        for section_position, section in enumerate(sections):
+            db.executemany(
+                f"""INSERT INTO {table}
+                (section_position,section_title,item_position,{ITEM_COLUMNS},synced_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                [
+                    (section_position, section.title, item_position, *self._item_values(item), now)
+                    for item_position, item in enumerate(section.items)
+                ],
+            )
+
+    def _sections_from_rows(self, rows: list[sqlite3.Row]) -> list[HomeSection]:
+        sections: dict[int, HomeSection] = {}
+        for row in rows:
+            section = sections.setdefault(
+                row["section_position"], HomeSection(row["section_title"], [])
+            )
+            section.items.append(self._item_from_row(row))
+        return list(sections.values())
+
     def save_home(self, sections: list[HomeSection]) -> None:
-        now = int(time.time())
         with self._connect() as db:
             db.execute("DELETE FROM home_items")
-            for section_position, section in enumerate(sections):
-                db.executemany(
-                    """INSERT INTO home_items
-                    (section_position,section_title,item_position,item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,synced_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                    [
-                        (
-                            section_position,
-                            section.title,
-                            item_position,
-                            item.id,
-                            item.title,
-                            item.subtitle,
-                            item.thumbnail,
-                            item.kind,
-                            item.playlist_id,
-                            item.set_video_id,
-                            now,
-                        )
-                        for item_position, item in enumerate(section.items)
-                    ],
-                )
+            self._save_sections(db, "home_items", sections, int(time.time()))
 
     def load_home(self) -> list[HomeSection]:
         with self._connect() as db:
             rows = db.execute(
                 "SELECT * FROM home_items ORDER BY section_position,item_position"
             ).fetchall()
-        sections: dict[int, HomeSection] = {}
-        for row in rows:
-            section = sections.setdefault(
-                row["section_position"], HomeSection(row["section_title"], [])
-            )
-            section.items.append(
-                LibraryItem(
-                    row["item_id"],
-                    row["title"],
-                    row["subtitle"],
-                    row["thumbnail"],
-                    row["kind"],
-                    row["playlist_id"],
-                    row["set_video_id"],
-                )
-            )
-        return list(sections.values())
-
-    def load_lyrics(self, video_id: str) -> tuple[str, str] | None:
-        with self._connect() as db:
-            row = db.execute(
-                "SELECT lyrics, provider FROM lyrics WHERE video_id = ?", (video_id,)
-            ).fetchone()
-        return (row["lyrics"], row["provider"]) if row else None
-
-    def save_lyrics(self, video_id: str, lyrics: str, provider: str = "YouTube Music") -> None:
-        if not video_id or not lyrics.strip():
-            return
-        with self._connect() as db:
-            db.execute(
-                """INSERT INTO lyrics(video_id, lyrics, provider, updated_at) VALUES(?,?,?,?)
-                   ON CONFLICT(video_id) DO UPDATE SET lyrics=excluded.lyrics,
-                   provider=excluded.provider, updated_at=excluded.updated_at""",
-                (video_id, lyrics.strip(), provider, int(time.time())),
-            )
+        return self._sections_from_rows(rows)
 
     def load_lyrics_document(self, video_id: str, provider: str = "auto") -> LyricsDocument | None:
         with self._connect() as db:
@@ -349,6 +297,15 @@ class Storage:
                     "SELECT * FROM lyrics_documents WHERE video_id = ? AND provider = ?",
                     (video_id, provider_name),
                 ).fetchone()
+            # The plain "lyrics" table is the cache of Harmonia versions before
+            # lyrics documents; it only ever held YouTube Music lyrics.
+            legacy = (
+                db.execute(
+                    "SELECT lyrics, provider FROM lyrics WHERE video_id = ?", (video_id,)
+                ).fetchone()
+                if row is None and provider == "youtube"
+                else None
+            )
         if row:
             try:
                 lines = [LyricLine(**entry) for entry in json.loads(row["synced_lyrics"])]
@@ -361,10 +318,8 @@ class Storage:
                 row["translated_lyrics"],
                 row["translation_language"],
             )
-        # Transparently promote the cache created by older Harmonia versions.
-        legacy = self.load_lyrics(video_id)
-        if legacy and provider == "youtube":
-            return LyricsDocument(legacy[0], legacy[1])
+        if legacy:
+            return LyricsDocument(legacy["lyrics"], legacy["provider"])
         return None
 
     def save_lyrics_document(self, video_id: str, document: LyricsDocument) -> None:
@@ -395,36 +350,13 @@ class Storage:
                     int(time.time()),
                 ),
             )
-        # Preserve compatibility with consumers of the original cache API.
-        self.save_lyrics(video_id, document.display_text, document.provider)
 
     def save_explore(self, data: ExploreData) -> None:
         now = int(time.time())
         with self._connect() as db:
             db.execute("DELETE FROM explore_items")
             db.execute("DELETE FROM explore_destinations")
-            for section_position, section in enumerate(data.sections):
-                db.executemany(
-                    """INSERT INTO explore_items
-                    (section_position,section_title,item_position,item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,synced_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                    [
-                        (
-                            section_position,
-                            section.title,
-                            item_position,
-                            item.id,
-                            item.title,
-                            item.subtitle,
-                            item.thumbnail,
-                            item.kind,
-                            item.playlist_id,
-                            item.set_video_id,
-                            now,
-                        )
-                        for item_position, item in enumerate(section.items)
-                    ],
-                )
+            self._save_sections(db, "explore_items", data.sections, now)
             for group, destinations in (("shortcuts", data.shortcuts), ("genres", data.genres)):
                 db.executemany(
                     """INSERT INTO explore_destinations
@@ -443,28 +375,14 @@ class Storage:
             destination_rows = db.execute(
                 "SELECT * FROM explore_destinations ORDER BY destination_group,position"
             ).fetchall()
-        sections: dict[int, HomeSection] = {}
-        for row in item_rows:
-            section = sections.setdefault(
-                row["section_position"], HomeSection(row["section_title"], [])
-            )
-            section.items.append(
-                LibraryItem(
-                    row["item_id"],
-                    row["title"],
-                    row["subtitle"],
-                    row["thumbnail"],
-                    row["kind"],
-                    row["playlist_id"],
-                    row["set_video_id"],
-                )
-            )
         groups: dict[str, list[ExploreDestination]] = {"shortcuts": [], "genres": []}
         for row in destination_rows:
             groups[row["destination_group"]].append(
                 ExploreDestination(row["title"], row["browse_id"], row["params"])
             )
-        return ExploreData(list(sections.values()), groups["shortcuts"], groups["genres"])
+        return ExploreData(
+            self._sections_from_rows(item_rows), groups["shortcuts"], groups["genres"]
+        )
 
     def artwork_path(self, url: str) -> Path:
         return self.artwork_dir / hashlib.sha256(url.encode()).hexdigest()
@@ -482,14 +400,14 @@ class Storage:
         )
 
     @staticmethod
-    def _item_from_row(row: sqlite3.Row) -> LibraryItem:
+    def _item_from_row(row: sqlite3.Row, playlist_column: str = "playlist_id") -> LibraryItem:
         return LibraryItem(
             row["item_id"],
             row["title"],
             row["subtitle"],
             row["thumbnail"],
             row["kind"],
-            row["playlist_id"],
+            row[playlist_column],
             row["set_video_id"],
         )
 
@@ -498,8 +416,8 @@ class Storage:
             db.execute("DELETE FROM playback_queue")
             for queue_group, items in (("queue", state.queue), ("related", state.related)):
                 db.executemany(
-                    """INSERT INTO playback_queue
-                    (queue_group,position,item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id)
+                    f"""INSERT INTO playback_queue
+                    (queue_group,position,{ITEM_COLUMNS})
                     VALUES (?,?,?,?,?,?,?,?,?)""",
                     [
                         (queue_group, position, *self._item_values(item))
@@ -569,8 +487,8 @@ class Storage:
             return None
         with self._connect() as db:
             cursor = db.execute(
-                """INSERT INTO play_history
-                (item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,played_at,position_ms)
+                f"""INSERT INTO play_history
+                ({ITEM_COLUMNS},played_at,position_ms)
                 VALUES (?,?,?,?,?,?,?,?,?)""",
                 (*self._item_values(item), int(time.time()), max(0, position_ms)),
             )
@@ -667,8 +585,8 @@ class Storage:
     def save_download(self, record: DownloadRecord) -> None:
         with self._connect() as db:
             db.execute(
-                """INSERT INTO downloads
-                (item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,status,file_path,
+                f"""INSERT INTO downloads
+                ({ITEM_COLUMNS},status,file_path,
                  downloaded_bytes,total_bytes,account_hash,error,updated_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(item_id) DO UPDATE SET
                 title=excluded.title, subtitle=excluded.subtitle, thumbnail=excluded.thumbnail,
@@ -813,15 +731,7 @@ class Storage:
         grouped: dict[int, list[LibraryItem]] = {}
         for row in items:
             grouped.setdefault(row["playlist_id"], []).append(
-                LibraryItem(
-                    row["item_id"],
-                    row["title"],
-                    row["subtitle"],
-                    row["thumbnail"],
-                    row["kind"],
-                    row["remote_playlist_id"],
-                    row["set_video_id"],
-                )
+                self._item_from_row(row, "remote_playlist_id")
             )
         return [
             LocalPlaylist(
