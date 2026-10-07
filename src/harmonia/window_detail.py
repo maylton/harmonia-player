@@ -19,6 +19,7 @@ from .models import (
     ArtistSection,
     LibraryItem,
 )
+from .track_rows import TRACK_COVER_SIZE, DetailTrackRow
 from .ui import (
     CreditsLabel,
     action_button,
@@ -30,16 +31,11 @@ from .ui import (
     page_shell,
     section_link,
     set_action_role,
-    set_css_class,
     set_icon_selected,
     style_icon_button,
-    track_byline,
 )
 
 LOGGER = logging.getLogger(__name__)
-
-
-TRACK_COVER_SIZE = 40
 
 
 def radio_queue(seed: LibraryItem, items: list[LibraryItem]) -> list[LibraryItem]:
@@ -667,147 +663,13 @@ class WindowDetailMixin:
         track: LibraryItem,
         index: int,
     ) -> Gtk.Widget:
-        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        row.add_css_class("detail-track-row")
-        row.add_css_class("media-row")
-        row.add_css_class("media-row-detailed")
-        row.set_cursor_from_name("pointer")
-
-        leading = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-        leading.set_size_request(36, 36)
-        number = Gtk.Label(label=str(index), width_chars=3, xalign=1)
-        number.add_css_class("detail-track-number")
-        leading.add_named(number, "number")
-        active_icon = Gtk.Image.new_from_icon_name("audio-volume-high-symbolic")
-        active_icon.add_css_class("detail-track-accent")
-        leading.add_named(active_icon, "active")
-        play = Gtk.Button(
-            icon_name="media-playback-start-symbolic",
-            tooltip_text=_("Reproduzir {title}").format(title=track.title),
-        )
-        style_icon_button(play, "sm")
-        play.add_css_class("detail-track-play")
-        leading.add_named(play, "play")
-        row.append(leading)
-
-        artwork = track if track.thumbnail else replace(track, thumbnail=collection.thumbnail)
-        cover = self._square_cover(artwork, size=TRACK_COVER_SIZE, fixed=True)
-        cover.add_css_class("detail-track-cover")
-        cover.set_valign(Gtk.Align.CENTER)
-        row.append(cover)
-
-        text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, valign=Gtk.Align.CENTER)
-        title = Gtk.Label(label=track.title, xalign=0, ellipsize=3)
-        title.add_css_class("detail-track-title")
-        text.append(title)
-        byline = track_byline(track)
-        if byline:
-            subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
-            subtitle.show_item(track, byline)
-            subtitle.add_css_class("detail-track-subtitle")
-            text.append(subtitle)
-        row.append(text)
-
-        liked_ids = {song.id for song in self.sections.get("songs", [])}
-        liked = track.id in liked_ids
-        like = Gtk.Button(
-            icon_name="starred-symbolic" if liked else "non-starred-symbolic",
-            tooltip_text=_("Remover das músicas curtidas") if liked else _("Curtir música"),
-        )
-        style_icon_button(like, "sm")
-        like.add_css_class("detail-track-action")
-        if liked:
-            like.add_css_class("detail-track-accent")
-        row.append(like)
-
-        duration = Gtk.Label(label=self._duration_text(track), width_chars=6, xalign=1)
-        duration.add_css_class("detail-track-duration")
-        row.append(duration)
-
-        options = Gtk.MenuButton(icon_name="view-more-symbolic", tooltip_text=_("Opções da faixa"))
-        style_icon_button(options, "sm")
-        options.add_css_class("detail-track-action")
-        popover = Gtk.Popover(has_arrow=False)
-        popover.add_css_class("item-menu")
-        options.set_popover(popover)
-        # Built when opened, so the offline state is always current.
-        options.set_create_popup_func(
-            lambda _button: popover.set_child(self._track_menu(collection, track, popover))
-        )
-        row.append(options)
-
-        state = {
-            "row": row,
-            "track": track,
-            "source": source,
-            "leading": leading,
-            "play": play,
-            "title": title,
-            "like": like,
-            "liked": liked,
-            "duration": duration,
-            "options": options,
-            "hovered": False,
-        }
-        self.detail_track_rows.append(state)
-
-        play.connect("clicked", lambda *_: self._activate_detail_track(state))
-        like.connect("clicked", lambda *_: self._toggle_detail_track_like(state))
-        options.connect("notify::active", lambda *_: self._update_detail_track_row(state))
-        motion = Gtk.EventControllerMotion()
-        motion.connect("enter", lambda *_: self._set_detail_track_hover(state, True))
-        motion.connect("leave", lambda *_: self._set_detail_track_hover(state, False))
-        row.add_controller(motion)
-        secondary = Gtk.GestureClick(button=3)
-        secondary.connect("pressed", lambda *_: options.popup())
-        row.add_controller(secondary)
-        click = Gtk.GestureClick(button=1)
-        click.connect(
-            "released", lambda _gesture, _press, _x, _y: self._activate_detail_track(state)
-        )
-        row.add_controller(click)
-        self._update_detail_track_row(state)
-        return row
-
-    def _set_detail_track_hover(self, state: dict, hovered: bool) -> None:
-        state["hovered"] = hovered
-        self._update_detail_track_row(state)
-
-    def _activate_detail_track(self, state: dict) -> None:
-        self.play_or_toggle(state["track"], state["source"])
-
-    def _toggle_detail_track_like(self, state: dict) -> None:
-        state["liked"] = not state["liked"]
-        self._update_detail_track_row(state)
-        self._toggle_song(state["track"], state["liked"])
-
-    def _update_detail_track_row(self, state: dict) -> None:
-        active = self.is_current_track(state["track"])
-        playing = active and self._playback_is_playing()
-        hovered = state["hovered"]
-        set_css_class(state["row"], "detail-track-current", active)
-        set_css_class(state["title"], "detail-track-accent", active)
-        set_css_class(state["duration"], "detail-track-accent", active)
-        state["leading"].set_visible_child_name(
-            "play" if hovered else ("active" if active else "number")
-        )
-        state["play"].set_icon_name(
-            "media-playback-pause-symbolic" if playing else "media-playback-start-symbolic"
-        )
-        state["like"].set_icon_name(
-            "starred-symbolic" if state["liked"] else "non-starred-symbolic"
-        )
-        set_css_class(state["like"], "detail-track-accent", state["liked"])
-        show_like = hovered or state["liked"]
-        emphasized = hovered or state["options"].get_active()
-        state["like"].set_opacity(1.0 if show_like else 0.0)
-        state["like"].set_can_target(show_like)
-        # Always reachable so the menu is discoverable without hovering.
-        state["options"].set_opacity(1.0 if emphasized else 0.55)
+        row = DetailTrackRow(self, collection, source, track, index)
+        self.detail_track_rows.append(row)
+        return row.widget
 
     def _refresh_detail_track_states(self) -> None:
-        for state in self.detail_track_rows:
-            self._update_detail_track_row(state)
+        for row in self.detail_track_rows:
+            row.update()
 
     def _track_menu(
         self, collection: LibraryItem, track: LibraryItem, popover: Gtk.Popover
