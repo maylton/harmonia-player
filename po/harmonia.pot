@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 09:18-0300\n"
+"POT-Creation-Date: 2026-10-07 09:23-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,13 +57,13 @@ msgid "Músicas curtidas"
 msgstr ""
 
 #: src/harmonia/app.py:265 src/harmonia/app.py:416
-#: src/harmonia/innertube.py:110 src/harmonia/qt_library.py:24
+#: src/harmonia/innertube/protocol.py:90 src/harmonia/qt_library.py:24
 #: src/harmonia/window_constants.py:4
 msgid "Playlists"
 msgstr ""
 
 #: src/harmonia/app.py:266 src/harmonia/app.py:424
-#: src/harmonia/innertube.py:109 src/harmonia/qt_library.py:22
+#: src/harmonia/innertube/protocol.py:89 src/harmonia/qt_library.py:22
 #: src/harmonia/window_constants.py:7
 msgid "Artistas"
 msgstr ""
@@ -293,100 +293,100 @@ msgstr ""
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr ""
 
-#: src/harmonia/innertube.py:106 src/harmonia/innertube.py:508
-#: src/harmonia/qt_library.py:23 src/harmonia/window_constants.py:5
-msgid "Músicas"
-msgstr ""
-
-#: src/harmonia/innertube.py:107
-msgid "Vídeos"
-msgstr ""
-
-#: src/harmonia/innertube.py:108 src/harmonia/qt_library.py:21
-#: src/harmonia/window_constants.py:6
-msgid "Álbuns"
-msgstr ""
-
-#: src/harmonia/innertube.py:136
-msgid ""
-"O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
-"o cookie completo."
-msgstr ""
-
-#: src/harmonia/innertube.py:188
-msgid "O YouTube Music não retornou o perfil da conta ativa."
-msgstr ""
-
-#: src/harmonia/innertube.py:568
-msgid "Artista"
-msgstr ""
-
-#: src/harmonia/innertube.py:721
+#: src/harmonia/innertube/client.py:170
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr ""
 
-#: src/harmonia/innertube.py:725
+#: src/harmonia/innertube/client.py:174
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr ""
 
-#: src/harmonia/innertube.py:732
+#: src/harmonia/innertube/client.py:181
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr ""
 
-#: src/harmonia/innertube.py:735
+#: src/harmonia/innertube/client.py:184
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr ""
 
-#: src/harmonia/innertube.py:750
+#: src/harmonia/innertube/client.py:199
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr ""
 
-#: src/harmonia/innertube.py:781
+#: src/harmonia/innertube/client.py:230
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr ""
 
-#: src/harmonia/innertube.py:854
+#: src/harmonia/innertube/client.py:303
 msgid "O artista não possui um identificador"
 msgstr ""
 
-#: src/harmonia/innertube.py:884
+#: src/harmonia/innertube/client.py:333
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr ""
 
-#: src/harmonia/innertube.py:926
+#: src/harmonia/innertube/client.py:375
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr ""
 
-#: src/harmonia/innertube.py:1025
+#: src/harmonia/innertube/client.py:474
 msgid "A faixa não contém um identificador reproduzível."
 msgstr ""
 
-#: src/harmonia/innertube.py:1083
+#: src/harmonia/innertube/client.py:532
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr ""
 
-#: src/harmonia/innertube.py:1140
+#: src/harmonia/innertube/client.py:589
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr ""
 
-#: src/harmonia/innertube.py:1163
+#: src/harmonia/innertube/client.py:612
 msgid "O nome da playlist não pode ficar vazio"
 msgstr ""
 
-#: src/harmonia/innertube.py:1170
+#: src/harmonia/innertube/client.py:619
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr ""
 
-#: src/harmonia/innertube.py:1193
+#: src/harmonia/innertube/client.py:642
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
+msgstr ""
+
+#: src/harmonia/innertube/parsers.py:67
+msgid "O YouTube Music não retornou o perfil da conta ativa."
+msgstr ""
+
+#: src/harmonia/innertube/parsers.py:387 src/harmonia/innertube/protocol.py:86
+#: src/harmonia/qt_library.py:23 src/harmonia/window_constants.py:5
+msgid "Músicas"
+msgstr ""
+
+#: src/harmonia/innertube/parsers.py:447
+msgid "Artista"
+msgstr ""
+
+#: src/harmonia/innertube/protocol.py:87
+msgid "Vídeos"
+msgstr ""
+
+#: src/harmonia/innertube/protocol.py:88 src/harmonia/qt_library.py:21
+#: src/harmonia/window_constants.py:6
+msgid "Álbuns"
+msgstr ""
+
+#: src/harmonia/innertube/protocol.py:113
+msgid ""
+"O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
+"o cookie completo."
 msgstr ""
 
 #: src/harmonia/insights.py:51

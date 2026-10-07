@@ -2,7 +2,8 @@ import inspect
 
 import pytest
 
-from harmonia.innertube import _linked_pages, parse_library_items, parse_watch_queue
+from harmonia.innertube import parse_library_items, parse_watch_queue
+from harmonia.innertube.parsers import _linked_pages
 from harmonia.models import LibraryItem
 from harmonia.ui import track_artist
 from harmonia.window_detail import radio_queue, track_byline

@@ -1,3 +1,8 @@
+import time
+import urllib.request
+
+from harmonia import host
+from harmonia.innertube import client as innertube_client
 from harmonia.innertube import (
     find_browse_endpoint,
     find_continuation,
@@ -291,7 +296,6 @@ def test_player_selects_highest_bitrate(monkeypatch):
     import io
     import json
 
-    from harmonia import innertube
     from harmonia.innertube import InnerTubeClient
 
     payload = {
@@ -318,7 +322,7 @@ def test_player_selects_highest_bitrate(monkeypatch):
             return False
 
     monkeypatch.setattr(
-        innertube.urllib.request,
+        urllib.request,
         "urlopen",
         lambda *_args, **_kwargs: Response(json.dumps(payload).encode()),
     )
@@ -329,7 +333,6 @@ def test_player_honors_configured_quality_ceiling(monkeypatch):
     import io
     import json
 
-    from harmonia import innertube
     from harmonia.innertube import InnerTubeClient
 
     payload = {
@@ -350,7 +353,7 @@ def test_player_honors_configured_quality_ceiling(monkeypatch):
             return False
 
     monkeypatch.setattr(
-        innertube.urllib.request,
+        urllib.request,
         "urlopen",
         lambda *_args, **_kwargs: Response(json.dumps(payload).encode()),
     )
@@ -410,7 +413,7 @@ def test_native_player_keeps_local_files_out_of_http_relay():
 def test_posix_locale_falls_back_to_valid_youtube_locale(monkeypatch):
     from harmonia import innertube
 
-    monkeypatch.setattr(innertube.host, "user_locale", lambda: "C")
+    monkeypatch.setattr(host, "user_locale", lambda: "C")
     client = innertube.InnerTubeClient("SAPISID=x")
     assert (client.hl, client.gl) == ("pt-BR", "BR")
 
@@ -630,7 +633,7 @@ def test_stream_resolution_caches_and_force_refreshes(monkeypatch):
 
     from harmonia import innertube
 
-    innertube._STREAM_CACHE.clear()
+    innertube_client._STREAM_CACHE.clear()
     expires = int(time.time()) + 3600
     calls = []
 
@@ -664,7 +667,7 @@ def test_stream_resolution_caches_and_force_refreshes(monkeypatch):
 
     client = innertube.InnerTubeClient("SAPISID=x")
     client._bootstrap = lambda: None
-    monkeypatch.setattr(innertube.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
     first = client.resolve_stream("cached")
     second = client.resolve_stream("cached")
     refreshed = client.resolve_stream("cached", force=True)
@@ -687,7 +690,7 @@ def test_stream_resolution_retries_then_falls_back(monkeypatch):
 
     from harmonia import innertube
 
-    innertube._STREAM_CACHE.clear()
+    innertube_client._STREAM_CACHE.clear()
     calls = []
 
     class Response(io.BytesIO):
@@ -720,8 +723,8 @@ def test_stream_resolution_retries_then_falls_back(monkeypatch):
 
     client = innertube.InnerTubeClient("SAPISID=x")
     client._bootstrap = lambda: None
-    monkeypatch.setattr(innertube.urllib.request, "urlopen", urlopen)
-    monkeypatch.setattr(innertube.time, "sleep", lambda *_args: None)
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(time, "sleep", lambda *_args: None)
     stream = client.resolve_stream("fallback")
     assert stream.client == innertube.PLAYER_CLIENTS[1]["name"]
     assert len(calls) == 3
@@ -831,7 +834,7 @@ def test_register_playback_builds_account_tracking_request(monkeypatch):
             return False
 
     monkeypatch.setattr(
-        innertube.urllib.request,
+        urllib.request,
         "urlopen",
         lambda request, **_kwargs: requests.append(request) or Response(b""),
     )
@@ -878,8 +881,8 @@ def test_player_response_retries_transient_errors_and_reports_the_reason(monkeyp
         )
 
     client = innertube.InnerTubeClient("SAPISID=x")
-    monkeypatch.setattr(innertube.urllib.request, "urlopen", urlopen)
-    monkeypatch.setattr(innertube.time, "sleep", lambda *_args: None)
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(time, "sleep", lambda *_args: None)
     profile = innertube.PLAYER_CLIENTS[0]
     with pytest.raises(innertube.InnerTubeError, match="HTTP 403"):
         client.player_response("abc", profile)
