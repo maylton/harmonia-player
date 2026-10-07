@@ -44,6 +44,18 @@ def active_lyric_index(
     return bisect_right([line.start_ms for line in lines], adjusted) - 1
 
 
+def remove_translation(document: LyricsDocument) -> bool:
+    """Drop a Portuguese translation, so "Traduzir" toggles it; True if one was dropped."""
+    if document.translation_language != "pt" or not (
+        document.translation or any(line.translation for line in document.synced)
+    ):
+        return False
+    document.translation = ""
+    document.translation_language = ""
+    document.synced = [LyricLine(line.start_ms, line.text) for line in document.synced]
+    return True
+
+
 def lyrics_copy_text(document: LyricsDocument) -> str:
     if document.synced and any(line.translation for line in document.synced):
         return "\n".join(

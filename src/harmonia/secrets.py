@@ -35,6 +35,10 @@ def keyring_backend(schema_name: str, attribute_names: tuple[str, ...]):
 
 
 class SessionSecret:
+    SCHEMA = "io.github.harmonia.Harmonia.Session"
+    ATTRIBUTE_NAMES: tuple[str, ...] = ("application",)
+    label = "Sessão do YouTube Music — Harmonia"
+
     def __init__(self) -> None:
         self.available = False
         self._secret = None
@@ -42,12 +46,12 @@ class SessionSecret:
         if os.environ.get("HARMONIA_DISABLE_SECRET_SERVICE") == "1":
             return
         try:
-            self._secret, self._schema = keyring_backend(
-                "io.github.harmonia.Harmonia.Session", ("application",)
-            )
+            self._secret, self._schema = keyring_backend(self.SCHEMA, self.ATTRIBUTE_NAMES)
             self.available = True
         except (ImportError, ValueError, OSError):
-            LOGGER.debug("Secret Service indisponível; usando armazenamento local restrito")
+            LOGGER.debug(
+                "Secret Service indisponível (%s); usando armazenamento local", self.SCHEMA
+            )
 
     @property
     def attributes(self) -> dict[str, str]:
@@ -89,7 +93,7 @@ class SessionSecret:
                     self._schema,
                     self.attributes,
                     self._secret.COLLECTION_DEFAULT,
-                    "Sessão do YouTube Music — Harmonia",
+                    self.label,
                     value,
                     None,
                 ),
@@ -111,39 +115,14 @@ class SessionSecret:
 class NamedSecret(SessionSecret):
     """A Secret Service entry isolated by service name."""
 
+    SCHEMA = "io.github.harmonia.Harmonia.Credential"
+    ATTRIBUTE_NAMES = ("application", "service")
+
     def __init__(self, service: str, label: str) -> None:
         self.service = service
         self.label = label
-        self.available = False
-        self._secret = None
-        self._schema = None
-        if os.environ.get("HARMONIA_DISABLE_SECRET_SERVICE") == "1":
-            return
-        try:
-            self._secret, self._schema = keyring_backend(
-                "io.github.harmonia.Harmonia.Credential", ("application", "service")
-            )
-            self.available = True
-        except (ImportError, ValueError, OSError):
-            LOGGER.debug("Secret Service indisponível para %s", service)
+        super().__init__()
 
     @property
     def attributes(self) -> dict[str, str]:
         return {"application": "harmonia", "service": self.service}
-
-    def store(self, value: str) -> bool:
-        if not self.available or not value:
-            return False
-        return bool(
-            self._bounded(
-                lambda: self._secret.password_store_sync(
-                    self._schema,
-                    self.attributes,
-                    self._secret.COLLECTION_DEFAULT,
-                    self.label,
-                    value,
-                    None,
-                ),
-                False,
-            )
-        )

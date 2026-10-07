@@ -3,6 +3,7 @@ src/harmonia/auth.py
 src/harmonia/auth_webview2.py
 src/harmonia/gtk_video.py
 src/harmonia/innertube.py
+src/harmonia/insights.py
 src/harmonia/player.py
 src/harmonia/qt_activity.py
 src/harmonia/qt_backend.py

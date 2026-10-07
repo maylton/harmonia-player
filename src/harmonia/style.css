@@ -291,7 +291,6 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 .detail-track-accent { color: @accent_color; }
 .detail-menu { padding: 7px; min-width: 210px; }
 .detail-menu button { padding: 8px 10px; }
-.detail-menu-note { padding: 10px; color: @harmonia_fg_dim; font-size: 12px; }
 /* Item menu, after YouTube Music: one flat list of full-width rows, the icon
    first and well apart from the label, no separators or rounded pills. */
 popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }

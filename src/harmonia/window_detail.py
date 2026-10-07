@@ -30,6 +30,7 @@ from .ui import (
     page_shell,
     section_link,
     set_action_role,
+    set_css_class,
     set_icon_selected,
     style_icon_button,
     track_byline,
@@ -773,15 +774,7 @@ class WindowDetailMixin:
         self._update_detail_track_row(state)
 
     def _activate_detail_track(self, state: dict) -> None:
-        track = state["track"]
-        active = (
-            getattr(self, "current_item", None) is not None and self.current_item.id == track.id
-        )
-        if active and self._stream_ready:
-            self._toggle_player()
-            return
-        source = state["source"]
-        self.set_queue(source, source.index(track))
+        self.play_or_toggle(state["track"], state["source"])
 
     def _toggle_detail_track_like(self, state: dict) -> None:
         state["liked"] = not state["liked"]
@@ -789,20 +782,12 @@ class WindowDetailMixin:
         self._toggle_song(state["track"], state["liked"])
 
     def _update_detail_track_row(self, state: dict) -> None:
-        track = state["track"]
-        active = (
-            getattr(self, "current_item", None) is not None and self.current_item.id == track.id
-        )
+        active = self.is_current_track(state["track"])
         playing = active and self._playback_is_playing()
         hovered = state["hovered"]
-        if active:
-            state["row"].add_css_class("detail-track-current")
-            state["title"].add_css_class("detail-track-accent")
-            state["duration"].add_css_class("detail-track-accent")
-        else:
-            state["row"].remove_css_class("detail-track-current")
-            state["title"].remove_css_class("detail-track-accent")
-            state["duration"].remove_css_class("detail-track-accent")
+        set_css_class(state["row"], "detail-track-current", active)
+        set_css_class(state["title"], "detail-track-accent", active)
+        set_css_class(state["duration"], "detail-track-accent", active)
         state["leading"].set_visible_child_name(
             "play" if hovered else ("active" if active else "number")
         )
@@ -812,10 +797,7 @@ class WindowDetailMixin:
         state["like"].set_icon_name(
             "starred-symbolic" if state["liked"] else "non-starred-symbolic"
         )
-        if state["liked"]:
-            state["like"].add_css_class("detail-track-accent")
-        else:
-            state["like"].remove_css_class("detail-track-accent")
+        set_css_class(state["like"], "detail-track-accent", state["liked"])
         show_like = hovered or state["liked"]
         emphasized = hovered or state["options"].get_active()
         state["like"].set_opacity(1.0 if show_like else 0.0)

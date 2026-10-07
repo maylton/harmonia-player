@@ -1067,15 +1067,8 @@ class HarmoniaWindow(
             listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
             listing.add_css_class("boxed-list")
             for position, item in enumerate(self.queue):
-                row = Adw.ActionRow()
+                row = self._queue_row(position, item)
                 row.add_css_class("media-row")
-                row.set_use_markup(False)
-                row.set_title(item.title)
-                row.set_subtitle(item.subtitle)
-                row.set_activatable(True)
-                if position == self.queue_index:
-                    row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
-                    row.add_css_class("current-track")
                 row.connect(
                     "activated",
                     lambda _row, selected=position: self._select_expanded_queue_item(selected),

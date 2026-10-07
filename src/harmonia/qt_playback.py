@@ -302,7 +302,7 @@ class QtPlaybackController(QObject):
         self._duration_ms = max(0, int(duration_ms or 0))
         self._pending_tracking_url = tracking_url or ""
         self._stream_ready = True
-        self.player.play(uri)
+        self._play_uri(uri)
         self.playbackChanged.emit()
         self.durationChanged.emit()
         self.positionChanged.emit()
@@ -314,6 +314,10 @@ class QtPlaybackController(QObject):
             QTimer.singleShot(700, lambda: self.seek(restored))
         self._save_state(restored)
         self.ensure_autoplay()
+
+    def _play_uri(self, uri: str) -> None:
+        """Start the resolved stream; a subclass may hand it to another transport."""
+        self.player.play(uri)
 
     def _apply_stream(self, request_id: int, stream, error: str) -> None:
         if request_id != self._stream_request:

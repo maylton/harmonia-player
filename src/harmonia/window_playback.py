@@ -236,14 +236,7 @@ class WindowPlaybackMixin:
         listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
         listing.add_css_class("boxed-list")
         for position, item in enumerate(self.queue):
-            row = Adw.ActionRow()
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            row.set_activatable(True)
-            if position == self.queue_index:
-                row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
-                row.add_css_class("current-track")
+            row = self._queue_row(position, item)
             controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
             up = Gtk.Button(icon_name="go-up-symbolic", tooltip_text=_("Mover para cima"))
             down = Gtk.Button(icon_name="go-down-symbolic", tooltip_text=_("Mover para baixo"))
@@ -408,6 +401,17 @@ class WindowPlaybackMixin:
         self._save_playback_state()
         self.play_item(self.queue[position])
 
+    def play_or_toggle(self, track: LibraryItem, source: list[LibraryItem]) -> None:
+        """Pause or resume ``track`` if it is playing, else play ``source`` from it."""
+        if self.is_current_track(track) and self._stream_ready:
+            self._toggle_player()
+            return
+        self.set_queue(source, source.index(track))
+
+    def is_current_track(self, track: LibraryItem) -> bool:
+        current = getattr(self, "current_item", None)
+        return current is not None and current.id == track.id
+
     def play_item(self, item: LibraryItem) -> None:
         resume_position = (
             self._restored_position_ms if getattr(self, "current_item", None) is item else 0
@@ -467,18 +471,33 @@ class WindowPlaybackMixin:
                 if offline_path:
                     GLib.idle_add(self._start_stream, request_id, offline_path.as_uri(), None, None)
                     return
-                stream = self.youtube.resolve_stream(item.id)
-                GLib.idle_add(
-                    self._start_stream,
-                    request_id,
-                    stream.url,
-                    stream.duration_ms,
-                    stream.playback_tracking_url,
-                )
+                self._deliver_stream(request_id, self.youtube.resolve_stream(item.id))
             except Exception as exc:
                 GLib.idle_add(self._play_request_error, request_id, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _deliver_stream(self, request_id: int, stream) -> None:
+        """Hand a resolved stream from a worker thread to the main loop."""
+        GLib.idle_add(
+            self._start_stream,
+            request_id,
+            stream.url,
+            stream.duration_ms,
+            stream.playback_tracking_url,
+        )
+
+    def _queue_row(self, position: int, item: LibraryItem) -> Adw.ActionRow:
+        """A queue entry, marked when it is the track playing."""
+        row = Adw.ActionRow()
+        row.set_use_markup(False)
+        row.set_title(item.title)
+        row.set_subtitle(item.subtitle)
+        row.set_activatable(True)
+        if position == self.queue_index:
+            row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
+            row.add_css_class("current-track")
+        return row
 
     def _start_stream(
         self,
@@ -651,46 +670,31 @@ class WindowPlaybackMixin:
 
             def recover() -> None:
                 try:
-                    stream = self.youtube.resolve_stream(item.id, force=True)
-                    GLib.idle_add(
-                        self._start_stream,
-                        request_id,
-                        stream.url,
-                        stream.duration_ms,
-                        stream.playback_tracking_url,
+                    self._deliver_stream(
+                        request_id, self.youtube.resolve_stream(item.id, force=True)
                     )
                 except Exception as exc:
                     GLib.idle_add(self._player_recovery_failed, request_id, str(exc))
 
             threading.Thread(target=recover, daemon=True, name="stream-recovery").start()
             return False
-        self.play_button.set_sensitive(True)
-        self.play_button.set_icon_name("media-playback-start-symbolic")
-        self.expanded_play_button.set_sensitive(True)
-        self.expanded_play_button.set_icon_name("media-playback-start-symbolic")
-        self.toast_overlay.add_toast(
-            Adw.Toast(
-                title=_("Não foi possível reproduzir: {error}").format(error=error), timeout=6
-            )
-        )
+        self._show_play_failure(_("Não foi possível reproduzir: {error}").format(error=error))
         return False
 
     def _player_recovery_failed(self, request_id: int, error: str) -> bool:
-        if request_id != self._play_request:
-            return False
-        self.play_button.set_sensitive(True)
-        self.play_button.set_icon_name("media-playback-start-symbolic")
-        self.expanded_play_button.set_sensitive(True)
-        self.expanded_play_button.set_icon_name("media-playback-start-symbolic")
-        self.toast_overlay.add_toast(
-            Adw.Toast(
-                title=_("Não foi possível reproduzir mesmo após renovar o stream: {error}").format(
+        if request_id == self._play_request:
+            self._show_play_failure(
+                _("Não foi possível reproduzir mesmo após renovar o stream: {error}").format(
                     error=error
-                ),
-                timeout=6,
+                )
             )
-        )
         return False
+
+    def _show_play_failure(self, message: str) -> None:
+        for button in (self.play_button, self.expanded_play_button):
+            button.set_sensitive(True)
+            button.set_icon_name("media-playback-start-symbolic")
+        self.toast_overlay.add_toast(Adw.Toast(title=message, timeout=6))
 
     def _stop_player(self) -> None:
         self._optional_stop()

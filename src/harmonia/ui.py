@@ -129,11 +129,16 @@ def media_play_button(
     return button
 
 
-def set_icon_selected(widget: Gtk.Widget, selected: bool) -> None:
-    if selected:
-        widget.add_css_class("app-icon-selected")
+def set_css_class(widget: Gtk.Widget, name: str, enabled: bool) -> None:
+    """Add or remove one CSS class."""
+    if enabled:
+        widget.add_css_class(name)
     else:
-        widget.remove_css_class("app-icon-selected")
+        widget.remove_css_class(name)
+
+
+def set_icon_selected(widget: Gtk.Widget, selected: bool) -> None:
+    set_css_class(widget, "app-icon-selected", selected)
 
 
 @dataclass(slots=True)

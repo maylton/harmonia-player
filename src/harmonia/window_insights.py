@@ -7,6 +7,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
 from .i18n import _, ngettext
+from .insights import month_names
 from .ui import page_header, page_shell
 
 
@@ -92,22 +93,8 @@ class WindowInsightsMixin:
             content.append(artists)
 
             months = Adw.PreferencesGroup(title=_("Atividade mensal"))
-            month_names = (
-                _("Jan"),
-                _("Fev"),
-                _("Mar"),
-                _("Abr"),
-                _("Mai"),
-                _("Jun"),
-                _("Jul"),
-                _("Ago"),
-                _("Set"),
-                _("Out"),
-                _("Nov"),
-                _("Dez"),
-            )
             maximum = max(insights.monthly_plays) or 1
-            for name, plays in zip(month_names, insights.monthly_plays, strict=True):
+            for name, plays in zip(month_names(), insights.monthly_plays, strict=True):
                 row = Adw.ActionRow(title=name, subtitle=str(plays))
                 level = Gtk.LevelBar(min_value=0, max_value=maximum, value=plays)
                 level.set_size_request(220, 8)
