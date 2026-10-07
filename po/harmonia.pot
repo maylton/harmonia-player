@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 11:11-0300\n"
+"POT-Creation-Date: 2026-10-07 14:14-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,200 +18,58 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/harmonia/app.py:85 src/harmonia/app.py:402 src/harmonia/app.py:1186
+#: src/harmonia/app.py:86 src/harmonia/app.py:535
+#: src/harmonia/window_chrome/sidebar.py:56
 msgid "Harmonia"
 msgstr ""
 
-#: src/harmonia/app.py:239
-msgid "Pesquisar músicas, álbuns, artistas…"
-msgstr ""
-
-#: src/harmonia/app.py:256 src/harmonia/auth.py:38
-#: src/harmonia/auth_webview2.py:203
-msgid "Voltar"
-msgstr ""
-
-#: src/harmonia/app.py:262
-msgid "Navegação"
-msgstr ""
-
-#: src/harmonia/app.py:270 src/harmonia/app.py:407
-#: src/harmonia/window_home.py:164
-msgid "Início"
-msgstr ""
-
-#: src/harmonia/app.py:271 src/harmonia/app.py:408
-#: src/harmonia/qt_backend.py:308 src/harmonia/qt_backend.py:1246
-#: src/harmonia/qt_catalog.py:58 src/harmonia/qt_catalog.py:118
-#: src/harmonia/qt_catalog.py:496 src/harmonia/window_home.py:34
-msgid "Explorar"
-msgstr ""
-
-#: src/harmonia/app.py:272 src/harmonia/app.py:411
-#: src/harmonia/window_library.py:61
-msgid "Biblioteca"
-msgstr ""
-
-#: src/harmonia/app.py:273 src/harmonia/app.py:419
-msgid "Músicas curtidas"
-msgstr ""
-
-#: src/harmonia/app.py:274 src/harmonia/app.py:425
-#: src/harmonia/innertube/protocol.py:90 src/harmonia/qt_library.py:24
-#: src/harmonia/window_constants.py:4
-msgid "Playlists"
-msgstr ""
-
-#: src/harmonia/app.py:275 src/harmonia/app.py:433
-#: src/harmonia/innertube/protocol.py:89 src/harmonia/qt_library.py:22
-#: src/harmonia/window_constants.py:7
-msgid "Artistas"
-msgstr ""
-
-#: src/harmonia/app.py:276 src/harmonia/app.py:440
-#: src/harmonia/window_history.py:162
-msgid "Histórico"
-msgstr ""
-
-#: src/harmonia/app.py:277 src/harmonia/app.py:446
-msgid "Estatísticas"
-msgstr ""
-
-#: src/harmonia/app.py:278 src/harmonia/app.py:453
-#: src/harmonia/qt_library.py:16 src/harmonia/window_history.py:45
-#: src/harmonia/window_library.py:77
-msgid "Downloads"
-msgstr ""
-
-#: src/harmonia/app.py:279 src/harmonia/app.py:458
-#: src/harmonia/settings_page/__init__.py:19
-msgid "Preferências"
-msgstr ""
-
-#: src/harmonia/app.py:288
-msgid "Sincronizar biblioteca"
-msgstr ""
-
-#: src/harmonia/app.py:293 src/harmonia/app.py:333
-#: src/harmonia/settings_page/account.py:19
+#: src/harmonia/app.py:252 src/harmonia/settings_page/account.py:19
+#: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr ""
 
-#: src/harmonia/app.py:372
+#: src/harmonia/app.py:291
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr ""
 
-#: src/harmonia/app.py:414
-msgid "SUAS MÚSICAS"
+#: src/harmonia/app.py:320 src/harmonia/qt_backend.py:699
+msgid "Nenhuma música reproduzindo"
 msgstr ""
 
-#: src/harmonia/app.py:462 src/harmonia/window_actions.py:112
-msgid "Nova playlist"
+#: src/harmonia/app.py:321 src/harmonia/qt_backend.py:707
+msgid "Escolha uma faixa para começar"
 msgstr ""
 
-#: src/harmonia/app.py:505
-msgid "Expandir player"
-msgstr ""
-
-#: src/harmonia/app.py:557
-msgid "Abrir player expandido"
-msgstr ""
-
-#: src/harmonia/app.py:572
-msgid "Curtir"
-msgstr ""
-
-#: src/harmonia/app.py:589 src/harmonia/app.py:890
-msgid "Ordem aleatória"
-msgstr ""
-
-#: src/harmonia/app.py:595 src/harmonia/app.py:897
-msgid "Anterior"
-msgstr ""
-
-#: src/harmonia/app.py:600 src/harmonia/app.py:904
-msgid "Pausar ou continuar"
-msgstr ""
-
-#: src/harmonia/app.py:606 src/harmonia/app.py:910
-msgid "Próxima"
-msgstr ""
-
-#: src/harmonia/app.py:610 src/harmonia/app.py:915
-msgid "Repetir"
-msgstr ""
-
-#: src/harmonia/app.py:617 src/harmonia/window_playback.py:158
-#: src/harmonia/window_playback.py:159
-msgid "Reprodução automática ativada"
-msgstr ""
-
-#: src/harmonia/app.py:633 src/harmonia/app.py:643 src/harmonia/app.py:871
-#: src/harmonia/app.py:881 src/harmonia/app.py:978 src/harmonia/app.py:979
+#: src/harmonia/app.py:327 src/harmonia/app.py:328
+#: src/harmonia/window_chrome/expanded_player.py:187
+#: src/harmonia/window_chrome/expanded_player.py:197
+#: src/harmonia/window_chrome/player_bar.py:170
+#: src/harmonia/window_chrome/player_bar.py:180
 #: src/harmonia/window_playback.py:452 src/harmonia/window_playback.py:453
 #: src/harmonia/window_playback.py:454 src/harmonia/window_playback.py:455
 #: src/harmonia/window_playback.py:718 src/harmonia/window_playback.py:719
 msgid "0:00"
 msgstr ""
 
-#: src/harmonia/app.py:656 src/harmonia/app.py:664 src/harmonia/app.py:784
-#: src/harmonia/app.py:939 src/harmonia/window_lyrics.py:61
-msgid "Letras"
+#: src/harmonia/app.py:413
+msgid "Fila"
 msgstr ""
 
-#: src/harmonia/app.py:665 src/harmonia/app.py:940
-#: src/harmonia/window_lyrics.py:62
-msgid "Comece a reproduzir uma música para ver a letra."
+#: src/harmonia/app.py:420
+msgid "Nada na fila"
 msgstr ""
 
-#: src/harmonia/app.py:669 src/harmonia/window_playback.py:227
-msgid "Fila de reprodução"
+#: src/harmonia/app.py:421
+msgid "Escolha uma música para ver as próximas faixas."
 msgstr ""
 
-#: src/harmonia/app.py:685
-msgid "Parar"
-msgstr ""
-
-#: src/harmonia/app.py:762
-msgid "Recolher player (Esc)"
-msgstr ""
-
-#: src/harmonia/app.py:782 src/harmonia/gtk_video.py:98
-msgid "Música"
-msgstr ""
-
-#: src/harmonia/app.py:787 src/harmonia/app.py:1087
+#: src/harmonia/app.py:436 src/harmonia/window_chrome/expanded_player.py:49
 #: src/harmonia/window_playback.py:270
 msgid "Relacionadas"
 msgstr ""
 
-#: src/harmonia/app.py:860 src/harmonia/track_rows.py:242
-#: src/harmonia/window_actions.py:85 src/harmonia/window_item_menu.py:97
-msgid "Curtir música"
-msgstr ""
-
-#: src/harmonia/app.py:971 src/harmonia/qt_backend.py:699
-msgid "Nenhuma música reproduzindo"
-msgstr ""
-
-#: src/harmonia/app.py:972 src/harmonia/qt_backend.py:707
-msgid "Escolha uma faixa para começar"
-msgstr ""
-
-#: src/harmonia/app.py:1064
-msgid "Fila"
-msgstr ""
-
-#: src/harmonia/app.py:1071
-msgid "Nada na fila"
-msgstr ""
-
-#: src/harmonia/app.py:1072
-msgid "Escolha uma música para ver as próximas faixas."
-msgstr ""
-
-#: src/harmonia/app.py:1099 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:448 src/harmonia/window_playback.py:286
 msgid "Adicionar ao fim"
 msgstr ""
 
@@ -220,12 +78,22 @@ msgstr ""
 msgid "Conectar ao YouTube Music"
 msgstr ""
 
+#: src/harmonia/auth.py:38 src/harmonia/auth_webview2.py:203
+#: src/harmonia/window_chrome/header.py:19
+msgid "Voltar"
+msgstr ""
+
 #: src/harmonia/auth.py:44 src/harmonia/auth_webview2.py:206
 msgid "Usar cookie manualmente"
 msgstr ""
 
 #: src/harmonia/gtk_media_variants.py:74 src/harmonia/qt_media_variants.py:211
 msgid "Não foi possível preservar o áudio original da música."
+msgstr ""
+
+#: src/harmonia/gtk_video.py:98
+#: src/harmonia/window_chrome/expanded_player.py:44
+msgid "Música"
 msgstr ""
 
 #: src/harmonia/gtk_video.py:99
@@ -383,6 +251,18 @@ msgstr ""
 msgid "Álbuns"
 msgstr ""
 
+#: src/harmonia/innertube/protocol.py:89 src/harmonia/qt_library.py:22
+#: src/harmonia/window_chrome/navigation.py:29
+#: src/harmonia/window_constants.py:7
+msgid "Artistas"
+msgstr ""
+
+#: src/harmonia/innertube/protocol.py:90 src/harmonia/qt_library.py:24
+#: src/harmonia/window_chrome/navigation.py:23
+#: src/harmonia/window_constants.py:4
+msgid "Playlists"
+msgstr ""
+
 #: src/harmonia/innertube/protocol.py:113
 msgid ""
 "O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
@@ -482,6 +362,13 @@ msgstr ""
 
 #: src/harmonia/qt_activity.py:353
 msgid "Letra traduzida."
+msgstr ""
+
+#: src/harmonia/qt_backend.py:308 src/harmonia/qt_backend.py:1246
+#: src/harmonia/qt_catalog.py:58 src/harmonia/qt_catalog.py:118
+#: src/harmonia/qt_catalog.py:496 src/harmonia/window_chrome/navigation.py:18
+#: src/harmonia/window_home.py:34
+msgid "Explorar"
 msgstr ""
 
 #: src/harmonia/qt_backend.py:755
@@ -754,6 +641,11 @@ msgstr ""
 
 #: src/harmonia/qt_library.py:15 src/harmonia/window_library.py:76
 msgid "Uploads"
+msgstr ""
+
+#: src/harmonia/qt_library.py:16 src/harmonia/window_chrome/navigation.py:40
+#: src/harmonia/window_history.py:45 src/harmonia/window_library.py:77
+msgid "Downloads"
 msgstr ""
 
 #: src/harmonia/qt_library.py:17 src/harmonia/window_library.py:78
@@ -1049,6 +941,11 @@ msgstr ""
 
 #: src/harmonia/recognition.py:96
 msgid "Configure o token do AudD nas Preferências"
+msgstr ""
+
+#: src/harmonia/settings_page/__init__.py:19
+#: src/harmonia/window_chrome/navigation.py:41
+msgid "Preferências"
 msgstr ""
 
 #: src/harmonia/settings_page/account.py:21
@@ -1529,6 +1426,12 @@ msgstr ""
 msgid "Remover das músicas curtidas"
 msgstr ""
 
+#: src/harmonia/track_rows.py:242 src/harmonia/window_actions.py:85
+#: src/harmonia/window_chrome/expanded_player.py:177
+#: src/harmonia/window_item_menu.py:97
+msgid "Curtir música"
+msgstr ""
+
 #: src/harmonia/track_rows.py:268
 #, python-brace-format
 msgid "Reproduzir {title}"
@@ -1624,6 +1527,10 @@ msgid_plural "Biblioteca atualizada · {count} itens"
 msgstr[0] ""
 msgstr[1] ""
 
+#: src/harmonia/window_actions.py:112 src/harmonia/window_chrome/sidebar.py:40
+msgid "Nova playlist"
+msgstr ""
+
 #: src/harmonia/window_actions.py:113
 msgid "Ela será criada como privada na sua conta do YouTube Music."
 msgstr ""
@@ -1710,6 +1617,113 @@ msgstr ""
 
 #: src/harmonia/window_actions.py:371
 msgid "Adicionar"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:45
+#: src/harmonia/window_chrome/expanded_player.py:258
+#: src/harmonia/window_chrome/player_bar.py:196
+#: src/harmonia/window_chrome/player_bar.py:204
+#: src/harmonia/window_lyrics.py:61
+msgid "Letras"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:101
+msgid "Recolher player (Esc)"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:214
+#: src/harmonia/window_chrome/player_bar.py:139
+msgid "Ordem aleatória"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:221
+#: src/harmonia/window_chrome/player_bar.py:142
+msgid "Anterior"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:226
+#: src/harmonia/window_chrome/player_bar.py:144
+msgid "Pausar ou continuar"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:232
+#: src/harmonia/window_chrome/player_bar.py:147
+msgid "Próxima"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:236
+#: src/harmonia/window_chrome/player_bar.py:149
+msgid "Repetir"
+msgstr ""
+
+#: src/harmonia/window_chrome/expanded_player.py:259
+#: src/harmonia/window_chrome/player_bar.py:205
+#: src/harmonia/window_lyrics.py:62
+msgid "Comece a reproduzir uma música para ver a letra."
+msgstr ""
+
+#: src/harmonia/window_chrome/header.py:25
+msgid "Sincronizar biblioteca"
+msgstr ""
+
+#: src/harmonia/window_chrome/header.py:35
+msgid "Pesquisar músicas, álbuns, artistas…"
+msgstr ""
+
+#: src/harmonia/window_chrome/header.py:57
+msgid "Navegação"
+msgstr ""
+
+#: src/harmonia/window_chrome/navigation.py:17 src/harmonia/window_home.py:164
+msgid "Início"
+msgstr ""
+
+#: src/harmonia/window_chrome/navigation.py:19
+#: src/harmonia/window_library.py:61
+msgid "Biblioteca"
+msgstr ""
+
+#: src/harmonia/window_chrome/navigation.py:20
+msgid "Músicas curtidas"
+msgstr ""
+
+#: src/harmonia/window_chrome/navigation.py:33
+#: src/harmonia/window_history.py:162
+msgid "Histórico"
+msgstr ""
+
+#: src/harmonia/window_chrome/navigation.py:36
+msgid "Estatísticas"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:57
+msgid "Abrir player expandido"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:72
+msgid "Curtir"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:80
+msgid "Expandir player"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:153
+#: src/harmonia/window_playback.py:158 src/harmonia/window_playback.py:159
+msgid "Reprodução automática ativada"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:209
+#: src/harmonia/window_playback.py:227
+msgid "Fila de reprodução"
+msgstr ""
+
+#: src/harmonia/window_chrome/player_bar.py:225
+msgid "Parar"
+msgstr ""
+
+#: src/harmonia/window_chrome/sidebar.py:35
+msgid "SUAS MÚSICAS"
 msgstr ""
 
 #: src/harmonia/window_detail.py:69

@@ -83,9 +83,11 @@ def test_gtk_theming_changes_stay_out_of_the_qt_frontend():
 
 
 def test_sidebar_navigation_scrolls_instead_of_forcing_window_height():
-    source = inspect.getsource(app.HarmoniaWindow._build_sidebar)
+    from harmonia.window_chrome import sidebar
+
+    source = inspect.getsource(sidebar.build_sidebar)
     assert "Gtk.ScrolledWindow(" in source
-    assert "self.sidebar.append(nav_scroll)" in source
+    assert "window.sidebar.append(nav_scroll)" in source
     assert "max-width: 800px" not in inspect.getsource(app.HarmoniaWindow.__init__)
 
 

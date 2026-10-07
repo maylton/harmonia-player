@@ -33,15 +33,16 @@ from .storage import Storage
 from .theming import DEFAULT_THEME
 from .track_rows import DetailTrackRow, HomeSongRow
 from .ui import (
-    CreditsLabel,
     deliver_to_main,
-    menu_action_button,
-    set_icon_selected,
-    style_icon_button,
 )
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
-from .window_constants import EXPLORE_ICON, LIKED_ICON
+from .window_chrome import (
+    build_expanded_player,
+    build_header,
+    build_player_bar,
+    build_sidebar,
+)
 from .window_detail import WindowDetailMixin
 from .window_history import WindowHistoryMixin
 from .window_home import WindowHomeMixin
@@ -90,6 +91,26 @@ class HarmoniaWindow(
         self.youtube = YouTubeMusicService(self.storage)
         self.lyrics_resolver = LyricsResolver(self.youtube.lyrics)
         self.translation_client = GoogleTranslationClient()
+        self._load_lyrics_settings()
+        self.downloads = DownloadManager(
+            self.storage,
+            self.youtube,
+            lambda record: GLib.idle_add(self._download_updated, record),
+        )
+        self.sections = self.storage.load_library()
+        self.home_sections = self.storage.load_home()
+        self.explore_data = self.storage.load_explore()
+        self._initialize_state()
+        self._build_layout()
+        self._start_player(app)
+        build_player_bar(self)
+        self._add_compact_breakpoint()
+        build_expanded_player(self)
+        self._start_up()
+        # Last: the video layer wraps the expanded player's artwork, built above.
+        self._video_feature_init()
+
+    def _load_lyrics_settings(self) -> None:
         self.lyrics_provider = self.storage.get_setting("lyrics_provider", "auto")
         if self.lyrics_provider not in {"auto", "lrclib", "youtube"}:
             self.lyrics_provider = "auto"
@@ -101,14 +122,9 @@ class HarmoniaWindow(
         self._lyrics_item_id: str | None = None
         self._lyric_views: list[dict] = []
         self._active_lyric_index = -1
-        self.downloads = DownloadManager(
-            self.storage,
-            self.youtube,
-            lambda record: GLib.idle_add(self._download_updated, record),
-        )
-        self.sections = self.storage.load_library()
-        self.home_sections = self.storage.load_home()
-        self.explore_data = self.storage.load_explore()
+
+    def _initialize_state(self) -> None:
+        """Defaults of the queue, playback, requests and page state."""
         self.main_view = "home"
         self.queue: list[LibraryItem] = []
         self.related_items: list[LibraryItem] = []
@@ -149,6 +165,9 @@ class HarmoniaWindow(
         self.repeat_buttons: list[Gtk.Button] = []
         self.like_buttons: list[Gtk.Button] = []
         self.current_liked = False
+
+    def _build_layout(self) -> None:
+        """Toasts over the ambient background, header, navigation pane and pages."""
         self.set_size_request(720, 520)
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
@@ -167,13 +186,13 @@ class HarmoniaWindow(
         self.root.add_css_class("app-root")
         self.app_overlay.add_overlay(self.root)
         self.app_overlay.set_measure_overlay(self.root, True)
-        self._build_header()
+        build_header(self)
         self._load_account_avatar(
             self.storage.get_setting("account_avatar_url", "") if self.storage.load_cookie() else ""
         )
         self.main_shell = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.main_shell.set_vexpand(True)
-        self._build_sidebar()
+        build_sidebar(self)
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
@@ -182,6 +201,9 @@ class HarmoniaWindow(
         self.stack.set_overflow(Gtk.Overflow.HIDDEN)
         self.main_shell.append(self.stack)
         self.root.append(self.main_shell)
+
+    def _start_player(self, app: Adw.Application) -> None:
+        """The GStreamer player and its desktop media controls (MPRIS)."""
         self.player = NativePlayer(self._player_state, self._player_error, self._play_next)
         self._initialize_optional_services()
         self._apply_audio_preferences()
@@ -207,7 +229,8 @@ class HarmoniaWindow(
             },
         )
         self.connect("close-request", self._shutdown_application)
-        self._build_player_bar()
+
+    def _add_compact_breakpoint(self) -> None:
         # A single breakpoint covers both the compact navigation and the compact
         # player bar; a narrower duplicate would only repeat these setters.
         compact_player = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 900px"))
@@ -217,7 +240,9 @@ class HarmoniaWindow(
         compact_player.add_setter(self.footer_secondary, "visible", False)
         compact_player.add_setter(self.player_bar, "spacing", 8)
         self.add_breakpoint(compact_player)
-        self._build_expanded_player()
+
+    def _start_up(self) -> None:
+        """Apply the preferences, show the first page and resume the session."""
         self._apply_appearance_preferences()
         GLib.timeout_add(500, self._update_progress)
         self._render()
@@ -230,90 +255,6 @@ class HarmoniaWindow(
             ).start()
             self.downloads.resume_pending()
             GLib.timeout_add_seconds(24 * 60 * 60, self._periodic_download_validation)
-        # Last: the video layer wraps the expanded player's artwork, built above.
-        self._video_feature_init()
-
-    def _build_header(self) -> None:
-        self.header = Adw.HeaderBar()
-        self.search_entry = Gtk.SearchEntry(
-            placeholder_text=_("Pesquisar músicas, álbuns, artistas…")
-        )
-        self.search_entry.set_size_request(380, -1)
-        self.search_entry.connect("activate", lambda *_: self.search(self.search_entry.get_text()))
-        self.search_entry.connect("search-changed", self._search_text_changed)
-        # Suggestions must never take the keyboard from the entry: an autohide
-        # popover grabs focus when it opens, which moved typing into its
-        # buttons (spaces activated suggestions and the caret jumped).
-        self.search_suggestions = Gtk.Popover(autohide=False, has_arrow=False)
-        self.search_suggestions.set_can_focus(False)
-        self.search_suggestions.set_parent(self.search_entry)
-        self.search_suggestions.add_css_class("search-suggestions")
-        self.search_entry.connect("stop-search", lambda *_: self.search_suggestions.popdown())
-        search_focus = Gtk.EventControllerFocus()
-        search_focus.connect("leave", lambda *_: self.search_suggestions.popdown())
-        self.search_entry.add_controller(search_focus)
-        self.header.set_title_widget(self.search_entry)
-        self.back = Gtk.Button(icon_name="go-previous-symbolic", tooltip_text=_("Voltar"))
-        style_icon_button(self.back, "md")
-        self.back.connect("clicked", lambda *_: self._go_back())
-        self.back.set_visible(False)
-        self.header.pack_start(self.back)
-        self.compact_menu = Gtk.MenuButton(
-            icon_name="open-menu-symbolic", tooltip_text=_("Navegação")
-        )
-        style_icon_button(self.compact_menu, "md")
-        self.compact_menu.set_visible(False)
-        menu = Gtk.Popover()
-        menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        menu_box.add_css_class("compact-menu")
-        for label, icon, callback in (
-            (_("Início"), "go-home-symbolic", self.show_home),
-            (_("Explorar"), EXPLORE_ICON, self.show_explore),
-            (_("Biblioteca"), "folder-music-symbolic", self.show_library),
-            (_("Músicas curtidas"), LIKED_ICON, lambda: self.show_category("songs")),
-            (_("Playlists"), "view-list-symbolic", lambda: self.show_category("playlists")),
-            (_("Artistas"), "avatar-default-symbolic", lambda: self.show_category("artists")),
-            (_("Histórico"), "document-open-recent-symbolic", self.show_history),
-            (_("Estatísticas"), "applications-multimedia-symbolic", self.show_insights),
-            (_("Downloads"), "folder-download-symbolic", self.show_downloads),
-            (_("Preferências"), "preferences-system-symbolic", self.show_settings),
-        ):
-            button = menu_action_button(label, icon)
-            button.connect("clicked", lambda _button, action=callback: (menu.popdown(), action()))
-            menu_box.append(button)
-        menu.set_child(menu_box)
-        self.compact_menu.set_popover(menu)
-        self.header.pack_start(self.compact_menu)
-        refresh = Gtk.Button(
-            icon_name="view-refresh-symbolic", tooltip_text=_("Sincronizar biblioteca")
-        )
-        style_icon_button(refresh, "md")
-        refresh.connect("clicked", lambda *_: (self.sync(), self.sync_home(), self.sync_explore()))
-        self.header.pack_start(refresh)
-        account = Gtk.Button(tooltip_text=_("Conta"))
-        style_icon_button(account, "md")
-        set_icon_selected(account, True)
-        account.add_css_class("account-avatar-button")
-        account.set_overflow(Gtk.Overflow.HIDDEN)
-        avatar_stack = Gtk.Overlay()
-        avatar_stack.set_size_request(30, 30)
-        avatar_stack.set_overflow(Gtk.Overflow.HIDDEN)
-        avatar_stack.add_css_class("account-avatar-frame")
-        self.account_avatar_fallback = Gtk.Image.new_from_icon_name("avatar-default-symbolic")
-        self.account_avatar_fallback.set_pixel_size(18)
-        avatar_stack.set_child(self.account_avatar_fallback)
-        self.account_avatar_picture = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
-        self.account_avatar_picture.set_can_shrink(True)
-        self.account_avatar_picture.set_hexpand(True)
-        self.account_avatar_picture.set_vexpand(True)
-        self.account_avatar_picture.set_opacity(0)
-        self.account_avatar_picture.add_css_class("account-avatar-picture")
-        avatar_stack.add_overlay(self.account_avatar_picture)
-        account.set_child(avatar_stack)
-        self.account_button = account
-        account.connect("clicked", lambda *_: self.login_dialog())
-        self.header.pack_end(account)
-        self.root.append(self.header)
 
     def _show_account_avatar_file(self, path: Path, request_id: int) -> bool:
         if request_id != self._account_avatar_request or not path.exists():
@@ -377,109 +318,6 @@ class HarmoniaWindow(
         self.storage.set_setting("account_avatar_url", "")
         self._load_account_avatar("")
 
-    def _build_sidebar(self) -> None:
-        self.sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        self.sidebar.add_css_class("sidebar")
-        self.sidebar.set_size_request(230, -1)
-        self.sidebar.set_hexpand(False)
-        self.sidebar.set_halign(Gtk.Align.START)
-        # The navigation list scrolls so the sidebar never dictates the window's
-        # minimum height; the player bar stays visible on short screens.
-        nav = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        nav_scroll = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.NEVER,
-            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-            vexpand=True,
-        )
-        nav_scroll.add_css_class("sidebar-scroll")
-        nav_scroll.set_child(nav)
-        self.sidebar_scroll = nav_scroll
-        brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        brand.add_css_class("sidebar-brand")
-        logo = Gtk.Image.new_from_icon_name("audio-headphones-symbolic")
-        logo.set_pixel_size(24)
-        brand.append(logo)
-        name = Gtk.Label(label=_("Harmonia"), xalign=0)
-        name.add_css_class("sidebar-brand-title")
-        brand.append(name)
-        nav.append(brand)
-        self.nav_buttons: dict[str, Gtk.Button] = {}
-        nav.append(self._sidebar_button("home", _("Início"), "go-home-symbolic", self.show_home))
-        nav.append(self._sidebar_button("explore", _("Explorar"), EXPLORE_ICON, self.show_explore))
-        nav.append(
-            self._sidebar_button(
-                "library", _("Biblioteca"), "folder-music-symbolic", self.show_library
-            )
-        )
-        heading = Gtk.Label(label=_("SUAS MÚSICAS"), xalign=0)
-        heading.add_css_class("sidebar-heading")
-        nav.append(heading)
-        nav.append(
-            self._sidebar_button(
-                "songs", _("Músicas curtidas"), LIKED_ICON, lambda: self.show_category("songs")
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "playlists",
-                _("Playlists"),
-                "view-list-symbolic",
-                lambda: self.show_category("playlists"),
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "artists",
-                _("Artistas"),
-                "avatar-default-symbolic",
-                lambda: self.show_category("artists"),
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "history", _("Histórico"), "document-open-recent-symbolic", self.show_history
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "insights",
-                _("Estatísticas"),
-                "applications-multimedia-symbolic",
-                self.show_insights,
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "downloads", _("Downloads"), "folder-download-symbolic", self.show_downloads
-            )
-        )
-        nav.append(
-            self._sidebar_button(
-                "settings", _("Preferências"), "preferences-system-symbolic", self.show_settings
-            )
-        )
-        self.sidebar.append(nav_scroll)
-        create = Gtk.Button(label=_("Nova playlist"), icon_name="list-add-symbolic")
-        create.add_css_class("sidebar-create")
-        create.connect("clicked", lambda *_: self.create_playlist_dialog())
-        self.sidebar.append(create)
-        self.main_shell.append(self.sidebar)
-        self.sidebar_separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        self.sidebar_separator.set_hexpand(False)
-        self.main_shell.append(self.sidebar_separator)
-
-    def _sidebar_button(self, key: str, label: str, icon: str, callback) -> Gtk.Button:
-        button = Gtk.Button()
-        button.add_css_class("sidebar-item")
-        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        row.append(Gtk.Image.new_from_icon_name(icon))
-        text = Gtk.Label(label=label, xalign=0, hexpand=True)
-        row.append(text)
-        button.set_child(row)
-        button.connect("clicked", lambda *_: callback())
-        self.nav_buttons[key] = button
-        return button
-
     def _set_active_nav(self, key: str) -> None:
         viewport = self.sidebar_scroll.get_child()
         for name, button in self.nav_buttons.items():
@@ -490,473 +328,6 @@ class HarmoniaWindow(
                     viewport.scroll_to(button, None)
             else:
                 button.remove_css_class("sidebar-active")
-
-    def _build_player_bar(self) -> None:
-        self.player_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
-        self.player_bar.add_css_class("player-bar")
-        self.player_bar.set_size_request(-1, 72)
-        self.player_bar.set_vexpand(False)
-        self.player_bar.set_valign(Gtk.Align.END)
-        self.player_bar.set_visible(True)
-        track = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12, hexpand=True)
-        track.add_css_class("player-track")
-        track.set_vexpand(False)
-        track.set_valign(Gtk.Align.CENTER)
-        cover_button = Gtk.Button(tooltip_text=_("Expandir player"))
-        cover_button.add_css_class("flat")
-        cover_button.add_css_class("player-cover-button")
-        cover_button.set_size_request(56, 56)
-        cover_button.set_hexpand(False)
-        cover_button.set_halign(Gtk.Align.START)
-        cover_button.set_valign(Gtk.Align.CENTER)
-        cover_button.set_vexpand(False)
-        cover_button.set_overflow(Gtk.Overflow.HIDDEN)
-        cover_button.connect("clicked", lambda *_: self._show_expanded_player())
-        self.footer_cover_button = cover_button
-        cover_frame = Gtk.AspectFrame(ratio=1.0, obey_child=False)
-        cover_frame.set_size_request(56, 56)
-        cover_frame.set_hexpand(False)
-        cover_frame.set_vexpand(False)
-        cover_frame.set_halign(Gtk.Align.CENTER)
-        cover_frame.set_valign(Gtk.Align.CENTER)
-        cover_frame.set_overflow(Gtk.Overflow.HIDDEN)
-        cover_frame.add_css_class("player-cover")
-        cover_overlay = Gtk.Overlay(hexpand=True, vexpand=True)
-        self.now_cover_placeholder = Gtk.Image.new_from_icon_name("audio-x-generic-symbolic")
-        self.now_cover_placeholder.set_pixel_size(24)
-        self.now_cover_placeholder.add_css_class("player-cover-placeholder")
-        cover_overlay.set_child(self.now_cover_placeholder)
-        self.now_cover = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
-        self.now_cover.set_can_shrink(True)
-        self.now_cover.set_halign(Gtk.Align.FILL)
-        self.now_cover.set_valign(Gtk.Align.FILL)
-        self.now_cover.set_hexpand(True)
-        self.now_cover.set_vexpand(True)
-        cover_overlay.add_overlay(self.now_cover)
-        self.cover_expand_hint = Gtk.Box(halign=Gtk.Align.FILL, valign=Gtk.Align.FILL)
-        self.cover_expand_hint.add_css_class("player-cover-expand")
-        expand_icon = Gtk.Image.new_from_icon_name("view-fullscreen-symbolic")
-        expand_icon.set_pixel_size(22)
-        expand_icon.set_hexpand(True)
-        expand_icon.set_vexpand(True)
-        expand_icon.set_halign(Gtk.Align.CENTER)
-        expand_icon.set_valign(Gtk.Align.CENTER)
-        self.cover_expand_hint.append(expand_icon)
-        self.cover_expand_hint.set_opacity(0)
-        self.cover_expand_hint.set_can_target(False)
-        cover_overlay.add_overlay(self.cover_expand_hint)
-        cover_frame.set_child(cover_overlay)
-        cover_button.set_child(cover_frame)
-        hover = Gtk.EventControllerMotion()
-        hover.connect("enter", lambda *_: self._footer_cover_hover(True))
-        hover.connect("leave", lambda *_: self._footer_cover_hover(False))
-        cover_button.add_controller(hover)
-        track.append(cover_button)
-        copy = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, valign=Gtk.Align.CENTER)
-        copy.set_cursor_from_name("pointer")
-        copy.set_tooltip_text(_("Abrir player expandido"))
-        copy_click = Gtk.GestureClick(button=1)
-        copy_click.connect("released", lambda *_: self._show_expanded_player())
-        copy.add_controller(copy_click)
-        self.footer_track_copy = copy
-        self.now_title = Gtk.Label(xalign=0, ellipsize=3, max_width_chars=28)
-        self.now_title.add_css_class("card-title")
-        self.now_subtitle = CreditsLabel(
-            self.navigate_credit, xalign=0, ellipsize=3, max_width_chars=28
-        )
-        self.now_subtitle.add_css_class("card-subtitle")
-        copy.append(self.now_title)
-        copy.append(self.now_subtitle)
-        track.append(copy)
-        self.footer_like_button = Gtk.Button(
-            icon_name="non-starred-symbolic", tooltip_text=_("Curtir")
-        )
-        style_icon_button(self.footer_like_button, "sm")
-        self.footer_like_button.set_valign(Gtk.Align.CENTER)
-        self.footer_like_button.connect("clicked", lambda *_: self._toggle_current_song_like())
-        self.like_buttons.append(self.footer_like_button)
-        track.append(self.footer_like_button)
-        self.player_bar.append(track)
-
-        center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
-        center.add_css_class("player-center")
-        center.set_vexpand(False)
-        center.set_valign(Gtk.Align.CENTER)
-        controls = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=10, halign=Gtk.Align.CENTER
-        )
-        shuffle = Gtk.Button(
-            icon_name="media-playlist-shuffle-symbolic", tooltip_text=_("Ordem aleatória")
-        )
-        style_icon_button(shuffle, "sm")
-        shuffle.connect("clicked", lambda button: self._toggle_shuffle(button))
-        self.shuffle_buttons.append(shuffle)
-        controls.append(shuffle)
-        previous = Gtk.Button(icon_name="media-skip-backward-symbolic", tooltip_text=_("Anterior"))
-        style_icon_button(previous, "sm")
-        previous.connect("clicked", lambda *_: self._play_previous())
-        controls.append(previous)
-        self.play_button = Gtk.Button(
-            icon_name="media-playback-pause-symbolic", tooltip_text=_("Pausar ou continuar")
-        )
-        style_icon_button(self.play_button, "sm")
-        self.play_button.add_css_class("app-media-play")
-        self.play_button.connect("clicked", lambda *_: self._toggle_player())
-        controls.append(self.play_button)
-        next_button = Gtk.Button(icon_name="media-skip-forward-symbolic", tooltip_text=_("Próxima"))
-        style_icon_button(next_button, "sm")
-        next_button.connect("clicked", lambda *_: self._play_next())
-        controls.append(next_button)
-        repeat = Gtk.Button(icon_name="media-playlist-repeat-symbolic", tooltip_text=_("Repetir"))
-        style_icon_button(repeat, "sm")
-        repeat.connect("clicked", lambda button: self._toggle_repeat(button))
-        self.repeat_buttons.append(repeat)
-        controls.append(repeat)
-        self.autoplay_button = Gtk.Button(
-            icon_name="media-playlist-consecutive-symbolic",
-            tooltip_text=_("Reprodução automática ativada"),
-        )
-        style_icon_button(self.autoplay_button, "sm")
-        set_icon_selected(self.autoplay_button, True)
-        self.autoplay_button.connect("clicked", lambda button: self._toggle_autoplay(button))
-        controls.append(self.autoplay_button)
-        self.footer_transport_controls = [
-            shuffle,
-            previous,
-            self.play_button,
-            next_button,
-            repeat,
-            self.autoplay_button,
-        ]
-        center.append(controls)
-        timeline = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self.elapsed_label = Gtk.Label(label=_("0:00"), width_chars=5)
-        self.elapsed_label.add_css_class("time-label")
-        timeline.append(self.elapsed_label)
-        self.progress = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 0.1)
-        self.progress.add_css_class("player-scale")
-        self.progress.set_draw_value(False)
-        self.progress.set_hexpand(True)
-        self.progress.set_sensitive(False)
-        self.progress.connect("change-value", self._seek_requested)
-        timeline.append(self.progress)
-        self.duration_label = Gtk.Label(label=_("0:00"), width_chars=5)
-        self.duration_label.add_css_class("time-label")
-        timeline.append(self.duration_label)
-        center.append(timeline)
-        self.player_bar.append(center)
-
-        secondary = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=8, hexpand=True, halign=Gtk.Align.END
-        )
-        secondary.add_css_class("player-secondary")
-        secondary.set_vexpand(False)
-        secondary.set_valign(Gtk.Align.CENTER)
-        self.lyrics_button = Gtk.MenuButton(
-            icon_name="audio-input-microphone-symbolic", tooltip_text=_("Letras")
-        )
-        style_icon_button(self.lyrics_button, "sm")
-        self.lyrics_popover = Gtk.Popover(autohide=True)
-        self.lyrics_button.set_popover(self.lyrics_popover)
-        self.lyrics_button.connect("notify::active", self._lyrics_toggled)
-        self._set_lyrics_message(
-            "audio-input-microphone-symbolic",
-            _("Letras"),
-            _("Comece a reproduzir uma música para ver a letra."),
-        )
-        secondary.append(self.lyrics_button)
-        self.queue_button = Gtk.MenuButton(
-            icon_name="view-list-symbolic", tooltip_text=_("Fila de reprodução")
-        )
-        style_icon_button(self.queue_button, "sm")
-        self.queue_popover = Gtk.Popover()
-        self.queue_button.set_popover(self.queue_popover)
-        secondary.append(self.queue_button)
-        secondary.append(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
-        volume = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
-        volume.add_css_class("player-scale")
-        volume.set_size_request(100, -1)
-        volume.set_draw_value(False)
-        volume.set_value(80)
-        volume.connect(
-            "value-changed", lambda slider: setattr(self.player, "volume", slider.get_value() / 100)
-        )
-        secondary.append(volume)
-        close = Gtk.Button(icon_name="window-close-symbolic", tooltip_text=_("Parar"))
-        style_icon_button(close, "sm")
-        close.connect("clicked", lambda *_: self._stop_player())
-        secondary.append(close)
-        self.footer_secondary = secondary
-        self.footer_item_controls = [
-            self.footer_like_button,
-            self.lyrics_button,
-            self.queue_button,
-            close,
-            *self.footer_transport_controls,
-        ]
-        self.player_bar.append(secondary)
-        self.root.append(self.player_bar)
-        compact_footer = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 920px"))
-        compact_footer.add_setter(self.footer_secondary, "visible", False)
-        self.add_breakpoint(compact_footer)
-        self._set_footer_item_state(False)
-
-    def _build_expanded_player(self) -> None:
-        self.expanded_revealer = Gtk.Revealer(
-            transition_type=Gtk.RevealerTransitionType.SLIDE_UP,
-            transition_duration=500,
-            hexpand=True,
-            vexpand=True,
-            halign=Gtk.Align.FILL,
-            valign=Gtk.Align.FILL,
-        )
-        self.expanded_revealer.set_can_target(False)
-        self.expanded_revealer.connect(
-            "notify::child-revealed",
-            lambda revealer, _pspec: revealer.set_can_target(revealer.get_child_revealed()),
-        )
-
-        surface = Gtk.Overlay(hexpand=True, vexpand=True)
-        surface.add_css_class("expanded-player")
-        background = Gtk.Box(hexpand=True, vexpand=True)
-        surface.set_child(background)
-        self.expanded_backdrop_base = Gtk.Picture(
-            content_fit=Gtk.ContentFit.COVER,
-            can_shrink=True,
-            hexpand=True,
-            vexpand=True,
-            halign=Gtk.Align.FILL,
-            valign=Gtk.Align.FILL,
-        )
-        # A very faint base prevents transparent-looking blur edges without
-        # making the original artwork composition readable in the backdrop.
-        self.expanded_backdrop_base.set_opacity(0.05)
-        self.expanded_backdrop_base.set_can_target(False)
-        self.expanded_backdrop_base.add_css_class("expanded-backdrop-base")
-        surface.add_overlay(self.expanded_backdrop_base)
-        self.expanded_backdrop = Gtk.Picture(
-            content_fit=Gtk.ContentFit.COVER,
-            can_shrink=True,
-            hexpand=True,
-            vexpand=True,
-            halign=Gtk.Align.FILL,
-            valign=Gtk.Align.FILL,
-        )
-        self.expanded_backdrop.set_opacity(0.68)
-        self.expanded_backdrop.set_can_target(False)
-        self.expanded_backdrop.add_css_class("expanded-backdrop")
-        surface.add_overlay(self.expanded_backdrop)
-        shade = Gtk.Box(hexpand=True, vexpand=True)
-        shade.set_can_target(False)
-        shade.add_css_class("expanded-backdrop-shade")
-        surface.add_overlay(shade)
-        self.expanded_surface = surface
-        self.expanded_backdrop_shade = shade
-
-        shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
-        shell.add_css_class("expanded-shell")
-        top = Gtk.CenterBox()
-        top.add_css_class("expanded-header")
-        self.expanded_close_button = Gtk.Button(
-            icon_name="go-down-symbolic",
-            tooltip_text=_("Recolher player (Esc)"),
-            halign=Gtk.Align.START,
-        )
-        style_icon_button(self.expanded_close_button, "md")
-        self.expanded_close_button.connect("clicked", lambda *_: self._hide_expanded_player())
-        top.set_start_widget(self.expanded_close_button)
-
-        self.expanded_stack = Adw.ViewStack()
-        self.expanded_stack.set_enable_transitions(True)
-        self.expanded_stack.set_transition_duration(250)
-        self.expanded_stack.set_vexpand(True)
-        switcher = Adw.ViewSwitcher(stack=self.expanded_stack, policy=Adw.ViewSwitcherPolicy.WIDE)
-        switcher.add_css_class("expanded-switcher")
-        top.set_center_widget(switcher)
-        top.set_end_widget(Gtk.Box(width_request=40))
-        shell.append(top)
-
-        music_page = self._expanded_music_page()
-        lyrics_page = self._expanded_lyrics_page()
-        related_page = self._expanded_related_page()
-        music_stack_page = self.expanded_stack.add_titled(music_page, "music", _("Música"))
-        music_stack_page.set_icon_name("audio-headphones-symbolic")
-        lyrics_stack_page = self.expanded_stack.add_titled(lyrics_page, "lyrics", _("Letras"))
-        lyrics_stack_page.set_icon_name("audio-input-microphone-symbolic")
-        related_stack_page = self.expanded_stack.add_titled(
-            related_page, "related", _("Relacionadas")
-        )
-        related_stack_page.set_icon_name("media-playlist-consecutive-symbolic")
-        self.expanded_stack.connect("notify::visible-child-name", self._expanded_page_changed)
-        shell.append(self.expanded_stack)
-        surface.add_overlay(shell)
-        self.expanded_revealer.set_child(surface)
-        self.app_overlay.add_overlay(self.expanded_revealer)
-        self.app_overlay.set_measure_overlay(self.expanded_revealer, False)
-
-        key = Gtk.EventControllerKey()
-        key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-        key.connect("key-pressed", self._expanded_key_pressed)
-        self.add_controller(key)
-
-    def _expanded_music_page(self) -> Gtk.Widget:
-        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        wrap = Adw.WrapBox(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            child_spacing=76,
-            line_spacing=40,
-            natural_line_length=900,
-            wrap_policy=Adw.WrapPolicy.NATURAL,
-            align=0.5,
-            valign=Gtk.Align.CENTER,
-            hexpand=True,
-            vexpand=True,
-        )
-        wrap.add_css_class("expanded-music-content")
-        wrap.set_child_spacing_unit(Adw.LengthUnit.PX)
-        wrap.set_line_spacing_unit(Adw.LengthUnit.PX)
-        wrap.set_natural_line_length_unit(Adw.LengthUnit.PX)
-
-        cover = Gtk.AspectFrame(ratio=1.0, obey_child=False)
-        cover.set_size_request(384, 384)
-        cover.set_halign(Gtk.Align.CENTER)
-        cover.set_valign(Gtk.Align.CENTER)
-        cover.set_overflow(Gtk.Overflow.HIDDEN)
-        cover.add_css_class("expanded-cover")
-        cover_overlay = Gtk.Overlay(hexpand=True, vexpand=True)
-        placeholder = Gtk.Image.new_from_icon_name("audio-x-generic-symbolic")
-        placeholder.set_pixel_size(104)
-        placeholder.add_css_class("expanded-cover-placeholder")
-        cover_overlay.set_child(placeholder)
-        self.expanded_cover = Gtk.Picture(
-            content_fit=Gtk.ContentFit.COVER,
-            can_shrink=True,
-            hexpand=True,
-            vexpand=True,
-        )
-        cover_overlay.add_overlay(self.expanded_cover)
-        cover.set_child(cover_overlay)
-        wrap.append(cover)
-
-        info = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=22,
-            valign=Gtk.Align.CENTER,
-        )
-        info.set_size_request(420, -1)
-        info.add_css_class("expanded-info")
-        heading = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
-        title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, hexpand=True)
-        self.expanded_title = Gtk.Label(xalign=0, wrap=True)
-        self.expanded_title.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
-        self.expanded_title.add_css_class("expanded-title")
-        self.expanded_subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
-        self.expanded_subtitle.add_css_class("expanded-subtitle")
-        title_box.append(self.expanded_title)
-        title_box.append(self.expanded_subtitle)
-        heading.append(title_box)
-        self.expanded_like_button = Gtk.Button(
-            icon_name="non-starred-symbolic",
-            tooltip_text=_("Curtir música"),
-            valign=Gtk.Align.END,
-        )
-        style_icon_button(self.expanded_like_button, "md")
-        self.expanded_like_button.add_css_class("expanded-like")
-        self.expanded_like_button.connect("clicked", lambda *_: self._toggle_current_song_like())
-        self.like_buttons.append(self.expanded_like_button)
-        heading.append(self.expanded_like_button)
-        info.append(heading)
-
-        timeline = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        self.expanded_elapsed_label = Gtk.Label(label=_("0:00"), width_chars=5, xalign=1)
-        self.expanded_elapsed_label.add_css_class("expanded-time")
-        timeline.append(self.expanded_elapsed_label)
-        self.expanded_progress = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 0.1)
-        self.expanded_progress.add_css_class("player-scale")
-        self.expanded_progress.set_draw_value(False)
-        self.expanded_progress.set_hexpand(True)
-        self.expanded_progress.set_sensitive(False)
-        self.expanded_progress.connect("change-value", self._seek_requested)
-        timeline.append(self.expanded_progress)
-        self.expanded_duration_label = Gtk.Label(label=_("0:00"), width_chars=5, xalign=0)
-        self.expanded_duration_label.add_css_class("expanded-time")
-        timeline.append(self.expanded_duration_label)
-        info.append(timeline)
-
-        controls = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=21, halign=Gtk.Align.CENTER
-        )
-        shuffle = Gtk.Button(
-            icon_name="media-playlist-shuffle-symbolic", tooltip_text=_("Ordem aleatória")
-        )
-        shuffle.add_css_class("flat")
-        shuffle.add_css_class("expanded-secondary-control")
-        shuffle.connect("clicked", lambda button: self._toggle_shuffle(button))
-        self.shuffle_buttons.append(shuffle)
-        controls.append(shuffle)
-        previous = Gtk.Button(icon_name="media-skip-backward-symbolic", tooltip_text=_("Anterior"))
-        previous.add_css_class("flat")
-        previous.add_css_class("expanded-skip-control")
-        previous.connect("clicked", lambda *_: self._play_previous())
-        controls.append(previous)
-        self.expanded_play_button = Gtk.Button(
-            icon_name="media-playback-pause-symbolic",
-            tooltip_text=_("Pausar ou continuar"),
-        )
-        self.expanded_play_button.add_css_class("circular")
-        self.expanded_play_button.add_css_class("expanded-play-control")
-        self.expanded_play_button.connect("clicked", lambda *_: self._toggle_player())
-        controls.append(self.expanded_play_button)
-        next_button = Gtk.Button(icon_name="media-skip-forward-symbolic", tooltip_text=_("Próxima"))
-        next_button.add_css_class("flat")
-        next_button.add_css_class("expanded-skip-control")
-        next_button.connect("clicked", lambda *_: self._play_next())
-        controls.append(next_button)
-        repeat = Gtk.Button(icon_name="media-playlist-repeat-symbolic", tooltip_text=_("Repetir"))
-        repeat.add_css_class("flat")
-        repeat.add_css_class("expanded-secondary-control")
-        repeat.connect("clicked", lambda button: self._toggle_repeat(button))
-        self.repeat_buttons.append(repeat)
-        controls.append(repeat)
-        info.append(controls)
-        wrap.append(info)
-        scroll.set_child(wrap)
-        return scroll
-
-    def _expanded_lyrics_page(self) -> Gtk.Widget:
-        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        scroll.set_kinetic_scrolling(True)
-        self.expanded_lyrics_scroll = scroll
-        self.expanded_lyrics_container = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            hexpand=True,
-            vexpand=True,
-        )
-        self.expanded_lyrics_container.add_css_class("expanded-tab-page")
-        scroll.set_child(self.expanded_lyrics_container)
-        self._set_expanded_lyrics_message(
-            "audio-input-microphone-symbolic",
-            _("Letras"),
-            _("Comece a reproduzir uma música para ver a letra."),
-        )
-        return scroll
-
-    def _expanded_related_page(self) -> Gtk.Widget:
-        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        self.expanded_related_container = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=14,
-        )
-        self.expanded_related_container.add_css_class("expanded-tab-page")
-        scroll.set_child(self.expanded_related_container)
-        self._render_expanded_related()
-        return scroll
-
-    def _footer_cover_hover(self, hovered: bool) -> None:
-        if getattr(self, "current_item", None) is None:
-            hovered = False
-        self.now_cover.set_opacity(0.52 if hovered else 1.0)
-        self.cover_expand_hint.set_opacity(1.0 if hovered else 0.0)
 
     def _set_footer_item_state(self, has_item: bool) -> None:
         """Switch the persistent footer between its empty and playable states."""
