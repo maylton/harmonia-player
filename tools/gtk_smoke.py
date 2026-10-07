@@ -251,6 +251,8 @@ def _drive(window, themes, log):
     yield 400  # initial render and the fake initial sync
     from gi.repository import Gtk
 
+    from harmonia import host
+
     settings = Gtk.Settings.get_for_display(window.get_display())
     # "gtk" follows the desktop icon theme: Adwaita, elementary (whose 8.x
     # symbolic icons need the compat shadow on GTK 4.21+) and an accent variant
@@ -261,6 +263,10 @@ def _drive(window, themes, log):
         ("gtk", "elementary-grape"),
         ("material", "Adwaita"),
     )
+    if host.SYSTEM_ICON_THEME:
+        # No desktop icon theme to follow (Windows): "gtk" always shows the
+        # bundled system icons, so those are what must resolve.
+        icon_styles = (("gtk", host.SYSTEM_ICON_THEME), ("material", "Adwaita"))
     combinations = [
         (theme, variant, style, icon_theme)
         for theme in themes
