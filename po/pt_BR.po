@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 09:23-0300\n"
+"POT-Creation-Date: 2026-10-07 09:28-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -439,19 +439,11 @@ msgstr "Nov"
 msgid "Dez"
 msgstr "Dez"
 
-#: src/harmonia/player.py:65
-msgid "Intervalo HTTP inválido"
-msgstr "Intervalo HTTP inválido"
-
-#: src/harmonia/player.py:100
-msgid "O servidor de mídia não informou o tamanho total"
-msgstr "O servidor de mídia não informou o tamanho total"
-
-#: src/harmonia/player.py:333
+#: src/harmonia/player.py:34
 msgid "O elemento GStreamer playbin não está disponível"
 msgstr "O elemento GStreamer playbin não está disponível"
 
-#: src/harmonia/player.py:549
+#: src/harmonia/player.py:250
 #, python-brace-format
 msgid ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
@@ -1083,6 +1075,14 @@ msgstr "O Last.fm não retornou uma sessão válida"
 #: src/harmonia/social.py:257 src/harmonia/social.py:280
 msgid "Não foi possível falar com o Discord"
 msgstr "Não foi possível falar com o Discord"
+
+#: src/harmonia/stream_relay.py:201
+msgid "Intervalo HTTP inválido"
+msgstr "Intervalo HTTP inválido"
+
+#: src/harmonia/stream_relay.py:239
+msgid "O servidor de mídia não informou o tamanho total"
+msgstr "O servidor de mídia não informou o tamanho total"
 
 #: src/harmonia/together.py:112 src/harmonia/together.py:120
 msgid "Link Listen Together inválido"
