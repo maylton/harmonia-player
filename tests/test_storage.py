@@ -39,13 +39,29 @@ def test_home_roundtrip(monkeypatch, tmp_path):
     assert storage.load_home() == sections
 
 
-def test_lyrics_cache_roundtrip(monkeypatch, tmp_path):
+def test_lyrics_cached_by_older_versions_are_still_read(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
     storage = Storage()
-    assert storage.load_lyrics("video") is None
-    storage.save_lyrics("video", "Linha um\nLinha dois")
-    assert storage.load_lyrics("video") == ("Linha um\nLinha dois", "YouTube Music")
+    assert storage.load_lyrics_document("video", "youtube") is None
+    with storage._connect() as db:
+        db.execute(
+            "INSERT INTO lyrics(video_id, lyrics, provider, updated_at) VALUES(?,?,?,?)",
+            ("video", "Linha um\nLinha dois", "YouTube Music", 0),
+        )
+    assert storage.load_lyrics_document("video", "youtube") == LyricsDocument(
+        "Linha um\nLinha dois", "YouTube Music"
+    )
+    # The legacy cache only ever held YouTube Music lyrics.
+    assert storage.load_lyrics_document("video", "lrclib") is None
+
+
+def test_youtube_lyrics_are_not_answered_with_another_provider(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    storage = Storage()
+    storage.save_lyrics_document("video", LyricsDocument("Synced", "LRCLIB"))
+    assert storage.load_lyrics_document("video", "youtube") is None
 
 
 def test_advanced_lyrics_cache_keeps_providers_and_translation(monkeypatch, tmp_path):
