@@ -219,6 +219,75 @@ def test_material_replaces_gdk_blur_behind_transparency(monkeypatch):
     assert ("blur", True) in calls and ("extend", 0) in calls
 
 
+def test_popovers_take_the_flyout_material_without_arrow(monkeypatch):
+    from harmonia import windows_backdrop
+    from harmonia.gtk_backdrop import POPOVER_CSS_CLASS, GtkWindowBackdrops
+
+    applied = []
+    monkeypatch.setattr(
+        windows_backdrop, "apply", lambda hwnd, kind, dark: applied.append(kind) or True
+    )
+
+    class PopoverStub:
+        def __init__(self):
+            self.arrow = True
+            self.classes = set()
+
+        def set_has_arrow(self, value):
+            self.arrow = value
+
+        def add_css_class(self, name):
+            self.classes.add(name)
+
+        def remove_css_class(self, name):
+            self.classes.discard(name)
+
+    class Style:
+        def get_dark(self):
+            return True
+
+    backdrops = GtkWindowBackdrops.__new__(GtkWindowBackdrops)
+    backdrops._style = Style()
+    backdrops._hwnd = lambda widget: 7
+    popover = PopoverStub()
+
+    backdrops.kind, backdrops.active = "mica", True
+    backdrops._apply_popover(popover)
+    # Popups are never activated, so they use the transient (flyout) material.
+    assert applied == [windows_backdrop.TRANSIENT]
+    assert popover.arrow is False and POPOVER_CSS_CLASS in popover.classes
+
+    backdrops.kind = "none"
+    backdrops._apply_popover(popover)
+    assert popover.arrow is True and POPOVER_CSS_CLASS not in popover.classes
+
+
+def test_popover_attachment_is_a_no_op_without_windows_materials(monkeypatch):
+    from harmonia.gtk_backdrop import GtkWindowBackdrops
+
+    monkeypatch.setattr(host, "WINDOW_BACKDROPS", False)
+    connected = []
+
+    class PopoverStub:
+        def connect(self, *args):
+            connected.append(args)
+
+    GtkWindowBackdrops().attach_popover(PopoverStub())
+    assert connected == []
+
+
+def test_windows_material_replaces_the_cover_on_detail_pages():
+    from pathlib import Path
+
+    css = (
+        Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "windows11.css"
+    ).read_text(encoding="utf-8")
+    for name in (".detail-backdrop", ".artist-backdrop", ".detail-backdrop-shade"):
+        assert f"window.harmonia-backdrop {name}" in css
+    assert "window.harmonia-backdrop .detail-surface" in css
+    assert "popover.background.harmonia-backdrop-popover" in css
+
+
 def test_material_names_match_the_preference_values():
     from harmonia.preferences import Preferences
     from harmonia.windows_backdrop import BACKDROPS

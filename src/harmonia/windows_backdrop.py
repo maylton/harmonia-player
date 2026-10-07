@@ -24,6 +24,10 @@ DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMWCP_ROUND = 2
 DWMSBT_NONE = 1
 BACKDROPS = {"mica": 2, "acrylic": 3}
+# Popups (menus, flyouts) are never activated, so a main-window material
+# would always show its inactive colour there; Windows draws them with the
+# transient material, as its own menus.
+TRANSIENT = "acrylic"
 DWM_BB_ENABLE = 0x1
 DWM_BB_BLURREGION = 0x2
 
