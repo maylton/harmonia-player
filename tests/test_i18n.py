@@ -21,7 +21,7 @@ def test_potfiles_covers_every_translatable_python_module() -> None:
     }
     translatable = {
         path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "src" / "harmonia").glob("*.py")
+        for path in (ROOT / "src" / "harmonia").rglob("*.py")
         if GETTEXT_CALL.search(path.read_text())
     }
 

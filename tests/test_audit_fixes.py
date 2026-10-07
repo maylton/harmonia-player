@@ -93,10 +93,10 @@ def test_every_translatable_string_is_in_the_catalogs(tmp_path):
 
 def test_every_python_file_with_strings_is_listed_for_extraction():
     listed = set((ROOT / "po" / "POTFILES").read_text().split())
-    for path in sorted((ROOT / "src" / "harmonia").glob("*.py")):
+    for path in sorted((ROOT / "src" / "harmonia").rglob("*.py")):
         source = path.read_text(encoding="utf-8")
         if re.search(r'(?<![\w.])_\(\s*["\']', source) or "ngettext(" in source:
-            assert str(path.relative_to(ROOT)) in listed, path.name
+            assert path.relative_to(ROOT).as_posix() in listed, path.name
 
 
 def test_every_qml_file_with_strings_is_listed_for_extraction():
