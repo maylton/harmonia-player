@@ -175,8 +175,10 @@ class WindowHistoryMixin:
         toggle.connect("notify::active", self._history_privacy_changed)
         privacy.add_suffix(toggle)
         privacy.set_activatable_widget(toggle)
-        privacy.add_css_class("boxed-list")
-        content.append(privacy)
+        privacy_list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        privacy_list.add_css_class("boxed-list")
+        privacy_list.append(privacy)
+        content.append(privacy_list)
         if loading:
             spinner = Gtk.Spinner(spinning=True, halign=Gtk.Align.CENTER)
             content.append(spinner)
