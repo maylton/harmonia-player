@@ -16,12 +16,10 @@ from .models import (
     ExploreDestination,
     LibraryItem,
 )
+from .track_rows import HomeSongRow
 from .ui import (
-    CreditsLabel,
     page_header,
     page_shell,
-    set_css_class,
-    style_icon_button,
 )
 from .window_constants import EXPLORE_ICON
 
@@ -280,144 +278,13 @@ class WindowHomeMixin:
         return int((viewport - gap * (visible_columns - 1)) / visible_columns)
 
     def _home_song_row(self, track: LibraryItem, source: list[LibraryItem]) -> Gtk.Widget:
-        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=11)
-        row.add_css_class("home-song-row")
-        row.add_css_class("media-row")
-        row.set_size_request(-1, 64)
-        row.set_vexpand(False)
-        row.set_cursor_from_name("pointer")
-
-        cover = Gtk.AspectFrame(ratio=1.0, obey_child=False)
-        cover.set_size_request(48, 48)
-        cover.set_halign(Gtk.Align.START)
-        cover.set_valign(Gtk.Align.CENTER)
-        # The artwork overlay expands; without this the cover inherits that and
-        # takes a share of the row's spare width that differs per title, so the
-        # titles of consecutive rows started at different x positions.
-        cover.set_hexpand(False)
-        cover.set_overflow(Gtk.Overflow.HIDDEN)
-        cover.add_css_class("home-song-cover")
-        artwork = Gtk.Overlay(hexpand=True, vexpand=True)
-        placeholder = Gtk.Image.new_from_icon_name("audio-x-generic-symbolic")
-        placeholder.set_pixel_size(20)
-        placeholder.add_css_class("cover-placeholder")
-        artwork.set_child(placeholder)
-        if track.thumbnail:
-            picture = Gtk.Picture(
-                content_fit=Gtk.ContentFit.COVER,
-                can_shrink=True,
-                hexpand=True,
-                vexpand=True,
-            )
-            self._load_artwork(track.thumbnail, picture, size=128)
-            artwork.add_overlay(picture)
-        play_hint = Gtk.Box(halign=Gtk.Align.FILL, valign=Gtk.Align.FILL)
-        play_hint.add_css_class("home-song-play-hint")
-        play_hint.set_opacity(0)
-        play_hint.set_can_target(False)
-        play_icon = Gtk.Image.new_from_icon_name("media-playback-start-symbolic")
-        play_icon.set_pixel_size(22)
-        play_icon.set_hexpand(True)
-        play_icon.set_vexpand(True)
-        play_icon.set_halign(Gtk.Align.CENTER)
-        play_icon.set_valign(Gtk.Align.CENTER)
-        play_hint.append(play_icon)
-        artwork.add_overlay(play_hint)
-        cover.set_child(artwork)
-        row.append(cover)
-
-        copy = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER
-        )
-        name = Gtk.Label(label=track.title, xalign=0, ellipsize=3)
-        name.add_css_class("home-song-title")
-        subtitle = CreditsLabel(self.navigate_credit, xalign=0, ellipsize=3)
-        subtitle.show_item(track, track.subtitle or "YouTube Music")
-        subtitle.add_css_class("home-song-subtitle")
-        copy.append(name)
-        copy.append(subtitle)
-        row.append(copy)
-
-        liked = any(song.id == track.id for song in self.sections.get("songs", []))
-        liked_icon = Gtk.Image.new_from_icon_name("starred-symbolic")
-        liked_icon.add_css_class("home-song-liked")
-        liked_icon.set_opacity(1.0 if liked else 0.0)
-        row.append(liked_icon)
-
-        options = Gtk.MenuButton(icon_name="view-more-symbolic", tooltip_text=_("Opções da faixa"))
-        style_icon_button(options, "sm")
-        options.add_css_class("home-song-options")
-        popover = Gtk.Popover(has_arrow=False)
-        popover.add_css_class("item-menu")
-        options.set_popover(popover)
-        row.append(options)
-
-        state = {
-            "row": row,
-            "track": track,
-            "source": source,
-            "play_hint": play_hint,
-            "play_icon": play_icon,
-            "title": name,
-            "liked": liked,
-            "liked_icon": liked_icon,
-            "options": options,
-            "hovered": False,
-        }
-        self.home_song_rows.append(state)
-        popover.connect(
-            "show",
-            lambda *_: popover.set_child(
-                self.item_menu(
-                    track,
-                    popover,
-                    liked=state["liked"],
-                    on_like=lambda: self._toggle_home_song_like(state, popover),
-                )
-            ),
-        )
-        options.connect("notify::active", lambda *_: self._update_home_song_row(state))
-        motion = Gtk.EventControllerMotion()
-        motion.connect("enter", lambda *_: self._set_home_song_hover(state, True))
-        motion.connect("leave", lambda *_: self._set_home_song_hover(state, False))
-        row.add_controller(motion)
-        click = Gtk.GestureClick(button=1)
-        click.connect("released", lambda *_: self._activate_home_song(state))
-        row.add_controller(click)
-        self._update_home_song_row(state)
-        return row
-
-    def _set_home_song_hover(self, state: dict, hovered: bool) -> None:
-        state["hovered"] = hovered
-        self._update_home_song_row(state)
-
-    def _activate_home_song(self, state: dict) -> None:
-        self.play_or_toggle(state["track"], state["source"])
-
-    def _toggle_home_song_like(self, state: dict, popover: Gtk.Popover) -> None:
-        popover.popdown()
-        state["liked"] = not state["liked"]
-        self._update_home_song_row(state)
-        self._toggle_song(state["track"], state["liked"])
-
-    def _update_home_song_row(self, state: dict) -> None:
-        active = self.is_current_track(state["track"])
-        playing = active and self._playback_is_playing()
-        hovered = state["hovered"]
-        set_css_class(state["row"], "home-song-current", active)
-        set_css_class(state["title"], "current-track", active)
-        state["play_icon"].set_from_icon_name(
-            "media-playback-pause-symbolic" if playing else "media-playback-start-symbolic"
-        )
-        state["play_hint"].set_opacity(1.0 if hovered or active else 0.0)
-        state["liked_icon"].set_opacity(1.0 if state["liked"] else 0.0)
-        show_options = hovered or state["options"].get_active()
-        state["options"].set_opacity(1.0 if show_options else 0.0)
-        state["options"].set_can_target(show_options)
+        row = HomeSongRow(self, track, source)
+        self.home_song_rows.append(row)
+        return row.widget
 
     def _refresh_home_song_rows(self) -> None:
-        for state in self.home_song_rows:
-            self._update_home_song_row(state)
+        for row in self.home_song_rows:
+            row.update()
 
     @staticmethod
     def _home_card_hover(cover: Gtk.Widget, hint: Gtk.Widget, hovered: bool) -> None:

@@ -31,6 +31,7 @@ from .preferences import Preferences
 from .services import YouTubeMusicService
 from .storage import Storage
 from .theming import DEFAULT_THEME
+from .track_rows import DetailTrackRow, HomeSongRow
 from .ui import (
     CreditsLabel,
     deliver_to_main,
@@ -142,8 +143,8 @@ class HarmoniaWindow(
         self._suggestion_request = 0
         self._suggestion_timeout = 0
         self.search_results: SearchResults | None = None
-        self.detail_track_rows: list[dict] = []
-        self.home_song_rows: list[dict] = []
+        self.detail_track_rows: list[DetailTrackRow] = []
+        self.home_song_rows: list[HomeSongRow] = []
         self.shuffle_buttons: list[Gtk.Button] = []
         self.repeat_buttons: list[Gtk.Button] = []
         self.like_buttons: list[Gtk.Button] = []

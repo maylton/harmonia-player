@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 09:38-0300\n"
+"POT-Creation-Date: 2026-10-07 11:11-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -13,200 +13,200 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/harmonia/app.py:78 src/harmonia/app.py:393 src/harmonia/app.py:1177
+#: src/harmonia/app.py:85 src/harmonia/app.py:402 src/harmonia/app.py:1186
 msgid "Harmonia"
 msgstr "Harmonia"
 
-#: src/harmonia/app.py:230
+#: src/harmonia/app.py:239
 msgid "Pesquisar músicas, álbuns, artistas…"
 msgstr "Search songs, albums, artists…"
 
-#: src/harmonia/app.py:247 src/harmonia/auth.py:38
+#: src/harmonia/app.py:256 src/harmonia/auth.py:38
 #: src/harmonia/auth_webview2.py:203
 msgid "Voltar"
 msgstr "Back"
 
-#: src/harmonia/app.py:253
+#: src/harmonia/app.py:262
 msgid "Navegação"
 msgstr "Navigation"
 
-#: src/harmonia/app.py:261 src/harmonia/app.py:398
-#: src/harmonia/window_home.py:166
+#: src/harmonia/app.py:270 src/harmonia/app.py:407
+#: src/harmonia/window_home.py:164
 msgid "Início"
 msgstr "Home"
 
-#: src/harmonia/app.py:262 src/harmonia/app.py:399
+#: src/harmonia/app.py:271 src/harmonia/app.py:408
 #: src/harmonia/qt_backend.py:308 src/harmonia/qt_backend.py:1246
 #: src/harmonia/qt_catalog.py:58 src/harmonia/qt_catalog.py:118
-#: src/harmonia/qt_catalog.py:496 src/harmonia/window_home.py:36
+#: src/harmonia/qt_catalog.py:496 src/harmonia/window_home.py:34
 msgid "Explorar"
 msgstr "Explore"
 
-#: src/harmonia/app.py:263 src/harmonia/app.py:402
+#: src/harmonia/app.py:272 src/harmonia/app.py:411
 #: src/harmonia/window_library.py:61
 msgid "Biblioteca"
 msgstr "Library"
 
-#: src/harmonia/app.py:264 src/harmonia/app.py:410
+#: src/harmonia/app.py:273 src/harmonia/app.py:419
 msgid "Músicas curtidas"
 msgstr "Liked songs"
 
-#: src/harmonia/app.py:265 src/harmonia/app.py:416
+#: src/harmonia/app.py:274 src/harmonia/app.py:425
 #: src/harmonia/innertube/protocol.py:90 src/harmonia/qt_library.py:24
 #: src/harmonia/window_constants.py:4
 msgid "Playlists"
 msgstr "Playlists"
 
-#: src/harmonia/app.py:266 src/harmonia/app.py:424
+#: src/harmonia/app.py:275 src/harmonia/app.py:433
 #: src/harmonia/innertube/protocol.py:89 src/harmonia/qt_library.py:22
 #: src/harmonia/window_constants.py:7
 msgid "Artistas"
 msgstr "Artists"
 
-#: src/harmonia/app.py:267 src/harmonia/app.py:431
+#: src/harmonia/app.py:276 src/harmonia/app.py:440
 #: src/harmonia/window_history.py:162
 msgid "Histórico"
 msgstr "History"
 
-#: src/harmonia/app.py:268 src/harmonia/app.py:437
+#: src/harmonia/app.py:277 src/harmonia/app.py:446
 msgid "Estatísticas"
 msgstr "Statistics"
 
-#: src/harmonia/app.py:269 src/harmonia/app.py:444
+#: src/harmonia/app.py:278 src/harmonia/app.py:453
 #: src/harmonia/qt_library.py:16 src/harmonia/window_history.py:45
 #: src/harmonia/window_library.py:77
 msgid "Downloads"
 msgstr "Downloads"
 
-#: src/harmonia/app.py:270 src/harmonia/app.py:449
+#: src/harmonia/app.py:279 src/harmonia/app.py:458
 #: src/harmonia/settings_page/__init__.py:19
 msgid "Preferências"
 msgstr "Preferences"
 
-#: src/harmonia/app.py:279
+#: src/harmonia/app.py:288
 msgid "Sincronizar biblioteca"
 msgstr "Sync library"
 
-#: src/harmonia/app.py:284 src/harmonia/app.py:324
+#: src/harmonia/app.py:293 src/harmonia/app.py:333
 #: src/harmonia/settings_page/account.py:19
 msgid "Conta"
 msgstr "Account"
 
-#: src/harmonia/app.py:363
+#: src/harmonia/app.py:372
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr "Account — {name}"
 
-#: src/harmonia/app.py:405
+#: src/harmonia/app.py:414
 msgid "SUAS MÚSICAS"
 msgstr "YOUR SONGS"
 
-#: src/harmonia/app.py:453 src/harmonia/window_actions.py:112
+#: src/harmonia/app.py:462 src/harmonia/window_actions.py:112
 msgid "Nova playlist"
 msgstr "New playlist"
 
-#: src/harmonia/app.py:496
+#: src/harmonia/app.py:505
 msgid "Expandir player"
 msgstr "Expand player"
 
-#: src/harmonia/app.py:548
+#: src/harmonia/app.py:557
 msgid "Abrir player expandido"
 msgstr "Open expanded player"
 
-#: src/harmonia/app.py:563
+#: src/harmonia/app.py:572
 msgid "Curtir"
 msgstr "Like"
 
-#: src/harmonia/app.py:580 src/harmonia/app.py:881
+#: src/harmonia/app.py:589 src/harmonia/app.py:890
 msgid "Ordem aleatória"
 msgstr "Shuffle"
 
-#: src/harmonia/app.py:586 src/harmonia/app.py:888
+#: src/harmonia/app.py:595 src/harmonia/app.py:897
 msgid "Anterior"
 msgstr "Previous"
 
-#: src/harmonia/app.py:591 src/harmonia/app.py:895
+#: src/harmonia/app.py:600 src/harmonia/app.py:904
 msgid "Pausar ou continuar"
 msgstr "Pause or resume"
 
-#: src/harmonia/app.py:597 src/harmonia/app.py:901
+#: src/harmonia/app.py:606 src/harmonia/app.py:910
 msgid "Próxima"
 msgstr "Next"
 
-#: src/harmonia/app.py:601 src/harmonia/app.py:906
+#: src/harmonia/app.py:610 src/harmonia/app.py:915
 msgid "Repetir"
 msgstr "Repeat"
 
-#: src/harmonia/app.py:608 src/harmonia/window_playback.py:158
+#: src/harmonia/app.py:617 src/harmonia/window_playback.py:158
 #: src/harmonia/window_playback.py:159
 msgid "Reprodução automática ativada"
 msgstr "Autoplay enabled"
 
-#: src/harmonia/app.py:624 src/harmonia/app.py:634 src/harmonia/app.py:862
-#: src/harmonia/app.py:872 src/harmonia/app.py:969 src/harmonia/app.py:970
+#: src/harmonia/app.py:633 src/harmonia/app.py:643 src/harmonia/app.py:871
+#: src/harmonia/app.py:881 src/harmonia/app.py:978 src/harmonia/app.py:979
 #: src/harmonia/window_playback.py:452 src/harmonia/window_playback.py:453
 #: src/harmonia/window_playback.py:454 src/harmonia/window_playback.py:455
 #: src/harmonia/window_playback.py:718 src/harmonia/window_playback.py:719
 msgid "0:00"
 msgstr "0:00"
 
-#: src/harmonia/app.py:647 src/harmonia/app.py:655 src/harmonia/app.py:775
-#: src/harmonia/app.py:930 src/harmonia/window_lyrics.py:61
+#: src/harmonia/app.py:656 src/harmonia/app.py:664 src/harmonia/app.py:784
+#: src/harmonia/app.py:939 src/harmonia/window_lyrics.py:61
 msgid "Letras"
 msgstr "Lyrics"
 
-#: src/harmonia/app.py:656 src/harmonia/app.py:931
+#: src/harmonia/app.py:665 src/harmonia/app.py:940
 #: src/harmonia/window_lyrics.py:62
 msgid "Comece a reproduzir uma música para ver a letra."
 msgstr "Start playing a song to see the lyrics."
 
-#: src/harmonia/app.py:660 src/harmonia/window_playback.py:227
+#: src/harmonia/app.py:669 src/harmonia/window_playback.py:227
 msgid "Fila de reprodução"
 msgstr "Play queue"
 
-#: src/harmonia/app.py:676
+#: src/harmonia/app.py:685
 msgid "Parar"
 msgstr "Stop"
 
-#: src/harmonia/app.py:753
+#: src/harmonia/app.py:762
 msgid "Recolher player (Esc)"
 msgstr "Collapse player (Esc)"
 
-#: src/harmonia/app.py:773 src/harmonia/gtk_video.py:86
+#: src/harmonia/app.py:782 src/harmonia/gtk_video.py:98
 msgid "Música"
 msgstr "Song"
 
-#: src/harmonia/app.py:778 src/harmonia/app.py:1078
+#: src/harmonia/app.py:787 src/harmonia/app.py:1087
 #: src/harmonia/window_playback.py:270
 msgid "Relacionadas"
 msgstr "Related"
 
-#: src/harmonia/app.py:851 src/harmonia/window_actions.py:85
-#: src/harmonia/window_detail.py:715 src/harmonia/window_item_menu.py:97
+#: src/harmonia/app.py:860 src/harmonia/track_rows.py:242
+#: src/harmonia/window_actions.py:85 src/harmonia/window_item_menu.py:97
 msgid "Curtir música"
 msgstr "Like song"
 
-#: src/harmonia/app.py:962 src/harmonia/qt_backend.py:699
+#: src/harmonia/app.py:971 src/harmonia/qt_backend.py:699
 msgid "Nenhuma música reproduzindo"
 msgstr "Nothing playing"
 
-#: src/harmonia/app.py:963 src/harmonia/qt_backend.py:707
+#: src/harmonia/app.py:972 src/harmonia/qt_backend.py:707
 msgid "Escolha uma faixa para começar"
 msgstr "Choose a track to start"
 
-#: src/harmonia/app.py:1055
+#: src/harmonia/app.py:1064
 msgid "Fila"
 msgstr "Queue"
 
-#: src/harmonia/app.py:1062
+#: src/harmonia/app.py:1071
 msgid "Nada na fila"
 msgstr "Nothing in the queue"
 
-#: src/harmonia/app.py:1063
+#: src/harmonia/app.py:1072
 msgid "Escolha uma música para ver as próximas faixas."
 msgstr "Choose a song to see upcoming tracks."
 
-#: src/harmonia/app.py:1090 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:1099 src/harmonia/window_playback.py:286
 msgid "Adicionar ao fim"
 msgstr "Add to end of queue"
 
@@ -219,72 +219,72 @@ msgstr "Connect to YouTube Music"
 msgid "Usar cookie manualmente"
 msgstr "Use cookie manually"
 
-#: src/harmonia/gtk_media_variants.py:84 src/harmonia/qt_media_variants.py:211
+#: src/harmonia/gtk_media_variants.py:74 src/harmonia/qt_media_variants.py:211
 msgid "Não foi possível preservar o áudio original da música."
 msgstr "Couldn't keep the song's original audio."
 
-#: src/harmonia/gtk_video.py:87
+#: src/harmonia/gtk_video.py:99
 msgid "Vídeo"
 msgstr "Video"
 
-#: src/harmonia/gtk_video.py:189
+#: src/harmonia/gtk_video.py:186
 msgid "O plugin GStreamer gtk4paintablesink não está disponível."
 msgstr "The GStreamer gtk4paintablesink plugin is not available."
 
-#: src/harmonia/gtk_video.py:193
+#: src/harmonia/gtk_video.py:190
 msgid "Arquivos locais não possuem vídeo associado no YouTube Music."
 msgstr "Local files have no associated video on YouTube Music."
 
-#: src/harmonia/gtk_video.py:196
+#: src/harmonia/gtk_video.py:193
 msgid "Alternar para o vídeo desta música"
 msgstr "Switch to this song's video"
 
-#: src/harmonia/gtk_video.py:279 src/harmonia/qt_video.py:403
+#: src/harmonia/gtk_video.py:276 src/harmonia/qt_video.py:403
 #, python-brace-format
 msgid "Não foi possível abrir o vídeo: {error}"
 msgstr "Couldn't open the video: {error}"
 
-#: src/harmonia/gtk_video.py:301 src/harmonia/qt_video.py:421
+#: src/harmonia/gtk_video.py:298 src/harmonia/qt_video.py:421
 msgid "A camada de vídeo do GStreamer não está disponível."
 msgstr "The GStreamer video layer is not available."
 
-#: src/harmonia/gtk_video.py:314 src/harmonia/qt_video.py:436
+#: src/harmonia/gtk_video.py:311 src/harmonia/qt_video.py:436
 msgid "A camada de vídeo não conseguiu iniciar o preroll"
 msgstr "The video layer could not start prerolling"
 
-#: src/harmonia/gtk_video.py:330 src/harmonia/qt_video.py:451
+#: src/harmonia/gtk_video.py:327 src/harmonia/qt_video.py:451
 msgid "O GStreamer falhou ao preparar os frames do vídeo."
 msgstr "GStreamer failed to prepare the video frames."
 
-#: src/harmonia/gtk_video.py:341 src/harmonia/qt_video.py:457
+#: src/harmonia/gtk_video.py:338 src/harmonia/qt_video.py:457
 msgid "O vídeo demorou demais para iniciar."
 msgstr "The video took too long to start."
 
-#: src/harmonia/gtk_video.py:362
+#: src/harmonia/gtk_video.py:359
 msgid "O fluxo de vídeo não conseguiu preparar a sincronização."
 msgstr "The video stream could not prepare synchronization."
 
-#: src/harmonia/gtk_video.py:376
+#: src/harmonia/gtk_video.py:373
 msgid "O vídeo falhou enquanto preparava a sincronização."
 msgstr "The video failed while preparing synchronization."
 
-#: src/harmonia/gtk_video.py:405 src/harmonia/qt_video.py:466
+#: src/harmonia/gtk_video.py:402 src/harmonia/qt_video.py:466
 msgid "O fluxo de vídeo não ficou disponível para sincronização."
 msgstr "The video stream did not become available for synchronization."
 
-#: src/harmonia/gtk_video.py:463 src/harmonia/qt_video.py:515
+#: src/harmonia/gtk_video.py:460 src/harmonia/qt_video.py:515
 msgid "O GStreamer falhou durante a sincronização do vídeo."
 msgstr "GStreamer failed while synchronizing the video."
 
-#: src/harmonia/gtk_video.py:508 src/harmonia/qt_video.py:554
+#: src/harmonia/gtk_video.py:505 src/harmonia/qt_video.py:554
 msgid "Não foi possível sincronizar o vídeo com a música."
 msgstr "Couldn't synchronize the video with the song."
 
-#: src/harmonia/gtk_video.py:585
+#: src/harmonia/gtk_video.py:582
 msgid "O vídeo falhou; voltando para a música…"
 msgstr "The video failed; returning to the song…"
 
-#: src/harmonia/gtk_video.py:604 src/harmonia/qt_video.py:644
+#: src/harmonia/gtk_video.py:601 src/harmonia/qt_video.py:644
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "The video ended before the audio track."
 
@@ -563,8 +563,8 @@ msgid "Playlist armazenada somente neste computador."
 msgstr "Playlist stored only on this computer."
 
 #: src/harmonia/qt_catalog.py:315 src/harmonia/qt_catalog.py:416
-#: src/harmonia/qt_catalog.py:463 src/harmonia/window_detail.py:72
-#: src/harmonia/window_detail.py:237 src/harmonia/window_home.py:113
+#: src/harmonia/qt_catalog.py:463 src/harmonia/window_detail.py:68
+#: src/harmonia/window_detail.py:233 src/harmonia/window_home.py:111
 #, python-brace-format
 msgid "Carregando {title}…"
 msgstr "Loading {title}…"
@@ -850,12 +850,12 @@ msgid "Música removida da biblioteca"
 msgstr "Song removed from library"
 
 #: src/harmonia/qt_mutations.py:94 src/harmonia/window_actions.py:101
-#: src/harmonia/window_detail.py:220
+#: src/harmonia/window_detail.py:216
 msgid "Inscrição realizada"
 msgstr "Subscribed"
 
 #: src/harmonia/qt_mutations.py:94 src/harmonia/window_actions.py:101
-#: src/harmonia/window_detail.py:220
+#: src/harmonia/window_detail.py:216
 msgid "Inscrição cancelada"
 msgstr "Unsubscribed"
 
@@ -863,11 +863,11 @@ msgstr "Unsubscribed"
 msgid "O YouTube Music não informou como salvar este item."
 msgstr "YouTube Music didn't say how to save this item."
 
-#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:600
+#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:596
 msgid "Adicionado à biblioteca"
 msgstr "Added to library"
 
-#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:600
+#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:596
 msgid "Removido da biblioteca"
 msgstr "Removed from library"
 
@@ -1521,8 +1521,21 @@ msgstr "Invalid Listen Together link"
 msgid "Link Listen Together incompleto"
 msgstr "Incomplete Listen Together link"
 
-#: src/harmonia/ui.py:126 src/harmonia/window_detail.py:167
-#: src/harmonia/window_detail.py:493 src/harmonia/window_library.py:667
+#: src/harmonia/track_rows.py:71
+msgid "Opções da faixa"
+msgstr "Track options"
+
+#: src/harmonia/track_rows.py:242 src/harmonia/window_actions.py:85
+msgid "Remover das músicas curtidas"
+msgstr "Remove from liked songs"
+
+#: src/harmonia/track_rows.py:268
+#, python-brace-format
+msgid "Reproduzir {title}"
+msgstr "Play {title}"
+
+#: src/harmonia/ui.py:126 src/harmonia/window_detail.py:163
+#: src/harmonia/window_detail.py:489 src/harmonia/window_library.py:667
 msgid "Reproduzir"
 msgstr "Play"
 
@@ -1614,10 +1627,6 @@ msgid_plural "Biblioteca atualizada · {count} itens"
 msgstr[0] "Library updated · {count} item"
 msgstr[1] "Library updated · {count} items"
 
-#: src/harmonia/window_actions.py:85 src/harmonia/window_detail.py:715
-msgid "Remover das músicas curtidas"
-msgstr "Remove from liked songs"
-
 #: src/harmonia/window_actions.py:113
 msgid "Ela será criada como privada na sua conta do YouTube Music."
 msgstr "It will be created as private on your YouTube Music account."
@@ -1672,7 +1681,7 @@ msgstr "Playlist exported"
 msgid "Não foi possível exportar: {error}"
 msgstr "Couldn't export: {error}"
 
-#: src/harmonia/window_actions.py:306 src/harmonia/window_detail.py:542
+#: src/harmonia/window_actions.py:306 src/harmonia/window_detail.py:538
 #: src/harmonia/window_library.py:674
 msgid "Renomear playlist"
 msgstr "Rename playlist"
@@ -1706,153 +1715,144 @@ msgstr "Add to playlist"
 msgid "Adicionar"
 msgstr "Add"
 
-#: src/harmonia/window_detail.py:73
+#: src/harmonia/window_detail.py:69
 msgid "Buscando a página completa do artista"
 msgstr "Loading the full artist page"
 
-#: src/harmonia/window_detail.py:106
+#: src/harmonia/window_detail.py:102
 msgid "Não foi possível abrir o artista"
 msgstr "Couldn't open artist"
 
-#: src/harmonia/window_detail.py:107
+#: src/harmonia/window_detail.py:103
 msgid "Resposta vazia do YouTube Music"
 msgstr "Empty response from YouTube Music"
 
-#: src/harmonia/window_detail.py:150 src/harmonia/window_detail.py:370
+#: src/harmonia/window_detail.py:146 src/harmonia/window_detail.py:366
 msgid "ARTISTA"
 msgstr "ARTIST"
 
-#: src/harmonia/window_detail.py:172
+#: src/harmonia/window_detail.py:168
 msgid "Rádio"
 msgstr "Radio"
 
-#: src/harmonia/window_detail.py:179 src/harmonia/window_detail.py:211
+#: src/harmonia/window_detail.py:175 src/harmonia/window_detail.py:207
 msgid "Inscrito"
 msgstr "Subscribed"
 
-#: src/harmonia/window_detail.py:211
+#: src/harmonia/window_detail.py:207
 msgid "Inscrever-se"
 msgstr "Subscribe"
 
-#: src/harmonia/window_detail.py:227 src/harmonia/window_library.py:278
+#: src/harmonia/window_detail.py:223 src/harmonia/window_library.py:278
 msgid "Mostrar tudo"
 msgstr "Show all"
 
-#: src/harmonia/window_detail.py:270 src/harmonia/window_lyrics.py:113
+#: src/harmonia/window_detail.py:266 src/harmonia/window_lyrics.py:113
 msgid "Não foi possível carregar"
 msgstr "Couldn't load"
 
-#: src/harmonia/window_detail.py:310 src/harmonia/window_home.py:147
+#: src/harmonia/window_detail.py:306 src/harmonia/window_home.py:145
 msgid "Não foi possível abrir"
 msgstr "Couldn't open"
 
-#: src/harmonia/window_detail.py:368
+#: src/harmonia/window_detail.py:364
 msgid "ÁLBUM"
 msgstr "ALBUM"
 
-#: src/harmonia/window_detail.py:369
+#: src/harmonia/window_detail.py:365
 msgid "PLAYLIST"
 msgstr "PLAYLIST"
 
-#: src/harmonia/window_detail.py:371
+#: src/harmonia/window_detail.py:367
 msgid "COLEÇÃO"
 msgstr "COLLECTION"
 
-#: src/harmonia/window_detail.py:392
+#: src/harmonia/window_detail.py:388
 msgid "Nenhuma faixa"
 msgstr "No tracks"
 
-#: src/harmonia/window_detail.py:393
+#: src/harmonia/window_detail.py:389
 msgid "Esta coleção ainda não possui músicas disponíveis."
 msgstr "This collection has no songs available yet."
 
-#: src/harmonia/window_detail.py:468
+#: src/harmonia/window_detail.py:464
 #, python-brace-format
 msgid "{count} música"
 msgid_plural "{count} músicas"
 msgstr[0] "{count} song"
 msgstr[1] "{count} songs"
 
-#: src/harmonia/window_detail.py:473
+#: src/harmonia/window_detail.py:469
 msgid "•"
 msgstr "•"
 
-#: src/harmonia/window_detail.py:499
+#: src/harmonia/window_detail.py:495
 msgid "Reproduzir em ordem aleatória"
 msgstr "Shuffle play"
 
-#: src/harmonia/window_detail.py:509 src/harmonia/window_detail.py:578
+#: src/harmonia/window_detail.py:505 src/harmonia/window_detail.py:574
 msgid "Salvo na biblioteca"
 msgstr "Saved to library"
 
-#: src/harmonia/window_detail.py:509 src/harmonia/window_detail.py:578
+#: src/harmonia/window_detail.py:505 src/harmonia/window_detail.py:574
 #: src/harmonia/window_item_menu.py:120
 msgid "Salvar na biblioteca"
 msgstr "Save to library"
 
-#: src/harmonia/window_detail.py:519 src/harmonia/window_item_menu.py:106
+#: src/harmonia/window_detail.py:515 src/harmonia/window_item_menu.py:106
 #: src/harmonia/window_item_menu.py:126
 msgid "Baixar"
 msgstr "Download"
 
-#: src/harmonia/window_detail.py:524 src/harmonia/window_item_menu.py:48
+#: src/harmonia/window_detail.py:520 src/harmonia/window_item_menu.py:48
 msgid "Mais opções"
 msgstr "More options"
 
-#: src/harmonia/window_detail.py:531 src/harmonia/window_playback.py:392
+#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:392
 msgid "Tocar a seguir"
 msgstr "Play next"
 
-#: src/harmonia/window_detail.py:532 src/harmonia/window_playback.py:394
+#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:394
 msgid "Adicionar à fila"
 msgstr "Add to queue"
 
-#: src/harmonia/window_detail.py:548 src/harmonia/window_library.py:677
+#: src/harmonia/window_detail.py:544 src/harmonia/window_library.py:677
 msgid "Excluir playlist"
 msgstr "Delete playlist"
 
-#: src/harmonia/window_detail.py:555
+#: src/harmonia/window_detail.py:551
 msgid "Cancelar inscrição"
 msgstr "Unsubscribe"
 
-#: src/harmonia/window_detail.py:595
+#: src/harmonia/window_detail.py:591
 msgid "O YouTube Music não informou como salvar este item"
 msgstr "YouTube Music did not provide the information needed to save this item"
 
-#: src/harmonia/window_detail.py:630
+#: src/harmonia/window_detail.py:626
 msgid "Nenhuma faixa disponível para download"
 msgstr "No tracks available for download"
 
-#: src/harmonia/window_detail.py:638
+#: src/harmonia/window_detail.py:634
 #, python-brace-format
 msgid "{count} download iniciado"
 msgid_plural "{count} downloads adicionados à fila"
 msgstr[0] "{count} download started"
 msgstr[1] "{count} downloads added to queue"
 
-#: src/harmonia/window_detail.py:649
+#: src/harmonia/window_detail.py:645
 msgid "#"
 msgstr "#"
 
-#: src/harmonia/window_detail.py:652
+#: src/harmonia/window_detail.py:648
 msgid "TÍTULO"
 msgstr "TITLE"
 
 #: src/harmonia/window_detail.py:686
 #, python-brace-format
-msgid "Reproduzir {title}"
-msgstr "Play {title}"
-
-#: src/harmonia/window_detail.py:727 src/harmonia/window_home.py:347
-msgid "Opções da faixa"
-msgstr "Track options"
-
-#: src/harmonia/window_detail.py:824
-#, python-brace-format
 msgid "Preparando a rádio de {title}…"
 msgstr "Preparing the {title} radio…"
 
-#: src/harmonia/window_detail.py:831
+#: src/harmonia/window_detail.py:693
 #, python-brace-format
 msgid "Não foi possível iniciar a rádio: {error}"
 msgstr "Couldn't start the radio: {error}"
@@ -1962,61 +1962,61 @@ msgstr "Local history paused"
 msgid "Não foi possível remover: {error}"
 msgstr "Couldn't remove: {error}"
 
-#: src/harmonia/window_home.py:37
+#: src/harmonia/window_home.py:35
 msgid "Lançamentos, paradas e sons para cada momento."
 msgstr "New releases, charts, and music for every moment."
 
-#: src/harmonia/window_home.py:54
+#: src/harmonia/window_home.py:52
 msgid "Descubra"
 msgstr "Discover"
 
-#: src/harmonia/window_home.py:59
+#: src/harmonia/window_home.py:57
 msgid "Momentos e gêneros"
 msgstr "Moods and genres"
 
-#: src/harmonia/window_home.py:64
+#: src/harmonia/window_home.py:62
 msgid "Preparando o Explorar…"
 msgstr "Preparing Explore…"
 
-#: src/harmonia/window_home.py:65
+#: src/harmonia/window_home.py:63
 msgid "Buscando novidades no YouTube Music"
 msgstr "Loading new releases from YouTube Music"
 
-#: src/harmonia/window_home.py:114
+#: src/harmonia/window_home.py:112
 msgid "Consultando o YouTube Music"
 msgstr "Checking YouTube Music"
 
-#: src/harmonia/window_home.py:153
+#: src/harmonia/window_home.py:151
 msgid "Seleção atualizada pelo YouTube Music."
 msgstr "Selection updated by YouTube Music."
 
-#: src/harmonia/window_home.py:166
+#: src/harmonia/window_home.py:164
 msgid "Escolhas feitas para você pelo YouTube Music"
 msgstr "Picks for you from YouTube Music"
 
-#: src/harmonia/window_home.py:171
+#: src/harmonia/window_home.py:169
 msgid "Preparando sua música…"
 msgstr "Preparing your music…"
 
-#: src/harmonia/window_home.py:172
+#: src/harmonia/window_home.py:170
 msgid "Carregando recomendações personalizadas"
 msgstr "Loading personalized recommendations"
 
-#: src/harmonia/window_home.py:443
+#: src/harmonia/window_home.py:310
 msgid "Tocar tudo"
 msgstr "Play all"
 
-#: src/harmonia/window_home.py:444
+#: src/harmonia/window_home.py:311
 #, python-brace-format
 msgid "Reproduzir tudo em {title}"
 msgstr "Play all in {title}"
 
-#: src/harmonia/window_home.py:453
+#: src/harmonia/window_home.py:320
 #, python-brace-format
 msgid "Voltar em {title}"
 msgstr "Back to {title}"
 
-#: src/harmonia/window_home.py:457
+#: src/harmonia/window_home.py:324
 #, python-brace-format
 msgid "Avançar em {title}"
 msgstr "Next in {title}"
