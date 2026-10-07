@@ -15,6 +15,7 @@ from .lyrics_state import (
     lyric_seek_target,
     lyrics_copy_text,
     next_lyrics_provider,
+    remove_translation,
 )
 from .models import HistoryEntry, LibraryItem, LyricLine
 from .services import YouTubeMusicService
@@ -299,12 +300,7 @@ class QtLyricsController(QObject):
         document = self.document
         if not item or not document:
             return
-        if document.translation_language == "pt" and (
-            document.translation or any(line.translation for line in document.synced)
-        ):
-            document.translation = ""
-            document.translation_language = ""
-            document.synced = [LyricLine(line.start_ms, line.text) for line in document.synced]
+        if remove_translation(document):
             self.storage.save_lyrics_document(item.id, document)
             self.lyricsChanged.emit()
             return

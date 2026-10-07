@@ -16,9 +16,7 @@ from .backup import BackupError, BackupManager
 from .i18n import _, ngettext
 from .preferences import Preferences
 from .theming import builtin_themes, get_theme
-from .ui import (
-    style_icon_button,
-)
+from .ui import set_css_class, style_icon_button
 
 LOGGER = logging.getLogger(__name__)
 BUNDLED_ICON_THEME = "HarmoniaMaterial"
@@ -140,10 +138,7 @@ class WindowPreferencesMixin:
             translucent = self._apply_window_backdrop()
             controller.apply(*theme_args, translucent=translucent)
         blurred = self.preferences.background_blur
-        if blurred:
-            self.root.add_css_class("appearance-blur")
-        else:
-            self.root.remove_css_class("appearance-blur")
+        set_css_class(self.root, "appearance-blur", blurred)
         self.ambient_background.set_opacity(0.30 if blurred else 0)
         self._apply_expanded_material(translucent)
 
@@ -202,17 +197,11 @@ class WindowPreferencesMixin:
             self.expanded_backdrop_shade,
         ):
             widget.set_visible(not material)
-        if material:
-            surface.add_css_class("expanded-material")
-        else:
-            surface.remove_css_class("expanded-material")
+        set_css_class(surface, "expanded-material", material)
         # The expanded player keeps its dark design: in light mode a dark veil
         # over the material keeps its white text readable.
         style = Adw.StyleManager.get_default()
-        if material and not style.get_dark():
-            surface.add_css_class("expanded-material-light")
-        else:
-            surface.remove_css_class("expanded-material-light")
+        set_css_class(surface, "expanded-material-light", material and not style.get_dark())
         if not getattr(self, "_expanded_material_handlers", False):
             self._expanded_material_handlers = True
             for signal in ("notify::reveal-child", "notify::child-revealed"):
@@ -268,7 +257,6 @@ class WindowPreferencesMixin:
             settings.set_property("gtk-icon-theme-name", BUNDLED_ICON_THEME)
             return
         if host.SYSTEM_ICON_THEME:
-            # Windows has no icon theme of its own; its icons ship with Harmonia.
             settings.set_property("gtk-icon-theme-name", host.SYSTEM_ICON_THEME)
             return
         settings.reset_property("gtk-icon-theme-name")

@@ -11,6 +11,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from . import host  # noqa: E402
+from .ui import set_css_class  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 # Windows with a material drop GTK's client-side shadow (see windows11.css):
@@ -72,10 +73,7 @@ class GtkWindowBackdrops:
             except OSError:
                 LOGGER.debug("O DWM recusou o material do popover", exc_info=True)
         popover.set_has_arrow(not applied)
-        if applied:
-            popover.add_css_class(POPOVER_CSS_CLASS)
-        else:
-            popover.remove_css_class(POPOVER_CSS_CLASS)
+        set_css_class(popover, POPOVER_CSS_CLASS, applied)
 
     def _watch_toplevels(self) -> None:
         for index in range(self._toplevels.get_n_items()):

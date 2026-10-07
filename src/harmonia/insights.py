@@ -4,6 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 
+from .i18n import _
 from .models import LibraryItem
 
 
@@ -42,3 +43,21 @@ def artist_from_subtitle(subtitle: str) -> str:
 
 def current_year() -> int:
     return time.localtime().tm_year
+
+
+def month_names() -> tuple[str, ...]:
+    """Short month names, translated when called, for PlaybackInsights.monthly_plays."""
+    return (
+        _("Jan"),
+        _("Fev"),
+        _("Mar"),
+        _("Abr"),
+        _("Mai"),
+        _("Jun"),
+        _("Jul"),
+        _("Ago"),
+        _("Set"),
+        _("Out"),
+        _("Nov"),
+        _("Dez"),
+    )

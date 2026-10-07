@@ -4,33 +4,8 @@ from datetime import datetime
 from typing import Any
 
 from .i18n import _
-from .insights import PlaybackInsights
+from .insights import PlaybackInsights, month_names
 from .models import ExploreDestination, HistoryEntry, LibraryItem
-
-CATEGORY_LABELS = {
-    "songs": _("Músicas curtidas"),
-    "albums": _("Álbuns"),
-    "artists": _("Artistas"),
-    "playlists": _("Playlists"),
-    "uploads": _("Uploads"),
-    "uploaded-albums": _("Álbuns enviados"),
-    "podcasts": _("Podcasts"),
-    "podcast-episodes": _("Episódios"),
-}
-MONTH_NAMES = (
-    _("Jan"),
-    _("Fev"),
-    _("Mar"),
-    _("Abr"),
-    _("Mai"),
-    _("Jun"),
-    _("Jul"),
-    _("Ago"),
-    _("Set"),
-    _("Out"),
-    _("Nov"),
-    _("Dez"),
-)
 
 
 def item_map(item: LibraryItem, *, index: int = -1, liked: bool = False) -> dict[str, Any]:
@@ -138,6 +113,6 @@ def insights_map(data: PlaybackInsights, liked_ids: set[str]) -> dict[str, Any]:
         "topArtists": [{"name": ranked.name, "plays": ranked.plays} for ranked in data.top_artists],
         "months": [
             {"label": label, "plays": plays, "ratio": plays / maximum}
-            for label, plays in zip(MONTH_NAMES, data.monthly_plays, strict=True)
+            for label, plays in zip(month_names(), data.monthly_plays, strict=True)
         ],
     }

@@ -18,6 +18,7 @@ from .lyrics_state import (
     lyric_seek_target,
     lyrics_copy_text,
     next_lyrics_provider,
+    remove_translation,
 )
 from .models import (
     LibraryItem,
@@ -26,6 +27,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    set_css_class,
     style_action,
     style_icon_button,
 )
@@ -307,12 +309,7 @@ class WindowLyricsMixin:
         document = self.current_lyrics_document
         if not item or not document:
             return
-        if document.translation_language == "pt" and (
-            document.translation or any(line.translation for line in document.synced)
-        ):
-            document.translation = ""
-            document.translation_language = ""
-            document.synced = [LyricLine(line.start_ms, line.text) for line in document.synced]
+        if remove_translation(document):
             self.storage.save_lyrics_document(item.id, document)
             self._render_lyrics(item, document)
             return
@@ -382,10 +379,7 @@ class WindowLyricsMixin:
         self._active_lyric_index = active
         for view in self._lyric_views:
             for index, row in enumerate(view["rows"]):
-                if index == active:
-                    row.add_css_class("lyrics-line-active")
-                else:
-                    row.remove_css_class("lyrics-line-active")
+                set_css_class(row, "lyrics-line-active", index == active)
             if active >= 0:
                 should_follow = (
                     view["expanded"]

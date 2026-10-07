@@ -20,6 +20,7 @@ from .ui import (
     CreditsLabel,
     page_header,
     page_shell,
+    set_css_class,
     style_icon_button,
 )
 from .window_constants import EXPLORE_ICON
@@ -391,15 +392,7 @@ class WindowHomeMixin:
         self._update_home_song_row(state)
 
     def _activate_home_song(self, state: dict) -> None:
-        track = state["track"]
-        active = (
-            getattr(self, "current_item", None) is not None and self.current_item.id == track.id
-        )
-        if active and self._stream_ready:
-            self._toggle_player()
-            return
-        source = state["source"]
-        self.set_queue(source, source.index(track))
+        self.play_or_toggle(state["track"], state["source"])
 
     def _toggle_home_song_like(self, state: dict, popover: Gtk.Popover) -> None:
         popover.popdown()
@@ -408,18 +401,11 @@ class WindowHomeMixin:
         self._toggle_song(state["track"], state["liked"])
 
     def _update_home_song_row(self, state: dict) -> None:
-        track = state["track"]
-        active = (
-            getattr(self, "current_item", None) is not None and self.current_item.id == track.id
-        )
+        active = self.is_current_track(state["track"])
         playing = active and self._playback_is_playing()
         hovered = state["hovered"]
-        if active:
-            state["row"].add_css_class("home-song-current")
-            state["title"].add_css_class("current-track")
-        else:
-            state["row"].remove_css_class("home-song-current")
-            state["title"].remove_css_class("current-track")
+        set_css_class(state["row"], "home-song-current", active)
+        set_css_class(state["title"], "current-track", active)
         state["play_icon"].set_from_icon_name(
             "media-playback-pause-symbolic" if playing else "media-playback-start-symbolic"
         )
