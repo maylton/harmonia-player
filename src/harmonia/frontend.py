@@ -79,12 +79,4 @@ def main() -> int:
     if ignored is not None:
         LOGGER.info("Ignorando GTK_THEME=%r; o frontend GTK usa o estilo do libadwaita", ignored)
     gtk_app = importlib.import_module(".app", __package__)
-
-    window_class = getattr(gtk_app, "HarmoniaWindow", None)
-    if window_class is not None:
-        from .gtk_media_variants import install_gtk_media_variants
-        from .gtk_video import install_gtk_video
-
-        install_gtk_video(window_class)
-        install_gtk_media_variants(window_class)
     return gtk_app.main()

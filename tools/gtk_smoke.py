@@ -121,13 +121,9 @@ def _child(verbose: bool) -> int:
         return 2
 
     from harmonia import app as gtk_app
-    from harmonia.gtk_media_variants import install_gtk_media_variants
-    from harmonia.gtk_video import install_gtk_video
     from harmonia.storage import Storage
     from harmonia.theming import builtin_themes
 
-    install_gtk_video(gtk_app.HarmoniaWindow)
-    install_gtk_media_variants(gtk_app.HarmoniaWindow)
     samples = _Samples(Path(os.environ["XDG_CACHE_HOME"]) / "smoke-media")
     gtk_app.YouTubeMusicService = lambda storage: _FakeService(storage, samples)
     storage = Storage()

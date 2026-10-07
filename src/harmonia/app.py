@@ -14,7 +14,9 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from .downloads import DownloadManager
+from .gtk_media_variants import GtkMediaVariantsMixin
 from .gtk_theme import GtkThemeController
+from .gtk_video import GtkVideoMixin
 from .i18n import _
 from .lyrics import GoogleTranslationClient, LyricsResolver
 from .models import (
@@ -57,6 +59,10 @@ APP_ID = "io.github.harmonia.Harmonia"
 
 
 class HarmoniaWindow(
+    # The video layers come first: they extend playback methods of the
+    # mixins below (play_item, _stop_player, _seek_playback...) through super().
+    GtkMediaVariantsMixin,
+    GtkVideoMixin,
     WindowPreferencesMixin,
     WindowHistoryMixin,
     WindowInsightsMixin,
@@ -223,6 +229,8 @@ class HarmoniaWindow(
             ).start()
             self.downloads.resume_pending()
             GLib.timeout_add_seconds(24 * 60 * 60, self._periodic_download_validation)
+        # Last: the video layer wraps the expanded player's artwork, built above.
+        self._video_feature_init()
 
     def _build_header(self) -> None:
         self.header = Adw.HeaderBar()
