@@ -274,6 +274,43 @@ check:checked, radio:checked { border-color: @accent_bg_color; background-color:
 progressbar trough { min-height: 3px; border-radius: 2px; background-color: alpha(@harmonia_overlay, .25); }
 progressbar progress { min-height: 3px; border-radius: 2px; background-color: @accent_bg_color; }
 
+/* Expanded player header: no bar, a subtle close button and the tabs as a
+   Fluent SelectorBar (subtle fill on hover, an accent pill under the
+   selected tab). The expanded player is always dark, hence the white text. */
+.expanded-header { background: transparent; border-bottom: none; }
+.expanded-header > button {
+  border-radius: 4px;
+  color: alpha(#ffffff, .79);
+  background-color: transparent;
+}
+.expanded-header > button:hover { color: #ffffff; background-color: alpha(#ffffff, .06); }
+.expanded-header > button:active { color: alpha(#ffffff, .6); background-color: alpha(#ffffff, .04); }
+.expanded-switcher { padding: 0; border-radius: 0; background: transparent; }
+.expanded-switcher button {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 4px;
+  color: alpha(#ffffff, .79);
+  font-weight: 400;
+  box-shadow: none;
+  background-color: transparent;
+  /* The pill is on every tab, transparent unless selected, so switching
+     tabs fades its colour instead of flashing the whole tab. */
+  background-image: linear-gradient(alpha(@accent_bg_color, 0), alpha(@accent_bg_color, 0));
+  background-size: 16px 3px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
+}
+.expanded-switcher button:hover { color: #ffffff; background-color: alpha(#ffffff, .06); }
+.expanded-switcher button:active { color: alpha(#ffffff, .6); background-color: alpha(#ffffff, .04); }
+.expanded-switcher button:checked,
+.expanded-switcher button:checked:hover {
+  color: #ffffff;
+  box-shadow: none;
+  background-image: linear-gradient(@accent_bg_color, @accent_bg_color);
+}
+.expanded-switcher button:checked { background-color: transparent; }
+
 /* Player bar on Mica, separated from the content by a hairline. */
 .player-bar { background: @harmonia_sidebar_bg; border-top: 1px solid alpha(@harmonia_shadow, .1); }
 
