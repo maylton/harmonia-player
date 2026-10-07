@@ -31,7 +31,7 @@ max-statements = 60
 # Size debt: these files hold functions over the limits above. Each step of
 # the modularization plan that splits one removes it from this list; no new
 # file may join it.
-"src/harmonia/{app,downloads,qt_integrations,video}.py" = [
+"src/harmonia/{downloads,qt_integrations,video}.py" = [
   "C901",
   "PLR0915",
 ]

@@ -47,7 +47,13 @@ def test_qt_controllers_do_not_depend_on_gtk_or_adwaita() -> None:
 
 
 def test_gtk_presentation_does_not_depend_on_pyside_or_qt_controllers() -> None:
-    paths = [PACKAGE / "app.py", *sorted(PACKAGE.glob("window_*.py"))]
+    paths = [
+        PACKAGE / "app.py",
+        PACKAGE / "track_rows.py",
+        *sorted(PACKAGE.glob("window_*.py")),
+        *sorted((PACKAGE / "window_chrome").glob("*.py")),
+        *sorted((PACKAGE / "settings_page").glob("*.py")),
+    ]
     for path in paths:
         source = _source(path)
         assert "PySide6" not in source, path.name

@@ -161,7 +161,9 @@ def test_google_artwork_url_requests_context_specific_resolution():
 
 def test_expanded_player_uses_a_supported_gtk_revealer_transition() -> None:
     root = Path(__file__).resolve().parents[1]
-    source = (root / "src" / "harmonia" / "app.py").read_text(encoding="utf-8")
+    source = (root / "src" / "harmonia" / "window_chrome" / "expanded_player.py").read_text(
+        encoding="utf-8"
+    )
 
     assert "Gtk.RevealerTransitionType.FADE_SLIDE_UP" not in source
     assert "Gtk.RevealerTransitionType.SLIDE_UP" in source

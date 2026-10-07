@@ -183,9 +183,10 @@ def test_search_focus_is_detected_inside_the_entry():
 
 
 def test_suggestions_never_take_keyboard_focus():
-    from harmonia import app, window_search
+    from harmonia import window_search
+    from harmonia.window_chrome import header as header_module
 
-    header = inspect.getsource(app.HarmoniaWindow._build_header)
+    header = inspect.getsource(header_module)
     assert "Gtk.Popover(autohide=False" in header
     assert "set_can_focus(False)" in header
     assert '"stop-search"' in header and "EventControllerFocus" in header

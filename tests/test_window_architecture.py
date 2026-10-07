@@ -46,4 +46,6 @@ def test_window_keeps_only_composition_and_chrome_methods():
     direct_methods = {name for name, value in HarmoniaWindow.__dict__.items() if callable(value)}
 
     assert len(direct_methods) <= 30
-    assert {"__init__", "_build_header", "_build_sidebar", "_build_player_bar"} <= direct_methods
+    assert "__init__" in direct_methods
+    # The fixed parts of the window are built by window_chrome, not by methods.
+    assert not {"_build_header", "_build_sidebar", "_build_player_bar"} & direct_methods
