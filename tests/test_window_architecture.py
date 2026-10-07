@@ -1,4 +1,6 @@
 from harmonia.app import HarmoniaWindow
+from harmonia.gtk_media_variants import GtkMediaVariantsMixin
+from harmonia.gtk_video import GtkVideoMixin
 from harmonia.window_account import WindowAccountMixin
 from harmonia.window_actions import WindowActionsMixin
 from harmonia.window_detail import WindowDetailMixin
@@ -24,7 +26,10 @@ DOMAIN_METHODS = {
     WindowActionsMixin: "_mutate",
     WindowLyricsMixin: "_render_lyrics",
     WindowOptionalMixin: "_initialize_optional_services",
-    WindowPlaybackMixin: "play_item",
+    # play_item itself is extended by the video layers below.
+    WindowPlaybackMixin: "enqueue",
+    GtkVideoMixin: "_video_feature_init",
+    GtkMediaVariantsMixin: "_apply_independent_video",
     WindowSocialMixin: "_initialize_social",
     WindowAccountMixin: "sync",
 }

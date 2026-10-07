@@ -12,29 +12,20 @@ from .ui import deliver_to_main
 LOGGER = logging.getLogger(__name__)
 
 
-def install_gtk_media_variants(window_class) -> None:
-    """Add independent official-video playback to the GTK media switch."""
-    if getattr(window_class, "_harmonia_media_variants_installed", False):
-        return
-    window_class._harmonia_media_variants_installed = True
+class GtkMediaVariantsMixin:
+    """Independent official-video playback for the GTK media switch.
 
-    original_apply_media_mode = window_class._apply_media_mode
-    original_set_media_mode = window_class._set_media_mode
-    original_video_failed = window_class._gtk_video_failed
-    original_video_message = window_class._on_gtk_video_message
-    original_player_error = window_class._player_error
-    original_current_playback_state = window_class._current_playback_state
-    original_start_stream = window_class._start_stream
-    original_play_item = window_class.play_item
-    original_stop = window_class._stop_player
+    When a song's official video differs from the track, the video brings its
+    own audio; this layer wraps the video layer to swap the audio and back.
+    """
 
-    def clear_independent_video(self) -> None:
+    def _clear_independent_video(self) -> None:
         self._independent_video_owns_audio = False
         self._independent_video_primary_uri = ""
         self._independent_video_primary_duration_ms = 0
         self._independent_video_primary_position_us = 0
 
-    def set_transport_duration(self, duration_ms: int) -> None:
+    def _set_media_transport_duration(self, duration_ms: int) -> None:
         duration_ms = max(0, int(duration_ms or 0))
         self.current_duration_ms = duration_ms
         formatted = self._format_time(duration_ms)
@@ -45,7 +36,7 @@ def install_gtk_media_variants(window_class) -> None:
         if getattr(self, "current_item", None) is not None:
             self.mpris.update(self.current_item, duration_ms * 1000)
 
-    def restore_primary_audio(self, *, playing: bool | None = None) -> None:
+    def _restore_primary_audio_after_video(self, *, playing: bool | None = None) -> None:
         if not getattr(self, "_independent_video_owns_audio", False):
             return
         uri = getattr(self, "_independent_video_primary_uri", "")
@@ -54,14 +45,14 @@ def install_gtk_media_variants(window_class) -> None:
         should_play = self._playback_is_playing() if playing is None else bool(playing)
 
         # Clear ownership before replacing the source to avoid recursive recovery.
-        clear_independent_video(self)
+        self._clear_independent_video()
         if uri:
             self.player.replace(uri, position_us=position_us, playing=should_play)
-            set_transport_duration(self, duration_ms)
+            self._set_media_transport_duration(duration_ms)
             self._save_playback_state(position_us // 1000)
             LOGGER.debug("Restored song audio at %d us", position_us)
 
-    def apply_independent_video(
+    def _apply_independent_video(
         self,
         request_id: int,
         item_id: str,
@@ -72,12 +63,11 @@ def install_gtk_media_variants(window_class) -> None:
         if request_id != self._media_switch_request or current is None or current.id != item_id:
             return GLib.SOURCE_REMOVE
         if error or playback is None:
-            return original_apply_media_mode(self, request_id, item_id, None, error)
+            return super()._apply_media_mode(request_id, item_id, None, error)
 
         primary_uri = str(getattr(self, "_media_primary_stream_uri", "") or "")
         if not primary_uri:
-            return original_apply_media_mode(
-                self,
+            return super()._apply_media_mode(
                 request_id,
                 item_id,
                 None,
@@ -105,28 +95,27 @@ def install_gtk_media_variants(window_class) -> None:
             video_duration_ms,
         )
         self.player.replace(playback.audio.url, position_us=0, playing=should_play)
-        set_transport_duration(self, video_duration_ms)
-        return original_apply_media_mode(
-            self,
+        self._set_media_transport_duration(video_duration_ms)
+        return super()._apply_media_mode(
             request_id,
             item_id,
             playback.video,
             "",
         )
 
-    def apply_media_mode(self, request_id: int, item_id: str, stream, error: str) -> bool:
+    def _apply_media_mode(self, request_id: int, item_id: str, stream, error: str) -> bool:
         if error or stream is None:
-            return original_apply_media_mode(self, request_id, item_id, stream, error)
+            return super()._apply_media_mode(request_id, item_id, stream, error)
 
         current = getattr(self, "current_item", None)
         if current is None or current.id != item_id:
-            return original_apply_media_mode(self, request_id, item_id, stream, error)
+            return super()._apply_media_mode(request_id, item_id, stream, error)
         if not is_independent_video_variant(
             item_kind=current.kind,
             song_duration_ms=self.current_duration_ms,
             video_duration_ms=stream.duration_ms,
         ):
-            return original_apply_media_mode(self, request_id, item_id, stream, error)
+            return super()._apply_media_mode(request_id, item_id, stream, error)
 
         def worker() -> None:
             try:
@@ -155,23 +144,23 @@ def install_gtk_media_variants(window_class) -> None:
         ).start()
         return GLib.SOURCE_REMOVE
 
-    def set_media_mode(self, mode: str, *, force: bool = False) -> None:
+    def _set_media_mode(self, mode: str, *, force: bool = False) -> None:
         normalized = "video" if mode == "video" else "audio"
         if normalized == "audio" and getattr(self, "_independent_video_owns_audio", False):
             should_play = self._playback_is_playing()
-            original_set_media_mode(self, "audio", force=force)
-            restore_primary_audio(self, playing=should_play)
+            super()._set_media_mode("audio", force=force)
+            self._restore_primary_audio_after_video(playing=should_play)
             return
-        original_set_media_mode(self, mode, force=force)
+        super()._set_media_mode(mode, force=force)
 
-    def gtk_video_failed(self, detail: str) -> None:
+    def _gtk_video_failed(self, detail: str) -> None:
         should_restore = getattr(self, "_independent_video_owns_audio", False)
         should_play = self._playback_is_playing()
-        original_video_failed(self, detail)
+        super()._gtk_video_failed(detail)
         if should_restore:
-            restore_primary_audio(self, playing=should_play)
+            self._restore_primary_audio_after_video(playing=should_play)
 
-    def on_gtk_video_message(self, bus, message) -> None:
+    def _on_gtk_video_message(self, bus, message) -> None:
         # The audio transport owns EOS for independent videos.
         if (
             getattr(self, "_independent_video_owns_audio", False)
@@ -179,23 +168,23 @@ def install_gtk_media_variants(window_class) -> None:
         ):
             LOGGER.debug("Ignoring visual EOS; independent video audio owns transport EOS")
             return
-        original_video_message(self, bus, message)
+        super()._on_gtk_video_message(bus, message)
 
-    def player_error(self, error: str):
+    def _player_error(self, error: str):
         if getattr(self, "_independent_video_owns_audio", False):
-            gtk_video_failed(self, error)
+            self._gtk_video_failed(error)
             return False
-        return original_player_error(self, error)
+        return super()._player_error(error)
 
-    def current_playback_state(self, position_ms: int | None = None):
+    def _current_playback_state(self, position_ms: int | None = None):
         if getattr(self, "_independent_video_owns_audio", False):
             position_ms = max(
                 0,
                 int(getattr(self, "_independent_video_primary_position_us", 0)) // 1000,
             )
-        return original_current_playback_state(self, position_ms)
+        return super()._current_playback_state(position_ms)
 
-    def wrapped_start_stream(
+    def _start_stream(
         self,
         request_id: int,
         url: str,
@@ -204,32 +193,17 @@ def install_gtk_media_variants(window_class) -> None:
     ):
         if request_id == self._play_request:
             self._media_primary_stream_uri = url
-        return original_start_stream(
-            self,
+        return super()._start_stream(
             request_id,
             url,
             duration_ms,
             playback_tracking_url,
         )
 
-    def wrapped_play_item(self, item) -> None:
-        clear_independent_video(self)
-        return original_play_item(self, item)
+    def play_item(self, item) -> None:
+        self._clear_independent_video()
+        return super().play_item(item)
 
-    def wrapped_stop(self) -> None:
-        clear_independent_video(self)
-        return original_stop(self)
-
-    window_class._clear_independent_video = clear_independent_video
-    window_class._set_media_transport_duration = set_transport_duration
-    window_class._restore_primary_audio_after_video = restore_primary_audio
-    window_class._apply_independent_video = apply_independent_video
-    window_class._apply_media_mode = apply_media_mode
-    window_class._set_media_mode = set_media_mode
-    window_class._gtk_video_failed = gtk_video_failed
-    window_class._on_gtk_video_message = on_gtk_video_message
-    window_class._player_error = player_error
-    window_class._current_playback_state = current_playback_state
-    window_class._start_stream = wrapped_start_stream
-    window_class.play_item = wrapped_play_item
-    window_class._stop_player = wrapped_stop
+    def _stop_player(self) -> None:
+        self._clear_independent_video()
+        return super()._stop_player()

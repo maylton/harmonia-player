@@ -18,24 +18,17 @@ from .ui import deliver_to_main  # noqa: E402
 LOGGER = logging.getLogger(__name__)
 
 
-def install_gtk_video(window_class) -> None:
-    """Install a synchronized GTK video layer next to the existing audio player.
+class GtkVideoMixin:
+    """A synchronized GTK video layer next to the audio player.
 
-    Audio remains owned by the original NativePlayer. Video uses a second,
-    muted playbin feeding gtk4paintablesink, which lets GTK consume YouTube's
-    adaptive video-only formats without disturbing queue, MPRIS, history,
-    scrobbling, equalizer or the audio transport.
+    Audio remains owned by the NativePlayer. Video uses a second, muted
+    playbin feeding gtk4paintablesink, which lets GTK consume YouTube's adaptive
+    video-only formats without disturbing queue, MPRIS, history, scrobbling,
+    equalizer or the audio transport. HarmoniaWindow calls _video_feature_init
+    once its widgets exist.
     """
-    if getattr(window_class, "_harmonia_video_installed", False):
-        return
-    window_class._harmonia_video_installed = True
 
-    original_init = window_class.__init__
-    original_play_item = window_class.play_item
-    original_stop = window_class._stop_player
-    original_seek = window_class._seek_playback
-
-    def video_feature_init(self) -> None:
+    def _video_feature_init(self) -> None:
         self._media_mode = "audio"
         self._media_switch_loading = False
         self._media_switch_request = 0
@@ -54,6 +47,25 @@ def install_gtk_video(window_class) -> None:
         if not isinstance(frame, Gtk.AspectFrame):
             return
 
+        video_picture = self._build_media_switch(frame, artwork_overlay)
+        self._prepare_gtk_video_sink(video_picture)
+        for button, mode in (
+            (self._media_audio_button, "audio"),
+            (self._media_video_button, "video"),
+        ):
+            button.connect(
+                "toggled",
+                lambda button, mode=mode: (
+                    self._set_media_mode(mode)
+                    if button.get_active() and not self._media_ui_guard
+                    else None
+                ),
+            )
+        self._gtk_video_sync_source = GLib.timeout_add(200, self._sync_gtk_video_transport)
+        self._sync_media_mode_ui()
+
+    def _build_media_switch(self, frame: Gtk.AspectFrame, artwork: Gtk.Widget) -> Gtk.Picture:
+        """Put the artwork and a video picture in a stack, under a Música/Vídeo switch."""
         frame.set_child(None)
         media_stack = Gtk.Stack(
             transition_type=Gtk.StackTransitionType.CROSSFADE,
@@ -61,7 +73,7 @@ def install_gtk_video(window_class) -> None:
             hexpand=True,
             vexpand=True,
         )
-        media_stack.add_named(artwork_overlay, "audio")
+        media_stack.add_named(artwork, "audio")
 
         video_picture = Gtk.Picture(
             content_fit=Gtk.ContentFit.CONTAIN,
@@ -101,70 +113,55 @@ def install_gtk_video(window_class) -> None:
         self._media_video_button = video_button
         self._media_spinner = spinner
         self._expanded_video_picture = video_picture
+        return video_picture
 
+    def _prepare_gtk_video_sink(self, video_picture: Gtk.Picture) -> None:
+        """A muted playbin drawing into ``video_picture``; unavailable without the plugin."""
         sink = Gst.ElementFactory.make("gtk4paintablesink", "harmonia-gtk-video")
         video_player = Gst.ElementFactory.make("playbin", "harmonia-gtk-video-layer")
         fake_audio = Gst.ElementFactory.make("fakesink", "harmonia-gtk-video-muted-audio")
-        if sink is not None and video_player is not None:
+        if sink is None or video_player is None:
+            return
+        try:
+            paintable = sink.get_property("paintable")
+            video_picture.set_paintable(paintable)
+
+            video_output = sink
             try:
-                paintable = sink.get_property("paintable")
-                video_picture.set_paintable(paintable)
-
-                video_output = sink
-                try:
-                    gl_context = paintable.get_property("gl-context")
-                except Exception:
-                    gl_context = None
-                if gl_context is not None:
-                    glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-gtk-video-bin")
-                    if glsinkbin is not None:
-                        glsinkbin.set_property("sink", sink)
-                        video_output = glsinkbin
-
-                video_player.set_property("video-sink", video_output)
-                if fake_audio is not None:
-                    fake_audio.set_property("sync", True)
-                    video_player.set_property("audio-sink", fake_audio)
-
-                bus = video_player.get_bus()
-                bus.add_signal_watch()
-                bus.connect("message", self._on_gtk_video_message)
-
-                self._gtk_video_sink = sink
-                self._gtk_video_output = video_output
-                self._gtk_video_player = video_player
-                self._gtk_video_bus = bus
-                self._gtk_video_fake_audio = fake_audio
-                self._gtk_video_sink_available = True
+                gl_context = paintable.get_property("gl-context")
             except Exception:
-                LOGGER.exception("Could not prepare GTK video layer")
-                with suppress(Exception):
-                    video_player.set_state(Gst.State.NULL)
-                self._gtk_video_sink = None
-                self._gtk_video_output = None
-                self._gtk_video_player = None
-                self._gtk_video_bus = None
+                gl_context = None
+            if gl_context is not None:
+                glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-gtk-video-bin")
+                if glsinkbin is not None:
+                    glsinkbin.set_property("sink", sink)
+                    video_output = glsinkbin
 
-        audio_button.connect(
-            "toggled",
-            lambda button: (
-                self._set_media_mode("audio")
-                if button.get_active() and not self._media_ui_guard
-                else None
-            ),
-        )
-        video_button.connect(
-            "toggled",
-            lambda button: (
-                self._set_media_mode("video")
-                if button.get_active() and not self._media_ui_guard
-                else None
-            ),
-        )
-        self._gtk_video_sync_source = GLib.timeout_add(200, self._sync_gtk_video_transport)
-        self._sync_media_mode_ui()
+            video_player.set_property("video-sink", video_output)
+            if fake_audio is not None:
+                fake_audio.set_property("sync", True)
+                video_player.set_property("audio-sink", fake_audio)
 
-    def sync_media_mode_ui(self) -> None:
+            bus = video_player.get_bus()
+            bus.add_signal_watch()
+            bus.connect("message", self._on_gtk_video_message)
+
+            self._gtk_video_sink = sink
+            self._gtk_video_output = video_output
+            self._gtk_video_player = video_player
+            self._gtk_video_bus = bus
+            self._gtk_video_fake_audio = fake_audio
+            self._gtk_video_sink_available = True
+        except Exception:
+            LOGGER.exception("Could not prepare GTK video layer")
+            with suppress(Exception):
+                video_player.set_state(Gst.State.NULL)
+            self._gtk_video_sink = None
+            self._gtk_video_output = None
+            self._gtk_video_player = None
+            self._gtk_video_bus = None
+
+    def _sync_media_mode_ui(self) -> None:
         if not hasattr(self, "_media_stack"):
             return
         item = getattr(self, "current_item", None)
@@ -213,7 +210,7 @@ def install_gtk_video(window_class) -> None:
             self._media_visual_frame.set_ratio(1.0)
             self._media_visual_frame.set_size_request(384, 384)
 
-    def set_media_mode(self, mode: str, *, force: bool = False) -> None:
+    def _set_media_mode(self, mode: str, *, force: bool = False) -> None:
         mode = "video" if mode == "video" else "audio"
         item = getattr(self, "current_item", None)
         if item is None or not getattr(self, "_stream_ready", False):
@@ -259,7 +256,7 @@ def install_gtk_video(window_class) -> None:
 
         threading.Thread(target=worker, daemon=True, name="media-mode-video").start()
 
-    def apply_media_mode(
+    def _apply_media_mode(
         self,
         request_id: int,
         item_id: str,
@@ -295,7 +292,7 @@ def install_gtk_video(window_class) -> None:
         self._start_gtk_video_layer(stream)
         return GLib.SOURCE_REMOVE
 
-    def start_gtk_video_layer(self, stream) -> None:
+    def _start_gtk_video_layer(self, stream) -> None:
         video_player = self._gtk_video_player
         if video_player is None:
             self._gtk_video_failed(_("A camada de vídeo do GStreamer não está disponível."))
@@ -318,7 +315,7 @@ def install_gtk_video(window_class) -> None:
 
         GLib.timeout_add(40, self._finish_gtk_video_preroll, generation, 0)
 
-    def finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
+    def _finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
         if generation != self._gtk_video_generation or self._media_mode != "video":
             return GLib.SOURCE_REMOVE
         video_player = self._gtk_video_player
@@ -364,7 +361,7 @@ def install_gtk_video(window_class) -> None:
         GLib.timeout_add(100, self._retry_gtk_video_initial_seek, generation, 0)
         return GLib.SOURCE_REMOVE
 
-    def retry_gtk_video_initial_seek(self, generation: int, attempt: int) -> bool:
+    def _retry_gtk_video_initial_seek(self, generation: int, attempt: int) -> bool:
         if generation != self._gtk_video_generation or self._media_mode != "video":
             return GLib.SOURCE_REMOVE
         video_player = self._gtk_video_player
@@ -405,7 +402,7 @@ def install_gtk_video(window_class) -> None:
         self._gtk_video_failed(_("O fluxo de vídeo não ficou disponível para sincronização."))
         return GLib.SOURCE_REMOVE
 
-    def seek_gtk_video_position(
+    def _seek_gtk_video_position(
         self,
         target_us: int,
         *,
@@ -446,7 +443,7 @@ def install_gtk_video(window_class) -> None:
         )
         return accepted
 
-    def finish_gtk_video_seek(
+    def _finish_gtk_video_seek(
         self,
         generation: int,
         target_us: int,
@@ -508,7 +505,7 @@ def install_gtk_video(window_class) -> None:
         self._gtk_video_failed(_("Não foi possível sincronizar o vídeo com a música."))
         return GLib.SOURCE_REMOVE
 
-    def complete_gtk_video_start(self, generation: int) -> None:
+    def _complete_gtk_video_start(self, generation: int) -> None:
         if generation != self._gtk_video_generation or self._media_mode != "video":
             return
         video_player = self._gtk_video_player
@@ -531,7 +528,7 @@ def install_gtk_video(window_class) -> None:
             audio_us - video_us if video_us >= 0 else -1,
         )
 
-    def sync_gtk_video_transport(self) -> bool:
+    def _sync_gtk_video_transport(self) -> bool:
         if self._media_mode != "video" or self._media_switch_loading:
             return GLib.SOURCE_CONTINUE
         video_player = self._gtk_video_player
@@ -563,7 +560,7 @@ def install_gtk_video(window_class) -> None:
             self._seek_gtk_video_position(audio_us, accurate=True)
         return GLib.SOURCE_CONTINUE
 
-    def stop_gtk_video_layer(self) -> None:
+    def _stop_gtk_video_layer(self) -> None:
         self._gtk_video_generation += 1
         self._gtk_video_last_sync_seek = 0.0
         self._gtk_video_initial_warmup = False
@@ -571,7 +568,7 @@ def install_gtk_video(window_class) -> None:
             with suppress(Exception):
                 self._gtk_video_player.set_state(Gst.State.READY)
 
-    def gtk_video_failed(self, detail: str) -> None:
+    def _gtk_video_failed(self, detail: str) -> None:
         LOGGER.error("GTK video layer failed: %s", detail)
         self._gtk_video_generation += 1
         self._gtk_video_initial_warmup = False
@@ -585,7 +582,7 @@ def install_gtk_video(window_class) -> None:
             Adw.Toast(title=_("O vídeo falhou; voltando para a música…"), timeout=3)
         )
 
-    def on_gtk_video_message(self, _bus, message) -> None:
+    def _on_gtk_video_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
             try:
@@ -603,30 +600,26 @@ def install_gtk_video(window_class) -> None:
         elif message.type == Gst.MessageType.EOS and self._media_mode == "video":
             self._gtk_video_failed(_("O vídeo terminou antes da faixa de áudio."))
 
-    def wrapped_init(self, *args, **kwargs):
-        original_init(self, *args, **kwargs)
-        self._video_feature_init()
-
-    def wrapped_play_item(self, item) -> None:
+    def play_item(self, item) -> None:
         if hasattr(self, "_media_switch_request"):
             self._media_switch_request += 1
             self._media_switch_loading = False
             self._stop_gtk_video_layer()
             self._media_mode = "audio"
             self._sync_media_mode_ui()
-        return original_play_item(self, item)
+        return super().play_item(item)
 
-    def wrapped_stop(self) -> None:
+    def _stop_player(self) -> None:
         if hasattr(self, "_media_switch_request"):
             self._media_switch_request += 1
             self._media_switch_loading = False
             self._stop_gtk_video_layer()
             self._media_mode = "audio"
             self._sync_media_mode_ui()
-        return original_stop(self)
+        return super()._stop_player()
 
-    def wrapped_seek(self, position_us: int) -> bool:
-        accepted = bool(original_seek(self, position_us))
+    def _seek_playback(self, position_us: int) -> bool:
+        accepted = bool(super()._seek_playback(position_us))
         if (
             accepted
             and getattr(self, "_media_mode", "audio") == "video"
@@ -635,22 +628,3 @@ def install_gtk_video(window_class) -> None:
         ):
             self._seek_gtk_video_position(position_us, accurate=True)
         return accepted
-
-    window_class._video_feature_init = video_feature_init
-    window_class._sync_media_mode_ui = sync_media_mode_ui
-    window_class._set_media_mode = set_media_mode
-    window_class._apply_media_mode = apply_media_mode
-    window_class._start_gtk_video_layer = start_gtk_video_layer
-    window_class._finish_gtk_video_preroll = finish_gtk_video_preroll
-    window_class._retry_gtk_video_initial_seek = retry_gtk_video_initial_seek
-    window_class._seek_gtk_video_position = seek_gtk_video_position
-    window_class._finish_gtk_video_seek = finish_gtk_video_seek
-    window_class._complete_gtk_video_start = complete_gtk_video_start
-    window_class._sync_gtk_video_transport = sync_gtk_video_transport
-    window_class._stop_gtk_video_layer = stop_gtk_video_layer
-    window_class._gtk_video_failed = gtk_video_failed
-    window_class._on_gtk_video_message = on_gtk_video_message
-    window_class.__init__ = wrapped_init
-    window_class.play_item = wrapped_play_item
-    window_class._stop_player = wrapped_stop
-    window_class._seek_playback = wrapped_seek
