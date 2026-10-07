@@ -3,7 +3,14 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from tools.sync_icons import ICONS, THEME_EXTRAS, THEMES, theme_icons
+from tools.sync_icons import (
+    FALLBACK_THEME,
+    ICONS,
+    THEME_EXTRAS,
+    THEMES,
+    UNTHEMED_FALLBACKS,
+    theme_icons,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_ID = "io.github.harmonia.Harmonia"
@@ -15,6 +22,14 @@ def test_every_icon_referenced_by_python_has_bundled_variants():
         used.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
 
     assert used <= ICONS.keys()
+
+
+def test_icons_recent_adwaita_dropped_have_unthemed_fallbacks():
+    root = ROOT / "src" / "harmonia" / "icons"
+    assert {path.stem for path in root.glob("*.svg")} == set(UNTHEMED_FALLBACKS)
+    source = root / FALLBACK_THEME / "scalable" / "actions"
+    for name in UNTHEMED_FALLBACKS:
+        assert (root / f"{name}.svg").read_bytes() == (source / f"{name}.svg").read_bytes()
 
 
 def test_bundled_icon_packs_are_valid_and_record_provenance():

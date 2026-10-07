@@ -10,6 +10,7 @@ Pass theme names to refresh only those:
 
 from __future__ import annotations
 
+import shutil
 import sys
 import urllib.parse
 import urllib.request
@@ -117,6 +118,12 @@ THEME_EXTRAS: dict[str, dict[str, str]] = {
 
 ROOT = Path(__file__).resolve().parents[1]
 ICONS_ROOT = ROOT / "src" / "harmonia" / "icons"
+# Names Harmonia uses that adwaita-icon-theme 51 moved to AdwaitaLegacy. A copy
+# at the root of the bundled icon folder is an unthemed icon, which GTK only
+# uses when no theme in the lookup has the name, so it fills the gap without
+# replacing any theme's own icon.
+UNTHEMED_FALLBACKS = ("emblem-ok-symbolic", "emblem-shared-symbolic")
+FALLBACK_THEME = "HarmoniaMaterial"
 LICENSES = {  # theme -> (file in licenses/, upstream license URL)
     "HarmoniaMaterial": (
         "Material-Symbols-Apache-2.0.txt",
@@ -147,6 +154,13 @@ def fetch(prefix: str, icon: str) -> str:
     return data
 
 
+def write_unthemed_fallbacks() -> None:
+    source = ICONS_ROOT / FALLBACK_THEME / "scalable" / "actions"
+    for name in UNTHEMED_FALLBACKS:
+        shutil.copyfile(source / f"{name}.svg", ICONS_ROOT / f"{name}.svg")
+    print(f"Unthemed fallbacks: {len(UNTHEMED_FALLBACKS)} copied from {FALLBACK_THEME}")
+
+
 def main(selected: list[str]) -> None:
     themes = [theme for theme in THEMES if not selected or theme in selected]
     for theme in themes:
@@ -165,6 +179,8 @@ def main(selected: list[str]) -> None:
             if duplicate.exists():
                 duplicate.unlink()
         print(f"{theme}: {len(icons)} SVGs synchronized")
+    if FALLBACK_THEME in themes:
+        write_unthemed_fallbacks()
     licenses_dir = ROOT / "licenses"
     licenses_dir.mkdir(exist_ok=True)
     for theme in themes:
