@@ -3,12 +3,11 @@ from __future__ import annotations
 import logging
 from contextlib import suppress
 
-import shiboken6
 from gi.repository import Gst
 
 from .i18n import _
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
-from .qt_video import QtVideoController, _set_foreign_pointer_property
+from .qt_video import QtVideoController
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,85 +28,35 @@ class OfficialVideoQtController(QtVideoController):
         self.playback._save_state = self._save_playback_state
         self.playback.player.on_error = self._on_primary_player_error
 
-    def _prepare_sink(self) -> bool:
-        """Prepare qml6glsink through glsinkbin for Qt Quick rendering."""
-        if self._sink_prepared:
-            return True
-        if self._sink is None:
-            self._sink_error = _("O plugin GStreamer qml6glsink não está disponível.")
-            self.availabilityChanged.emit()
-            return False
-        if self._video_player is None:
-            self._sink_error = _("O GStreamer playbin para vídeo não está disponível.")
-            self.availabilityChanged.emit()
-            return False
-        if self._surface is None:
-            self._sink_error = _("A superfície de vídeo Qt ainda não foi inicializada.")
-            self.availabilityChanged.emit()
-            return False
-        if not self._surface_window or not self._scene_graph_ready(self._surface_window):
-            return False
-        if not self._surface_is_visible():
-            return False
+    def _video_output(self):
+        """qml6glsink through glsinkbin, for Qt Quick rendering."""
+        # Initialize qml6glsink first so downstream GL elements reuse Qt's display.
+        sink_state = self._sink.set_state(Gst.State.READY)
+        if sink_state == Gst.StateChangeReturn.FAILURE:
+            raise RuntimeError(_("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt"))
 
-        glsinkbin = None
-        try:
-            LOGGER.debug("Preparing Qt GL video sink")
-            pointer = int(shiboken6.getCppPointer(self._surface)[0])
-            if not pointer:
-                raise RuntimeError(_("A superfície GstGLQt6VideoItem não possui ponteiro nativo"))
-            _set_foreign_pointer_property(self._sink, "widget", pointer)
-
-            # Initialize qml6glsink first so downstream GL elements reuse Qt's display.
-            sink_state = self._sink.set_state(Gst.State.READY)
-            if sink_state == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError(
-                    _("qml6glsink não conseguiu inicializar o contexto OpenGL do Qt")
-                )
-
-            video_output = self._sink
-            glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
-            if glsinkbin is not None:
-                glsinkbin.set_property("sink", self._sink)
-                video_output = glsinkbin
-                bin_state = glsinkbin.set_state(Gst.State.READY)
-                if bin_state == Gst.StateChangeReturn.FAILURE:
-                    raise RuntimeError(_("glsinkbin não conseguiu inicializar"))
-            else:
-                LOGGER.warning(
-                    "glsinkbin unavailable; falling back to direct qml6glsink negotiation"
-                )
-
-            self._video_player.set_property("video-sink", video_output)
-            if self._fake_audio_sink is not None:
-                self._video_player.set_property("audio-sink", self._fake_audio_sink)
-            result = self._video_player.set_state(Gst.State.READY)
-            if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError(_("A camada de vídeo recusou o estado READY"))
-        except Exception as exc:
-            self._log_sink_prepare_failure(exc)
-            with suppress(Exception):
-                self._video_player.set_state(Gst.State.NULL)
-            if glsinkbin is not None:
-                with suppress(Exception):
-                    glsinkbin.set_state(Gst.State.NULL)
-            with suppress(Exception):
-                self._sink.set_state(Gst.State.NULL)
-            self._qt_glsinkbin = None
-            self._qt_video_output = None
-            self._sink_error = str(exc)
-            self._sink_prepared = False
-            self.availabilityChanged.emit()
-            self._schedule_sink_prepare_retry()
-            return False
-
+        video_output = self._sink
+        glsinkbin = Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")
         self._qt_glsinkbin = glsinkbin
+        if glsinkbin is not None:
+            glsinkbin.set_property("sink", self._sink)
+            video_output = glsinkbin
+            bin_state = glsinkbin.set_state(Gst.State.READY)
+            if bin_state == Gst.StateChangeReturn.FAILURE:
+                raise RuntimeError(_("glsinkbin não conseguiu inicializar"))
+        else:
+            LOGGER.warning("glsinkbin unavailable; falling back to direct qml6glsink negotiation")
         self._qt_video_output = video_output
-        self._sink_prepared = True
-        self._sink_error = ""
-        self.availabilityChanged.emit()
-        LOGGER.debug("Qt video sink ready")
-        return True
+        return video_output
+
+    def _release_video_output(self) -> None:
+        if self._qt_glsinkbin is not None:
+            with suppress(Exception):
+                self._qt_glsinkbin.set_state(Gst.State.NULL)
+        with suppress(Exception):
+            self._sink.set_state(Gst.State.NULL)
+        self._qt_glsinkbin = None
+        self._qt_video_output = None
 
     def _clear_independent_video(self) -> None:
         self._independent_video_owns_audio = False

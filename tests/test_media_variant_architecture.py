@@ -44,6 +44,9 @@ def test_qt_video_primes_qml_gl_display_and_uses_glsinkbin() -> None:
     assert "self._sink.set_state(Gst.State.READY)" in source
     assert 'Gst.ElementFactory.make("glsinkbin", "harmonia-qt-video-bin")' in source
     assert 'glsinkbin.set_property("sink", self._sink)' in source
-    assert 'self._video_player.set_property("video-sink", video_output)' in source
+    # The base controller binds the surface and plays into _video_output().
+    assert "def _video_output(self):" in source and "return video_output" in source
+    base = (HARMONIA / "qt_video.py").read_text(encoding="utf-8")
+    assert 'self._video_player.set_property("video-sink", self._video_output())' in base
     assert "self._qt_glsinkbin = glsinkbin" in source
     assert "self._qt_video_output = video_output" in source
