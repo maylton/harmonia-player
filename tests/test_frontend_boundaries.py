@@ -28,6 +28,8 @@ SHARED_MODULES = (
     "playback_state.py",
     "backup.py",
     "insights.py",
+    "video_sync.py",
+    "stream_relay.py",
 )
 
 

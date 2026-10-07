@@ -12,6 +12,7 @@ gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, GLib, Gst, Gtk  # noqa: E402
 
+from . import video_sync  # noqa: E402
 from .i18n import _  # noqa: E402
 from .ui import deliver_to_main  # noqa: E402
 
@@ -327,7 +328,7 @@ class GtkVideoMixin:
             self._gtk_video_failed(_("O GStreamer falhou ao preparar os frames do vídeo."))
             return GLib.SOURCE_REMOVE
         if state not in (Gst.State.PAUSED, Gst.State.PLAYING):
-            if attempt < 100:
+            if attempt < video_sync.PREROLL_ATTEMPTS:
                 GLib.timeout_add(
                     40,
                     self._finish_gtk_video_preroll,
@@ -339,7 +340,7 @@ class GtkVideoMixin:
             return GLib.SOURCE_REMOVE
 
         target_us = max(0, int(self._playback_position_us()))
-        if target_us <= 250_000:
+        if target_us <= video_sync.START_WITHOUT_SEEK_US:
             self._complete_gtk_video_start(generation)
             return GLib.SOURCE_REMOVE
 
@@ -413,26 +414,7 @@ class GtkVideoMixin:
             return False
 
         target_us = max(0, int(target_us))
-        flags = Gst.SeekFlags.FLUSH | (
-            Gst.SeekFlags.ACCURATE if accurate else Gst.SeekFlags.KEY_UNIT
-        )
-        accepted = bool(
-            video_player.seek_simple(
-                Gst.Format.TIME,
-                flags,
-                target_us * 1000,
-            )
-        )
-        mode = "accurate" if accurate else "key-unit"
-        if not accepted and accurate:
-            accepted = bool(
-                video_player.seek_simple(
-                    Gst.Format.TIME,
-                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                    target_us * 1000,
-                )
-            )
-            mode = "key-unit-fallback"
+        accepted, mode = video_sync.seek(video_player, target_us, accurate=accurate)
         if accepted:
             self._gtk_video_last_sync_seek = time.monotonic()
         LOGGER.debug(
@@ -468,7 +450,7 @@ class GtkVideoMixin:
         # Compare against the audio clock *now*, not only against the position at
         # which the seek was issued. Audio keeps advancing during network flush
         # and decoder preroll, especially on the first video switch.
-        if ok and abs(drift_us) <= 1_000_000:
+        if ok and video_sync.is_settled(drift_us):
             LOGGER.info(
                 "GTK video initial sync settled: audio=%d us video=%d us drift=%d us",
                 audio_us,
@@ -478,15 +460,12 @@ class GtkVideoMixin:
             self._complete_gtk_video_start(generation)
             return GLib.SOURCE_REMOVE
 
-        # Refresh the target a few times while the video remains hidden. This
-        # avoids chasing an old timestamp if the initial seek itself took a
-        # second or more to flush and preroll.
-        if attempt in (15, 35, 55):
+        if attempt in video_sync.RETARGET_AT:
             retry_target = audio_us
             if self._seek_gtk_video_position(retry_target, accurate=True):
                 target_us = retry_target
 
-        if attempt < 75:
+        if attempt < video_sync.SETTLE_ATTEMPTS:
             GLib.timeout_add(
                 60,
                 self._finish_gtk_video_seek,
@@ -546,11 +525,7 @@ class GtkVideoMixin:
         audio_us = max(0, int(self._playback_position_us()))
         video_us = max(0, int(video_ns // 1000))
         drift_us = audio_us - video_us
-
-        # Independent playbins share the same wall clock closely enough that
-        # corrections should be rare. A short cooldown prevents seek storms on
-        # fragmented MP4 while still correcting visible A/V drift quickly.
-        if abs(drift_us) > 500_000 and time.monotonic() - self._gtk_video_last_sync_seek >= 1.0:
+        if video_sync.needs_correction(drift_us, self._gtk_video_last_sync_seek, time.monotonic()):
             LOGGER.info(
                 "GTK video drift correction: audio=%d us video=%d us drift=%d us",
                 audio_us,

@@ -13,6 +13,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst  # noqa: E402
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot  # noqa: E402
 
+from . import video_sync  # noqa: E402
 from .i18n import _  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
@@ -463,14 +464,14 @@ class QtVideoController(QObject):
             self._video_failed(_("O GStreamer falhou ao preparar os frames do vídeo."))
             return GLib.SOURCE_REMOVE
         if state not in (Gst.State.PAUSED, Gst.State.PLAYING):
-            if attempt < 100:
+            if attempt < video_sync.PREROLL_ATTEMPTS:
                 GLib.timeout_add(40, self._finish_video_preroll, generation, attempt + 1)
             else:
                 self._video_failed(_("O vídeo demorou demais para iniciar."))
             return GLib.SOURCE_REMOVE
 
         target_ms = max(0, int(self.playback.position))
-        if target_ms <= 250:
+        if target_ms * 1000 <= video_sync.START_WITHOUT_SEEK_US:
             self._complete_video_start(generation)
             return GLib.SOURCE_REMOVE
 
@@ -486,26 +487,7 @@ class QtVideoController(QObject):
             return False
 
         target_ms = max(0, int(target_ms))
-        flags = Gst.SeekFlags.FLUSH | (
-            Gst.SeekFlags.ACCURATE if accurate else Gst.SeekFlags.KEY_UNIT
-        )
-        accepted = bool(
-            self._video_player.seek_simple(
-                Gst.Format.TIME,
-                flags,
-                target_ms * 1_000_000,
-            )
-        )
-        mode = "accurate" if accurate else "key-unit"
-        if not accepted and accurate:
-            accepted = bool(
-                self._video_player.seek_simple(
-                    Gst.Format.TIME,
-                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                    target_ms * 1_000_000,
-                )
-            )
-            mode = "key-unit-fallback"
+        accepted, mode = video_sync.seek(self._video_player, target_ms * 1000, accurate=accurate)
         if accepted:
             self._video_last_sync_seek = time.monotonic()
         LOGGER.debug(
@@ -532,7 +514,7 @@ class QtVideoController(QObject):
         audio_ms = max(0, int(self.playback.position))
         drift_ms = audio_ms - video_ms if video_ms >= 0 else -1
 
-        if ok and abs(drift_ms) <= 1000:
+        if ok and video_sync.is_settled(drift_ms * 1000):
             LOGGER.debug(
                 "Qt video initial sync: audio=%d ms video=%d ms drift=%d ms",
                 audio_ms,
@@ -542,12 +524,12 @@ class QtVideoController(QObject):
             self._complete_video_start(generation)
             return GLib.SOURCE_REMOVE
 
-        if attempt in (15, 35, 55):
+        if attempt in video_sync.RETARGET_AT:
             retry_target = audio_ms
             if self._seek_video_position(retry_target, accurate=True):
                 target_ms = retry_target
 
-        if attempt < 75:
+        if attempt < video_sync.SETTLE_ATTEMPTS:
             GLib.timeout_add(
                 60,
                 self._finish_video_seek,
@@ -602,7 +584,9 @@ class QtVideoController(QObject):
         audio_ms = max(0, int(self.playback.position))
         video_ms = max(0, int(video_ns // 1_000_000))
         drift_ms = audio_ms - video_ms
-        if abs(drift_ms) > 500 and time.monotonic() - self._video_last_sync_seek >= 1.0:
+        if video_sync.needs_correction(
+            drift_ms * 1000, self._video_last_sync_seek, time.monotonic()
+        ):
             LOGGER.debug(
                 "Qt video drift correction: audio=%d ms video=%d ms drift=%d ms",
                 audio_ms,
