@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 09:28-0300\n"
+"POT-Creation-Date: 2026-10-07 09:38-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,7 +84,7 @@ msgid "Downloads"
 msgstr ""
 
 #: src/harmonia/app.py:270 src/harmonia/app.py:449
-#: src/harmonia/window_preferences.py:445
+#: src/harmonia/settings_page/__init__.py:19
 msgid "Preferências"
 msgstr ""
 
@@ -93,7 +93,7 @@ msgid "Sincronizar biblioteca"
 msgstr ""
 
 #: src/harmonia/app.py:284 src/harmonia/app.py:324
-#: src/harmonia/window_preferences.py:449
+#: src/harmonia/settings_page/account.py:19
 msgid "Conta"
 msgstr ""
 
@@ -503,7 +503,7 @@ msgid "Downloads da coleção iniciados."
 msgstr ""
 
 #: src/harmonia/qt_backend.py:1202 src/harmonia/qt_preferences.py:162
-#: src/harmonia/window_preferences.py:328
+#: src/harmonia/window_preferences.py:329
 msgid "Validando sessão…"
 msgstr ""
 
@@ -747,8 +747,8 @@ msgid "Reproduzindo em {name}."
 msgstr ""
 
 #: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:76
-#: src/harmonia/qt_presenters.py:77 src/harmonia/window_history.py:208
-#: src/harmonia/window_library.py:75 src/harmonia/window_preferences.py:457
+#: src/harmonia/qt_presenters.py:77 src/harmonia/settings_page/account.py:28
+#: src/harmonia/window_history.py:208 src/harmonia/window_library.py:75
 msgid "YouTube Music"
 msgstr ""
 
@@ -947,7 +947,7 @@ msgstr ""
 msgid "Cache limpo · {size} removidos."
 msgstr ""
 
-#: src/harmonia/qt_preferences.py:170 src/harmonia/window_preferences.py:341
+#: src/harmonia/qt_preferences.py:170 src/harmonia/window_preferences.py:342
 msgid "Sessão inválida ou expirada"
 msgstr ""
 
@@ -1051,6 +1051,439 @@ msgstr ""
 msgid "Configure o token do AudD nas Preferências"
 msgstr ""
 
+#: src/harmonia/settings_page/account.py:21
+msgid "Sessão protegida pelo Gerenciador de Credenciais do Windows."
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:23
+msgid "Sessão protegida pelo chaveiro Secret Service do sistema."
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:29
+msgid "Conectada"
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:29
+msgid "Não conectada"
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:34
+msgid "Validar"
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:38
+#: src/harmonia/settings_page/social.py:58 src/harmonia/window_account.py:71
+#: src/harmonia/window_optional.py:156
+msgid "Desconectar"
+msgstr ""
+
+#: src/harmonia/settings_page/account.py:46 src/harmonia/window_account.py:73
+msgid "Conectar"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:20
+msgid "Aparência"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:21
+msgid "Personalize o ambiente visual sem alterar o conteúdo."
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:25
+msgid "Tema"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:33
+msgid "Modo de cor"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:35
+#: src/harmonia/settings_page/appearance.py:48
+msgid "Padrão do tema"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:36
+msgid "Seguir o sistema"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:37
+msgid "Claro"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:38
+msgid "Escuro"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:46
+msgid "Cor de destaque"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:49
+msgid "Vermelho"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:50
+msgid "Laranja"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:51
+msgid "Amarelo"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:52
+msgid "Verde"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:53
+msgid "Menta"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:54
+msgid "Azul"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:55
+msgid "Roxo"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:56
+msgid "Rosa"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:57
+msgid "Marrom"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:58
+msgid "Ardósia"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:66
+msgid "Fundo ambiente desfocado"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:67
+msgid "Usa as cores da capa atual atrás da interface"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:76
+msgid "Estilo dos ícones"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:79
+msgid "Windows — ícones Fluent"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:81
+msgid "GTK — padrão do sistema"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:84
+msgid "Material Expressive"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:98
+msgid "Efeito de fundo"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:100
+msgid "Mica"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:101
+msgid "Acrílico (fosco)"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:102
+msgid "Nenhum"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:108
+msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:113
+msgid "Capa desfocada no player expandido"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:114
+msgid "Desligada, o player expandido mostra o efeito de fundo"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:21
+msgid "Áudio"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:22
+msgid "Processamento nativo em tempo real pelo GStreamer."
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:26
+msgid "Equalizador"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:28
+msgid "Plano"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:29
+msgid "Graves"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:30
+msgid "Voz"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:31
+msgid "Agudos"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:39
+msgid "Normalização de volume"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:40
+msgid "Reduz variações de volume entre faixas"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:47
+msgid "Pular silêncio"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:48
+msgid "Remove trechos silenciosos longos"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:53
+msgid "Velocidade"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:54
+msgid "Tom (semitons)"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:56
+msgid "Temporizador"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:58
+msgid "Desligado"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:59
+msgid "15 minutos"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:60
+msgid "30 minutos"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:61
+msgid "1 hora"
+msgstr ""
+
+#: src/harmonia/settings_page/audio.py:62
+msgid "1 hora e 30"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:17
+msgid "Integrações sociais"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:18
+msgid ""
+"Recursos opcionais; nenhum dado é enviado enquanto estiverem desligados."
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:30
+msgid "Scrobble no Last.fm"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:32
+#, python-brace-format
+msgid "Conectado como {username}"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:34
+msgid "Configure uma chave de API e autorize a conta"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:43
+msgid "Chave da API do Last.fm"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:44
+msgid "Crie uma API Account gratuita no site do Last.fm"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:46
+msgid "API key"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:53
+msgid "Autorização do Last.fm"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:54
+msgid "A autorização é concluída no navegador padrão"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:61
+msgid "Autorizar"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:62
+msgid "Concluir"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:71
+msgid "Segredo da API do Last.fm"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:72 src/harmonia/window_optional.py:122
+msgid "Armazenado no chaveiro do sistema"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:75 src/harmonia/window_optional.py:125
+msgid "Configurado"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:75
+msgid "Secret"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:92
+msgid "Discord Rich Presence"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:93
+msgid "Mostra a faixa atual usando somente o IPC local do Discord"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:100
+msgid "Client ID do Discord"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:101
+msgid "ID de uma aplicação criada no Discord Developer Portal"
+msgstr ""
+
+#: src/harmonia/settings_page/social.py:103
+msgid "Client ID"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:18
+msgid "Streaming"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:19
+msgid "Estas opções são aplicadas à próxima requisição ao YouTube Music."
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:23
+msgid "Qualidade do áudio"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:24
+msgid "Alta"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:24
+msgid "Média"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:24
+msgid "Econômica"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:31
+msgid "Idioma"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:33
+msgid "Português (Brasil)"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:34
+msgid "English"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:35
+msgid "Español"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:44
+msgid "Região"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:46
+msgid "Brasil"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:47
+msgid "Estados Unidos"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:48
+msgid "Portugal"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:49
+msgid "Japão"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:57
+msgid "Proxy HTTP(S)"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:58
+msgid "Opcional · exemplo: http://127.0.0.1:8080"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:60
+msgid "Sem proxy"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:65
+msgid "Cache de capas"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:66
+#, python-brace-format
+msgid "{size} armazenados"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:68
+msgid "Limpar"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:75
+msgid "Dados e backup"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:77
+msgid ""
+"Salva biblioteca, histórico e preferências sem incluir credenciais ou áudio."
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:81
+msgid "Backup portátil"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:82
+msgid "Compatível com outras instalações do Harmonia"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:84
+#: src/harmonia/window_library.py:672
+msgid "Exportar"
+msgstr ""
+
+#: src/harmonia/settings_page/streaming.py:85
+#: src/harmonia/window_preferences.py:410
+msgid "Restaurar"
+msgstr ""
+
 #: src/harmonia/social.py:102
 msgid "A chave e o segredo da API do Last.fm são obrigatórios"
 msgstr ""
@@ -1149,18 +1582,8 @@ msgstr ""
 #: src/harmonia/window_actions.py:143 src/harmonia/window_actions.py:309
 #: src/harmonia/window_actions.py:335 src/harmonia/window_actions.py:370
 #: src/harmonia/window_library.py:768 src/harmonia/window_library.py:785
-#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:408
+#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:409
 msgid "Cancelar"
-msgstr ""
-
-#: src/harmonia/window_account.py:71 src/harmonia/window_optional.py:156
-#: src/harmonia/window_preferences.py:468
-#: src/harmonia/window_preferences.py:750
-msgid "Desconectar"
-msgstr ""
-
-#: src/harmonia/window_account.py:73 src/harmonia/window_preferences.py:476
-msgid "Conectar"
 msgstr ""
 
 #: src/harmonia/window_account.py:89
@@ -1759,10 +2182,6 @@ msgstr ""
 msgid "Buscando {title}"
 msgstr ""
 
-#: src/harmonia/window_library.py:672 src/harmonia/window_preferences.py:671
-msgid "Exportar"
-msgstr ""
-
 #: src/harmonia/window_library.py:686
 #, python-brace-format
 msgid "Playlist local · {tracks}"
@@ -1938,14 +2357,6 @@ msgstr ""
 msgid "Token da API AudD"
 msgstr ""
 
-#: src/harmonia/window_optional.py:122 src/harmonia/window_preferences.py:725
-msgid "Armazenado no chaveiro do sistema"
-msgstr ""
-
-#: src/harmonia/window_optional.py:125 src/harmonia/window_preferences.py:728
-msgid "Configurado"
-msgstr ""
-
 #: src/harmonia/window_optional.py:125
 msgid "Token"
 msgstr ""
@@ -2097,467 +2508,77 @@ msgstr ""
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:293
+#: src/harmonia/window_preferences.py:294
 msgid "0 B armazenados"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:296
+#: src/harmonia/window_preferences.py:297
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:313
+#: src/harmonia/window_preferences.py:314
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_preferences.py:324
+#: src/harmonia/window_preferences.py:325
 msgid "Reprodução pausada pelo temporizador"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:341
+#: src/harmonia/window_preferences.py:342
 msgid "Conectada e válida"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:344
+#: src/harmonia/window_preferences.py:345
 msgid "Conta validada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:346
+#: src/harmonia/window_preferences.py:347
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:357
+#: src/harmonia/window_preferences.py:358
 msgid "Conta desconectada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:362
+#: src/harmonia/window_preferences.py:363
 msgid "Exportar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:372
+#: src/harmonia/window_preferences.py:373
 msgid "Backup exportado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:377
+#: src/harmonia/window_preferences.py:378
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:387
+#: src/harmonia/window_preferences.py:388
 msgid "Restaurar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:402
+#: src/harmonia/window_preferences.py:403
 msgid "Restaurar este backup?"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:404
+#: src/harmonia/window_preferences.py:405
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
 msgstr ""
 
-#: src/harmonia/window_preferences.py:409
-#: src/harmonia/window_preferences.py:675
-msgid "Restaurar"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:424
+#: src/harmonia/window_preferences.py:425
 msgid "Backup restaurado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:429
+#: src/harmonia/window_preferences.py:430
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:451
-msgid "Sessão protegida pelo Gerenciador de Credenciais do Windows."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:453
-msgid "Sessão protegida pelo chaveiro Secret Service do sistema."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:458
-msgid "Conectada"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:458
-msgid "Não conectada"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:462
-msgid "Validar"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:485
-msgid "Streaming"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:486
-msgid "Estas opções são aplicadas à próxima requisição ao YouTube Music."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:503
-msgid "Aparência"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:504
-msgid "Personalize o ambiente visual sem alterar o conteúdo."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:508
-msgid "Tema"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:516
-msgid "Modo de cor"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:518
-#: src/harmonia/window_preferences.py:531
-msgid "Padrão do tema"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:519
-msgid "Seguir o sistema"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:520
-msgid "Claro"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:521
-msgid "Escuro"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:529
-msgid "Cor de destaque"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:532
-msgid "Vermelho"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:533
-msgid "Laranja"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:534
-msgid "Amarelo"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:535
-msgid "Verde"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:536
-msgid "Menta"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:537
-msgid "Azul"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:538
-msgid "Roxo"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:539
-msgid "Rosa"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:540
-msgid "Marrom"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:541
-msgid "Ardósia"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:548
-msgid "Fundo ambiente desfocado"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:549
-msgid "Usa as cores da capa atual atrás da interface"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:559
-msgid "Efeito de fundo"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:561
-msgid "Mica"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:562
-msgid "Acrílico (fosco)"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:563
-msgid "Nenhum"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:569
-msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:574
-msgid "Capa desfocada no player expandido"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:575
-msgid "Desligada, o player expandido mostra o efeito de fundo"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:588
-msgid "Estilo dos ícones"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:591
-msgid "Windows — ícones Fluent"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:593
-msgid "GTK — padrão do sistema"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:596
-msgid "Material Expressive"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:606
-msgid "Qualidade do áudio"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:607
-msgid "Alta"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:607
-msgid "Média"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:607
-msgid "Econômica"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:614
-msgid "Idioma"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:616
-msgid "Português (Brasil)"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:617
-msgid "English"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:618
-msgid "Español"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:627
-msgid "Região"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:629
-msgid "Brasil"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:630
-msgid "Estados Unidos"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:631
-msgid "Portugal"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:632
-msgid "Japão"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:639
-msgid "Proxy HTTP(S)"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:639
-msgid "Opcional · exemplo: http://127.0.0.1:8080"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:642
-msgid "Sem proxy"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:651
-msgid "Cache de capas"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:652
-#, python-brace-format
-msgid "{size} armazenados"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:654
-msgid "Limpar"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:662
-msgid "Dados e backup"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:664
-msgid ""
-"Salva biblioteca, histórico e preferências sem incluir credenciais ou áudio."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:668
-msgid "Backup portátil"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:669
-msgid "Compatível com outras instalações do Harmonia"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:683
-msgid "Integrações sociais"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:685
-msgid ""
-"Recursos opcionais; nenhum dado é enviado enquanto estiverem desligados."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:691
-msgid "Scrobble no Last.fm"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:693
-#, python-brace-format
-msgid "Conectado como {username}"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:695
-msgid "Configure uma chave de API e autorize a conta"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:707
-msgid "Chave da API do Last.fm"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:708
-msgid "Crie uma API Account gratuita no site do Last.fm"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:712
-msgid "API key"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:724
-msgid "Segredo da API do Last.fm"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:728
-msgid "Secret"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:746
-msgid "Autorização do Last.fm"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:747
-msgid "A autorização é concluída no navegador padrão"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:756
-msgid "Autorizar"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:760
-msgid "Concluir"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:769
-msgid "Discord Rich Presence"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:770
-msgid "Mostra a faixa atual usando somente o IPC local do Discord"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:781
-msgid "Client ID do Discord"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:782
-msgid "ID de uma aplicação criada no Discord Developer Portal"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:786
-msgid "Client ID"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:802
-msgid "Áudio"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:803
-msgid "Processamento nativo em tempo real pelo GStreamer."
-msgstr ""
-
-#: src/harmonia/window_preferences.py:814
-msgid "Normalização de volume"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:814
-msgid "Reduz variações de volume entre faixas"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:825
-msgid "Pular silêncio"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:825
-msgid "Remove trechos silenciosos longos"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:858
-msgid "Velocidade"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:869
-msgid "Tom (semitons)"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:879
-msgid "Desligado"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:880
-msgid "15 minutos"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:881
-msgid "30 minutos"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:882
-msgid "1 hora"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:883
-msgid "1 hora e 30"
-msgstr ""
-
-#: src/harmonia/window_preferences.py:886
-msgid "Temporizador"
 msgstr ""
 
 #: src/harmonia/window_search.py:112
@@ -3070,22 +3091,6 @@ msgstr ""
 
 #: src/harmonia/qml/SettingsPage.qml:246
 msgid "Equalizador:"
-msgstr ""
-
-#: src/harmonia/qml/SettingsPage.qml:248
-msgid "Plano"
-msgstr ""
-
-#: src/harmonia/qml/SettingsPage.qml:249
-msgid "Graves"
-msgstr ""
-
-#: src/harmonia/qml/SettingsPage.qml:250
-msgid "Voz"
-msgstr ""
-
-#: src/harmonia/qml/SettingsPage.qml:251
-msgid "Agudos"
 msgstr ""
 
 #: src/harmonia/qml/SettingsPage.qml:268

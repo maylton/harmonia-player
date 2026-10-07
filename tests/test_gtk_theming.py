@@ -137,7 +137,7 @@ def test_elementary_shadow_ships_only_fixed_used_icons_and_no_theme_index():
     # merges it into the installed elementary theme and its variants.
     assert not list((SOURCE / "icons-compat").rglob("index.theme"))
     used = set()
-    for source in SOURCE.glob("*.py"):
+    for source in SOURCE.rglob("*.py"):
         used.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
     icons = sorted(root.rglob("*.svg"))
     assert icons

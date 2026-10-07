@@ -21,6 +21,12 @@ src/harmonia/qt_preferences.py
 src/harmonia/qt_presenters.py
 src/harmonia/qt_video.py
 src/harmonia/recognition.py
+src/harmonia/settings_page/__init__.py
+src/harmonia/settings_page/account.py
+src/harmonia/settings_page/appearance.py
+src/harmonia/settings_page/audio.py
+src/harmonia/settings_page/social.py
+src/harmonia/settings_page/streaming.py
 src/harmonia/social.py
 src/harmonia/stream_relay.py
 src/harmonia/together.py

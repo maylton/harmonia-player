@@ -53,7 +53,7 @@ SUBSET_ATTRIBUTES = {
 
 def used_icon_names() -> set[str]:
     names: set[str] = set()
-    for source in (ROOT / "src" / "harmonia").glob("*.py"):
+    for source in (ROOT / "src" / "harmonia").rglob("*.py"):
         names.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
     return names
 
