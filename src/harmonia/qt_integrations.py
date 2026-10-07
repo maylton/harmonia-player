@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+from typing import ClassVar
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
@@ -661,89 +662,110 @@ class QtIntegrationsController(QObject):
         except RuntimeError:
             LOGGER.debug("Executor já encerrado; ignorando %s", name)
 
+    # Operation run by _run -> method handling its result.
+    OPERATION_HANDLERS: ClassVar[dict[str, str]] = {
+        "lastfm-begin": "_lastfm_authorization_started",
+        "lastfm-finish": "_lastfm_authorization_finished",
+        "together-join": "_together_joined",
+        "together-sync": "_together_synced",
+        "recognition": "_music_recognized",
+        "cast-discovery": "_cast_devices_found",
+        "cast-connect": "_cast_playback_started",
+        "cast-track": "_cast_playback_started",
+    }
+
     @Slot(str, object, str)
     def _operation_finished(self, operation: str, result, error: str) -> None:
         silent = operation.startswith("silent:")
         name = operation.removeprefix("silent:")
         if error:
-            if name == "together-sync":
-                self._together_fetching = False
-            if name in {"cast-connect", "cast-track"}:
-                self._disconnect_cast(resume=True)
-            if not silent:
-                labels = {
-                    "lastfm-begin": _("Não foi possível iniciar o Last.fm"),
-                    "lastfm-finish": _("Não foi possível conectar ao Last.fm"),
-                    "together-join": _("Não foi possível entrar na sessão"),
-                    "recognition": _("Não foi possível reconhecer a música"),
-                    "cast-discovery": _("Não foi possível procurar dispositivos"),
-                    "cast-connect": _("Não foi possível transmitir"),
-                    "cast-track": _("Não foi possível trocar a faixa no dispositivo"),
-                }
-                label = labels.get(name, _("Não foi possível concluir a operação"))
-                self.backend._set_status(
-                    _("{label}: {error}").format(label=label, error=error), error=True
-                )
+            self._operation_failed(name, error, silent=silent)
             return
+        handler = self.OPERATION_HANDLERS.get(name)
+        if handler:
+            getattr(self, handler)(result)
 
-        if name == "lastfm-begin":
-            token, url = result
-            self._lastfm_pending_token = token
-            self.changed.emit()
-            QDesktopServices.openUrl(QUrl(url))
-            self.backend._set_status(_("Autorize no navegador e depois clique em Concluir."))
-        elif name == "lastfm-finish":
-            self._lastfm_pending_token = ""
-            self.settings.values.lastfm_enabled = True
-            self._save_preferences()
-            self.backend._set_status(
-                _("Last.fm conectado como {username}.").format(username=result.username)
-            )
-        elif name == "together-join":
-            generation, client, state = result
-            if generation != self._together_generation:
-                return
-            self.together_client = client
-            self._together_revision = -1
-            self._apply_together_state(state)
-            self.togetherChanged.emit()
-            self.backend._set_status(_("Listen Together conectado."))
-        elif name == "together-sync":
+    def _operation_failed(self, name: str, error: str, *, silent: bool) -> None:
+        if name == "together-sync":
             self._together_fetching = False
-            client, state = result
-            if client is self.together_client:
-                self._apply_together_state(state)
-        elif name == "recognition":
-            if result is None:
-                self.backend._set_status(_("Nenhuma música reconhecida."))
-            else:
-                self.backend._set_status(
-                    _("Encontrada: {title} — {artist}").format(
-                        title=result.title, artist=result.artist
-                    )
-                )
-                self.backend.search(f"{result.artist} {result.title}")
-        elif name == "cast-discovery":
-            self._cast_devices = list(result or [])
-            self.castChanged.emit()
-            if self._cast_devices:
-                count = len(self._cast_devices)
-                self.backend._set_status(
-                    ngettext(
-                        "{count} dispositivo encontrado.",
-                        "{count} dispositivos encontrados.",
-                        count,
-                    ).format(count=count)
-                )
-            else:
-                self.backend._set_status(_("Nenhum dispositivo UPnP/DLNA encontrado."))
-        elif name in {"cast-connect", "cast-track"}:
-            self.castChanged.emit()
-            self.playback.playbackChanged.emit()
-            if self.cast_device:
-                self.backend._set_status(
-                    _("Reproduzindo em {name}.").format(name=self.cast_device.name)
-                )
+        if name in {"cast-connect", "cast-track"}:
+            self._disconnect_cast(resume=True)
+        if silent:
+            return
+        labels = {
+            "lastfm-begin": _("Não foi possível iniciar o Last.fm"),
+            "lastfm-finish": _("Não foi possível conectar ao Last.fm"),
+            "together-join": _("Não foi possível entrar na sessão"),
+            "recognition": _("Não foi possível reconhecer a música"),
+            "cast-discovery": _("Não foi possível procurar dispositivos"),
+            "cast-connect": _("Não foi possível transmitir"),
+            "cast-track": _("Não foi possível trocar a faixa no dispositivo"),
+        }
+        label = labels.get(name, _("Não foi possível concluir a operação"))
+        self.backend._set_status(_("{label}: {error}").format(label=label, error=error), error=True)
+
+    def _lastfm_authorization_started(self, result) -> None:
+        token, url = result
+        self._lastfm_pending_token = token
+        self.changed.emit()
+        QDesktopServices.openUrl(QUrl(url))
+        self.backend._set_status(_("Autorize no navegador e depois clique em Concluir."))
+
+    def _lastfm_authorization_finished(self, result) -> None:
+        self._lastfm_pending_token = ""
+        self.settings.values.lastfm_enabled = True
+        self._save_preferences()
+        self.backend._set_status(
+            _("Last.fm conectado como {username}.").format(username=result.username)
+        )
+
+    def _together_joined(self, result) -> None:
+        generation, client, state = result
+        if generation != self._together_generation:
+            return
+        self.together_client = client
+        self._together_revision = -1
+        self._apply_together_state(state)
+        self.togetherChanged.emit()
+        self.backend._set_status(_("Listen Together conectado."))
+
+    def _together_synced(self, result) -> None:
+        self._together_fetching = False
+        client, state = result
+        if client is self.together_client:
+            self._apply_together_state(state)
+
+    def _music_recognized(self, result) -> None:
+        if result is None:
+            self.backend._set_status(_("Nenhuma música reconhecida."))
+            return
+        self.backend._set_status(
+            _("Encontrada: {title} — {artist}").format(title=result.title, artist=result.artist)
+        )
+        self.backend.search(f"{result.artist} {result.title}")
+
+    def _cast_devices_found(self, result) -> None:
+        self._cast_devices = list(result or [])
+        self.castChanged.emit()
+        if not self._cast_devices:
+            self.backend._set_status(_("Nenhum dispositivo UPnP/DLNA encontrado."))
+            return
+        count = len(self._cast_devices)
+        self.backend._set_status(
+            ngettext(
+                "{count} dispositivo encontrado.",
+                "{count} dispositivos encontrados.",
+                count,
+            ).format(count=count)
+        )
+
+    def _cast_playback_started(self, _result) -> None:
+        self.castChanged.emit()
+        self.playback.playbackChanged.emit()
+        if self.cast_device:
+            self.backend._set_status(
+                _("Reproduzindo em {name}.").format(name=self.cast_device.name)
+            )
 
     @Slot()
     def _session_changed(self) -> None:
