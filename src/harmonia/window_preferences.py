@@ -855,7 +855,7 @@ class WindowPreferencesMixin:
 
         audio.add(
             scale_row(
-                "Velocidade",
+                _("Velocidade"),
                 0.5,
                 2.0,
                 0.05,
@@ -866,7 +866,7 @@ class WindowPreferencesMixin:
         )
         audio.add(
             scale_row(
-                "Tom (semitons)",
+                _("Tom (semitons)"),
                 -12,
                 12,
                 1,
@@ -876,14 +876,15 @@ class WindowPreferencesMixin:
             )
         )
         timer_values = [
-            ("Desligado", 0),
-            ("15 minutos", 15),
-            ("30 minutos", 30),
-            ("1 hora", 60),
-            ("1 hora e 30", 90),
+            (_("Desligado"), 0),
+            (_("15 minutos"), 15),
+            (_("30 minutos"), 30),
+            (_("1 hora"), 60),
+            (_("1 hora e 30"), 90),
         ]
         timer = Adw.ComboRow(
-            title=_("Temporizador"), model=Gtk.StringList.new([label for label, _ in timer_values])
+            title=_("Temporizador"),
+            model=Gtk.StringList.new([label for label, _minutes in timer_values]),
         )
         timer.connect(
             "notify::selected",
