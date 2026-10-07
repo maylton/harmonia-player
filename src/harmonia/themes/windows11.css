@@ -325,6 +325,18 @@ window.harmonia-backdrop .detail-backdrop-shade,
 window.harmonia-backdrop .artist-backdrop,
 window.harmonia-backdrop .artist-backdrop-shade { opacity: 0; }
 
+/* Expanded player with the material instead of the blurred cover
+   (Preferences > Capa desfocada no player expandido): it slides in opaque
+   over the pages and fades to the material once they are hidden. It keeps
+   its dark design, so light mode lays a dark veil over the material. */
+window.harmonia-backdrop .expanded-player.expanded-material { background-color: @harmonia_opaque_sidebar_bg; }
+window.harmonia-backdrop .expanded-player.expanded-material-light { background-color: #202020; }
+window.harmonia-backdrop .expanded-player.expanded-material.expanded-revealed {
+  background-color: transparent;
+  transition: background-color 250ms ease-out;
+}
+window.harmonia-backdrop .expanded-player.expanded-material-light.expanded-revealed { background-color: alpha(#202020, .88); }
+
 /* Out of focus the material gives way to opaque colours and comes back when
    the window is focused again, fading both ways, as Fluent's Mica and
    acrylic brushes swap to their fallback colour. GTK marks the unfocused
@@ -343,6 +355,8 @@ window.harmonia-backdrop:backdrop .sidebar,
 window.harmonia-backdrop:backdrop .player-bar { background-color: @harmonia_opaque_sidebar_bg; }
 window.harmonia-backdrop:backdrop headerbar { background-color: @harmonia_opaque_headerbar_bg; }
 window.harmonia-backdrop:backdrop .sidebar ~ stack { background-color: @harmonia_opaque_bg; }
+window.harmonia-backdrop:backdrop .expanded-player.expanded-material { background-color: @harmonia_opaque_sidebar_bg; }
+window.harmonia-backdrop:backdrop .expanded-player.expanded-material-light { background-color: #202020; }
 
 /* Type ramp: Segoe UI Variable Display, semibold, for titles. */
 .hero-title, .section-title, .artist-title, .detail-title, .expanded-title,

@@ -128,6 +128,7 @@ class WindowPreferencesMixin:
     def _apply_appearance_preferences(self) -> None:
         application = self.get_application() if hasattr(self, "get_application") else None
         controller = getattr(application, "theme_controller", None)
+        translucent = False
         if controller:
             theme_args = (
                 self.preferences.theme,
@@ -136,13 +137,15 @@ class WindowPreferencesMixin:
             )
             # The colour scheme comes first: the window material is tinted for it.
             controller.apply(*theme_args)
-            controller.apply(*theme_args, translucent=self._apply_window_backdrop())
+            translucent = self._apply_window_backdrop()
+            controller.apply(*theme_args, translucent=translucent)
         blurred = self.preferences.background_blur
         if blurred:
             self.root.add_css_class("appearance-blur")
         else:
             self.root.remove_css_class("appearance-blur")
         self.ambient_background.set_opacity(0.30 if blurred else 0)
+        self._apply_expanded_material(translucent)
 
         self.root.remove_css_class("icons-material")
         if self.preferences.icon_style != "gtk":
@@ -167,6 +170,8 @@ class WindowPreferencesMixin:
         kind = self.preferences.backdrop if supported else "none"
         if getattr(self, "_backdrop_row", None) is not None:
             self._backdrop_row.set_sensitive(supported)
+        if getattr(self, "_expanded_cover_row", None) is not None:
+            self._expanded_cover_row.set_sensitive(kind != "none")
         if kind != "none" and not self.get_realized():
             # The window first applies its preferences before it has a native
             # window, so the material (and the translucent palette that goes
@@ -177,6 +182,62 @@ class WindowPreferencesMixin:
                 )
             return False
         return self._window_backdrops.set_kind(kind, self)
+
+    def _apply_expanded_material(self, translucent: bool) -> None:
+        """Show the window material behind the expanded player instead of the cover.
+
+        Only with a material on and Preferences > "Capa desfocada no player
+        expandido" off. The expanded player covers the window, so it slides in
+        opaque and turns transparent once revealed, when the pages underneath
+        are hidden and only the material shows through.
+        """
+        surface = getattr(self, "expanded_surface", None)
+        if not host.WINDOW_BACKDROPS or surface is None:
+            return
+        self._expanded_translucent = translucent
+        material = translucent and not self.preferences.expanded_cover
+        for widget in (
+            self.expanded_backdrop_base,
+            self.expanded_backdrop,
+            self.expanded_backdrop_shade,
+        ):
+            widget.set_visible(not material)
+        if material:
+            surface.add_css_class("expanded-material")
+        else:
+            surface.remove_css_class("expanded-material")
+        # The expanded player keeps its dark design: in light mode a dark veil
+        # over the material keeps its white text readable.
+        style = Adw.StyleManager.get_default()
+        if material and not style.get_dark():
+            surface.add_css_class("expanded-material-light")
+        else:
+            surface.remove_css_class("expanded-material-light")
+        if not getattr(self, "_expanded_material_handlers", False):
+            self._expanded_material_handlers = True
+            for signal in ("notify::reveal-child", "notify::child-revealed"):
+                self.expanded_revealer.connect(signal, lambda *_: self._update_expanded_reveal())
+            style.connect(
+                "notify::dark",
+                lambda *_: self._apply_expanded_material(self._expanded_translucent),
+            )
+        self._update_expanded_reveal()
+
+    def _update_expanded_reveal(self) -> None:
+        surface = self.expanded_surface
+        revealed = (
+            surface.has_css_class("expanded-material")
+            and self.expanded_revealer.get_reveal_child()
+            and self.expanded_revealer.get_child_revealed()
+        )
+        if revealed:
+            surface.add_css_class("expanded-revealed")
+        else:
+            # Back to opaque at once, before the player slides away.
+            surface.remove_css_class("expanded-revealed")
+        self.root.set_opacity(0 if revealed else 1)
+        blurred = self.preferences.background_blur
+        self.ambient_background.set_opacity(0 if revealed or not blurred else 0.30)
 
     def _reapply_appearance(self) -> bool:
         self._apply_appearance_preferences()
@@ -521,6 +582,19 @@ class WindowPreferencesMixin:
             )
             self._backdrop_row.set_sensitive(get_theme(self.preferences.theme).backdrop)
             appearance.add(self._backdrop_row)
+            self._expanded_cover_row = Adw.SwitchRow(
+                title=_("Capa desfocada no player expandido"),
+                subtitle=_("Desligada, o player expandido mostra o efeito de fundo"),
+            )
+            self._expanded_cover_row.set_active(self.preferences.expanded_cover)
+            self._expanded_cover_row.connect(
+                "notify::active",
+                lambda row, _pspec: self._appearance_changed("expanded_cover", row.get_active()),
+            )
+            self._expanded_cover_row.set_sensitive(
+                get_theme(self.preferences.theme).backdrop and self.preferences.backdrop != "none"
+            )
+            appearance.add(self._expanded_cover_row)
         appearance.add(
             combo(
                 _("Estilo dos ícones"),

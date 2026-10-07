@@ -24,6 +24,9 @@ class Preferences:
     accent: str = "theme"
     # Window material for themes that support one (Windows 11 only).
     backdrop: str = "mica"
+    # Blurred cover behind the expanded player while a material is on;
+    # off, the expanded player shows the material too.
+    expanded_cover: bool = False
     lastfm_enabled: bool = False
     lastfm_api_key: str = ""
     discord_enabled: bool = False
@@ -72,6 +75,7 @@ class Preferences:
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
             accent=accent if accent in ACCENTS else "theme",
             backdrop=backdrop if backdrop in cls.BACKDROPS else "mica",
+            expanded_cover=boolean("expanded_cover", False),
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
@@ -103,6 +107,7 @@ class Preferences:
             "theme_variant": self.theme_variant,
             "accent": self.accent,
             "backdrop": self.backdrop,
+            "expanded_cover": "1" if self.expanded_cover else "0",
             "lastfm_enabled": "1" if self.lastfm_enabled else "0",
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",
