@@ -1,0 +1,147 @@
+name: Release
+
+# A tag v<version> (for example v0.1.0-beta.2) builds the Windows installer and
+# the Linux Flatpak bundle from that tag and publishes them, with checksums
+# and install.sh, on the tag's GitHub release. A version with a "-" suffix is
+# published as a pre-release. Run it by hand to rebuild an existing tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build and publish, e.g. v0.1.0-beta.2"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Instalar MSYS2 UCRT64 e dependências
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-adwaita-icon-theme
+            mingw-w64-ucrt-x86_64-gettext-runtime
+            mingw-w64-ucrt-x86_64-gettext-tools
+            mingw-w64-ucrt-x86_64-glib-networking
+            mingw-w64-ucrt-x86_64-gobject-introspection
+            mingw-w64-ucrt-x86_64-gst-libav
+            mingw-w64-ucrt-x86_64-gst-plugins-bad
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-gst-plugins-good
+            mingw-w64-ucrt-x86_64-gst-plugins-rs
+            mingw-w64-ucrt-x86_64-gst-python
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gtk4
+            mingw-w64-ucrt-x86_64-libadwaita
+            mingw-w64-ucrt-x86_64-librsvg
+            mingw-w64-ucrt-x86_64-pyinstaller
+            mingw-w64-ucrt-x86_64-python
+            mingw-w64-ucrt-x86_64-python-gobject
+            mingw-w64-ucrt-x86_64-webview2-loader
+
+      - name: Instalar Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Gerar o instalador
+        run: |
+          version="${TAG#v}"
+          bash packaging/windows/build.sh "$version"
+          cd build/windows
+          sha256sum "Harmonia-$version-x86_64-setup.exe" > "Harmonia-$version-x86_64-setup.exe.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            build/windows/*-setup.exe
+            build/windows/*-setup.exe.sha256
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Instalar Flatpak
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      # The bundle only carries Harmonia; install.sh adds Flathub, where the
+      # GNOME runtime it depends on comes from.
+      - name: Gerar o bundle Flatpak
+        run: |
+          version="${TAG#v}"
+          asset="Harmonia-$version-x86_64.flatpak"
+          flatpak-builder build-gtk \
+            --user \
+            --install-deps-from=flathub \
+            --force-clean \
+            --disable-rofiles-fuse \
+            --repo=repo \
+            io.github.harmonia.Harmonia.yml
+          flatpak build-bundle repo "$asset" io.github.harmonia.Harmonia \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+          sha256sum "$asset" > "$asset.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            Harmonia-*.flatpak
+            Harmonia-*.flatpak.sha256
+            install.sh
+          if-no-files-found: error
+
+  publish:
+    needs: [windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - name: Publicar no release da tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="${TAG#v}"
+          prerelease=""
+          case "$version" in *-*) prerelease="--prerelease" ;; esac
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" $prerelease --verify-tag \
+              --title "Harmonia $version" --generate-notes
+          fi
+          gh release upload "$TAG" assets/* --clobber
