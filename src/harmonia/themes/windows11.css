@@ -69,12 +69,20 @@ entry:focus-within, headerbar entry:focus-within {
 .sidebar-brand { padding: 6px 12px 14px; }
 .sidebar-brand-title { font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif; font-size: 16px; font-weight: 600; }
 .sidebar-heading { padding: 18px 12px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: @harmonia_fg_dim; }
+/* The selection pill is drawn on every item, transparent unless active:
+   with the size and position only on the active item, the button transition
+   cross-faded the pill's image while the size already spanned the whole
+   button, and the item just left flashed in the accent colour. */
 .sidebar-item {
   min-height: 36px;
   margin: 1px 0;
   padding: 0 12px;
   border-radius: 4px;
   color: @harmonia_fg;
+  background-image: linear-gradient(alpha(@accent_bg_color, 0), alpha(@accent_bg_color, 0));
+  background-size: 3px 16px;
+  background-position: 0 50%;
+  background-repeat: no-repeat;
 }
 .sidebar-item label { font-weight: 400; }
 .sidebar-item:hover { background-color: alpha(@harmonia_overlay, .06); }
@@ -82,9 +90,6 @@ entry:focus-within, headerbar entry:focus-within {
 .sidebar-active, .sidebar-active:hover {
   background-color: alpha(@harmonia_overlay, .06);
   background-image: linear-gradient(@accent_bg_color, @accent_bg_color);
-  background-size: 3px 16px;
-  background-position: 0 50%;
-  background-repeat: no-repeat;
   color: @harmonia_fg;
 }
 .sidebar-create { margin: 8px 4px 0; border-radius: 4px; }
