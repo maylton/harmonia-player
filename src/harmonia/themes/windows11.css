@@ -298,6 +298,33 @@ window.harmonia-backdrop .player-bar { background: transparent; }
 window.harmonia-backdrop .sidebar-active,
 window.harmonia-backdrop .sidebar-active:hover { background-color: alpha(@harmonia_overlay, .08); }
 
+/* Popovers with their own material (the player bar's queue and lyrics):
+   no GTK shadow or frame, so Windows' flyout material covers exactly the
+   popover and DWM draws the rounded corners and the shadow. */
+window.harmonia-backdrop popover.background.harmonia-backdrop-popover,
+window.harmonia-backdrop popover.background.harmonia-backdrop-popover > contents {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+}
+window.harmonia-backdrop popover.background.harmonia-backdrop-popover > contents {
+  /* Windows draws never-activated popups with a light, uniform frost; a
+     veil of the window colour brings it to the tone of its own flyouts. */
+  background-color: alpha(@harmonia_opaque_sidebar_bg, .65);
+  border-radius: 0;
+}
+
+/* Album, playlist and artist headers: the material replaces the blurred
+   cover, as the other pages show it. */
+window.harmonia-backdrop .detail-surface,
+window.harmonia-backdrop .detail-background,
+window.harmonia-backdrop .artist-surface { background: transparent; }
+window.harmonia-backdrop .detail-backdrop,
+window.harmonia-backdrop .detail-backdrop-shade,
+window.harmonia-backdrop .artist-backdrop,
+window.harmonia-backdrop .artist-backdrop-shade { opacity: 0; }
+
 /* Out of focus the material gives way to opaque colours and comes back when
    the window is focused again, fading both ways, as Fluent's Mica and
    acrylic brushes swap to their fallback colour. GTK marks the unfocused

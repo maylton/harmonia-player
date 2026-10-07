@@ -17,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 # DWM draws the native shadow and rounded corners instead, and a GTK shadow
 # would show as a band of material around the window.
 CSS_CLASS = "harmonia-backdrop"
+POPOVER_CSS_CLASS = "harmonia-backdrop-popover"
 
 
 class GtkWindowBackdrops:
@@ -45,6 +46,36 @@ class GtkWindowBackdrops:
         self._watch_toplevels()
         self.active = self._apply(main_window)
         return self.active
+
+    def attach_popover(self, popover: Gtk.Popover) -> None:
+        """Give a popover the window's material while it is shown.
+
+        Popovers are native windows of their own on Windows, so the material
+        behind the main window does not reach them. They drop the arrow and
+        GTK's shadow while a material is on, so the material covers exactly
+        the popover and DWM draws the rounded corners and the shadow.
+        """
+        if not host.WINDOW_BACKDROPS:
+            return
+        popover.connect("map", self._apply_popover)
+
+    def _apply_popover(self, popover: Gtk.Popover) -> None:
+        from . import windows_backdrop
+
+        hwnd = self._hwnd(popover)
+        applied = False
+        if hwnd is not None and self.kind != "none" and self.active:
+            try:
+                applied = windows_backdrop.apply(
+                    hwnd, windows_backdrop.TRANSIENT, self._style.get_dark()
+                )
+            except OSError:
+                LOGGER.debug("O DWM recusou o material do popover", exc_info=True)
+        popover.set_has_arrow(not applied)
+        if applied:
+            popover.add_css_class(POPOVER_CSS_CLASS)
+        else:
+            popover.remove_css_class(POPOVER_CSS_CLASS)
 
     def _watch_toplevels(self) -> None:
         for index in range(self._toplevels.get_n_items()):
