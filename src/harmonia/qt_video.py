@@ -152,6 +152,48 @@ class QtVideoController(QObject):
     def _prepare_sink(self) -> bool:
         if self._sink_prepared:
             return True
+        if not self._sink_preflight():
+            return False
+
+        LOGGER.debug("Preparing Qt GL video sink")
+
+        try:
+            pointer = int(shiboken6.getCppPointer(self._surface)[0])
+            if not pointer:
+                raise RuntimeError(_("A superfície GstGLQt6VideoItem não possui ponteiro nativo"))
+            _set_foreign_pointer_property(self._sink, "widget", pointer)
+            self._video_player.set_property("video-sink", self._video_output())
+            if self._fake_audio_sink is not None:
+                self._video_player.set_property("audio-sink", self._fake_audio_sink)
+            result = self._video_player.set_state(Gst.State.READY)
+            if result == Gst.StateChangeReturn.FAILURE:
+                raise RuntimeError(_("A camada de vídeo recusou o estado READY"))
+        except Exception as exc:
+            self._log_sink_prepare_failure(exc)
+            with suppress(Exception):
+                self._video_player.set_state(Gst.State.NULL)
+            self._release_video_output()
+            self._sink_error = str(exc)
+            self._sink_prepared = False
+            self.availabilityChanged.emit()
+            self._schedule_sink_prepare_retry()
+            return False
+
+        self._sink_prepared = True
+        self._sink_error = ""
+        self.availabilityChanged.emit()
+        LOGGER.debug("Qt video layer ready")
+        return True
+
+    def _video_output(self):
+        """The element the video playbin draws into, once the sink is bound."""
+        return self._sink
+
+    def _release_video_output(self) -> None:
+        """Undo _video_output after a failed preparation."""
+
+    def _sink_preflight(self) -> bool:
+        """Whether the sink, the playbin and a visible surface are all there."""
         if self._sink is None:
             self._sink_error = _("O plugin GStreamer qml6glsink não está disponível.")
             self.availabilityChanged.emit()
@@ -166,38 +208,8 @@ class QtVideoController(QObject):
             return False
         if not self._surface_window or not self._scene_graph_ready(self._surface_window):
             return False
-        if not self._surface_is_visible():
-            # qml6glsink can only bind a surface in the visible scene graph.
-            return False
-
-        LOGGER.debug("Preparing Qt GL video sink")
-
-        try:
-            pointer = int(shiboken6.getCppPointer(self._surface)[0])
-            if not pointer:
-                raise RuntimeError(_("A superfície GstGLQt6VideoItem não possui ponteiro nativo"))
-            _set_foreign_pointer_property(self._sink, "widget", pointer)
-            self._video_player.set_property("video-sink", self._sink)
-            if self._fake_audio_sink is not None:
-                self._video_player.set_property("audio-sink", self._fake_audio_sink)
-            result = self._video_player.set_state(Gst.State.READY)
-            if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError(_("A camada de vídeo recusou o estado READY"))
-        except Exception as exc:
-            self._log_sink_prepare_failure(exc)
-            with suppress(Exception):
-                self._video_player.set_state(Gst.State.NULL)
-            self._sink_error = str(exc)
-            self._sink_prepared = False
-            self.availabilityChanged.emit()
-            self._schedule_sink_prepare_retry()
-            return False
-
-        self._sink_prepared = True
-        self._sink_error = ""
-        self.availabilityChanged.emit()
-        LOGGER.debug("Qt video layer ready")
-        return True
+        # qml6glsink can only bind a surface in the visible scene graph.
+        return self._surface_is_visible()
 
     @Slot(QObject)
     def registerSurface(self, surface: QObject) -> None:
