@@ -22,6 +22,7 @@ src/harmonia/qt_presenters.py
 src/harmonia/qt_video.py
 src/harmonia/recognition.py
 src/harmonia/social.py
+src/harmonia/stream_relay.py
 src/harmonia/together.py
 src/harmonia/ui.py
 src/harmonia/video.py
