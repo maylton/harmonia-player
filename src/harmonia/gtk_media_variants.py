@@ -5,6 +5,7 @@ import threading
 
 from gi.repository import GLib, Gst
 
+from .i18n import _
 from .media_variants import IndependentVideoPlayback, is_independent_video_variant
 from .ui import deliver_to_main
 
@@ -80,7 +81,7 @@ def install_gtk_media_variants(window_class) -> None:
                 request_id,
                 item_id,
                 None,
-                "Não foi possível preservar o áudio original da música.",
+                _("Não foi possível preservar o áudio original da música."),
             )
 
         primary_position_us = max(0, int(self._playback_position_us()))
