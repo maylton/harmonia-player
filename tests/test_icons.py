@@ -11,7 +11,7 @@ APP_ID = "io.github.harmonia.Harmonia"
 
 def test_every_icon_referenced_by_python_has_bundled_variants():
     used = set()
-    for source in (ROOT / "src" / "harmonia").glob("*.py"):
+    for source in (ROOT / "src" / "harmonia").rglob("*.py"):
         used.update(re.findall(r'"([a-z0-9][a-z0-9-]*-symbolic)"', source.read_text()))
 
     assert used <= ICONS.keys()

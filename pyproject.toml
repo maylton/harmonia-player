@@ -35,7 +35,7 @@ max-statements = 60
   "C901",
   "PLR0915",
 ]
-"src/harmonia/{window_detail,window_home,window_library,window_optional,window_preferences}.py" = [
+"src/harmonia/{window_detail,window_home,window_library,window_optional}.py" = [
   "PLR0915",
 ]
 "tools/gtk_smoke.py" = ["PLR0915"]
