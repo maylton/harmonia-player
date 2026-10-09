@@ -45,11 +45,6 @@ def configured_wallpapers(*, dark: bool) -> list[Path]:
     return found
 
 
-def wallpaper_candidates(*, dark: bool) -> list[Path]:
-    """The configured images that can be read."""
-    return [path for path in configured_wallpapers(dark=dark) if path.is_file()]
-
-
 def host_path(path: Path) -> Path:
     """A system path as the Flatpak sees it, under /run/host."""
     posix = path.as_posix()

@@ -63,10 +63,6 @@ class CrossfadingPlayer:
 
     # Settings
 
-    @property
-    def crossfade_seconds(self) -> int:
-        return self._seconds
-
     def set_crossfade(self, seconds: float) -> None:
         self._seconds = crossfade.clamp_seconds(seconds)
         if self._seconds and not self._watch_source:
