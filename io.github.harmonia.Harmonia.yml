@@ -15,6 +15,19 @@ finish-args:
   - --own-name=org.mpris.MediaPlayer2.Harmonia
   - --filesystem=xdg-run/discord-ipc-0
   - --filesystem=xdg-run/app/com.discordapp.Discord:ro
+  # The desktop wallpaper, which the Windows 11 theme's Mica is made of
+  # (desktop_wallpaper.py), all read-only: GNOME keeps the choice in dconf,
+  # Plasma in its config; the images are the system's (/run/host/usr) or
+  # the ones the desktops copy to the user's data folder.
+  - --filesystem=xdg-run/dconf
+  - --filesystem=~/.config/dconf:ro
+  - --talk-name=ca.desrt.dconf
+  - --env=DCONF_USER_CONFIG_DIR=.config/dconf
+  - --filesystem=host-os:ro
+  - --filesystem=xdg-data/backgrounds:ro
+  - --filesystem=xdg-data/wallpapers:ro
+  - --filesystem=xdg-config/plasma-org.kde.plasma.desktop-appletsrc:ro
+  - --filesystem=xdg-config/kdeglobals:ro
 modules:
   - name: harmonia
     buildsystem: meson

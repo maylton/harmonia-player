@@ -15,7 +15,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - selo "E" nas faixas com conteúdo explícito;
 - erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
 - Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início;
-- Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF.
+- Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF;
+- Mica também no Flatpak: o app lê, só para leitura, a configuração do papel de parede (dconf do GNOME ou configuração do Plasma), as imagens do sistema e as pastas de papéis de parede do usuário; quando a imagem está em outra pasta, as Preferências mostram o comando `flatpak override` que a libera.
 
 ## 0.1.0-beta.3 — 2026-10-09
 

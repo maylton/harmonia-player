@@ -95,6 +95,7 @@ def mica_image(wallpaper: Path, cache: Path) -> Path:
 
 
 FORMAT_PACKAGES = {".jxl": "JPEG XL", ".webp": "WebP", ".avif": "AVIF"}
+FLATPAK_ID = "io.github.harmonia.Harmonia"
 
 
 def unreadable_reason(wallpaper: Path) -> str:
@@ -191,7 +192,8 @@ class LinuxWindowBackdrops:
     @staticmethod
     def _mica(dark: bool) -> tuple[Path | None, str]:
         """The blurred wallpaper, or None and why there is none."""
-        candidates = desktop_wallpaper.wallpaper_candidates(dark=dark)
+        configured = desktop_wallpaper.configured_wallpapers(dark=dark)
+        candidates = [path for path in configured if path.is_file()]
         for wallpaper in candidates:
             try:
                 return mica_image(wallpaper, host.cache_dir() / "mica"), ""
@@ -201,9 +203,15 @@ class LinuxWindowBackdrops:
                 )
         if candidates:
             return None, unreadable_reason(candidates[0])
-        if desktop_wallpaper.in_flatpak():
+        if configured and desktop_wallpaper.in_flatpak():
+            # The setting names a file outside what the manifest lets it read.
             return None, _(
-                "O Flatpak não tem acesso ao papel de parede; instale o pacote .deb ou .rpm"
+                "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: "
+                "flatpak override --user --filesystem={folder}:ro {app}"
+            ).format(folder=configured[0].parent, app=FLATPAK_ID)
+        if configured:
+            return None, _("O papel de parede {name} não foi encontrado").format(
+                name=configured[0].name
             )
         return None, _("Papel de parede do GNOME ou do Plasma não encontrado")
 
