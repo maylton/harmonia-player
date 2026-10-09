@@ -372,6 +372,12 @@ class InnerTubeClient:
     def library(
         self, category: str, all_pages: bool = True, max_pages: int = 10
     ) -> list[LibraryItem]:
+        return self.library_listing(category, all_pages, max_pages)[0]
+
+    def library_listing(
+        self, category: str, all_pages: bool = True, max_pages: int = 10
+    ) -> tuple[list[LibraryItem], bool]:
+        """The category's items, and whether every page was read."""
         if category not in LIBRARIES:
             raise ValueError(_("Categoria desconhecida: {category}").format(category=category))
         payload = self._post({"browseId": LIBRARIES[category]})
@@ -390,7 +396,7 @@ class InnerTubeClient:
             continuation = find_continuation(payload)
             pages += 1
         unique = {item.id: item for item in result}
-        return list(unique.values())
+        return list(unique.values()), not continuation
 
     def browse(
         self, browse_id: str, kind: str = "songs", all_pages: bool = True, max_pages: int = 10

@@ -11,6 +11,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .innertube import InnerTubeClient
+from .library_sync import Listing, merge_library
 from .models import (
     AccountProfile,
     ArtistPage,
@@ -32,6 +33,10 @@ SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
 
 
 class YouTubeMusicService:
+    # Pages of each library category read per sync; beyond it the listing is
+    # incomplete and only adds to the cache.
+    LIBRARY_MAX_PAGES = 40
+
     def __init__(
         self,
         storage: Storage,
@@ -89,25 +94,55 @@ class YouTubeMusicService:
         )
         required = {"playlists", "songs", "albums", "artists"}
         cached = self.storage.load_library()
-        sections: dict[str, list[LibraryItem]] = {}
+        listings: dict[str, Listing] = {}
         with ThreadPoolExecutor(
             max_workers=len(categories), thread_name_prefix="library-sync"
         ) as pool:
             pending = {
-                pool.submit(self.client().library, category): category for category in categories
+                pool.submit(
+                    self.client().library_listing, category, max_pages=self.LIBRARY_MAX_PAGES
+                ): category
+                for category in categories
             }
             for future in as_completed(pending):
                 category = pending[future]
                 try:
-                    sections[category] = future.result()
+                    listings[category] = Listing(*future.result())
                 except Exception:
                     if category in required:
                         raise
-                    if category in cached:
-                        sections[category] = cached[category]
+        # See library_sync: incomplete or empty listings and recent changes
+        # made here never drop items from the cache.
+        changes = self.storage.pending_library_changes()
+        merged, settled = merge_library(cached, listings, changes)
+        self.storage.forget_library_changes(settled)
+        sections = {**cached, **merged}
         ordered = {category: sections[category] for category in categories if category in sections}
         self.storage.save_library(ordered)
         return ordered
+
+    # Library changes made here, recorded so the next sync keeps them while
+    # YouTube Music catches up (library_sync.py). ``client`` reuses the one a
+    # mutation already has.
+
+    def set_song_liked(self, item: LibraryItem, liked: bool, client=None) -> None:
+        (client or self.client()).like_song(item.id, liked)
+        self.storage.record_library_change("songs", item, liked)
+
+    def set_artist_subscribed(self, item: LibraryItem, subscribed: bool, client=None) -> None:
+        (client or self.client()).subscribe_artist(item.id, subscribed)
+        self.storage.record_library_change("artists", item, subscribed)
+
+    def set_collection_saved(
+        self, item: LibraryItem, playlist_id: str, saved: bool, client=None
+    ) -> None:
+        (client or self.client()).like_playlist(playlist_id, saved)
+        category = "albums" if item.kind == "albums" else "playlists"
+        self.storage.record_library_change(category, item, saved)
+
+    def delete_playlist(self, item: LibraryItem, client=None) -> None:
+        (client or self.client()).delete_playlist(item.id)
+        self.storage.record_library_change("playlists", item, False)
 
     def sync_home(self) -> list[HomeSection]:
         sections = self.client().home()

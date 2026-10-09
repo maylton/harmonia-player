@@ -31,7 +31,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | 1 | Normalização de volume por faixa | Alta | Feita |
 | 2 | Crossfade entre faixas | Alta | Feita |
 | 3 | Letras palavra por palavra e novos provedores | Alta | Feita (falta o KDE) |
-| 4 | Sincronização segura da biblioteca | Alta | A fazer |
+| 4 | Sincronização segura da biblioteca | Alta | Feita |
 | 5 | Pequenas melhorias de uso | Média | A fazer |
 | 6 | Equalizador com perfis do AutoEQ | Média | A fazer |
 | 7 | Backup antes de atualizar e escolha de conta | Média | A fazer |
@@ -120,12 +120,24 @@ Uma faixa termina enquanto a próxima começa, com volumes cruzados.
 
 ## Fase 4 — Sincronização segura da biblioteca (alta)
 
-- [ ] `library_sync.py`: compara o que veio do YouTube com o cache local.
-- [ ] Remoções feitas no YouTube são aplicadas no app.
-- [ ] Itens que só existem localmente não são apagados.
-- [ ] Resposta incompleta (paginação falhou, lista vazia por erro) não apaga
-  curtidas nem playlists locais.
-- [ ] Testes com respostas completas, parciais e vazias.
+Antes, cada categoria vinda do YouTube substituía o cache inteiro: uma lista
+vazia por erro apagava a biblioteca local, uma lista cortada no limite de
+páginas perdia o resto, e uma curtida recém-feita sumia na sincronização que
+vinha logo depois, porque o YouTube demora a listá-la.
+
+- [x] `library_sync.py` (sem rede nem interface): junta a lista do YouTube
+  com o cache.
+- [x] Remoções feitas no YouTube são aplicadas quando a lista está completa
+  (`InnerTubeClient.library_listing` informa se leu todas as páginas; a
+  sincronização lê até 40).
+- [x] Lista incompleta só acrescenta; lista vazia sobre um cache com itens é
+  tratada como resposta com erro.
+- [x] Mudanças feitas no Harmonia (curtir, inscrever-se, salvar álbum ou
+  playlist, excluir playlist) ficam em `storage/library_changes.py` e valem
+  por cima da lista até o YouTube mostrá-las, por até 15 minutos. Os dois
+  frontends as registram pelo serviço (`set_song_liked` e afins).
+- [x] Testes com listas completas, incompletas e vazias, mudanças pendentes,
+  a sincronização do serviço e o repositório.
 
 ## Fase 5 — Pequenas melhorias de uso (média)
 

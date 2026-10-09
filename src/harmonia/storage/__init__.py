@@ -10,6 +10,7 @@ from .. import host
 from ..secrets import SessionSecret
 from .catalog import CatalogCache
 from .downloads import DownloadRecords
+from .library_changes import LibraryChanges
 from .local import LocalMedia
 from .loudness import LoudnessRecords
 from .lyrics import LyricsCache
@@ -17,7 +18,13 @@ from .playback import PlaybackRecords
 
 
 class Storage(
-    CatalogCache, LyricsCache, PlaybackRecords, DownloadRecords, LocalMedia, LoudnessRecords
+    CatalogCache,
+    LyricsCache,
+    PlaybackRecords,
+    DownloadRecords,
+    LocalMedia,
+    LoudnessRecords,
+    LibraryChanges,
 ):
     def __init__(self) -> None:
         config = host.config_dir()
@@ -35,6 +42,7 @@ class Storage(
         self.session_secret = SessionSecret()
         self._initialize_database()
         self._initialize_loudness()
+        self._initialize_library_changes()
         self._migrate_json_cache()
 
     def load_cookie(self) -> str:

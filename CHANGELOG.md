@@ -8,7 +8,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - seletor "Nível do volume" (Suave, Padrão, Alto) para a normalização;
 - transição entre faixas (crossfade) de 3 a 12 segundos, em Preferências > Áudio;
 - letras palavra por palavra: a linha cantada acende a cada palavra, com as letras do novo provedor LyricsPlus;
-- letras em LRC estendido não mostram mais as marcas de tempo das palavras no texto.
+- letras em LRC estendido não mostram mais as marcas de tempo das palavras no texto;
+- sincronização da biblioteca mais segura: uma resposta vazia ou incompleta do YouTube não apaga mais itens, e curtidas, inscrições e playlists salvas não somem enquanto o YouTube demora a listá-las.
 
 ## 0.1.0-beta.3 — 2026-10-09
 
