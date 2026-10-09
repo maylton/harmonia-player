@@ -11,7 +11,7 @@ class FakeYouTube:
 
     def resolve_stream(self, video_id, force=False):
         self.calls.append((video_id, force))
-        return StreamInfo("https://media.example/audio", 1000, "TEST")
+        return StreamInfo("https://media.example/audio", 1000, "TEST", loudness_db=1.5)
 
     def validate_account(self):
         return True
@@ -69,6 +69,7 @@ def test_download_completes_in_bounded_chunks_and_is_available_offline(monkeypat
     assert requests[0][0] == 0
     assert all(end - start + 1 <= manager.CHUNK_SIZE for start, end in requests)
     assert youtube.calls == [("video", True)]
+    assert storage.track_loudness("video") == 1.5  # normalised offline too
 
 
 def test_download_resumes_from_partial_file(monkeypatch, tmp_path):

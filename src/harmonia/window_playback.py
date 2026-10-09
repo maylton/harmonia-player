@@ -469,7 +469,14 @@ class WindowPlaybackMixin:
                     return
                 offline_path = self.downloads.offline_path(item.id)
                 if offline_path:
-                    GLib.idle_add(self._start_stream, request_id, offline_path.as_uri(), None, None)
+                    GLib.idle_add(
+                        self._start_stream,
+                        request_id,
+                        offline_path.as_uri(),
+                        None,
+                        None,
+                        self.storage.track_loudness(item.id),
+                    )
                     return
                 self._deliver_stream(request_id, self.youtube.resolve_stream(item.id))
             except Exception as exc:
@@ -485,6 +492,7 @@ class WindowPlaybackMixin:
             stream.url,
             stream.duration_ms,
             stream.playback_tracking_url,
+            stream.loudness_db,
         )
 
     def _queue_row(self, position: int, item: LibraryItem) -> Adw.ActionRow:
@@ -505,10 +513,12 @@ class WindowPlaybackMixin:
         url: str,
         duration_ms: int | None,
         playback_tracking_url: str | None = None,
+        loudness_db: float | None = None,
     ):
         if request_id != self._play_request:
             return False
         self._stream_ready = True
+        self.player.set_track_loudness(loudness_db)
         self.play_button.set_sensitive(True)
         self.expanded_play_button.set_sensitive(True)
         self.current_duration_ms = duration_ms or 0

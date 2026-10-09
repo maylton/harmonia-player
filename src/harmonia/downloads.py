@@ -127,6 +127,8 @@ class DownloadManager:
         part = Path(str(final) + ".part")
         try:
             stream = self.youtube.resolve_stream(record.item.id, force=True)
+            # Offline the track keeps its volume normalisation.
+            self.storage.save_track_loudness(record.item.id, stream.loudness_db)
             self.storage.set_setting("download_account_hash", record.account_hash)
             self.storage.set_setting("download_account_validated_at", str(int(time.time())))
             final.parent.mkdir(parents=True, exist_ok=True)

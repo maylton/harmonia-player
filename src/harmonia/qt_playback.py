@@ -142,6 +142,7 @@ class QtPlaybackController(QObject):
         self,
         *,
         normalization: bool,
+        normalization_level: str,
         equalizer: str,
         speed: float,
         pitch: float,
@@ -149,6 +150,7 @@ class QtPlaybackController(QObject):
     ) -> None:
         self.player.apply_audio_settings(
             normalization=normalization,
+            normalization_level=normalization_level,
             equalizer=equalizer,
             speed=speed,
             pitch=pitch,
@@ -273,7 +275,9 @@ class QtPlaybackController(QObject):
 
         offline = self.downloads.offline_path(item.id)
         if offline:
-            self._start_uri(request_id, offline.as_uri(), None, None)
+            self._start_uri(
+                request_id, offline.as_uri(), None, None, self.storage.track_loudness(item.id)
+            )
             return
 
         self.set_busy(True)
@@ -295,9 +299,11 @@ class QtPlaybackController(QObject):
         uri: str,
         duration_ms: int | None,
         tracking_url: str | None,
+        loudness_db: float | None = None,
     ) -> None:
         if request_id != self._stream_request:
             return
+        self.player.set_track_loudness(loudness_db)
         self.set_busy(False)
         self._duration_ms = max(0, int(duration_ms or 0))
         self._pending_tracking_url = tracking_url or ""
@@ -333,6 +339,7 @@ class QtPlaybackController(QObject):
             stream.url,
             stream.duration_ms,
             stream.playback_tracking_url,
+            stream.loudness_db,
         )
 
     def toggle_playback(self) -> None:

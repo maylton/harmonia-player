@@ -11,11 +11,14 @@ from ..secrets import SessionSecret
 from .catalog import CatalogCache
 from .downloads import DownloadRecords
 from .local import LocalMedia
+from .loudness import LoudnessRecords
 from .lyrics import LyricsCache
 from .playback import PlaybackRecords
 
 
-class Storage(CatalogCache, LyricsCache, PlaybackRecords, DownloadRecords, LocalMedia):
+class Storage(
+    CatalogCache, LyricsCache, PlaybackRecords, DownloadRecords, LocalMedia, LoudnessRecords
+):
     def __init__(self) -> None:
         config = host.config_dir()
         cache = host.cache_dir()
@@ -31,6 +34,7 @@ class Storage(CatalogCache, LyricsCache, PlaybackRecords, DownloadRecords, Local
         self.web_data_dir = config / "web-auth"
         self.session_secret = SessionSecret()
         self._initialize_database()
+        self._initialize_loudness()
         self._migrate_json_cache()
 
     def load_cookie(self) -> str:

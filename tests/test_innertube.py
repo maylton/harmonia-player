@@ -651,6 +651,7 @@ def test_stream_resolution_caches_and_force_refreshes(monkeypatch):
             "playbackTracking": {
                 "videostatsPlaybackUrl": {"baseUrl": "https://track.example/play"}
             },
+            "playerConfig": {"audioConfig": {"loudnessDb": 4.5}},
             "streamingData": {
                 "adaptiveFormats": [
                     {
@@ -680,6 +681,7 @@ def test_stream_resolution_caches_and_force_refreshes(monkeypatch):
         expires,
     )
     assert first.playback_tracking_url == "https://track.example/play"
+    assert first.loudness_db == 4.5
     assert len(calls) == 2
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import gi
 
 gi.require_version("Adw", "1")
-from gi.repository import Adw  # noqa: E402
+from gi.repository import Adw, GObject  # noqa: E402
 
 from ..i18n import _  # noqa: E402
 from .rows import combo_row, scale_row, switch_row  # noqa: E402
@@ -34,14 +34,21 @@ def audio_group(window) -> Adw.PreferencesGroup:
             changed("equalizer"),
         )
     )
-    group.add(
-        switch_row(
-            _("Normalização de volume"),
-            _("Reduz variações de volume entre faixas"),
-            preferences.normalization,
-            changed("normalization"),
-        )
+    normalization = switch_row(
+        _("Normalização de volume"),
+        _("Iguala o volume das faixas com a medição do YouTube Music"),
+        preferences.normalization,
+        changed("normalization"),
     )
+    group.add(normalization)
+    level = combo_row(
+        _("Nível do volume"),
+        [(_("Suave"), "soft"), (_("Padrão"), "standard"), (_("Alto"), "loud")],
+        preferences.normalization_level,
+        changed("normalization_level"),
+    )
+    normalization.bind_property("active", level, "sensitive", GObject.BindingFlags.SYNC_CREATE)
+    group.add(level)
     group.add(
         switch_row(
             _("Pular silêncio"),

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 11:08-0300\n"
+"POT-Creation-Date: 2026-10-09 17:45-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -43,7 +43,7 @@ msgstr "Choose a track to start"
 #: src/harmonia/window_chrome/player_bar.py:180
 #: src/harmonia/window_playback.py:452 src/harmonia/window_playback.py:453
 #: src/harmonia/window_playback.py:454 src/harmonia/window_playback.py:455
-#: src/harmonia/window_playback.py:718 src/harmonia/window_playback.py:719
+#: src/harmonia/window_playback.py:728 src/harmonia/window_playback.py:729
 msgid "0:00"
 msgstr "0:00"
 
@@ -156,71 +156,71 @@ msgstr "The video failed; returning to the song…"
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "The video ended before the audio track."
 
-#: src/harmonia/innertube/client.py:170
+#: src/harmonia/innertube/client.py:171
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr ""
 "The session has expired or the cookie no longer has access to YouTube Music."
 
-#: src/harmonia/innertube/client.py:174
+#: src/harmonia/innertube/client.py:175
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr "YouTube Music responded HTTP {code}: {detail}"
 
-#: src/harmonia/innertube/client.py:181
+#: src/harmonia/innertube/client.py:182
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr "Couldn't connect to YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:184
+#: src/harmonia/innertube/client.py:185
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr "Couldn't complete the request to YouTube Music."
 
-#: src/harmonia/innertube/client.py:199
+#: src/harmonia/innertube/client.py:200
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Couldn't sign in to YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:230
+#: src/harmonia/innertube/client.py:231
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Unknown search category: {category}"
 
-#: src/harmonia/innertube/client.py:303
+#: src/harmonia/innertube/client.py:304
 msgid "O artista não possui um identificador"
 msgstr "The artist does not have an ID"
 
-#: src/harmonia/innertube/client.py:333
+#: src/harmonia/innertube/client.py:334
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "YouTube Music did not provide a removal token"
 
-#: src/harmonia/innertube/client.py:375
+#: src/harmonia/innertube/client.py:376
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Unknown category: {category}"
 
-#: src/harmonia/innertube/client.py:474
+#: src/harmonia/innertube/client.py:475
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "The track does not contain a playable identifier."
 
-#: src/harmonia/innertube/client.py:532
+#: src/harmonia/innertube/client.py:534
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Couldn't obtain a playable stream. {details}"
 
-#: src/harmonia/innertube/client.py:589
+#: src/harmonia/innertube/client.py:591
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Couldn't register playback: {error}"
 
-#: src/harmonia/innertube/client.py:612
+#: src/harmonia/innertube/client.py:614
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "The playlist name cannot be empty"
 
-#: src/harmonia/innertube/client.py:619
+#: src/harmonia/innertube/client.py:621
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "YouTube created the playlist without returning its ID"
 
-#: src/harmonia/innertube/client.py:642
+#: src/harmonia/innertube/client.py:644
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr "Track does not contain playlistSetVideoId and cannot be safely removed"
@@ -315,11 +315,11 @@ msgstr "Nov"
 msgid "Dez"
 msgstr "Dec"
 
-#: src/harmonia/player.py:34
+#: src/harmonia/player.py:35
 msgid "O elemento GStreamer playbin não está disponível"
 msgstr "GStreamer playbin element is not available"
 
-#: src/harmonia/player.py:250
+#: src/harmonia/player.py:269
 #, python-brace-format
 msgid ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
@@ -387,8 +387,8 @@ msgstr "Download of {title} started."
 msgid "Downloads da coleção iniciados."
 msgstr "Collection downloads started."
 
-#: src/harmonia/qt_backend.py:1202 src/harmonia/qt_preferences.py:162
-#: src/harmonia/window_preferences.py:331
+#: src/harmonia/qt_backend.py:1202 src/harmonia/qt_preferences.py:163
+#: src/harmonia/window_preferences.py:332
 msgid "Validando sessão…"
 msgstr "Validating session…"
 
@@ -584,11 +584,11 @@ msgstr "Couldn't cast"
 msgid "Não foi possível trocar a faixa no dispositivo"
 msgstr "Couldn't change the track on the device"
 
-#: src/harmonia/qt_integrations.py:704 src/harmonia/qt_preferences.py:244
+#: src/harmonia/qt_integrations.py:704 src/harmonia/qt_preferences.py:245
 msgid "Não foi possível concluir a operação"
 msgstr "Couldn't complete the operation"
 
-#: src/harmonia/qt_integrations.py:705 src/harmonia/qt_preferences.py:245
+#: src/harmonia/qt_integrations.py:705 src/harmonia/qt_preferences.py:246
 #, python-brace-format
 msgid "{label}: {error}"
 msgstr "{label}: {error}"
@@ -763,117 +763,117 @@ msgstr "Added to {title}"
 msgid "Faixa removida da playlist"
 msgstr "Track removed from playlist"
 
-#: src/harmonia/qt_playback.py:269
+#: src/harmonia/qt_playback.py:271
 msgid "O arquivo local não está mais disponível."
 msgstr "The local file is no longer available."
 
-#: src/harmonia/qt_playback.py:328
+#: src/harmonia/qt_playback.py:334
 #, python-brace-format
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr "Couldn't play the track: {error}"
 
-#: src/harmonia/qt_playback.py:467 src/harmonia/window_playback.py:204
+#: src/harmonia/qt_playback.py:474 src/harmonia/window_playback.py:204
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr "Couldn't continue radio: {error}"
 
-#: src/harmonia/qt_playback.py:479
+#: src/harmonia/qt_playback.py:486
 msgid "A rádio não encontrou novas músicas."
 msgstr "The radio found no new songs."
 
-#: src/harmonia/qt_playback.py:565 src/harmonia/window_playback.py:666
+#: src/harmonia/qt_playback.py:572 src/harmonia/window_playback.py:676
 msgid "O stream falhou; renovando a conexão…"
 msgstr "The stream failed; renewing the connection…"
 
-#: src/harmonia/qt_playback.py:579
+#: src/harmonia/qt_playback.py:586
 #, python-brace-format
 msgid "Erro de reprodução: {error}"
 msgstr "Playback error: {error}"
 
-#: src/harmonia/qt_preferences.py:86
+#: src/harmonia/qt_preferences.py:87
 msgid "Qualidade de áudio atualizada."
 msgstr "Audio quality updated."
 
-#: src/harmonia/qt_preferences.py:96
+#: src/harmonia/qt_preferences.py:97
 msgid "Idioma e região salvos. Sincronize para atualizar o conteúdo."
 msgstr "Language and region saved. Sync to update the content."
 
-#: src/harmonia/qt_preferences.py:104
+#: src/harmonia/qt_preferences.py:105
 msgid "Proxy salvo. A próxima conexão usará esta configuração."
 msgstr "Proxy saved. The next connection will use this setting."
 
-#: src/harmonia/qt_preferences.py:113
+#: src/harmonia/qt_preferences.py:114
 msgid "Fundo ambiente desfocado ativado."
 msgstr "Blurred ambient background turned on."
 
-#: src/harmonia/qt_preferences.py:115
+#: src/harmonia/qt_preferences.py:116
 msgid "Fundo ambiente desfocado desativado."
 msgstr "Blurred ambient background turned off."
 
-#: src/harmonia/qt_preferences.py:158
+#: src/harmonia/qt_preferences.py:159
 #, python-brace-format
 msgid "Cache limpo · {size} removidos."
 msgstr "Cache cleared · {size} removed."
 
-#: src/harmonia/qt_preferences.py:170 src/harmonia/window_preferences.py:344
+#: src/harmonia/qt_preferences.py:171 src/harmonia/window_preferences.py:345
 msgid "Sessão inválida ou expirada"
 msgstr "Invalid or expired session"
 
-#: src/harmonia/qt_preferences.py:179
+#: src/harmonia/qt_preferences.py:180
 msgid "Validando conta dos downloads…"
 msgstr "Validating the downloads account…"
 
-#: src/harmonia/qt_preferences.py:195
+#: src/harmonia/qt_preferences.py:196
 msgid "Exportando backup…"
 msgstr "Exporting backup…"
 
-#: src/harmonia/qt_preferences.py:211
+#: src/harmonia/qt_preferences.py:212
 msgid "Restaurando backup…"
 msgstr "Restoring backup…"
 
-#: src/harmonia/qt_preferences.py:226
+#: src/harmonia/qt_preferences.py:227
 msgid "Temporizador desligado."
 msgstr "Sleep timer turned off."
 
-#: src/harmonia/qt_preferences.py:229
+#: src/harmonia/qt_preferences.py:230
 #, python-brace-format
 msgid "Temporizador definido para {minutes} minutos."
 msgstr "Sleep timer set for {minutes} minutes."
 
-#: src/harmonia/qt_preferences.py:234
+#: src/harmonia/qt_preferences.py:235
 msgid "Reprodução pausada pelo temporizador."
 msgstr "Playback paused by the sleep timer."
 
-#: src/harmonia/qt_preferences.py:239
+#: src/harmonia/qt_preferences.py:240
 msgid "Não foi possível validar a conta"
 msgstr "Couldn't validate the account"
 
-#: src/harmonia/qt_preferences.py:240
+#: src/harmonia/qt_preferences.py:241
 msgid "Não foi possível validar os downloads"
 msgstr "Couldn't validate the downloads"
 
-#: src/harmonia/qt_preferences.py:241
+#: src/harmonia/qt_preferences.py:242
 msgid "Não foi possível exportar o backup"
 msgstr "Couldn't export the backup"
 
-#: src/harmonia/qt_preferences.py:242
+#: src/harmonia/qt_preferences.py:243
 msgid "Não foi possível restaurar o backup"
 msgstr "Couldn't restore the backup"
 
-#: src/harmonia/qt_preferences.py:248
+#: src/harmonia/qt_preferences.py:249
 msgid "Conta conectada e válida."
 msgstr "Account connected and valid."
 
-#: src/harmonia/qt_preferences.py:250
+#: src/harmonia/qt_preferences.py:251
 msgid "Conta dos downloads validada."
 msgstr "Downloads account validated."
 
-#: src/harmonia/qt_preferences.py:252
+#: src/harmonia/qt_preferences.py:253
 #, python-brace-format
 msgid "Backup exportado para {path}."
 msgstr "Backup exported to {path}."
 
-#: src/harmonia/qt_preferences.py:256
+#: src/harmonia/qt_preferences.py:257
 msgid "Backup restaurado."
 msgstr "Backup restored."
 
@@ -1143,51 +1143,67 @@ msgstr "Vocal"
 msgid "Agudos"
 msgstr "Treble"
 
-#: src/harmonia/settings_page/audio.py:39
+#: src/harmonia/settings_page/audio.py:38
 msgid "Normalização de volume"
 msgstr "Volume normalization"
 
-#: src/harmonia/settings_page/audio.py:40
-msgid "Reduz variações de volume entre faixas"
-msgstr "Reduces volume variations between tracks"
+#: src/harmonia/settings_page/audio.py:39
+msgid "Iguala o volume das faixas com a medição do YouTube Music"
+msgstr "Evens out track volume using YouTube Music's measurement"
 
-#: src/harmonia/settings_page/audio.py:47
+#: src/harmonia/settings_page/audio.py:45
+msgid "Nível do volume"
+msgstr "Volume level"
+
+#: src/harmonia/settings_page/audio.py:46
+msgid "Suave"
+msgstr "Soft"
+
+#: src/harmonia/settings_page/audio.py:46
+msgid "Padrão"
+msgstr "Standard"
+
+#: src/harmonia/settings_page/audio.py:46
+msgid "Alto"
+msgstr "Loud"
+
+#: src/harmonia/settings_page/audio.py:54
 msgid "Pular silêncio"
 msgstr "Skip silence"
 
-#: src/harmonia/settings_page/audio.py:48
+#: src/harmonia/settings_page/audio.py:55
 msgid "Remove trechos silenciosos longos"
 msgstr "Removes long silent stretches"
 
-#: src/harmonia/settings_page/audio.py:53
+#: src/harmonia/settings_page/audio.py:60
 msgid "Velocidade"
 msgstr "Speed"
 
-#: src/harmonia/settings_page/audio.py:54
+#: src/harmonia/settings_page/audio.py:61
 msgid "Tom (semitons)"
 msgstr "Pitch (semitones)"
 
-#: src/harmonia/settings_page/audio.py:56
+#: src/harmonia/settings_page/audio.py:63
 msgid "Temporizador"
 msgstr "Timer"
 
-#: src/harmonia/settings_page/audio.py:58
+#: src/harmonia/settings_page/audio.py:65
 msgid "Desligado"
 msgstr "Off"
 
-#: src/harmonia/settings_page/audio.py:59
+#: src/harmonia/settings_page/audio.py:66
 msgid "15 minutos"
 msgstr "15 minutes"
 
-#: src/harmonia/settings_page/audio.py:60
+#: src/harmonia/settings_page/audio.py:67
 msgid "30 minutos"
 msgstr "30 minutes"
 
-#: src/harmonia/settings_page/audio.py:61
+#: src/harmonia/settings_page/audio.py:68
 msgid "1 hora"
 msgstr "1 hour"
 
-#: src/harmonia/settings_page/audio.py:62
+#: src/harmonia/settings_page/audio.py:69
 msgid "1 hora e 30"
 msgstr "1 hour 30"
 
@@ -1387,7 +1403,7 @@ msgid "Exportar"
 msgstr "Export"
 
 #: src/harmonia/settings_page/streaming.py:85
-#: src/harmonia/window_preferences.py:412
+#: src/harmonia/window_preferences.py:413
 msgid "Restaurar"
 msgstr "Restore"
 
@@ -1511,7 +1527,7 @@ msgstr "SAPISID=…; __Secure-3PAPISID=…"
 #: src/harmonia/window_actions.py:143 src/harmonia/window_actions.py:309
 #: src/harmonia/window_actions.py:335 src/harmonia/window_actions.py:370
 #: src/harmonia/window_library.py:768 src/harmonia/window_library.py:785
-#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:411
+#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:412
 msgid "Cancelar"
 msgstr "Cancel"
 
@@ -2531,75 +2547,75 @@ msgstr[1] "{count} tracks added to the queue"
 msgid "O arquivo local não está mais disponível"
 msgstr "Local file is no longer available"
 
-#: src/harmonia/window_playback.py:681
+#: src/harmonia/window_playback.py:691
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Couldn't play: {error}"
 
-#: src/harmonia/window_playback.py:687
+#: src/harmonia/window_playback.py:697
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Couldn't play even after renewing the stream: {error}"
 
-#: src/harmonia/window_preferences.py:296
+#: src/harmonia/window_preferences.py:297
 msgid "0 B armazenados"
 msgstr "0 B stored"
 
-#: src/harmonia/window_preferences.py:299
+#: src/harmonia/window_preferences.py:300
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr "Cache cleared · {size} removed"
 
-#: src/harmonia/window_preferences.py:316
+#: src/harmonia/window_preferences.py:317
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] "Timer set to {count} minute"
 msgstr[1] "Timer set to {count} minutes"
 
-#: src/harmonia/window_preferences.py:327
+#: src/harmonia/window_preferences.py:328
 msgid "Reprodução pausada pelo temporizador"
 msgstr "Playback paused by timer"
 
-#: src/harmonia/window_preferences.py:344
+#: src/harmonia/window_preferences.py:345
 msgid "Conectada e válida"
 msgstr "Connected and valid"
 
-#: src/harmonia/window_preferences.py:347
+#: src/harmonia/window_preferences.py:348
 msgid "Conta validada"
 msgstr "Account validated"
 
-#: src/harmonia/window_preferences.py:349
+#: src/harmonia/window_preferences.py:350
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr "Couldn't validate account{detail}"
 
-#: src/harmonia/window_preferences.py:360
+#: src/harmonia/window_preferences.py:361
 msgid "Conta desconectada"
 msgstr "Account disconnected"
 
-#: src/harmonia/window_preferences.py:365
+#: src/harmonia/window_preferences.py:366
 msgid "Exportar backup"
 msgstr "Export backup"
 
-#: src/harmonia/window_preferences.py:375
+#: src/harmonia/window_preferences.py:376
 msgid "Backup exportado"
 msgstr "Backup exported"
 
-#: src/harmonia/window_preferences.py:380
+#: src/harmonia/window_preferences.py:381
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr "Couldn't export backup: {error}"
 
-#: src/harmonia/window_preferences.py:390
+#: src/harmonia/window_preferences.py:391
 msgid "Restaurar backup"
 msgstr "Restore backup"
 
-#: src/harmonia/window_preferences.py:405
+#: src/harmonia/window_preferences.py:406
 msgid "Restaurar este backup?"
 msgstr "Restore this backup?"
 
-#: src/harmonia/window_preferences.py:407
+#: src/harmonia/window_preferences.py:408
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
@@ -2607,11 +2623,11 @@ msgstr ""
 "The current local library, history, and preferences will be replaced. The "
 "account session and audio files will not be changed."
 
-#: src/harmonia/window_preferences.py:427
+#: src/harmonia/window_preferences.py:428
 msgid "Backup restaurado"
 msgstr "Backup restored"
 
-#: src/harmonia/window_preferences.py:432
+#: src/harmonia/window_preferences.py:433
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr "Couldn't restore backup: {error}"

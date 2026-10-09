@@ -190,6 +190,7 @@ class GtkMediaVariantsMixin:
         url: str,
         duration_ms: int | None,
         playback_tracking_url: str | None = None,
+        loudness_db: float | None = None,
     ):
         if request_id == self._play_request:
             self._media_primary_stream_uri = url
@@ -198,6 +199,7 @@ class GtkMediaVariantsMixin:
             url,
             duration_ms,
             playback_tracking_url,
+            loudness_db,
         )
 
     def play_item(self, item) -> None:
