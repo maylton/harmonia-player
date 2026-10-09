@@ -77,7 +77,7 @@ License: GPL-3.0-or-later
 URL: ${HOMEPAGE}
 BuildArch: noarch
 AutoReqProv: no
-Requires: python3 >= 3.11, python3-gobject, gtk4, libadwaita >= 1.7, gstreamer1, gstreamer1-plugins-base, gstreamer1-plugins-good, libsecret, webkitgtk6.0
+Requires: python3 >= 3.11, python3-gobject, gobject-introspection, gtk4, libadwaita >= 1.7, gstreamer1, gstreamer1-plugins-base, gstreamer1-plugins-good, libsecret, webkitgtk6.0
 Recommends: gstreamer1-plugins-bad-free, gstreamer1-plugin-libav, gstreamer1-plugin-gtk4
 
 %description
