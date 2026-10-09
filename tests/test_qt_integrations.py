@@ -77,7 +77,7 @@ def test_lastfm_scrobbles_each_track_once(monkeypatch, tmp_path):
     from harmonia.storage import Storage
 
     playback = SimpleNamespace(duration=200_000, position=150_000)
-    context, events = make_context(playback, Storage())
+    context, _events = make_context(playback, Storage())
     lastfm = LastFmBridge(context)
     lastfm.set_enabled(True)
     assert context.settings.values.lastfm_enabled is False  # not authorized yet
