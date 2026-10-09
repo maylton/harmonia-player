@@ -67,18 +67,58 @@ def test_plasma_default_wallpaper_when_none_was_chosen(monkeypatch, tmp_path):
 def test_mica_reports_why_it_is_not_shown(monkeypatch, tmp_path):
     from harmonia import desktop_wallpaper, linux_backdrop
 
-    monkeypatch.setattr(desktop_wallpaper, "wallpaper_candidates", lambda *, dark: [])
+    def configured(*paths):
+        monkeypatch.setattr(desktop_wallpaper, "configured_wallpapers", lambda *, dark: list(paths))
+
+    configured()
     monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: False)
     assert "não encontrado" in linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    # Named by the settings but out of the sandbox's reach: say how to allow it.
+    configured(tmp_path / "Imagens" / "praia.jpg")
     monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: True)
-    assert "Flatpak" in linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    reason = linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    assert f"--filesystem={tmp_path / 'Imagens'}:ro io.github.harmonia.Harmonia" in reason
 
     broken = tmp_path / "adwaita-d.jxl"
     broken.write_bytes(b"not an image")
-    monkeypatch.setattr(desktop_wallpaper, "wallpaper_candidates", lambda *, dark: [broken])
+    configured(broken)
     monkeypatch.setattr(linux_backdrop.host, "cache_dir", lambda: tmp_path / "cache")
     image, reason = linux_backdrop.LinuxWindowBackdrops._mica(True)
     assert image is None and "JPEG XL" in reason
+
+
+def test_the_flatpak_reads_system_wallpapers_and_defaults_under_run_host(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    from harmonia import desktop_wallpaper
+
+    host = tmp_path / "host"
+    image = host / "usr" / "share" / "backgrounds" / "warty-final-ubuntu.png"
+    image.parent.mkdir(parents=True)
+    image.write_bytes(b"png")
+    schemas = host / "usr" / "share" / "glib-2.0" / "schemas"
+    schemas.mkdir(parents=True)
+    (schemas / "00_plain.gschema.override").write_text(
+        "[org.gnome.desktop.background]\npicture-uri='file:///plain.png'\n", encoding="utf-8"
+    )
+    (schemas / "10_ubuntu-settings.gschema.override").write_text(
+        "[org.gnome.desktop.background:ubuntu]\n"
+        "picture-uri='file:///usr/share/backgrounds/warty-final-ubuntu.png'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(desktop_wallpaper, "HOST_ROOT", host)
+    monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: True)
+    monkeypatch.setenv("XDG_CURRENT_DESKTOP", "ubuntu:GNOME")
+
+    default = desktop_wallpaper.host_schema_default(desktop_wallpaper.GNOME_SCHEMA, "picture-uri")
+    assert default == "file:///usr/share/backgrounds/warty-final-ubuntu.png"
+    assert desktop_wallpaper.local_path(default) == image
+    monkeypatch.setenv("XDG_CURRENT_DESKTOP", "GNOME")
+    assert desktop_wallpaper.host_schema_default(desktop_wallpaper.GNOME_SCHEMA, "picture-uri") == (
+        "file:///plain.png"
+    )
+    # Paths outside the system folders are left alone.
+    assert desktop_wallpaper.host_path(Path("/home/eu/x.png")) == Path("/home/eu/x.png")
 
 
 def test_gtk_decodes_what_gdkpixbuf_cannot(monkeypatch, tmp_path):

@@ -317,24 +317,31 @@ msgstr ""
 msgid "Dez"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:104
+#: src/harmonia/linux_backdrop.py:105
 #, python-brace-format
 msgid ""
 "O papel de parede é {format} e falta o suporte a esse formato (pacote do gdk-"
 "pixbuf para {format})"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:107
+#: src/harmonia/linux_backdrop.py:108
 #, python-brace-format
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:206
+#: src/harmonia/linux_backdrop.py:209
+#, python-brace-format
 msgid ""
-"O Flatpak não tem acesso ao papel de parede; instale o pacote .deb ou .rpm"
+"O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
+"override --user --filesystem={folder}:ro {app}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:208
+#: src/harmonia/linux_backdrop.py:213
+#, python-brace-format
+msgid "O papel de parede {name} não foi encontrado"
+msgstr ""
+
+#: src/harmonia/linux_backdrop.py:216
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr ""
 
