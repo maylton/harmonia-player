@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="0.1.0-beta.2" date="2026-10-08" type="development">
+      <description>
+        <p>Pacotes .deb e .rpm, instalador que escolhe o formato certo para o sistema, versão para Windows e reorganização interna do código.</p>
+        <p xml:lang="en">.deb and .rpm packages, an installer that picks the right format for the system, a Windows build and an internal reorganization of the code.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.1" date="2026-08-13" type="development">
       <description>
         <p>Primeira versão beta pública do cliente.</p>
