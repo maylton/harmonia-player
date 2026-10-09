@@ -61,6 +61,11 @@ class CatalogCache(Database):
                     ],
                 )
 
+    def clear_library(self) -> None:
+        """Forget the cached library, as when acting as another channel."""
+        with self._connect() as db:
+            db.execute("DELETE FROM library_items")
+
     def load_library(self) -> dict[str, list[LibraryItem]]:
         result: dict[str, list[LibraryItem]] = {}
         with self._connect() as db:

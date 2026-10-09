@@ -11,6 +11,7 @@ from gi.repository import Adw, Gtk  # noqa: E402
 from .. import host  # noqa: E402
 from ..i18n import _  # noqa: E402
 from ..ui import style_icon_button  # noqa: E402
+from .identity import identity_row  # noqa: E402
 from .rows import pill_button  # noqa: E402
 
 
@@ -45,4 +46,5 @@ def account_group(window) -> Adw.PreferencesGroup:
     else:
         account.add_suffix(pill_button(_("Conectar"), window.login_dialog, "suggested-action"))
     group.add(account)
+    group.add(identity_row(window))
     return group

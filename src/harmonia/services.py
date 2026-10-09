@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import replace
 
+from .accounts import IDENTITY_SETTING, YouTubeIdentity
 from .innertube import InnerTubeClient
 from .library_sync import Listing, merge_library
 from .models import (
@@ -51,6 +53,11 @@ class YouTubeMusicService:
             if hasattr(self.storage, "get_setting")
             else Preferences()
         )
+        identity = (
+            self.storage.get_setting(IDENTITY_SETTING, "")
+            if hasattr(self.storage, "get_setting")
+            else ""
+        )
         try:
             return self.client_factory(
                 cookie,
@@ -58,6 +65,7 @@ class YouTubeMusicService:
                 gl=preferences.region,
                 max_bitrate=preferences.max_bitrate,
                 proxy=preferences.proxy,
+                identity=identity,
             )
         except TypeError:
             return self.client_factory(cookie)
@@ -69,17 +77,41 @@ class YouTubeMusicService:
         client = self._make_client(cookie.strip())
         if not client.authenticated:
             return False
-        self.storage.save_cookie(cookie.strip())
+        self.save_session(cookie)
         return True
+
+    def save_session(self, cookie: str) -> None:
+        """A new login acts as its own channel until one is chosen."""
+        self.storage.save_cookie(cookie.strip())
+        self.storage.set_setting(IDENTITY_SETTING, "")
 
     def disconnect(self) -> None:
         self.storage.clear_cookie()
+        self.storage.set_setting(IDENTITY_SETTING, "")
 
     def validate_account(self) -> bool:
         return self.client().validate_session()
 
     def account_profile(self) -> AccountProfile:
         return self.client().account_profile()
+
+    def identities(self) -> list[YouTubeIdentity]:
+        """The channels the login can act as, the chosen one marked selected."""
+        identities = self.client().identities()
+        chosen = self.storage.get_setting(IDENTITY_SETTING, "")
+        if not chosen:
+            return identities
+        return [replace(identity, selected=identity.id == chosen) for identity in identities]
+
+    def set_identity(self, identity: YouTubeIdentity) -> None:
+        """Act as ``identity`` from the next request on; the library must sync again.
+
+        The cached library is the previous channel's: it is dropped, since a
+        sync keeps cached items when a listing comes back empty.
+        """
+        self.storage.set_setting(IDENTITY_SETTING, identity.id)
+        self.storage.clear_library()
+        self.storage.clear_library_changes()
 
     def sync_library(self) -> dict[str, list[LibraryItem]]:
         categories = (

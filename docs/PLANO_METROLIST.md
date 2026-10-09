@@ -36,7 +36,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | 4 | Sincronização segura da biblioteca | Alta | Feita |
 | 5 | Pequenas melhorias de uso | Média | Feita (falta o visual no KDE) |
 | 6 | Equalizador com perfis do AutoEQ | Média | Feita (falta importar no KDE) |
-| 7 | Backup antes de atualizar e escolha de conta | Média | A fazer |
+| 7 | Backup antes de atualizar e escolha de conta | Média | Feita (falta conferir canal de marca) |
 | 8 | Confiabilidade do streaming e ajustes finos | Baixa | A fazer |
 
 ---
@@ -195,8 +195,15 @@ Cada item é independente e pode virar um commit separado.
   restauram por Preferências > Dados e backup. Uma falha no backup não impede
   o app de abrir. Restaurar um backup antigo agora recria as tabelas novas
   (`Storage.initialize_tables`).
-- [ ] Escolha da conta ou do canal da marca após o login, quando houver mais
-  de um (`accounts.py`).
+- [x] Escolha do canal (pessoal ou de marca) em Preferências > Conta, quando
+  o login tem mais de um (`accounts.py`, `settings_page/identity.py`). A lista
+  vem de `account/accounts_list` (o seletor de canais, como no Metrolist), só
+  com os canais do mesmo login Google; o escolhido vai como
+  `onBehalfOfUser` em todas as requisições. Trocar de canal apaga a
+  biblioteca em cache e as mudanças pendentes do canal anterior e sincroniza;
+  um novo login ou sair volta ao canal do próprio login. No KDE, o canal
+  escolhido vale, mas falta o seletor no QML.
+  - [ ] Conferir com uma conta real que tenha canal de marca.
 
 ## Fase 8 — Confiabilidade do streaming e ajustes finos (baixa)
 

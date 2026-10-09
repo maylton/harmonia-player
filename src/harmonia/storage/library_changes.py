@@ -55,6 +55,10 @@ class LibraryChanges(Database):
             )
         return changes
 
+    def clear_library_changes(self) -> None:
+        with self._connect() as db:
+            db.execute("DELETE FROM library_changes")
+
     def forget_library_changes(self, changes: list[PendingChange]) -> None:
         if not changes:
             return

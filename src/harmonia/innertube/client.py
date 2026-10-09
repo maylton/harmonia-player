@@ -17,6 +17,7 @@ from contextlib import suppress
 from typing import Any
 
 from .. import host
+from ..accounts import YouTubeIdentity, parse_identities, same_login
 from ..i18n import _
 from ..loudness import loudness_from_player
 from ..models import (
@@ -75,8 +76,11 @@ class InnerTubeClient:
         gl: str | None = None,
         max_bitrate: int | None = None,
         proxy: str = "",
+        identity: str = "",
     ):
         self.cookie = cookie.strip()
+        # A brand channel of the same login to act as; see accounts.py.
+        self.identity = identity
         language = host.user_locale()
         language = language if language and language not in ("C", "POSIX") else "pt_BR"
         self.hl = hl or language.replace("_", "-")
@@ -84,6 +88,7 @@ class InnerTubeClient:
         self.client_version = CLIENT_VERSION
         self.visitor_data: str | None = None
         self.data_sync_id: str | None = None
+        self.session_data_sync_id = ""
         self.session_index: str | None = None
         self._bootstrapped = False
         self.max_bitrate = max_bitrate or 10_000_000
@@ -118,14 +123,31 @@ class InnerTubeClient:
     def account_profile(self) -> AccountProfile:
         return parse_account_profile(self._api_post("account/account_menu", {}))
 
+    def identities(self) -> list[YouTubeIdentity]:
+        """The channels of this login the session can act as (accounts.py)."""
+        payload = self._api_post(
+            "account/accounts_list",
+            {
+                "requestType": "ACCOUNTS_LIST_REQUEST_TYPE_CHANNEL_SWITCHER",
+                "callCircumstance": "SWITCHING_USERS_FULL",
+            },
+            as_identity=False,
+        )
+        return same_login(parse_identities(payload), self.session_data_sync_id)
+
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
         return self._api_post("browse", body, authenticated=True)
 
     def _api_post(
-        self, endpoint: str, body: dict[str, Any], authenticated: bool = True
+        self,
+        endpoint: str,
+        body: dict[str, Any],
+        authenticated: bool = True,
+        as_identity: bool = True,
     ) -> dict[str, Any]:
         if authenticated:
             self._bootstrap()
+        acting_as = self.data_sync_id if as_identity else None
         context = {
             "client": {
                 "clientName": CLIENT_NAME,
@@ -134,7 +156,7 @@ class InnerTubeClient:
                 "gl": self.gl,
                 **({"visitorData": self.visitor_data} if self.visitor_data else {}),
             },
-            "user": {**({"onBehalfOfUser": self.data_sync_id} if self.data_sync_id else {})},
+            "user": {**({"onBehalfOfUser": acting_as} if acting_as else {})},
         }
         body = {"context": context, **body}
         query_separator = "&" if "?" in endpoint else "?"
@@ -208,7 +230,8 @@ class InnerTubeClient:
         self.client_version = config("INNERTUBE_CLIENT_VERSION") or CLIENT_VERSION
         self.visitor_data = config("VISITOR_DATA")
         data_sync = config("DATASYNC_ID")
-        self.data_sync_id = data_sync.split("||", 1)[0] if data_sync else None
+        self.session_data_sync_id = data_sync or ""
+        self.data_sync_id = self.identity or (data_sync.split("||", 1)[0] if data_sync else None)
         self.session_index = config("SESSION_INDEX")
         self._bootstrapped = True
 
