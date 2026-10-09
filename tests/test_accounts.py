@@ -102,8 +102,19 @@ def test_the_client_lists_channels_as_the_login_and_acts_as_the_chosen_one():
     acting._bootstrapped, acting.data_sync_id = True, "222"
     acting._api_post("browse", {})
     acting._api_post("account/accounts_list", {}, as_identity=False)
+    # Anonymous requests (searches) never act as anyone: YouTube refuses
+    # onBehalfOfUser without the session with 401, once shown as an expired
+    # cookie when a video lookup fell back to search.
+    acting.session_index = "0"
+    acting._open = lambda request, timeout=30: (
+        sent.append((json.loads(request.data), dict(request.header_items()))) or Response(b"{}")
+    )
+    acting._api_post("search", {"query": "x"}, authenticated=False)
     assert sent[0]["context"]["user"] == {"onBehalfOfUser": "222"}
     assert sent[1]["context"]["user"] == {}
+    anonymous_body, anonymous_headers = sent[2]
+    assert anonymous_body["context"]["user"] == {}
+    assert not {"Cookie", "Authorization", "X-goog-authuser"} & set(anonymous_headers)
 
 
 def test_switching_channels_drops_the_previous_library(monkeypatch, tmp_path):
