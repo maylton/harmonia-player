@@ -1,26 +1,28 @@
+"""The KDE frontend's integrations, as QML sees them.
+
+Each integration keeps its state and logic in its own module (qt_lastfm,
+qt_discord, qt_together, qt_recognition, qt_cast); this controller only
+declares the properties and slots QML binds to, runs their background jobs
+and forwards the playback events they follow.
+"""
+
 from __future__ import annotations
 
 import logging
-import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import ClassVar
+from typing import Any
 
-from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
-from .cast import CastMediaHost, UpnpDiscovery, UpnpRenderer
-from .i18n import _, ngettext
-from .recognition import AuddRecognitionProvider, MusicRecognizer, RecognitionTokenStore
-from .social import (
-    DiscordPresence,
-    LastFmClient,
-    LastFmCredentials,
-    LastFmCredentialStore,
-    LastFmError,
-    playback_started_at,
-    scrobble_ready,
-)
-from .together import TogetherClient, TogetherHost, TogetherState
+from .i18n import _
+from .qt_cast import CastBridge
+from .qt_discord import DiscordBridge
+from .qt_integration_context import IntegrationContext, Job
+from .qt_lastfm import LastFmBridge
+from .qt_recognition import RecognitionBridge
+from .qt_together import TogetherBridge
+from .social import playback_started_at
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class QtIntegrationsController(QObject):
     changed = Signal()
     togetherChanged = Signal()
     castChanged = Signal()
-    _operationReady = Signal(str, object, str)
+    _jobFinished = Signal(object, object, str)
 
     def __init__(
         self,
@@ -41,50 +43,39 @@ class QtIntegrationsController(QObject):
     ) -> None:
         super().__init__(parent)
         self.backend = backend
-        self.storage = backend.storage
         self.settings = backend.settings
         self.playback = backend.playback
         self.executor = executor
-
-        self.lastfm_credentials = LastFmCredentialStore(self.storage)
-        self._lastfm_pending_token = ""
         self._social_started_at = 0
         self._social_item = None
-        self._lastfm_scrobbled = False
-        self.discord_presence: DiscordPresence | None = None
-        self._discord_config: tuple[bool, str] | None = None
 
-        self.recognition_tokens = RecognitionTokenStore(self.storage)
+        context = IntegrationContext(
+            settings=self.settings,
+            playback=self.playback,
+            storage=backend.storage,
+            set_status=backend._set_status,
+            run=self._run,
+            save_preferences=self._save_preferences,
+            changed=self.changed.emit,
+        )
+        self.lastfm = LastFmBridge(context)
+        self.discord = DiscordBridge(context)
+        self.together = TogetherBridge(context, self.togetherChanged.emit)
+        self.recognition = RecognitionBridge(context, backend.search)
+        self.cast = CastBridge(context, self.castChanged.emit)
 
-        self.together_host: TogetherHost | None = None
-        self.together_client: TogetherClient | None = None
-        self._together_share_url = ""
-        self._together_revision = -1
-        self._together_fetching = False
-        self._together_generation = 0
-        self._pending_together_playing: bool | None = None
-
-        self.cast_renderer: UpnpRenderer | None = None
-        self.cast_device = None
-        self._cast_devices = []
-        self.cast_media = CastMediaHost()
-        self._cast_stream_uri = ""
-        self._cast_position_ms = 0
-        self._cast_started = 0.0
-        self._cast_playing = False
-
-        self._operationReady.connect(self._operation_finished)
+        self._jobFinished.connect(self._job_finished)
         self.playback.trackStarted.connect(self._track_started)
-        self.playback.playbackChanged.connect(self._playback_changed)
+        self.playback.playbackChanged.connect(self._update_discord)
         self.playback.positionChanged.connect(self._position_changed)
         self.playback.nowPlayingChanged.connect(self._now_playing_changed)
         self.backend.preferencesChanged.connect(self.reload)
         self.backend.sessionChanged.connect(self._session_changed)
-        self.playback.set_remote_transport(self)
+        self.playback.set_remote_transport(self.cast)
 
         self._together_timer = QTimer(self)
         self._together_timer.setInterval(1000)
-        self._together_timer.timeout.connect(self._together_tick)
+        self._together_timer.timeout.connect(self.together.tick)
         self._together_timer.start()
 
         self._download_validation_timer = QTimer(self)
@@ -94,7 +85,7 @@ class QtIntegrationsController(QObject):
         if self.backend.loggedIn:
             QTimer.singleShot(1500, self._validate_downloads_if_connected)
 
-        self._configure_discord_presence()
+        self.discord.configure()
 
     # Preferences -----------------------------------------------------
 
@@ -104,19 +95,18 @@ class QtIntegrationsController(QObject):
 
     @Slot()
     def reload(self) -> None:
-        self._configure_discord_presence()
+        self.discord.configure()
         self.changed.emit()
 
     # Last.fm ---------------------------------------------------------
 
     @Property(bool, notify=changed)
     def lastFmConnected(self) -> bool:
-        return self.lastfm_credentials.load().session is not None
+        return self.lastfm.connected
 
     @Property(str, notify=changed)
     def lastFmUsername(self) -> str:
-        session = self.lastfm_credentials.load().session
-        return session.username if session else ""
+        return self.lastfm.username
 
     @Property(bool, notify=changed)
     def lastFmEnabled(self) -> bool:
@@ -128,84 +118,35 @@ class QtIntegrationsController(QObject):
 
     @Property(bool, notify=changed)
     def lastFmSecretConfigured(self) -> bool:
-        return bool(self.lastfm_credentials.load().api_secret)
+        return self.lastfm.secret_configured
 
     @Property(bool, notify=changed)
     def lastFmAuthorizationPending(self) -> bool:
-        return bool(self._lastfm_pending_token)
-
-    def _lastfm_client(self, *, require_session: bool = True) -> LastFmClient:
-        credentials = self.lastfm_credentials.load()
-        session_key = credentials.session.key if credentials.session else ""
-        if require_session and not session_key:
-            raise LastFmError(_("A conta do Last.fm ainda não foi autorizada"))
-        return LastFmClient(
-            self.settings.values.lastfm_api_key,
-            credentials.api_secret,
-            session_key,
-        )
+        return bool(self.lastfm.pending_token)
 
     @Slot(bool)
     def setLastFmEnabled(self, enabled: bool) -> None:
-        enabled = bool(enabled) and self.lastFmConnected
-        if enabled == self.settings.values.lastfm_enabled:
-            return
-        self.settings.values.lastfm_enabled = enabled
-        self._save_preferences()
+        self.lastfm.set_enabled(enabled)
 
     @Slot(str)
     def setLastFmApiKey(self, value: str) -> None:
-        value = value.strip()
-        if value == self.settings.values.lastfm_api_key:
-            return
-        self.settings.values.lastfm_api_key = value
-        self._save_preferences()
+        self.lastfm.set_api_key(value)
 
     @Slot(str)
     def setLastFmSecret(self, value: str) -> None:
-        value = value.strip()
-        if not value:
-            return
-        credentials = self.lastfm_credentials.load()
-        self.lastfm_credentials.save(LastFmCredentials(value, credentials.session))
-        self.changed.emit()
-        self.backend._set_status(_("Segredo da API do Last.fm salvo no chaveiro do sistema."))
+        self.lastfm.set_secret(value)
 
     @Slot()
     def beginLastFmAuthorization(self) -> None:
-        self.backend._set_status(_("Iniciando autorização do Last.fm…"))
-
-        def operation():
-            client = self._lastfm_client(require_session=False)
-            token = client.request_token()
-            return token, client.authorization_url(token)
-
-        self._run("lastfm-begin", operation)
+        self.lastfm.begin_authorization()
 
     @Slot()
     def finishLastFmAuthorization(self) -> None:
-        token = self._lastfm_pending_token
-        if not token:
-            self.backend._set_status(_("Inicie a autorização do Last.fm primeiro."))
-            return
-        self.backend._set_status(_("Concluindo autorização do Last.fm…"))
-
-        def operation():
-            client = self._lastfm_client(require_session=False)
-            session = client.create_session(token)
-            credentials = self.lastfm_credentials.load()
-            self.lastfm_credentials.save(LastFmCredentials(credentials.api_secret, session))
-            return session
-
-        self._run("lastfm-finish", operation)
+        self.lastfm.finish_authorization()
 
     @Slot()
     def disconnectLastFm(self) -> None:
-        self.lastfm_credentials.clear_session()
-        self._lastfm_pending_token = ""
-        self.settings.values.lastfm_enabled = False
-        self._save_preferences()
-        self.backend._set_status(_("Last.fm desconectado."))
+        self.lastfm.disconnect()
 
     # Discord ---------------------------------------------------------
 
@@ -219,49 +160,13 @@ class QtIntegrationsController(QObject):
 
     @Slot(bool)
     def setDiscordEnabled(self, enabled: bool) -> None:
-        enabled = bool(enabled)
-        if enabled == self.settings.values.discord_enabled:
-            return
-        self.settings.values.discord_enabled = enabled
-        self._save_preferences()
-        self._configure_discord_presence()
-        self._update_discord_presence()
+        if self.discord.set_enabled(enabled):
+            self._update_discord()
 
     @Slot(str)
     def setDiscordClientId(self, value: str) -> None:
-        value = value.strip()
-        if value == self.settings.values.discord_client_id:
-            return
-        self.settings.values.discord_client_id = value
-        self._save_preferences()
-        self._configure_discord_presence()
-        self._update_discord_presence()
-
-    def _configure_discord_presence(self) -> None:
-        values = self.settings.values
-        config = (bool(values.discord_enabled), values.discord_client_id.strip())
-        if config == self._discord_config:
-            return
-        self._discord_config = config
-        old = self.discord_presence
-        if old is not None:
-            try:
-                old.clear()
-                old.close()
-            except OSError:
-                LOGGER.debug("Não foi possível limpar o Rich Presence anterior", exc_info=True)
-        self.discord_presence = DiscordPresence(config[1]) if config[0] and config[1] else None
-
-    def _update_discord_presence(self) -> None:
-        presence = self.discord_presence
-        item = self._social_item or self.playback.current_item
-        if presence is None or item is None:
-            return
-        self._run(
-            "discord-presence",
-            lambda: presence.update(item, self.playback.playing, self._social_started_at),
-            report_error=False,
-        )
+        if self.discord.set_client_id(value):
+            self._update_discord()
 
     # Playback hooks --------------------------------------------------
 
@@ -269,165 +174,51 @@ class QtIntegrationsController(QObject):
     def _track_started(self, item, duration_ms: int) -> None:
         self._social_item = item
         self._social_started_at = playback_started_at(self.playback.position)
-        self._lastfm_scrobbled = False
-        if item is not None and self.settings.values.lastfm_enabled and self.lastFmConnected:
-            self._run(
-                "lastfm-now-playing",
-                lambda: self._lastfm_client().update_now_playing(item, duration_ms),
-                report_error=False,
-            )
-        self._update_discord_presence()
-
-        pending = self._pending_together_playing
-        self._pending_together_playing = None
-        if pending is False:
-            QTimer.singleShot(300, self._pause_for_together)
-
-    def _pause_for_together(self) -> None:
-        if self.playback.playing:
-            self.playback.toggle_playback()
+        self.lastfm.track_started(item, duration_ms)
+        self._update_discord()
+        self.together.track_started()
 
     @Slot()
-    def _playback_changed(self) -> None:
-        self._update_discord_presence()
+    def _update_discord(self) -> None:
+        item = self._social_item or self.playback.current_item
+        self.discord.update(item, self.playback.playing, self._social_started_at)
 
     @Slot()
     def _position_changed(self) -> None:
-        item = self._social_item
-        if (
-            item is None
-            or self._lastfm_scrobbled
-            or not self.settings.values.lastfm_enabled
-            or not self.lastFmConnected
-            or not scrobble_ready(self.playback.duration, self.playback.position)
-        ):
-            return
-        self._lastfm_scrobbled = True
-        self._run(
-            "lastfm-scrobble",
-            lambda: self._lastfm_client().scrobble(
-                item,
-                self._social_started_at,
-                self.playback.duration,
-            ),
-            report_error=False,
-        )
+        self.lastfm.position_changed(self._social_item, self._social_started_at)
 
     @Slot()
     def _now_playing_changed(self) -> None:
-        if self.playback.current_item is not None:
-            return
-        self._social_item = None
-        presence = self.discord_presence
-        if presence is not None:
-            self._run("discord-clear", presence.clear, report_error=False)
+        if self.playback.current_item is None:
+            self._social_item = None
+            self.discord.clear()
 
     # Listen Together -------------------------------------------------
 
     @Property(str, notify=togetherChanged)
     def togetherStatus(self) -> str:
-        if self.together_host:
-            return _("Você está compartilhando a reprodução")
-        if self.together_client:
-            return _("Sincronizado com o anfitrião")
-        return _("Nenhuma sessão ativa")
+        return self.together.status
 
     @Property(str, notify=togetherChanged)
     def togetherShareUrl(self) -> str:
-        return self._together_share_url
+        return self.together.share_url
 
     @Property(bool, notify=togetherChanged)
     def togetherActive(self) -> bool:
-        return bool(self.together_host or self.together_client)
-
-    def _leave_together(self, *, invalidate: bool = True) -> None:
-        if invalidate:
-            self._together_generation += 1
-        if self.together_host:
-            self.together_host.close()
-        self.together_host = None
-        self.together_client = None
-        self._together_share_url = ""
-        self._together_revision = -1
-        self._together_fetching = False
-        self._pending_together_playing = None
-        self.togetherChanged.emit()
+        return self.together.active
 
     @Slot()
     def createTogetherSession(self) -> None:
-        self._leave_together()
-        try:
-            self.together_host = TogetherHost()
-            self._together_share_url = self.together_host.share_url()
-        except OSError as exc:
-            self.backend._set_status(
-                _("Não foi possível criar a sessão: {error}").format(error=exc), error=True
-            )
-            return
-        self.togetherChanged.emit()
-        self.backend._set_status(_("Sessão Listen Together criada."))
+        self.together.create()
 
     @Slot(str)
     def joinTogetherSession(self, share_url: str) -> None:
-        try:
-            client = TogetherClient(share_url)
-        except ValueError as exc:
-            self.backend._set_status(str(exc), error=True)
-            return
-        self._leave_together()
-        generation = self._together_generation
-        self.backend._set_status(_("Entrando na sessão Listen Together…"))
-        self._run(
-            "together-join",
-            lambda: (generation, client, client.fetch()),
-        )
+        self.together.join(share_url)
 
     @Slot()
     def leaveTogetherSession(self) -> None:
-        self._leave_together()
+        self.together.leave()
         self.backend._set_status(_("Sessão Listen Together encerrada."))
-
-    def _together_tick(self) -> None:
-        if self.together_host:
-            self.together_host.update(
-                TogetherState(
-                    list(self.playback.queue),
-                    max(0, self.playback.queue_index),
-                    self.playback.position,
-                    self.playback.playing,
-                )
-            )
-            return
-        if self.together_client and not self._together_fetching:
-            self._together_fetching = True
-            client = self.together_client
-            self._run(
-                "together-sync",
-                lambda: (client, client.fetch()),
-                report_error=False,
-            )
-
-    def _apply_together_state(self, state: TogetherState) -> None:
-        if state.revision <= self._together_revision:
-            return
-        self._together_revision = state.revision
-        if not state.queue:
-            return
-        index = min(state.index, len(state.queue) - 1)
-        position_ms = state.corrected_position_ms()
-        current = self.playback.current_item
-        target = state.queue[index]
-        if current is None or current.id != target.id:
-            self._pending_together_playing = state.playing
-            self.playback.load_shared_state(state.queue, index, position_ms)
-            return
-        self.playback.queue = list(state.queue)
-        self.playback.queue_index = index
-        self.playback.queueChanged.emit()
-        if abs(self.playback.position - position_ms) > 1500:
-            self.playback.seek(position_ms)
-        if state.playing != self.playback.playing:
-            self.playback.toggle_playback()
 
     # Recognition -----------------------------------------------------
 
@@ -441,331 +232,82 @@ class QtIntegrationsController(QObject):
 
     @Property(bool, notify=changed)
     def recognitionTokenConfigured(self) -> bool:
-        return bool(self.recognition_tokens.load())
+        return self.recognition.token_configured
 
     @Slot(str)
     def setRecognitionProvider(self, value: str) -> None:
-        value = value if value in {"audd", "custom"} else "audd"
-        if value == self.settings.values.recognition_provider:
-            return
-        self.settings.values.recognition_provider = value
-        self._save_preferences()
+        self.recognition.set_provider(value)
 
     @Slot(str)
     def setRecognitionEndpoint(self, value: str) -> None:
-        value = value.strip() or "https://api.audd.io/"
-        if value == self.settings.values.recognition_endpoint:
-            return
-        self.settings.values.recognition_endpoint = value
-        self._save_preferences()
+        self.recognition.set_endpoint(value)
 
     @Slot(str)
     def setRecognitionToken(self, value: str) -> None:
-        value = value.strip()
-        if not value:
-            return
-        self.recognition_tokens.save(value)
-        self.changed.emit()
-        self.backend._set_status(_("Token do AudD salvo no chaveiro do sistema."))
+        self.recognition.set_token(value)
 
     @Slot()
     def recognizeMusic(self) -> None:
-        token = self.recognition_tokens.load()
-        if not token:
-            self.backend._set_status(_("Configure o token do AudD primeiro."))
-            return
-        endpoint = (
-            self.settings.values.recognition_endpoint
-            if self.settings.values.recognition_provider == "custom"
-            else None
-        )
-        recognizer = MusicRecognizer(AuddRecognitionProvider(token, endpoint=endpoint))
-        self.backend._set_status(_("Ouvindo por 12 segundos…"))
-        self._run("recognition", recognizer.recognize)
+        self.recognition.recognize()
 
     # UPnP / DLNA -----------------------------------------------------
 
     @Property("QVariantList", notify=castChanged)
     def castDevices(self) -> list[dict[str, object]]:
-        return [
-            {"name": device.name, "index": index} for index, device in enumerate(self._cast_devices)
-        ]
+        return [{"name": device.name, "index": i} for i, device in enumerate(self.cast.devices)]
 
     @Property(bool, notify=castChanged)
     def castConnected(self) -> bool:
-        return self.cast_renderer is not None
+        return self.cast.active
 
     @Property(str, notify=castChanged)
     def castDeviceName(self) -> str:
-        return self.cast_device.name if self.cast_device else ""
+        return self.cast.device.name if self.cast.device else ""
 
     @Slot()
     def scanCastDevices(self) -> None:
-        self.backend._set_status(_("Procurando dispositivos UPnP/DLNA na rede local…"))
-        self._run("cast-discovery", UpnpDiscovery().discover)
+        self.cast.scan()
 
     @Slot(int)
     def connectCastDevice(self, index: int) -> None:
-        if not 0 <= index < len(self._cast_devices):
-            return
-        if self.playback.current_item is None or not self.playback.current_stream_uri:
-            self.backend._set_status(_("Comece a reproduzir uma faixa antes de transmitir."))
-            return
-
-        device = self._cast_devices[index]
-        renderer = UpnpRenderer(device)
-        position_ms = self.playback.position
-        was_playing = self.playback.playing
-        uri = self.playback.current_stream_uri
-        title = self.playback.current_item.title
-        try:
-            cast_uri = self.cast_media.uri_for(uri)
-        except (OSError, ValueError) as exc:
-            self.backend._set_status(
-                _("Não foi possível transmitir: {error}").format(error=exc), error=True
-            )
-            return
-
-        # Stop GStreamer before making the remote transport active, otherwise
-        # the Qt playback facade would already report the renderer's state.
-        self.playback.player.stop()
-        self.cast_device = device
-        self.cast_renderer = renderer
-        self._cast_stream_uri = uri
-        self._cast_position_ms = position_ms
-        self._cast_started = time.monotonic() - position_ms / 1000
-        self._cast_playing = was_playing
-        self.castChanged.emit()
-        self.playback.playbackChanged.emit()
-
-        def operation():
-            renderer.play_uri(cast_uri, title)
-            if position_ms > 1000:
-                renderer.seek(position_ms)
-            if not was_playing:
-                renderer.pause()
-            return device
-
-        self.backend._set_status(_("Conectando a {name}…").format(name=device.name))
-        self._run("cast-connect", operation)
+        self.cast.connect(index)
 
     @Slot()
     def disconnectCast(self) -> None:
-        self._disconnect_cast(resume=True)
+        self.cast.disconnect(resume=True)
 
-    @property
-    def active(self) -> bool:
-        return self.cast_renderer is not None
+    # Background jobs -------------------------------------------------
 
-    @property
-    def playing(self) -> bool:
-        return self._cast_playing if self.active else self.playback.player.playing
+    def _run(self, job: Job, operation: Callable[[], Any]) -> None:
+        """Run ``operation`` on the executor and the job's callbacks on the Qt thread."""
 
-    @property
-    def position_ms(self) -> int:
-        if not self.active:
-            return self.playback.player.position_us // 1000
-        if self._cast_playing:
-            return max(0, int((time.monotonic() - self._cast_started) * 1000))
-        return self._cast_position_ms
-
-    def start_stream(self, uri: str, item) -> bool:
-        if not self.active:
-            return False
-        renderer = self.cast_renderer
-        if renderer is None:
-            return False
-        self._cast_stream_uri = uri
-        self._cast_position_ms = 0
-        self._cast_started = time.monotonic()
-        self._cast_playing = True
-        try:
-            cast_uri = self.cast_media.uri_for(uri)
-        except (OSError, ValueError) as exc:
-            self.backend._set_status(
-                _("Não foi possível transmitir: {error}").format(error=exc), error=True
-            )
-            self._disconnect_cast(resume=False)
-            return False
-        self._run("cast-track", lambda: renderer.play_uri(cast_uri, item.title))
-        self.castChanged.emit()
-        return True
-
-    def toggle(self) -> bool:
-        renderer = self.cast_renderer
-        if renderer is None:
-            return False
-        if self._cast_playing:
-            self._cast_position_ms = self.position_ms
-            self._cast_playing = False
-            self._run("cast-pause", renderer.pause, report_error=False)
-        else:
-            self._cast_started = time.monotonic() - self._cast_position_ms / 1000
-            self._cast_playing = True
-            self._run("cast-play", renderer.play, report_error=False)
-        self.playback.playbackChanged.emit()
-        return True
-
-    def seek(self, position_ms: int) -> bool:
-        renderer = self.cast_renderer
-        if renderer is None:
-            return False
-        self._cast_position_ms = max(0, int(position_ms))
-        if self._cast_playing:
-            self._cast_started = time.monotonic() - self._cast_position_ms / 1000
-        self._run(
-            "cast-seek",
-            lambda: renderer.seek(self._cast_position_ms),
-            report_error=False,
-        )
-        return True
-
-    def stop(self) -> bool:
-        if not self.active:
-            return False
-        self._disconnect_cast(resume=False)
-        return True
-
-    def _disconnect_cast(self, *, resume: bool) -> None:
-        renderer = self.cast_renderer
-        if renderer is None:
-            return
-        position_ms = self.position_ms
-        stream_uri = self._cast_stream_uri or self.playback.current_stream_uri
-        self.cast_renderer = None
-        self.cast_device = None
-        self._cast_playing = False
-        self._cast_stream_uri = ""
-        self._run("cast-stop", renderer.stop, report_error=False)
-        self.cast_media.close()
-        self.castChanged.emit()
-        if resume and stream_uri and self.playback.current_item is not None:
-            self.playback.player.play(stream_uri)
-            QTimer.singleShot(500, lambda: self.playback.seek(position_ms))
-            self.backend._set_status(_("Reprodução devolvida a este computador."))
-        self.playback.playbackChanged.emit()
-
-    # Workers / lifecycle --------------------------------------------
-
-    def _run(self, name: str, operation, *, report_error: bool = True) -> None:
         def worker() -> None:
             try:
                 result, error = operation(), ""
             except Exception as exc:
-                LOGGER.debug("Falha na integração Qt %s", name, exc_info=True)
+                LOGGER.debug("Falha na integração Qt %s", job.name, exc_info=True)
                 result, error = None, str(exc)
-            operation_name = name if report_error else f"silent:{name}"
-            self._operationReady.emit(operation_name, result, error)
+            self._jobFinished.emit(job, result, error)
 
         try:
             self.executor.submit(worker)
         except RuntimeError:
-            LOGGER.debug("Executor já encerrado; ignorando %s", name)
+            LOGGER.debug("Executor já encerrado; ignorando %s", job.name)
 
-    # Operation run by _run -> method handling its result.
-    OPERATION_HANDLERS: ClassVar[dict[str, str]] = {
-        "lastfm-begin": "_lastfm_authorization_started",
-        "lastfm-finish": "_lastfm_authorization_finished",
-        "together-join": "_together_joined",
-        "together-sync": "_together_synced",
-        "recognition": "_music_recognized",
-        "cast-discovery": "_cast_devices_found",
-        "cast-connect": "_cast_playback_started",
-        "cast-track": "_cast_playback_started",
-    }
-
-    @Slot(str, object, str)
-    def _operation_finished(self, operation: str, result, error: str) -> None:
-        silent = operation.startswith("silent:")
-        name = operation.removeprefix("silent:")
-        if error:
-            self._operation_failed(name, error, silent=silent)
+    @Slot(object, object, str)
+    def _job_finished(self, job: Job, result, error: str) -> None:
+        if not error:
+            if job.on_done is not None:
+                job.on_done(result)
             return
-        handler = self.OPERATION_HANDLERS.get(name)
-        if handler:
-            getattr(self, handler)(result)
-
-    def _operation_failed(self, name: str, error: str, *, silent: bool) -> None:
-        if name == "together-sync":
-            self._together_fetching = False
-        if name in {"cast-connect", "cast-track"}:
-            self._disconnect_cast(resume=True)
-        if silent:
-            return
-        labels = {
-            "lastfm-begin": _("Não foi possível iniciar o Last.fm"),
-            "lastfm-finish": _("Não foi possível conectar ao Last.fm"),
-            "together-join": _("Não foi possível entrar na sessão"),
-            "recognition": _("Não foi possível reconhecer a música"),
-            "cast-discovery": _("Não foi possível procurar dispositivos"),
-            "cast-connect": _("Não foi possível transmitir"),
-            "cast-track": _("Não foi possível trocar a faixa no dispositivo"),
-        }
-        label = labels.get(name, _("Não foi possível concluir a operação"))
-        self.backend._set_status(_("{label}: {error}").format(label=label, error=error), error=True)
-
-    def _lastfm_authorization_started(self, result) -> None:
-        token, url = result
-        self._lastfm_pending_token = token
-        self.changed.emit()
-        QDesktopServices.openUrl(QUrl(url))
-        self.backend._set_status(_("Autorize no navegador e depois clique em Concluir."))
-
-    def _lastfm_authorization_finished(self, result) -> None:
-        self._lastfm_pending_token = ""
-        self.settings.values.lastfm_enabled = True
-        self._save_preferences()
-        self.backend._set_status(
-            _("Last.fm conectado como {username}.").format(username=result.username)
-        )
-
-    def _together_joined(self, result) -> None:
-        generation, client, state = result
-        if generation != self._together_generation:
-            return
-        self.together_client = client
-        self._together_revision = -1
-        self._apply_together_state(state)
-        self.togetherChanged.emit()
-        self.backend._set_status(_("Listen Together conectado."))
-
-    def _together_synced(self, result) -> None:
-        self._together_fetching = False
-        client, state = result
-        if client is self.together_client:
-            self._apply_together_state(state)
-
-    def _music_recognized(self, result) -> None:
-        if result is None:
-            self.backend._set_status(_("Nenhuma música reconhecida."))
-            return
-        self.backend._set_status(
-            _("Encontrada: {title} — {artist}").format(title=result.title, artist=result.artist)
-        )
-        self.backend.search(f"{result.artist} {result.title}")
-
-    def _cast_devices_found(self, result) -> None:
-        self._cast_devices = list(result or [])
-        self.castChanged.emit()
-        if not self._cast_devices:
-            self.backend._set_status(_("Nenhum dispositivo UPnP/DLNA encontrado."))
-            return
-        count = len(self._cast_devices)
-        self.backend._set_status(
-            ngettext(
-                "{count} dispositivo encontrado.",
-                "{count} dispositivos encontrados.",
-                count,
-            ).format(count=count)
-        )
-
-    def _cast_playback_started(self, _result) -> None:
-        self.castChanged.emit()
-        self.playback.playbackChanged.emit()
-        if self.cast_device:
+        if job.on_failure is not None:
+            job.on_failure(error)
+        if job.failure_label:
             self.backend._set_status(
-                _("Reproduzindo em {name}.").format(name=self.cast_device.name)
+                _("{label}: {error}").format(label=job.failure_label, error=error), error=True
             )
+
+    # Lifecycle -------------------------------------------------------
 
     @Slot()
     def _session_changed(self) -> None:
@@ -780,16 +322,6 @@ class QtIntegrationsController(QObject):
     def shutdown(self) -> None:
         self._together_timer.stop()
         self._download_validation_timer.stop()
-        self._leave_together()
-        if self.cast_renderer:
-            renderer = self.cast_renderer
-            self.cast_renderer = None
-            self._run("cast-stop", renderer.stop, report_error=False)
-        self.cast_media.close()
-        if self.discord_presence:
-            try:
-                self.discord_presence.clear()
-                self.discord_presence.close()
-            except OSError:
-                LOGGER.debug("Falha ao encerrar Discord Rich Presence", exc_info=True)
-            self.discord_presence = None
+        self.together.leave()
+        self.cast.close()
+        self.discord.close()
