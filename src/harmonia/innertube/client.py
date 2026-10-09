@@ -147,7 +147,11 @@ class InnerTubeClient:
     ) -> dict[str, Any]:
         if authenticated:
             self._bootstrap()
-        acting_as = self.data_sync_id if as_identity else None
+        # Acting as a channel needs the session's credentials: an anonymous
+        # request with onBehalfOfUser is refused with 401, which used to read
+        # as an expired cookie (searches, after a signed-in call on the same
+        # client, as video lookups do).
+        acting_as = self.data_sync_id if authenticated and as_identity else None
         context = {
             "client": {
                 "clientName": CLIENT_NAME,
@@ -175,9 +179,12 @@ class InnerTubeClient:
                 "X-YouTube-Client-Name": CLIENT_ID,
                 "X-YouTube-Client-Version": self.client_version,
                 **({"X-Goog-Visitor-Id": self.visitor_data} if self.visitor_data else {}),
-                **({"X-Goog-AuthUser": self.session_index} if self.session_index else {}),
                 **(
-                    {"Cookie": self.cookie, "Authorization": sapisid_hash(self.cookie)}
+                    {
+                        "Cookie": self.cookie,
+                        "Authorization": sapisid_hash(self.cookie),
+                        **({"X-Goog-AuthUser": self.session_index} if self.session_index else {}),
+                    }
                     if authenticated
                     else {}
                 ),
@@ -189,7 +196,7 @@ class InnerTubeClient:
                     return json.load(response)
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode(errors="replace")[:300]
-                if exc.code in (401, 403):
+                if exc.code in (401, 403) and authenticated:
                     raise InnerTubeError(
                         _("A sessão expirou ou o cookie não tem acesso ao YouTube Music.")
                     ) from exc
