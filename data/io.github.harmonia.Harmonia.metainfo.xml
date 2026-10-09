@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="0.1.0-beta.3" date="2026-10-09" type="development">
+      <description>
+        <p>O tema Windows 11 e os ícones Fluent também no Linux, com a cor de destaque do GNOME.</p>
+        <p xml:lang="en">The Windows 11 theme and the Fluent icons on Linux too, with GNOME's accent colour.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.2" date="2026-10-08" type="development">
       <description>
         <p>Pacotes .deb e .rpm, instalador que escolhe o formato certo para o sistema, versão para Windows e reorganização interna do código.</p>
