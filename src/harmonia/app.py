@@ -1,11 +1,9 @@
+"""The GTK frontend: the window composes one mixin per feature and builds the layout."""
+
 from __future__ import annotations
 
 import logging
-import re
 import threading
-import urllib.request
-from html import escape
-from pathlib import Path
 
 import gi
 
@@ -13,7 +11,6 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
-from . import queue_view
 from .auto_backup import open_storage
 from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
@@ -34,9 +31,6 @@ from .preferences import Preferences
 from .services import YouTubeMusicService
 from .theming import DEFAULT_THEME
 from .track_rows import DetailTrackRow, HomeSongRow
-from .ui import (
-    deliver_to_main,
-)
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
 from .window_artist import WindowArtistMixin
@@ -51,6 +45,7 @@ from .window_chrome import (
 )
 from .window_detail import WindowDetailMixin
 from .window_detail_header import WindowDetailHeaderMixin
+from .window_expanded import WindowExpandedPlayerMixin
 from .window_history import WindowHistoryMixin
 from .window_home import WindowHomeMixin
 from .window_insights import WindowInsightsMixin
@@ -60,6 +55,7 @@ from .window_local_playlists import WindowLocalPlaylistsMixin
 from .window_lyrics import WindowLyricsMixin
 from .window_lyrics_follow import WindowLyricsFollowMixin
 from .window_lyrics_tools import WindowLyricsToolsMixin
+from .window_navigation import WindowNavigationMixin
 from .window_optional import WindowOptionalMixin
 from .window_playback import WindowPlaybackMixin
 from .window_playback_recovery import WindowPlaybackRecoveryMixin
@@ -78,6 +74,8 @@ class HarmoniaWindow(
     # mixins below (play_item, _stop_player, _seek_playback...) through super().
     GtkMediaVariantsMixin,
     GtkVideoMixin,
+    WindowNavigationMixin,
+    WindowExpandedPlayerMixin,
     WindowPreferencesMixin,
     WindowHistoryMixin,
     WindowInsightsMixin,
@@ -286,79 +284,6 @@ class HarmoniaWindow(
             self.downloads.resume_pending()
             GLib.timeout_add_seconds(24 * 60 * 60, self._periodic_download_validation)
 
-    def _show_account_avatar_file(self, path: Path, request_id: int) -> bool:
-        if request_id != self._account_avatar_request or not path.exists():
-            return GLib.SOURCE_REMOVE
-        self.account_avatar_picture.set_filename(str(path))
-        self.account_avatar_picture.set_opacity(1)
-        self.account_avatar_fallback.set_opacity(0)
-        return GLib.SOURCE_REMOVE
-
-    def _load_account_avatar(self, url: str) -> None:
-        self._account_avatar_request += 1
-        request_id = self._account_avatar_request
-        if not url:
-            self.account_avatar_picture.set_opacity(0)
-            self.account_avatar_picture.set_filename(None)
-            self.account_avatar_fallback.set_opacity(1)
-            self.account_button.set_tooltip_text(_("Conta"))
-            return
-        target = self.storage.artwork_path(url)
-        if target.exists():
-            self._show_account_avatar_file(target, request_id)
-            return
-
-        def worker() -> None:
-            try:
-                request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(request, timeout=15) as response:
-                    data = response.read(2 * 1024 * 1024)
-                target.write_bytes(data)
-                GLib.idle_add(self._show_account_avatar_file, target, request_id)
-            except Exception:
-                LOGGER.debug("Não foi possível baixar o avatar da conta", exc_info=True)
-
-        threading.Thread(target=worker, daemon=True, name="account-avatar-image").start()
-
-    def _refresh_account_avatar(self) -> None:
-        if not self.storage.load_cookie():
-            self._clear_account_avatar()
-            return
-
-        def worker() -> None:
-            try:
-                profile = self.youtube.account_profile()
-                GLib.idle_add(self._account_profile_loaded, profile)
-            except Exception:
-                LOGGER.debug(
-                    "Não foi possível atualizar o perfil; mantendo o avatar em cache",
-                    exc_info=True,
-                )
-
-        threading.Thread(target=worker, daemon=True, name="account-profile").start()
-
-    def _account_profile_loaded(self, profile) -> bool:
-        avatar = profile.thumbnail or ""
-        self.storage.set_setting("account_avatar_url", avatar)
-        self.account_button.set_tooltip_text(_("Conta — {name}").format(name=profile.name))
-        self._load_account_avatar(avatar)
-        return GLib.SOURCE_REMOVE
-
-    def _clear_account_avatar(self) -> None:
-        self.storage.set_setting("account_avatar_url", "")
-        self._load_account_avatar("")
-
-    def _set_active_nav(self, key: str) -> None:
-        viewport = self.sidebar_scroll.get_child()
-        for name, button in self.nav_buttons.items():
-            if name == key:
-                button.add_css_class("sidebar-active")
-                # Keep the active entry visible when the navigation list scrolls.
-                if isinstance(viewport, Gtk.Viewport) and hasattr(viewport, "scroll_to"):
-                    viewport.scroll_to(button, None)
-            else:
-                button.remove_css_class("sidebar-active")
-
     def _set_footer_item_state(self, has_item: bool) -> None:
         """Switch the persistent footer between its empty and playable states."""
         self.footer_cover_button.set_sensitive(has_item)
@@ -380,145 +305,6 @@ class HarmoniaWindow(
         self.duration_label.set_label(_("0:00"))
         self.progress.set_value(0)
         self.progress.set_sensitive(False)
-
-    def _show_expanded_player(self) -> None:
-        if getattr(self, "current_item", None) is None:
-            return
-        self._refresh_expanded_player()
-        self.expanded_stack.set_visible_child_name("music")
-        self.player_bar.set_visible(False)
-        self.expanded_revealer.set_reveal_child(True)
-        self.expanded_revealer.set_can_target(True)
-        GLib.idle_add(self.expanded_close_button.grab_focus)
-
-    def _hide_expanded_player(self) -> None:
-        self.expanded_revealer.set_reveal_child(False)
-        self.player_bar.set_visible(True)
-
-    def _expanded_key_pressed(self, _controller, keyval, _keycode, _state) -> bool:
-        if keyval == Gdk.KEY_Escape and self.expanded_revealer.get_reveal_child():
-            self._hide_expanded_player()
-            return True
-        return False
-
-    def _expanded_page_changed(self, stack: Adw.ViewStack, _pspec) -> None:
-        page = stack.get_visible_child_name()
-        if page == "lyrics":
-            self._load_current_lyrics()
-        elif page == "related":
-            self._render_expanded_related()
-
-    def _refresh_expanded_player(self) -> None:
-        item = getattr(self, "current_item", None)
-        if item is None:
-            return
-        self.expanded_title.set_label(item.title)
-        subtitle = re.sub(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$", "", item.subtitle or "")
-        self.expanded_subtitle.show_item(item, subtitle or "YouTube Music")
-        if item.thumbnail:
-            self.expanded_cover.set_paintable(None)
-            self.expanded_backdrop_base.set_paintable(None)
-            self.expanded_backdrop.set_paintable(None)
-            # Reuse an already-cached thumbnail immediately, then replace it
-            # with the dedicated high-resolution variant when available.
-            self._load_artwork(item.thumbnail, self.expanded_cover)
-            self._load_artwork(item.thumbnail, self.expanded_cover, size=1024)
-            self._load_artwork(item.thumbnail, self.expanded_backdrop_base, size=1280)
-            self._load_artwork(item.thumbnail, self.expanded_backdrop, size=1280)
-            self._load_artwork(item.thumbnail, self.ambient_background, size=1280)
-        else:
-            self.expanded_cover.set_paintable(None)
-            self.expanded_backdrop_base.set_paintable(None)
-            self.expanded_backdrop.set_paintable(None)
-            self.ambient_background.set_paintable(None)
-        self._refresh_current_like_from_library()
-        self._render_expanded_related()
-
-    def _set_expanded_lyrics_message(self, icon: str, title: str, description: str) -> None:
-        if not hasattr(self, "expanded_lyrics_container"):
-            return
-        while child := self.expanded_lyrics_container.get_first_child():
-            self.expanded_lyrics_container.remove(child)
-        # The description is Pango markup; callers pass plain text such as a
-        # track title, which may hold a bare "&".
-        status = Adw.StatusPage(icon_name=icon, title=title, description=escape(description))
-        status.set_vexpand(True)
-        self.expanded_lyrics_container.append(status)
-
-    def _render_expanded_lyrics(self, item: LibraryItem, document: LyricsDocument) -> None:
-        while child := self.expanded_lyrics_container.get_first_child():
-            self.expanded_lyrics_container.remove(child)
-        clamp = Adw.Clamp(maximum_size=760, tightening_threshold=620)
-        box = self._lyrics_surface(item, document, expanded=True)
-        if self._lyric_views and self._lyric_views[-1]["expanded"]:
-            self._lyric_views[-1]["scroll"] = self.expanded_lyrics_scroll
-        clamp.set_child(box)
-        self.expanded_lyrics_container.append(clamp)
-
-    def _render_expanded_related(self) -> None:
-        if not hasattr(self, "expanded_related_container"):
-            return
-        while child := self.expanded_related_container.get_first_child():
-            self.expanded_related_container.remove(child)
-        self.expanded_related_container.append(
-            queue_view.expanded_content(
-                self.queue,
-                self.queue_index,
-                self.related_items,
-                self._queue_actions(select=self._select_expanded_queue_item),
-            )
-        )
-
-    def _select_expanded_queue_item(self, position: int) -> None:
-        self.queue_index = position
-        self._render_queue()
-        self.play_item(self.queue[position])
-
-    def show_library(self) -> None:
-        self.main_view = "library"
-        self.back.set_visible(False)
-        self._render()
-        self.stack.set_visible_child_name("library")
-        self._set_active_nav("library")
-
-    def _go_back(self) -> None:
-        if self.main_view == "home":
-            self.show_home()
-        elif self.main_view.startswith("explore"):
-            self.show_explore()
-        elif self.main_view == "history" or self.main_view == "insights":
-            self.show_home()
-        elif self.main_view == "downloads":
-            self.show_library()
-        elif self.main_view == "settings":
-            self.show_home()
-        elif self.main_view == "artist-section" and self._artist_current_item:
-            self._open_artist(self._artist_current_item)
-        else:
-            self.show_library()
-
-    def show_home(self) -> None:
-        self.main_view = "home"
-        self.back.set_visible(False)
-        self._render_home()
-        self.stack.set_visible_child_name("home")
-        self._set_active_nav("home")
-
-    def show_history(self) -> None:
-        self.main_view = "history"
-        self.back.set_visible(False)
-        self._set_active_nav("history")
-        self._history_entries = self.storage.load_history()
-        self._render_history(self._history_entries, loading=True)
-
-        def worker() -> None:
-            try:
-                remote = self.youtube.history() if self.storage.load_cookie() else []
-                deliver_to_main(self._history_loaded, remote, None)
-            except Exception as exc:
-                deliver_to_main(self._history_loaded, [], str(exc))
-
-        threading.Thread(target=worker, daemon=True, name="account-history").start()
 
 
 class HarmoniaApplication(Adw.Application):

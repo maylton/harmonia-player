@@ -18,6 +18,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    deliver_to_main,
     icon_button,
     page_header,
     page_shell,
@@ -312,3 +313,19 @@ class WindowHistoryMixin:
                 "Não foi possível registrar a reprodução remota; o histórico local foi mantido",
                 exc_info=True,
             )
+
+    def show_history(self) -> None:
+        self.main_view = "history"
+        self.back.set_visible(False)
+        self._set_active_nav("history")
+        self._history_entries = self.storage.load_history()
+        self._render_history(self._history_entries, loading=True)
+
+        def worker() -> None:
+            try:
+                remote = self.youtube.history() if self.storage.load_cookie() else []
+                deliver_to_main(self._history_loaded, remote, None)
+            except Exception as exc:
+                deliver_to_main(self._history_loaded, [], str(exc))
+
+        threading.Thread(target=worker, daemon=True, name="account-history").start()
