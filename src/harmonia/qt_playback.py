@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
 from .i18n import _
 from .models import HistoryEntry, LibraryItem
@@ -18,7 +19,6 @@ from .playback_state import (
     remove_queue_item,
     shuffled_queue_keep_current,
 )
-from .player import NativePlayer
 from .services import YouTubeMusicService
 from .storage import Storage
 
@@ -26,7 +26,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class QtPlaybackController(QObject):
-    """Qt-facing playback state backed by the same NativePlayer used by GTK."""
+    """Qt-facing playback state backed by the same player used by GTK."""
 
     nowPlayingChanged = Signal()
     playbackChanged = Signal()
@@ -96,7 +96,9 @@ class QtPlaybackController(QObject):
             self._restored_position_ms = restored.position_ms
             self._play_generation = 1
 
-        self.player = NativePlayer(self._on_player_state, self._player_error, self.next)
+        self.player = CrossfadingPlayer(self._on_player_state, self._player_error, self.next)
+        # The video controller narrows this further while a video plays.
+        self.player.crossfade_allowed = lambda: not getattr(self, "remote_active", False)
         self.player.volume = 0.85
 
         self._streamReady.connect(self._apply_stream)
@@ -147,7 +149,9 @@ class QtPlaybackController(QObject):
         speed: float,
         pitch: float,
         skip_silence: bool,
+        crossfade: int = 0,
     ) -> None:
+        self.player.set_crossfade(crossfade)
         self.player.apply_audio_settings(
             normalization=normalization,
             normalization_level=normalization_level,

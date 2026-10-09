@@ -5,7 +5,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 ## Não publicado
 
 - normalização de volume por faixa com a medição do YouTube Music, também nos downloads offline; antes ela só baixava todas as faixas 6 dB por igual;
-- seletor "Nível do volume" (Suave, Padrão, Alto) para a normalização.
+- seletor "Nível do volume" (Suave, Padrão, Alto) para a normalização;
+- transição entre faixas (crossfade) de 3 a 12 segundos, em Preferências > Áudio.
 
 ## 0.1.0-beta.3 — 2026-10-09
 

@@ -13,6 +13,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
 from .gtk_media_variants import GtkMediaVariantsMixin
 from .gtk_theme import GtkThemeController
@@ -26,7 +27,6 @@ from .models import (
     SearchResults,
 )
 from .mpris import MprisService
-from .player import NativePlayer
 from .preferences import Preferences
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -204,7 +204,13 @@ class HarmoniaWindow(
 
     def _start_player(self, app: Adw.Application) -> None:
         """The GStreamer player and its desktop media controls (MPRIS)."""
-        self.player = NativePlayer(self._player_state, self._player_error, self._play_next)
+        self.player = CrossfadingPlayer(self._player_state, self._player_error, self._play_next)
+        # No crossfade while a video plays in sync with the audio or a cast
+        # device has the track.
+        self.player.crossfade_allowed = lambda: (
+            getattr(self, "_media_mode", "audio") == "audio"
+            and getattr(self, "cast_renderer", None) is None
+        )
         self._initialize_optional_services()
         self._apply_audio_preferences()
         self.mpris = MprisService(

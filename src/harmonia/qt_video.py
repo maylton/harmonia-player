@@ -74,6 +74,8 @@ class QtVideoController(QObject):
         self.backend = backend
         self.playback = backend.playback
         self._mode = "audio"
+        allowed = self.playback.player.crossfade_allowed
+        self.playback.player.crossfade_allowed = lambda: self._mode == "audio" and allowed()
         self._loading = False
         self._request = 0
         self._video_generation = 0

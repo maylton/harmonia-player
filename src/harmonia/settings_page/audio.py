@@ -7,6 +7,7 @@ import gi
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GObject  # noqa: E402
 
+from ..crossfade import CHOICES as CROSSFADE_CHOICES  # noqa: E402
 from ..i18n import _  # noqa: E402
 from .rows import combo_row, scale_row, switch_row  # noqa: E402
 
@@ -55,6 +56,17 @@ def audio_group(window) -> Adw.PreferencesGroup:
             _("Remove trechos silenciosos longos"),
             preferences.skip_silence,
             changed("skip_silence"),
+        )
+    )
+    group.add(
+        combo_row(
+            _("Transição entre faixas"),
+            [
+                (_("Desligada"), 0),
+                *((_("{seconds} segundos").format(seconds=s), s) for s in CROSSFADE_CHOICES[1:]),
+            ],
+            preferences.crossfade,
+            changed("crossfade"),
         )
     )
     group.add(scale_row(_("Velocidade"), (0.5, 2.0, 0.05), preferences.speed, changed("speed"), 2))
