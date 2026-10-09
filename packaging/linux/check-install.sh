@@ -47,5 +47,6 @@ EOF
 
 test -f /usr/share/applications/io.github.harmonia.Harmonia.desktop
 test -f /usr/share/metainfo/io.github.harmonia.Harmonia.metainfo.xml
-ls /usr/share/locale/pt_BR/LC_MESSAGES/harmonia.mo >/dev/null
+# Translations are checked in the package itself: minimal container images
+# tell dpkg to skip /usr/share/locale.
 echo "Package OK"
