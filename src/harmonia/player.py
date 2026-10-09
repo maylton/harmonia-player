@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import urllib.parse
 import urllib.request
+from collections.abc import Sequence
 from itertools import pairwise
 from typing import ClassVar
 
@@ -12,6 +13,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
 from . import loudness
+from .equalizer import PRESETS, equalizer_gains
 from .i18n import _
 from .playback_speed import pitch_properties
 from .stream_relay import StreamRelay
@@ -22,12 +24,7 @@ LOGGER = logging.getLogger(__name__)
 class NativePlayer:
     """Thin GStreamer playbin wrapper kept independent from the GTK widgets."""
 
-    EQ_PRESETS: ClassVar[dict[str, tuple[int, ...]]] = {
-        "flat": (0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        "bass": (6, 5, 3, 1, 0, 0, -1, -1, 0, 0),
-        "vocal": (-2, -1, 0, 2, 4, 4, 2, 1, 0, -1),
-        "treble": (-2, -1, 0, 0, 1, 2, 3, 4, 5, 6),
-    }
+    EQ_PRESETS: ClassVar[dict[str, tuple[float, ...]]] = PRESETS
 
     def __init__(self, on_state=None, on_error=None, on_eos=None):
         Gst.init(None)
@@ -84,13 +81,17 @@ class NativePlayer:
         *,
         normalization: bool = False,
         normalization_level: str = loudness.DEFAULT_LEVEL,
-        equalizer: str = "flat",
+        equalizer: str | Sequence[float] = "flat",
         speed: float = 1.0,
         pitch: float = 0.0,
         skip_silence: bool = False,
         speed_pitch_linked: bool = False,
     ) -> None:
-        """Apply processing atomically; safe when optional plugins are absent."""
+        """Apply processing atomically; safe when optional plugins are absent.
+
+        ``equalizer`` is a preset key or the 10 band gains themselves
+        (equalizer.equalizer_gains resolves imported AutoEQ profiles).
+        """
         self._normalization = (normalization, normalization_level)
         self._apply_normalization()
         pitch_filter = self._audio_elements.get("pitch")
@@ -99,7 +100,7 @@ class NativePlayer:
                 pitch_filter.set_property(name, value)
         equalizer_filter = self._audio_elements.get("equalizer")
         if equalizer_filter:
-            bands = self.EQ_PRESETS.get(equalizer, self.EQ_PRESETS["flat"])
+            bands = equalizer_gains(equalizer, {}) if isinstance(equalizer, str) else equalizer
             for index, gain in enumerate(bands):
                 equalizer_filter.set_property(f"band{index}", float(gain))
         silence = self._audio_elements.get("silence")

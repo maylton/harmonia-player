@@ -13,6 +13,7 @@ from gi.repository import Adw, Gdk, GLib, Gtk
 
 from . import host
 from .backup import BackupError, BackupManager
+from .equalizer import equalizer_gains
 from .i18n import _, ngettext
 from .preferences import Preferences
 from .settings_page import build_settings_page
@@ -114,7 +115,7 @@ class WindowPreferencesMixin:
         self.player.apply_audio_settings(
             normalization=self.preferences.normalization,
             normalization_level=self.preferences.normalization_level,
-            equalizer=self.preferences.equalizer,
+            equalizer=equalizer_gains(self.preferences.equalizer, self.storage.eq_profiles()),
             speed=self.preferences.speed,
             pitch=self.preferences.pitch,
             skip_silence=self.preferences.skip_silence,
