@@ -149,10 +149,12 @@ class QtPlaybackController(QObject):
         speed: float,
         pitch: float,
         skip_silence: bool,
+        speed_pitch_linked: bool = False,
         crossfade: int = 0,
     ) -> None:
         self.player.set_crossfade(crossfade)
         self.player.apply_audio_settings(
+            speed_pitch_linked=speed_pitch_linked,
             normalization=normalization,
             normalization_level=normalization_level,
             equalizer=equalizer,

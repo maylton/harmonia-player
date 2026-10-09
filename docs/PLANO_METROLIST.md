@@ -148,8 +148,10 @@ Cada item é independente e pode virar um commit separado.
   direto (`InnerTubeClient.watch_item`, que funciona até sem login); os
   outros abrem a página. GTK e KDE.
 - [ ] **Posição ao adicionar à playlist**: início ou fim, com preferência.
-- [ ] **Velocidade e tom juntos**: opção que muda os dois ao mesmo tempo, como
-  um disco mais rápido.
+- [x] **Velocidade e tom juntos** (`playback_speed.py`): "Velocidade muda o
+  tom" usa o `rate` do elemento `pitch`, como um disco mais rápido; o seletor
+  de tom fica desativado. Posição e duração seguem iguais às do modo
+  separado (conferido com GStreamer).
 - [ ] **Selo de conteúdo explícito** nas linhas de faixa, a partir do
   `badges` da InnerTube.
 - [ ] **Relatório de erro de reprodução** (`playback_report.py`): texto com

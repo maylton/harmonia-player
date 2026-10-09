@@ -70,7 +70,21 @@ def audio_group(window) -> Adw.PreferencesGroup:
         )
     )
     group.add(scale_row(_("Velocidade"), (0.5, 2.0, 0.05), preferences.speed, changed("speed"), 2))
-    group.add(scale_row(_("Tom (semitons)"), (-12, 12, 1), preferences.pitch, changed("pitch"), 0))
+    pitch = scale_row(_("Tom (semitons)"), (-12, 12, 1), preferences.pitch, changed("pitch"), 0)
+    linked = switch_row(
+        _("Velocidade muda o tom"),
+        _("Como um disco tocado mais rápido ou mais devagar"),
+        preferences.speed_pitch_linked,
+        changed("speed_pitch_linked"),
+    )
+    linked.bind_property(
+        "active",
+        pitch,
+        "sensitive",
+        GObject.BindingFlags.SYNC_CREATE | GObject.BindingFlags.INVERT_BOOLEAN,
+    )
+    group.add(linked)
+    group.add(pitch)
     timer = combo_row(
         _("Temporizador"),
         [
