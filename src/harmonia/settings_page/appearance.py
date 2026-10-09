@@ -71,18 +71,22 @@ def appearance_group(window) -> Adw.PreferencesGroup:
     )
     if host.WINDOW_BACKDROPS:
         _add_window_material_rows(window, group)
+    icon_styles = [
+        (
+            _("Windows — ícones Fluent")
+            if host.SYSTEM_ICON_THEME
+            else _("GTK — padrão do sistema"),
+            "gtk",
+        ),
+        (_("Material Expressive"), "material"),
+    ]
+    if not host.SYSTEM_ICON_THEME:
+        # On Windows the system style already is Fluent.
+        icon_styles.append((_("Fluent — ícones do Windows 11"), "fluent"))
     group.add(
         combo_row(
             _("Estilo dos ícones"),
-            [
-                (
-                    _("Windows — ícones Fluent")
-                    if host.SYSTEM_ICON_THEME
-                    else _("GTK — padrão do sistema"),
-                    "gtk",
-                ),
-                (_("Material Expressive"), "material"),
-            ],
+            icon_styles,
             preferences.icon_style,
             lambda value: changed("icon_style", value),
         )

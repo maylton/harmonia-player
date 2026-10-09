@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-07 14:14-0300\n"
+"POT-Creation-Date: 2026-10-09 10:04-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,30 +18,30 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/harmonia/app.py:86 src/harmonia/app.py:535
+#: src/harmonia/app.py:86 src/harmonia/app.py:557
 #: src/harmonia/window_chrome/sidebar.py:56
 msgid "Harmonia"
 msgstr ""
 
-#: src/harmonia/app.py:252 src/harmonia/settings_page/account.py:19
+#: src/harmonia/app.py:274 src/harmonia/settings_page/account.py:19
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr ""
 
-#: src/harmonia/app.py:291
+#: src/harmonia/app.py:313
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr ""
 
-#: src/harmonia/app.py:320 src/harmonia/qt_backend.py:699
+#: src/harmonia/app.py:342 src/harmonia/qt_backend.py:699
 msgid "Nenhuma música reproduzindo"
 msgstr ""
 
-#: src/harmonia/app.py:321 src/harmonia/qt_backend.py:707
+#: src/harmonia/app.py:343 src/harmonia/qt_backend.py:707
 msgid "Escolha uma faixa para começar"
 msgstr ""
 
-#: src/harmonia/app.py:327 src/harmonia/app.py:328
+#: src/harmonia/app.py:349 src/harmonia/app.py:350
 #: src/harmonia/window_chrome/expanded_player.py:187
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
@@ -52,24 +52,24 @@ msgstr ""
 msgid "0:00"
 msgstr ""
 
-#: src/harmonia/app.py:413
+#: src/harmonia/app.py:435
 msgid "Fila"
 msgstr ""
 
-#: src/harmonia/app.py:420
+#: src/harmonia/app.py:442
 msgid "Nada na fila"
 msgstr ""
 
-#: src/harmonia/app.py:421
+#: src/harmonia/app.py:443
 msgid "Escolha uma música para ver as próximas faixas."
 msgstr ""
 
-#: src/harmonia/app.py:436 src/harmonia/window_chrome/expanded_player.py:49
+#: src/harmonia/app.py:458 src/harmonia/window_chrome/expanded_player.py:49
 #: src/harmonia/window_playback.py:270
 msgid "Relacionadas"
 msgstr ""
 
-#: src/harmonia/app.py:448 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:470 src/harmonia/window_playback.py:286
 msgid "Adicionar ao fim"
 msgstr ""
 
@@ -87,77 +87,77 @@ msgstr ""
 msgid "Usar cookie manualmente"
 msgstr ""
 
-#: src/harmonia/gtk_media_variants.py:74 src/harmonia/qt_media_variants.py:211
+#: src/harmonia/gtk_media_variants.py:74 src/harmonia/qt_media_variants.py:160
 msgid "Não foi possível preservar o áudio original da música."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:98
+#: src/harmonia/gtk_video.py:99
 #: src/harmonia/window_chrome/expanded_player.py:44
 msgid "Música"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:99
+#: src/harmonia/gtk_video.py:100
 msgid "Vídeo"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:186
+#: src/harmonia/gtk_video.py:187
 msgid "O plugin GStreamer gtk4paintablesink não está disponível."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:190
+#: src/harmonia/gtk_video.py:191
 msgid "Arquivos locais não possuem vídeo associado no YouTube Music."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:193
+#: src/harmonia/gtk_video.py:194
 msgid "Alternar para o vídeo desta música"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:276 src/harmonia/qt_video.py:403
+#: src/harmonia/gtk_video.py:277 src/harmonia/qt_video.py:416
 #, python-brace-format
 msgid "Não foi possível abrir o vídeo: {error}"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:298 src/harmonia/qt_video.py:421
+#: src/harmonia/gtk_video.py:299 src/harmonia/qt_video.py:434
 msgid "A camada de vídeo do GStreamer não está disponível."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:311 src/harmonia/qt_video.py:436
+#: src/harmonia/gtk_video.py:312 src/harmonia/qt_video.py:449
 msgid "A camada de vídeo não conseguiu iniciar o preroll"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:327 src/harmonia/qt_video.py:451
+#: src/harmonia/gtk_video.py:328 src/harmonia/qt_video.py:464
 msgid "O GStreamer falhou ao preparar os frames do vídeo."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:338 src/harmonia/qt_video.py:457
+#: src/harmonia/gtk_video.py:339 src/harmonia/qt_video.py:470
 msgid "O vídeo demorou demais para iniciar."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:359
+#: src/harmonia/gtk_video.py:360
 msgid "O fluxo de vídeo não conseguiu preparar a sincronização."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:373
+#: src/harmonia/gtk_video.py:374
 msgid "O vídeo falhou enquanto preparava a sincronização."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:402 src/harmonia/qt_video.py:466
+#: src/harmonia/gtk_video.py:403 src/harmonia/qt_video.py:479
 msgid "O fluxo de vídeo não ficou disponível para sincronização."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:460 src/harmonia/qt_video.py:515
+#: src/harmonia/gtk_video.py:442 src/harmonia/qt_video.py:509
 msgid "O GStreamer falhou durante a sincronização do vídeo."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:505 src/harmonia/qt_video.py:554
+#: src/harmonia/gtk_video.py:484 src/harmonia/qt_video.py:548
 msgid "Não foi possível sincronizar o vídeo com a música."
 msgstr ""
 
-#: src/harmonia/gtk_video.py:582
+#: src/harmonia/gtk_video.py:557
 msgid "O vídeo falhou; voltando para a música…"
 msgstr ""
 
-#: src/harmonia/gtk_video.py:601 src/harmonia/qt_video.py:644
+#: src/harmonia/gtk_video.py:576 src/harmonia/qt_video.py:640
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr ""
 
@@ -390,7 +390,7 @@ msgid "Downloads da coleção iniciados."
 msgstr ""
 
 #: src/harmonia/qt_backend.py:1202 src/harmonia/qt_preferences.py:162
-#: src/harmonia/window_preferences.py:329
+#: src/harmonia/window_preferences.py:331
 msgid "Validando sessão…"
 msgstr ""
 
@@ -468,167 +468,167 @@ msgstr ""
 msgid "Não foi possível carregar a seção: {error}"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:140 src/harmonia/social.py:109
+#: src/harmonia/qt_integrations.py:141 src/harmonia/social.py:109
 #: src/harmonia/window_social.py:39
 msgid "A conta do Last.fm ainda não foi autorizada"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:171
+#: src/harmonia/qt_integrations.py:172
 msgid "Segredo da API do Last.fm salvo no chaveiro do sistema."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:175
+#: src/harmonia/qt_integrations.py:176
 msgid "Iniciando autorização do Last.fm…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:188
+#: src/harmonia/qt_integrations.py:189
 msgid "Inicie a autorização do Last.fm primeiro."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:190
+#: src/harmonia/qt_integrations.py:191
 msgid "Concluindo autorização do Last.fm…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:207
+#: src/harmonia/qt_integrations.py:208
 msgid "Last.fm desconectado."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:329 src/harmonia/window_optional.py:169
+#: src/harmonia/qt_integrations.py:330 src/harmonia/window_optional.py:169
 msgid "Você está compartilhando a reprodução"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:331 src/harmonia/window_optional.py:171
+#: src/harmonia/qt_integrations.py:332 src/harmonia/window_optional.py:171
 msgid "Sincronizado com o anfitrião"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:332 src/harmonia/window_optional.py:172
+#: src/harmonia/qt_integrations.py:333 src/harmonia/window_optional.py:172
 msgid "Nenhuma sessão ativa"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:363 src/harmonia/window_optional.py:183
+#: src/harmonia/qt_integrations.py:364 src/harmonia/window_optional.py:183
 #, python-brace-format
 msgid "Não foi possível criar a sessão: {error}"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:367
+#: src/harmonia/qt_integrations.py:368
 msgid "Sessão Listen Together criada."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:378
+#: src/harmonia/qt_integrations.py:379
 msgid "Entrando na sessão Listen Together…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:387
+#: src/harmonia/qt_integrations.py:388
 msgid "Sessão Listen Together encerrada."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:468
+#: src/harmonia/qt_integrations.py:469
 msgid "Token do AudD salvo no chaveiro do sistema."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:474
+#: src/harmonia/qt_integrations.py:475
 msgid "Configure o token do AudD primeiro."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:482 src/harmonia/window_optional.py:283
+#: src/harmonia/qt_integrations.py:483 src/harmonia/window_optional.py:283
 msgid "Ouvindo por 12 segundos…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:503
+#: src/harmonia/qt_integrations.py:504
 msgid "Procurando dispositivos UPnP/DLNA na rede local…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:511
+#: src/harmonia/qt_integrations.py:512
 msgid "Comece a reproduzir uma faixa antes de transmitir."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:524 src/harmonia/qt_integrations.py:585
+#: src/harmonia/qt_integrations.py:525 src/harmonia/qt_integrations.py:586
 #: src/harmonia/window_optional.py:356 src/harmonia/window_optional.py:376
 #: src/harmonia/window_optional.py:415
 #, python-brace-format
 msgid "Não foi possível transmitir: {error}"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:548
+#: src/harmonia/qt_integrations.py:549
 #, python-brace-format
 msgid "Conectando a {name}…"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:644
+#: src/harmonia/qt_integrations.py:645
 msgid "Reprodução devolvida a este computador."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:675
+#: src/harmonia/qt_integrations.py:696
 msgid "Não foi possível iniciar o Last.fm"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:676
+#: src/harmonia/qt_integrations.py:697
 msgid "Não foi possível conectar ao Last.fm"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:677
+#: src/harmonia/qt_integrations.py:698
 msgid "Não foi possível entrar na sessão"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:678 src/harmonia/recognition.py:125
+#: src/harmonia/qt_integrations.py:699 src/harmonia/recognition.py:125
 msgid "Não foi possível reconhecer a música"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:679
+#: src/harmonia/qt_integrations.py:700
 msgid "Não foi possível procurar dispositivos"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:680
+#: src/harmonia/qt_integrations.py:701
 msgid "Não foi possível transmitir"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:681
+#: src/harmonia/qt_integrations.py:702
 msgid "Não foi possível trocar a faixa no dispositivo"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:683 src/harmonia/qt_preferences.py:244
+#: src/harmonia/qt_integrations.py:704 src/harmonia/qt_preferences.py:244
 msgid "Não foi possível concluir a operação"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:685 src/harmonia/qt_preferences.py:245
+#: src/harmonia/qt_integrations.py:705 src/harmonia/qt_preferences.py:245
 #, python-brace-format
 msgid "{label}: {error}"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:694
+#: src/harmonia/qt_integrations.py:712
 msgid "Autorize no navegador e depois clique em Concluir."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:700
+#: src/harmonia/qt_integrations.py:719
 #, python-brace-format
 msgid "Last.fm conectado como {username}."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:710
+#: src/harmonia/qt_integrations.py:730
 msgid "Listen Together conectado."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:718
+#: src/harmonia/qt_integrations.py:740
 msgid "Nenhuma música reconhecida."
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:721 src/harmonia/window_optional.py:303
+#: src/harmonia/qt_integrations.py:743 src/harmonia/window_optional.py:303
 #, python-brace-format
 msgid "Encontrada: {title} — {artist}"
 msgstr ""
 
-#: src/harmonia/qt_integrations.py:733
+#: src/harmonia/qt_integrations.py:751
+msgid "Nenhum dispositivo UPnP/DLNA encontrado."
+msgstr ""
+
+#: src/harmonia/qt_integrations.py:756
 #, python-brace-format
 msgid "{count} dispositivo encontrado."
 msgid_plural "{count} dispositivos encontrados."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/qt_integrations.py:739
-msgid "Nenhum dispositivo UPnP/DLNA encontrado."
-msgstr ""
-
-#: src/harmonia/qt_integrations.py:745
+#: src/harmonia/qt_integrations.py:767
 #, python-brace-format
 msgid "Reproduzindo em {name}."
 msgstr ""
@@ -696,34 +696,12 @@ msgid_plural "{count} faixas"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/qt_media_variants.py:37 src/harmonia/qt_video.py:90
-#: src/harmonia/qt_video.py:156
-msgid "O plugin GStreamer qml6glsink não está disponível."
-msgstr ""
-
-#: src/harmonia/qt_media_variants.py:41 src/harmonia/qt_video.py:98
-#: src/harmonia/qt_video.py:160
-msgid "O GStreamer playbin para vídeo não está disponível."
-msgstr ""
-
-#: src/harmonia/qt_media_variants.py:45 src/harmonia/qt_video.py:164
-msgid "A superfície de vídeo Qt ainda não foi inicializada."
-msgstr ""
-
-#: src/harmonia/qt_media_variants.py:58 src/harmonia/qt_video.py:178
-msgid "A superfície GstGLQt6VideoItem não possui ponteiro nativo"
-msgstr ""
-
-#: src/harmonia/qt_media_variants.py:65
+#: src/harmonia/qt_media_variants.py:36
 msgid "qml6glsink não conseguiu inicializar o contexto OpenGL do Qt"
 msgstr ""
 
-#: src/harmonia/qt_media_variants.py:75
+#: src/harmonia/qt_media_variants.py:46
 msgid "glsinkbin não conseguiu inicializar"
-msgstr ""
-
-#: src/harmonia/qt_media_variants.py:86 src/harmonia/qt_video.py:185
-msgid "A camada de vídeo recusou o estado READY"
 msgstr ""
 
 #: src/harmonia/qt_mutations.py:54 src/harmonia/window_actions.py:31
@@ -839,7 +817,7 @@ msgstr ""
 msgid "Cache limpo · {size} removidos."
 msgstr ""
 
-#: src/harmonia/qt_preferences.py:170 src/harmonia/window_preferences.py:342
+#: src/harmonia/qt_preferences.py:170 src/harmonia/window_preferences.py:344
 msgid "Sessão inválida ou expirada"
 msgstr ""
 
@@ -901,32 +879,52 @@ msgstr ""
 msgid "Backup restaurado."
 msgstr ""
 
-#: src/harmonia/qt_video.py:38
+#: src/harmonia/qt_video.py:39
 msgid "Não foi possível obter o ponteiro nativo do objeto GStreamer"
 msgstr ""
 
-#: src/harmonia/qt_video.py:46
+#: src/harmonia/qt_video.py:47
 msgid "O objeto GStreamer não expõe o ponteiro nativo"
 msgstr ""
 
-#: src/harmonia/qt_video.py:351
+#: src/harmonia/qt_video.py:91 src/harmonia/qt_video.py:199
+msgid "O plugin GStreamer qml6glsink não está disponível."
+msgstr ""
+
+#: src/harmonia/qt_video.py:99 src/harmonia/qt_video.py:203
+msgid "O GStreamer playbin para vídeo não está disponível."
+msgstr ""
+
+#: src/harmonia/qt_video.py:164
+msgid "A superfície GstGLQt6VideoItem não possui ponteiro nativo"
+msgstr ""
+
+#: src/harmonia/qt_video.py:171
+msgid "A camada de vídeo recusou o estado READY"
+msgstr ""
+
+#: src/harmonia/qt_video.py:207
+msgid "A superfície de vídeo Qt ainda não foi inicializada."
+msgstr ""
+
+#: src/harmonia/qt_video.py:364
 msgid "O vídeo não está disponível para esta faixa neste dispositivo."
 msgstr ""
 
-#: src/harmonia/qt_video.py:356
+#: src/harmonia/qt_video.py:369
 msgid "saída de vídeo indisponível"
 msgstr ""
 
-#: src/harmonia/qt_video.py:358
+#: src/harmonia/qt_video.py:371
 #, python-brace-format
 msgid "Não foi possível preparar a saída de vídeo: {detail}"
 msgstr ""
 
-#: src/harmonia/qt_video.py:401
+#: src/harmonia/qt_video.py:414
 msgid "nenhum vídeo correspondente foi encontrado"
 msgstr ""
 
-#: src/harmonia/qt_video.py:621
+#: src/harmonia/qt_video.py:617
 #, python-brace-format
 msgid "Não foi possível exibir o vídeo: {detail}"
 msgstr ""
@@ -1064,46 +1062,50 @@ msgid "Usa as cores da capa atual atrás da interface"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:76
-msgid "Estilo dos ícones"
-msgstr ""
-
-#: src/harmonia/settings_page/appearance.py:79
 msgid "Windows — ícones Fluent"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:81
+#: src/harmonia/settings_page/appearance.py:76
 msgid "GTK — padrão do sistema"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:84
+#: src/harmonia/settings_page/appearance.py:79
 msgid "Material Expressive"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:98
-msgid "Efeito de fundo"
+#: src/harmonia/settings_page/appearance.py:83
+msgid "Fluent — ícones do Windows 11"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:86
+msgid "Estilo dos ícones"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:100
-msgid "Mica"
-msgstr ""
-
-#: src/harmonia/settings_page/appearance.py:101
-msgid "Acrílico (fosco)"
+msgid "Efeito de fundo"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:102
+msgid "Mica"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:103
+msgid "Acrílico (fosco)"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:104
 msgid "Nenhum"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:108
+#: src/harmonia/settings_page/appearance.py:110
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:113
+#: src/harmonia/settings_page/appearance.py:115
 msgid "Capa desfocada no player expandido"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:114
+#: src/harmonia/settings_page/appearance.py:116
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr ""
 
@@ -1377,7 +1379,7 @@ msgid "Exportar"
 msgstr ""
 
 #: src/harmonia/settings_page/streaming.py:85
-#: src/harmonia/window_preferences.py:410
+#: src/harmonia/window_preferences.py:412
 msgid "Restaurar"
 msgstr ""
 
@@ -1498,7 +1500,7 @@ msgstr ""
 #: src/harmonia/window_actions.py:143 src/harmonia/window_actions.py:309
 #: src/harmonia/window_actions.py:335 src/harmonia/window_actions.py:370
 #: src/harmonia/window_library.py:768 src/harmonia/window_library.py:785
-#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:409
+#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:411
 msgid "Cancelar"
 msgstr ""
 
@@ -2522,75 +2524,75 @@ msgstr ""
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:294
+#: src/harmonia/window_preferences.py:296
 msgid "0 B armazenados"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:297
+#: src/harmonia/window_preferences.py:299
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:314
+#: src/harmonia/window_preferences.py:316
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_preferences.py:325
+#: src/harmonia/window_preferences.py:327
 msgid "Reprodução pausada pelo temporizador"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:342
+#: src/harmonia/window_preferences.py:344
 msgid "Conectada e válida"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:345
+#: src/harmonia/window_preferences.py:347
 msgid "Conta validada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:347
+#: src/harmonia/window_preferences.py:349
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:358
+#: src/harmonia/window_preferences.py:360
 msgid "Conta desconectada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:363
+#: src/harmonia/window_preferences.py:365
 msgid "Exportar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:373
+#: src/harmonia/window_preferences.py:375
 msgid "Backup exportado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:378
+#: src/harmonia/window_preferences.py:380
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:388
+#: src/harmonia/window_preferences.py:390
 msgid "Restaurar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:403
+#: src/harmonia/window_preferences.py:405
 msgid "Restaurar este backup?"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:405
+#: src/harmonia/window_preferences.py:407
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
 msgstr ""
 
-#: src/harmonia/window_preferences.py:425
+#: src/harmonia/window_preferences.py:427
 msgid "Backup restaurado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:430
+#: src/harmonia/window_preferences.py:432
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr ""

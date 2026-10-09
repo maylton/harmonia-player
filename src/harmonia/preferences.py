@@ -35,6 +35,13 @@ class Preferences:
     recognition_endpoint: str = "https://api.audd.io/"
 
     BACKDROPS: ClassVar[tuple[str, ...]] = ("mica", "acrylic", "none")
+    # "gtk" follows the desktop (on Windows, the bundled Fluent icons); the
+    # others are icon themes bundled with Harmonia.
+    ICON_STYLES: ClassVar[dict[str, str]] = {
+        "gtk": "",
+        "material": "HarmoniaMaterial",
+        "fluent": "HarmoniaFluent",
+    }
     QUALITY_BITRATES: ClassVar[dict[str, int]] = {
         "low": 70_000,
         "medium": 160_000,
@@ -70,7 +77,7 @@ class Preferences:
             pitch=max(-12, min(12, number("pitch", 0.0))),
             skip_silence=boolean("skip_silence", False),
             background_blur=boolean("background_blur", False),
-            icon_style=icon_style if icon_style in {"gtk", "material"} else "gtk",
+            icon_style=icon_style if icon_style in cls.ICON_STYLES else "gtk",
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
             accent=accent if accent in ACCENTS else "theme",

@@ -2,7 +2,6 @@
   "id": "windows11",
   "name": "Windows 11",
   "description": "Inspirado no Fluent do Windows 11: Segoe UI Variable, cantos de 4 e 8 px, cor de destaque do sistema e botões de janela retangulares.",
-  "platforms": ["windows"],
   "default_variant": "system",
   "restyle_adwaita": true,
   "system_accent": true,

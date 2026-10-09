@@ -143,7 +143,8 @@ class WindowPreferencesMixin:
         self.ambient_background.set_opacity(0.30 if blurred else 0)
         self._apply_expanded_material(translucent)
 
-        self.root.remove_css_class("icons-material")
+        for style in Preferences.ICON_STYLES:
+            self.root.remove_css_class(f"icons-{style}")
         if self.preferences.icon_style != "gtk":
             self.root.add_css_class(f"icons-{self.preferences.icon_style}")
         self._apply_icon_theme()
@@ -254,8 +255,9 @@ class WindowPreferencesMixin:
             self._icon_settings_handler = settings.connect(
                 "notify::gtk-icon-theme-name", lambda *_: self._ensure_icon_theme_available()
             )
-        if self.preferences.icon_style == "material":
-            settings.set_property("gtk-icon-theme-name", BUNDLED_ICON_THEME)
+        bundled = Preferences.ICON_STYLES.get(self.preferences.icon_style)
+        if bundled:
+            settings.set_property("gtk-icon-theme-name", bundled)
             return
         if host.SYSTEM_ICON_THEME:
             settings.set_property("gtk-icon-theme-name", host.SYSTEM_ICON_THEME)

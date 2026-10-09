@@ -15,6 +15,7 @@ from . import host  # noqa: E402
 from .theming import (  # noqa: E402
     DEFAULT_THEME,
     Theme,
+    accent_shades,
     fluent_accent,
     get_theme,
     render_gtk_css,
@@ -75,7 +76,7 @@ class GtkThemeController:
     def _render(self) -> None:
         dark = self.style_manager.get_dark()
         system_accent = (
-            fluent_accent(host.windows_accent_palette(), dark=dark)
+            fluent_accent(self._system_accent_palette(), dark=dark)
             if self.theme.system_accent
             else None
         )
@@ -101,6 +102,25 @@ class GtkThemeController:
             self.provider.load_from_data(css, -1)
         self._rendered = key
         LOGGER.debug("Tema %s aplicado (%s)", self.theme.id, "escuro" if dark else "claro")
+
+    def _system_accent_palette(self) -> list[str] | None:
+        """The desktop's accent shades, or None to keep the theme's own accent.
+
+        Windows reports the exact shades. Other desktops report one accent
+        colour through libadwaita (GNOME's Appearance settings); without one
+        (older libadwaita, desktops with no accent setting) the theme keeps its
+        own.
+        """
+        if host.IS_WINDOWS:
+            return host.windows_accent_palette()
+        manager = self.style_manager
+        if not hasattr(manager, "get_system_supports_accent_colors"):
+            return None
+        if not manager.get_system_supports_accent_colors():
+            return None
+        rgba = manager.get_accent_color_rgba()
+        channels = (round(value * 255) for value in (rgba.red, rgba.green, rgba.blue))
+        return accent_shades("#" + "".join(f"{channel:02x}" for channel in channels))
 
     @staticmethod
     def _parsing_error(_provider, section, error) -> None:

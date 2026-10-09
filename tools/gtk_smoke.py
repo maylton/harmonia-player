@@ -258,6 +258,7 @@ def _drive(window, themes, log):
         ("gtk", "elementary"),
         ("gtk", "elementary-grape"),
         ("material", "Adwaita"),
+        ("fluent", "Adwaita"),
     )
     if host.SYSTEM_ICON_THEME:
         # No desktop icon theme to follow (Windows): "gtk" always shows the
