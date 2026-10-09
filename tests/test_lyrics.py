@@ -65,15 +65,48 @@ def test_lrclib_search_fallback_selects_closest_duration():
     assert document and document.display_text == "Certa"
 
 
-def test_resolver_falls_back_to_native_and_honors_provider():
-    class MissingLrcLib:
-        def lyrics(self, item, duration_ms):
-            return None
+class Missing:
+    def lyrics(self, item, duration_ms):
+        return None
 
-    resolver = LyricsResolver(lambda _video_id: "Letra nativa", MissingLrcLib())
+
+class Fixed:
+    def __init__(self, document=None, error=None):
+        self.document, self.error = document, error
+
+    def lyrics(self, item, duration_ms):
+        if self.error:
+            raise self.error
+        return self.document
+
+
+def test_resolver_falls_back_to_native_and_honors_provider():
+    resolver = LyricsResolver(lambda _video_id: "Letra nativa", Missing(), Missing())
     item = LibraryItem("v", "Faixa", "Artista")
     assert resolver.fetch(item).provider == "YouTube Music"
     assert resolver.fetch(item, provider="lrclib") is None
+    assert resolver.fetch(item, provider="lyricsplus") is None
+
+
+def test_resolver_prefers_lyrics_timed_by_word():
+    from harmonia.models import LyricLine, LyricsDocument, LyricWord
+
+    by_word = LyricsDocument(
+        "Um", "LyricsPlus", [LyricLine(0, "Um", words=(LyricWord(0, 500, "Um"),))]
+    )
+    by_line = LyricsDocument("Um", "LyricsPlus", [LyricLine(0, "Um")])
+    lrclib = LyricsDocument("Um", "LRCLIB", [LyricLine(0, "Um")])
+    item = LibraryItem("v", "Faixa", "Artista")
+
+    def native(_video_id):
+        return None
+
+    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_word)).fetch(item) is by_word
+    # LRCLIB wins over LyricsPlus timed by line; LyricsPlus fills in when LRCLIB fails.
+    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_line)).fetch(item) is lrclib
+    failing = Fixed(error=OSError("offline"))
+    assert LyricsResolver(native, failing, Fixed(by_line)).fetch(item) is by_line
+    assert LyricsResolver(native, Missing(), failing).fetch(item) is None
 
 
 def test_translation_preserves_line_mapping():

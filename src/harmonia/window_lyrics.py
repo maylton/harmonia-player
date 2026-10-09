@@ -11,6 +11,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
+from .gtk_lyric_words import LyricWordHighlighter
 from .i18n import _
 from .lyrics_state import (
     active_lyric_index,
@@ -19,10 +20,10 @@ from .lyrics_state import (
     lyrics_copy_text,
     next_lyrics_provider,
     remove_translation,
+    with_translations,
 )
 from .models import (
     LibraryItem,
-    LyricLine,
     LyricsDocument,
 )
 from .ui import (
@@ -123,7 +124,16 @@ class WindowLyricsMixin:
             self._render_lyrics(item, document)
         return False
 
+    def _lyric_words(self) -> LyricWordHighlighter:
+        highlighter = getattr(self, "_word_highlighter", None)
+        if highlighter is None:
+            highlighter = self._word_highlighter = LyricWordHighlighter(
+                lambda: self._playback_position_us() // 1000 + self.lyrics_offset_ms
+            )
+        return highlighter
+
     def _render_lyrics(self, item: LibraryItem, document: LyricsDocument) -> None:
+        self._lyric_words().clear()
         self.current_lyrics_document = document
         self._lyrics_item_id = item.id
         for view in self._lyric_views:
@@ -177,6 +187,7 @@ class WindowLyricsMixin:
                 lead.add_css_class("lyrics-breathing-space")
                 body.append(lead)
             rows: list[Gtk.Button] = []
+            texts: list[Gtk.Label] = []
             for line in document.synced:
                 row = Gtk.Button()
                 row.add_css_class("flat")
@@ -189,6 +200,7 @@ class WindowLyricsMixin:
                 original = Gtk.Label(label=line.text, xalign=0, wrap=True)
                 original.add_css_class("lyrics-line-text")
                 labels.append(original)
+                texts.append(original)
                 if line.translation:
                     translated = Gtk.Label(label=line.translation, xalign=0, wrap=True)
                     translated.add_css_class("lyrics-line-translation")
@@ -203,6 +215,7 @@ class WindowLyricsMixin:
             self._lyric_views.append(
                 {
                     "rows": rows,
+                    "texts": texts,
                     "expanded": expanded,
                     "body": body,
                     "scroll": None,
@@ -236,7 +249,12 @@ class WindowLyricsMixin:
             wrap_policy=Adw.WrapPolicy.NATURAL,
         )
         bar.add_css_class("lyrics-actions")
-        provider_names = {"auto": _("Automática"), "lrclib": "LRCLIB", "youtube": "YouTube"}
+        provider_names = {
+            "auto": _("Automática"),
+            "lyricsplus": "LyricsPlus",
+            "lrclib": "LRCLIB",
+            "youtube": "YouTube",
+        }
         provider = Gtk.Button(
             label=_("Fonte: {provider}").format(
                 provider=provider_names.get(self.lyrics_provider, _("Automática"))
@@ -342,10 +360,7 @@ class WindowLyricsMixin:
             )
             return False
         if document.synced:
-            document.synced = [
-                LyricLine(line.start_ms, line.text, result[index] if index < len(result) else "")
-                for index, line in enumerate(document.synced)
-            ]
+            document.synced = with_translations(document.synced, result)
         else:
             document.translation = "\n".join(result)
         document.translation_language = "pt"
@@ -377,6 +392,10 @@ class WindowLyricsMixin:
         if active == self._active_lyric_index:
             return
         self._active_lyric_index = active
+        self._lyric_words().follow(
+            document.synced[active] if active >= 0 else None,
+            [view["texts"][active] for view in self._lyric_views if active < len(view["texts"])],
+        )
         for view in self._lyric_views:
             for index, row in enumerate(view["rows"]):
                 set_css_class(row, "lyrics-line-active", index == active)

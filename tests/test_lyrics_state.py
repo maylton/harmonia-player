@@ -12,10 +12,25 @@ from harmonia.models import LyricLine, LyricsDocument
 def test_lyrics_provider_normalization_and_cycle() -> None:
     assert normalize_lyrics_provider("YOUTUBE") == "youtube"
     assert normalize_lyrics_provider("unknown") == "auto"
-    assert next_lyrics_provider("auto") == "lrclib"
+    assert normalize_lyrics_provider("LyricsPlus") == "lyricsplus"
+    assert next_lyrics_provider("auto") == "lyricsplus"
+    assert next_lyrics_provider("lyricsplus") == "lrclib"
     assert next_lyrics_provider("lrclib") == "youtube"
     assert next_lyrics_provider("youtube") == "auto"
-    assert next_lyrics_provider("invalid") == "lrclib"
+    assert next_lyrics_provider("invalid") == "lyricsplus"
+
+
+def test_translations_keep_the_words_of_each_line() -> None:
+    from harmonia.lyrics_state import remove_translation, with_translations
+    from harmonia.models import LyricWord
+
+    words = (LyricWord(1000, 1400, "One "), LyricWord(1400, 1900, "day"))
+    document = LyricsDocument("One day", "LyricsPlus", [LyricLine(1000, "One day", words=words)])
+    document.synced = with_translations(document.synced, ["Um dia"])
+    document.translation_language = "pt"
+    assert document.synced[0].translation == "Um dia" and document.synced[0].words == words
+    assert remove_translation(document)
+    assert document.synced[0].translation == "" and document.synced[0].words == words
 
 
 def test_lyrics_offset_is_clamped_and_seek_uses_the_same_offset_rule() -> None:

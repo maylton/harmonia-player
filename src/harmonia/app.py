@@ -20,6 +20,7 @@ from .gtk_theme import GtkThemeController
 from .gtk_video import GtkVideoMixin
 from .i18n import _
 from .lyrics import GoogleTranslationClient, LyricsResolver
+from .lyrics_state import normalize_lyrics_provider
 from .models import (
     HistoryEntry,
     LibraryItem,
@@ -111,9 +112,9 @@ class HarmoniaWindow(
         self._video_feature_init()
 
     def _load_lyrics_settings(self) -> None:
-        self.lyrics_provider = self.storage.get_setting("lyrics_provider", "auto")
-        if self.lyrics_provider not in {"auto", "lrclib", "youtube"}:
-            self.lyrics_provider = "auto"
+        self.lyrics_provider = normalize_lyrics_provider(
+            self.storage.get_setting("lyrics_provider", "auto")
+        )
         try:
             self.lyrics_offset_ms = int(self.storage.get_setting("lyrics_offset_ms", "0"))
         except ValueError:

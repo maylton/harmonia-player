@@ -7,7 +7,18 @@ QML = Path(__file__).resolve().parents[1] / "src" / "harmonia" / "qml"
 LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 TRANSLATED = re.compile(r'i18n\.n?trf?\(\s*$|i18n\.n?trf?\("(?:[^"\\]|\\.)*",\s*$')
 # Brand names, units and symbols stay the same in every language.
-UNTRANSLATED = {"YouTube Music", "YouTube", "LRCLIB", "AudD", "0:00", "0 ms", " ms", " st", "%"}
+UNTRANSLATED = {
+    "YouTube Music",
+    "YouTube",
+    "LRCLIB",
+    "LyricsPlus",
+    "AudD",
+    "0:00",
+    "0 ms",
+    " ms",
+    " st",
+    "%",
+}
 
 
 def _user_facing(text: str) -> bool:
