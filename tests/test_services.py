@@ -22,6 +22,17 @@ class MemoryStorage:
     def load_library(self):
         return self.library or {}
 
+    def pending_library_changes(self):
+        return getattr(self, "changes", [])
+
+    def forget_library_changes(self, changes):
+        self.forgotten = changes
+
+    def record_library_change(self, category, item, added):
+        from harmonia.library_sync import PendingChange
+
+        self.changes = [*getattr(self, "changes", []), PendingChange(category, item, added)]
+
 
 class FakeClient:
     authenticated = True
@@ -31,6 +42,9 @@ class FakeClient:
 
     def library(self, category):
         return [LibraryItem(category, category.title(), kind=category)]
+
+    def library_listing(self, category, max_pages=10):
+        return self.library(category), True
 
     def search_category(self, query, category, continuation=None):
         if category == "artists":
@@ -103,6 +117,29 @@ def test_optional_library_failure_preserves_cached_section():
     storage.library = {"podcasts": [LibraryItem("cached", "Em cache", kind="podcasts")]}
     result = YouTubeMusicService(storage, PartialClient).sync_library()
     assert result["podcasts"][0].id == "cached"
+
+
+def test_a_like_survives_the_sync_until_youtube_lists_it():
+    liked = LibraryItem("new-like", "Nova", kind="songs")
+    lagging = []
+
+    class LaggingClient(FakeClient):
+        def like_song(self, video_id, liked):
+            pass
+
+        def library(self, category):
+            listed = super().library(category)
+            return [*lagging, *listed] if category == "songs" else listed
+
+    storage = MemoryStorage()
+    service = YouTubeMusicService(storage, LaggingClient)
+    service.set_song_liked(liked, True)
+    result = service.sync_library()
+    assert [item.id for item in result["songs"]] == ["new-like", "songs"]
+    assert storage.forgotten == []  # YouTube does not list it yet
+    lagging.append(liked)
+    service.sync_library()
+    assert [change.item.id for change in storage.forgotten] == ["new-like"]
 
 
 def test_service_passes_connection_preferences_to_client():

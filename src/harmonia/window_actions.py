@@ -64,7 +64,7 @@ class WindowActionsMixin:
         self._mutate(
             verb,
             item.id,
-            lambda client: client.like_song(item.id, liked),
+            lambda client: self.youtube.set_song_liked(item, liked, client),
             message,
             lambda _r: self.sync(),
         )
@@ -102,7 +102,7 @@ class WindowActionsMixin:
         self._mutate(
             "subscribe-artist" if subscribed else "unsubscribe-artist",
             item.id,
-            lambda client: client.subscribe_artist(item.id, subscribed),
+            lambda client: self.youtube.set_artist_subscribed(item, subscribed, client),
             message,
             lambda _r: self.sync(),
         )
@@ -342,7 +342,7 @@ class WindowActionsMixin:
                 and self._mutate(
                     "delete-playlist",
                     item.id,
-                    lambda client: client.delete_playlist(item.id),
+                    lambda client: self.youtube.delete_playlist(item, client),
                     _("Playlist excluída"),
                     lambda _r: (self.show_library(), self.sync()),
                 )

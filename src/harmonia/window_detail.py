@@ -212,7 +212,7 @@ class WindowDetailMixin:
         self._mutate(
             "subscribe-artist" if subscribed else "unsubscribe-artist",
             item.id,
-            lambda client: client.subscribe_artist(item.id, subscribed),
+            lambda client: self.youtube.set_artist_subscribed(item, subscribed, client),
             _("Inscrição realizada") if subscribed else _("Inscrição cancelada"),
             completed,
         )
@@ -603,7 +603,7 @@ class WindowDetailMixin:
         self._mutate(
             "like-collection" if save else "unlike-collection",
             playlist_id,
-            lambda client: client.like_playlist(playlist_id, save),
+            lambda client: self.youtube.set_collection_saved(item, playlist_id, save, client),
             message,
             done,
         )

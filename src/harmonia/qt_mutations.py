@@ -79,7 +79,7 @@ class QtMutationController(QObject):
         self._run(
             "like-song" if liked else "unlike-song",
             item.id,
-            lambda: self.youtube.mutate(lambda client: client.like_song(item.id, liked)),
+            lambda: self.youtube.set_song_liked(item, liked),
             _("Música adicionada à biblioteca") if liked else _("Música removida da biblioteca"),
             self.sync_library,
         )
@@ -88,9 +88,7 @@ class QtMutationController(QObject):
         self._run(
             "subscribe-artist" if subscribed else "unsubscribe-artist",
             item.id,
-            lambda: self.youtube.mutate(
-                lambda client: client.subscribe_artist(item.id, subscribed)
-            ),
+            lambda: self.youtube.set_artist_subscribed(item, subscribed),
             _("Inscrição realizada") if subscribed else _("Inscrição cancelada"),
             self.sync_library,
         )
@@ -113,7 +111,7 @@ class QtMutationController(QObject):
         self._run(
             "like-collection" if saved else "unlike-collection",
             playlist_id,
-            lambda: self.youtube.mutate(lambda client: client.like_playlist(playlist_id, saved)),
+            lambda: self.youtube.set_collection_saved(item, playlist_id, saved),
             _("Adicionado à biblioteca") if saved else _("Removido da biblioteca"),
             self.sync_library,
         )
@@ -161,7 +159,7 @@ class QtMutationController(QObject):
         self._run(
             "delete-playlist",
             item.id,
-            lambda: self.youtube.mutate(lambda client: client.delete_playlist(item.id)),
+            lambda: self.youtube.delete_playlist(item),
             _("Playlist excluída"),
             completed,
         )
