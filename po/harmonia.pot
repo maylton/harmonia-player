@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:18-0300\n"
+"POT-Creation-Date: 2026-10-09 18:30-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,34 +197,34 @@ msgstr ""
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:376
+#: src/harmonia/innertube/client.py:392
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:475
+#: src/harmonia/innertube/client.py:491
 msgid "A faixa não contém um identificador reproduzível."
 msgstr ""
 
-#: src/harmonia/innertube/client.py:534
+#: src/harmonia/innertube/client.py:550
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:591
+#: src/harmonia/innertube/client.py:607
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:614
+#: src/harmonia/innertube/client.py:630
 msgid "O nome da playlist não pode ficar vazio"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:621
+#: src/harmonia/innertube/client.py:637
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr ""
 
-#: src/harmonia/innertube/client.py:644
+#: src/harmonia/innertube/client.py:660
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr ""
@@ -365,8 +365,8 @@ msgid "Letra traduzida."
 msgstr ""
 
 #: src/harmonia/qt_backend.py:308 src/harmonia/qt_backend.py:1246
-#: src/harmonia/qt_catalog.py:58 src/harmonia/qt_catalog.py:118
-#: src/harmonia/qt_catalog.py:496 src/harmonia/window_chrome/navigation.py:18
+#: src/harmonia/qt_catalog.py:60 src/harmonia/qt_catalog.py:121
+#: src/harmonia/qt_catalog.py:526 src/harmonia/window_chrome/navigation.py:18
 #: src/harmonia/window_home.py:34
 msgid "Explorar"
 msgstr ""
@@ -407,63 +407,76 @@ msgstr ""
 msgid "Conta desconectada."
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:93
+#: src/harmonia/qt_catalog.py:96
 msgid "Sincronizando biblioteca, Início e Explorar…"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:111 src/harmonia/window_account.py:179
+#: src/harmonia/qt_catalog.py:114 src/harmonia/window_account.py:179
 #, python-brace-format
 msgid "Não foi possível sincronizar: {error}"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:165
+#: src/harmonia/qt_catalog.py:172
 #, python-brace-format
 msgid "Pesquisando por “{query}”…"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:183
+#: src/harmonia/qt_catalog.py:187 src/harmonia/window_search.py:139
+msgid "Link do YouTube"
+msgstr ""
+
+#: src/harmonia/qt_catalog.py:202 src/harmonia/window_search.py:158
+#, python-brace-format
+msgid "Não foi possível abrir o link: {error}"
+msgstr ""
+
+#: src/harmonia/qt_catalog.py:203 src/harmonia/window_search.py:159
+msgid "faixa não encontrada"
+msgstr ""
+
+#: src/harmonia/qt_catalog.py:213
 #, python-brace-format
 msgid "Não foi possível pesquisar: {error}"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:189
+#: src/harmonia/qt_catalog.py:219
 msgid "Algumas categorias da busca não puderam ser carregadas."
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:207
+#: src/harmonia/qt_catalog.py:237
 #, python-brace-format
 msgid "Carregando mais {title}…"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:232 src/harmonia/window_search.py:266
+#: src/harmonia/qt_catalog.py:262 src/harmonia/window_search.py:304
 #, python-brace-format
 msgid "Não foi possível carregar mais resultados: {error}"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:288
+#: src/harmonia/qt_catalog.py:318
 #, python-brace-format
 msgid "{count} faixa · playlist local"
 msgid_plural "{count} faixas · playlist local"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/qt_catalog.py:296
+#: src/harmonia/qt_catalog.py:326
 msgid "Playlist armazenada somente neste computador."
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:315 src/harmonia/qt_catalog.py:416
-#: src/harmonia/qt_catalog.py:463 src/harmonia/window_detail.py:68
+#: src/harmonia/qt_catalog.py:345 src/harmonia/qt_catalog.py:446
+#: src/harmonia/qt_catalog.py:493 src/harmonia/window_detail.py:68
 #: src/harmonia/window_detail.py:233 src/harmonia/window_home.py:111
 #, python-brace-format
 msgid "Carregando {title}…"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:337 src/harmonia/qt_catalog.py:481
+#: src/harmonia/qt_catalog.py:367 src/harmonia/qt_catalog.py:511
 #, python-brace-format
 msgid "Não foi possível abrir {title}: {error}"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:441
+#: src/harmonia/qt_catalog.py:471
 #, python-brace-format
 msgid "Não foi possível carregar a seção: {error}"
 msgstr ""
@@ -721,47 +734,47 @@ msgstr ""
 msgid "Música removida da biblioteca"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:94 src/harmonia/window_actions.py:101
+#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:101
 #: src/harmonia/window_detail.py:216
 msgid "Inscrição realizada"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:94 src/harmonia/window_actions.py:101
+#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:101
 #: src/harmonia/window_detail.py:216
 msgid "Inscrição cancelada"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:111
+#: src/harmonia/qt_mutations.py:109
 msgid "O YouTube Music não informou como salvar este item."
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:596
+#: src/harmonia/qt_mutations.py:115 src/harmonia/window_detail.py:596
 msgid "Adicionado à biblioteca"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:117 src/harmonia/window_detail.py:596
+#: src/harmonia/qt_mutations.py:115 src/harmonia/window_detail.py:596
 msgid "Removido da biblioteca"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:129 src/harmonia/window_actions.py:129
+#: src/harmonia/qt_mutations.py:127 src/harmonia/window_actions.py:129
 msgid "Playlist criada"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:152 src/harmonia/window_actions.py:321
+#: src/harmonia/qt_mutations.py:150 src/harmonia/window_actions.py:321
 msgid "Playlist renomeada"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:165 src/harmonia/window_actions.py:346
+#: src/harmonia/qt_mutations.py:163 src/harmonia/window_actions.py:346
 msgid "Playlist excluída"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:176 src/harmonia/window_actions.py:382
+#: src/harmonia/qt_mutations.py:174 src/harmonia/window_actions.py:382
 #: src/harmonia/window_actions.py:389
 #, python-brace-format
 msgid "Adicionada a {title}"
 msgstr ""
 
-#: src/harmonia/qt_mutations.py:195 src/harmonia/window_actions.py:402
+#: src/harmonia/qt_mutations.py:193 src/harmonia/window_actions.py:402
 msgid "Faixa removida da playlist"
 msgstr ""
 
@@ -2632,39 +2645,39 @@ msgstr ""
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr ""
 
-#: src/harmonia/window_search.py:112
+#: src/harmonia/window_search.py:118
 msgid "Buscando…"
 msgstr ""
 
-#: src/harmonia/window_search.py:148
+#: src/harmonia/window_search.py:186
 msgid "Não foi possível buscar"
 msgstr ""
 
-#: src/harmonia/window_search.py:154
+#: src/harmonia/window_search.py:192
 msgid " Algumas categorias não puderam ser consultadas."
 msgstr ""
 
-#: src/harmonia/window_search.py:157
+#: src/harmonia/window_search.py:195
 msgid "Nenhum resultado"
 msgstr ""
 
-#: src/harmonia/window_search.py:158
+#: src/harmonia/window_search.py:196
 #, python-brace-format
 msgid "Nada encontrado para “{query}”"
 msgstr ""
 
-#: src/harmonia/window_search.py:166
+#: src/harmonia/window_search.py:204
 #, python-brace-format
 msgid "Resultados para “{query}”"
 msgstr ""
 
-#: src/harmonia/window_search.py:170
+#: src/harmonia/window_search.py:208
 msgid ""
 "Algumas categorias não puderam ser carregadas; os resultados disponíveis "
 "foram preservados."
 msgstr ""
 
-#: src/harmonia/window_search.py:217
+#: src/harmonia/window_search.py:255
 #, python-brace-format
 msgid "Carregar mais {category}"
 msgstr ""

@@ -355,6 +355,16 @@ class InnerTubeClient:
         payload = self._api_post("next", {"videoId": video_id}, authenticated=True)
         return find_video_counterpart(payload)
 
+    def watch_item(self, video_id: str) -> LibraryItem | None:
+        """The track or video behind a video id, as the player's queue shows it."""
+        if not video_id:
+            return None
+        payload = self._api_post("next", {"videoId": video_id}, authenticated=self.authenticated)
+        return next(
+            (item for item in parse_watch_queue(payload, audio_only=False) if item.id == video_id),
+            None,
+        )
+
     def radio(self, video_id: str, limit: int = 50) -> list[LibraryItem]:
         """Build YouTube Music's automatic radio queue from a seed track."""
         if not video_id:

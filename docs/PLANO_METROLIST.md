@@ -143,8 +143,10 @@ vinha logo depois, porque o YouTube demora a listá-la.
 
 Cada item é independente e pode virar um commit separado.
 
-- [ ] **Colar link na busca** (`youtube_links.py`): reconhece links de
-  música, vídeo, playlist, álbum e artista e abre ou toca direto.
+- [x] **Colar link na busca** (`youtube_links.py`): links de música, vídeo,
+  Shorts, youtu.be, playlist, álbum e canal de artista. Música e vídeo tocam
+  direto (`InnerTubeClient.watch_item`, que funciona até sem login); os
+  outros abrem a página. GTK e KDE.
 - [ ] **Posição ao adicionar à playlist**: início ou fim, com preferência.
 - [ ] **Velocidade e tom juntos**: opção que muda os dois ao mesmo tempo, como
   um disco mais rápido.

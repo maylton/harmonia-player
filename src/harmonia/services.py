@@ -170,6 +170,9 @@ class YouTubeMusicService:
     def mutate(self, operation):
         return operation(self.client())
 
+    def watch_item(self, video_id: str) -> LibraryItem | None:
+        return self.client().watch_item(video_id)
+
     def radio(self, video_id: str) -> list[LibraryItem]:
         return self.client().radio(video_id)
 
