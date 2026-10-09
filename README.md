@@ -51,7 +51,7 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 
 ## Running from source
 
-Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita 1.7 or later (for `Adw.WrapBox`), and WebKitGTK 6. Distributions that ship an older libadwaita, such as elementary OS 8 and other Ubuntu 24.04-based systems, should use the Flatpak build. The KDE frontend requires PySide6, Kirigami, and Qt WebEngine from a compatible Qt/KDE stack.
+Harmonia requires Python 3.11 or later, PyGObject, GStreamer 1.0 with audio plugins, and libsecret. The GTK frontend additionally requires GTK 4, libadwaita 1.7 or later (for `Adw.WrapBox`), and WebKitGTK 6. Distributions that ship an older libadwaita, such as elementary OS 8 and other Ubuntu 24.04-based systems, should use the Flatpak build, which the installer picks for them. The KDE frontend requires PySide6, Kirigami, and Qt WebEngine from a compatible Qt/KDE stack.
 
 ```bash
 PYTHONPATH=src python3 -m harmonia
@@ -86,11 +86,16 @@ meson compile -C build-user
 meson install -C build-user
 ```
 
+To keep the code out of the interpreter's versioned `site-packages` (as the
+.deb and .rpm do), add `-Dprivate_python=true`; it goes to
+`<prefix>/share/harmonia/python` and the `harmonia` launcher finds it there.
+
 ## Installing on Linux
 
-The portable installer detects Flatpak, configures Flathub for the current user,
-downloads the official bundle, verifies its SHA-256 checksum, and installs the
-required runtime automatically:
+Each release publishes a `.deb` (Debian, Ubuntu and derivatives), a `.rpm`
+(Fedora and other DNF distributions) and a Flatpak bundle, with SHA-256
+checksums. The installer downloads the latest release and picks the format
+that suits the system:
 
 ```bash
 curl -fLO https://raw.githubusercontent.com/maylton/harmonia-player/main/install.sh
@@ -98,19 +103,20 @@ chmod +x install.sh
 ./install.sh --run
 ```
 
-Inspecting a downloaded script before running it is recommended. Use
-`./install.sh --help` for system-wide, local-bundle, and uninstall options. The
-installer supports distributions based on APT, DNF/YUM, Zypper, Pacman, APK,
-XBPS, and eopkg when Flatpak itself still needs to be installed.
+- **.deb or .rpm** when the distribution's libadwaita is 1.7 or newer (Ubuntu
+  25.04+, Debian 13, Fedora 42+): installed with apt or dnf, which pull in the
+  dependencies;
+- **Flatpak** otherwise, for example on Ubuntu 24.04 or elementary OS 8: it
+  brings its own GNOME runtime from Flathub;
+- `--method deb|rpm|flatpak|source` chooses one; `source` builds the release
+  with Meson into `~/.local` (or `/usr/local` with `--system`).
 
-To install a bundle downloaded manually from the corresponding GitHub release:
-
-```bash
-./install.sh --bundle ./Harmonia-0.1.0-beta.1-x86_64.flatpak --run
-```
-
-The bundle includes both Brazilian Portuguese and English translations. The
-GNOME runtime is resolved separately by Flatpak.
+Switching from the Flatpak to a native package offers to remove the Flatpak
+and carries over your settings and library cache; the YouTube Music session
+lives in the keyring and is kept either way. Inspecting a downloaded script
+before running it is recommended. `./install.sh --help` lists every option,
+including `--release X`, `--package FILE` for a downloaded package, and
+`--uninstall`, which removes Harmonia whichever way it was installed.
 
 ## Translations
 
