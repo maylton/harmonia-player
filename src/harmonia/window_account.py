@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib
 import logging
 import threading
+import urllib.request
+from pathlib import Path
 
 import gi
 
@@ -199,3 +201,65 @@ class WindowAccountMixin:
             )
         )
         return False
+
+    def _show_account_avatar_file(self, path: Path, request_id: int) -> bool:
+        if request_id != self._account_avatar_request or not path.exists():
+            return GLib.SOURCE_REMOVE
+        self.account_avatar_picture.set_filename(str(path))
+        self.account_avatar_picture.set_opacity(1)
+        self.account_avatar_fallback.set_opacity(0)
+        return GLib.SOURCE_REMOVE
+
+    def _load_account_avatar(self, url: str) -> None:
+        self._account_avatar_request += 1
+        request_id = self._account_avatar_request
+        if not url:
+            self.account_avatar_picture.set_opacity(0)
+            self.account_avatar_picture.set_filename(None)
+            self.account_avatar_fallback.set_opacity(1)
+            self.account_button.set_tooltip_text(_("Conta"))
+            return
+        target = self.storage.artwork_path(url)
+        if target.exists():
+            self._show_account_avatar_file(target, request_id)
+            return
+
+        def worker() -> None:
+            try:
+                request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(request, timeout=15) as response:
+                    data = response.read(2 * 1024 * 1024)
+                target.write_bytes(data)
+                GLib.idle_add(self._show_account_avatar_file, target, request_id)
+            except Exception:
+                LOGGER.debug("Não foi possível baixar o avatar da conta", exc_info=True)
+
+        threading.Thread(target=worker, daemon=True, name="account-avatar-image").start()
+
+    def _refresh_account_avatar(self) -> None:
+        if not self.storage.load_cookie():
+            self._clear_account_avatar()
+            return
+
+        def worker() -> None:
+            try:
+                profile = self.youtube.account_profile()
+                GLib.idle_add(self._account_profile_loaded, profile)
+            except Exception:
+                LOGGER.debug(
+                    "Não foi possível atualizar o perfil; mantendo o avatar em cache",
+                    exc_info=True,
+                )
+
+        threading.Thread(target=worker, daemon=True, name="account-profile").start()
+
+    def _account_profile_loaded(self, profile) -> bool:
+        avatar = profile.thumbnail or ""
+        self.storage.set_setting("account_avatar_url", avatar)
+        self.account_button.set_tooltip_text(_("Conta — {name}").format(name=profile.name))
+        self._load_account_avatar(avatar)
+        return GLib.SOURCE_REMOVE
+
+    def _clear_account_avatar(self) -> None:
+        self.storage.set_setting("account_avatar_url", "")
+        self._load_account_avatar("")

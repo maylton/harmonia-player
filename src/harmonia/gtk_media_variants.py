@@ -3,11 +3,17 @@ from __future__ import annotations
 import logging
 import threading
 
-from gi.repository import GLib, Gst
+import gi
 
-from .i18n import _
-from .media_variants import IndependentVideoPlayback, is_independent_video_variant
-from .ui import deliver_to_main
+gi.require_version("Gst", "1.0")
+from gi.repository import GLib, Gst  # noqa: E402
+
+from .i18n import _  # noqa: E402
+from .media_variants import (  # noqa: E402
+    IndependentVideoPlayback,
+    is_independent_video_variant,
+)
+from .ui import deliver_to_main  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
