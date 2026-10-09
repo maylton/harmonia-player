@@ -15,11 +15,11 @@ from typing import Any
 from .i18n import _
 from .innertube import (
     ORIGIN,
-    PLAYER_CLIENTS,
     InnerTubeClient,
     InnerTubeError,
     stream_expiration,
 )
+from .innertube.player_clients import CATALOG
 from .models import LibraryItem
 
 
@@ -327,7 +327,9 @@ def resolve_video_stream(
     with suppress(InnerTubeError):
         client._bootstrap()
 
-    for profile in PLAYER_CLIENTS:
+    # The published list's profiles too; video needs other formats than audio,
+    # so its outcomes are not counted in the clients' health.
+    for profile in CATALOG.profiles():
         try:
             payload = client.player_response(video_id, profile)
         except InnerTubeError as exc:

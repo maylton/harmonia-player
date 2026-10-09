@@ -16,6 +16,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
 - Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início;
 - Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF;
+- corrigido: o vídeo de algumas faixas dizia que a sessão tinha expirado mesmo com a conta funcionando;
+- streaming mais resistente: os perfis de cliente do YouTube podem ser atualizados pelo repositório sem nova versão, e o cliente que funcionou por último é tentado primeiro;
 - escolha do canal do YouTube Music (pessoal ou de marca) em Preferências > Conta, quando o login tem mais de um;
 - backup automático do banco de dados quando o Harmonia é atualizado (os três últimos ficam guardados), e restaurar um backup de uma versão antiga recria as tabelas novas;
 - perfis do AutoEQ no equalizador: importe o ParametricEQ, o FixedBandEQ ou o GraphicEQ do seu fone em Preferências > Áudio, e ele vira uma opção do equalizador;

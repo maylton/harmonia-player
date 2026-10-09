@@ -47,6 +47,7 @@ from .parsers import (
     parse_search_suggestions,
     parse_watch_queue,
 )
+from .player_clients import CATALOG
 from .protocol import (
     API_URL,
     CLIENT_ID,
@@ -54,7 +55,6 @@ from .protocol import (
     CLIENT_VERSION,
     LIBRARIES,
     ORIGIN,
-    PLAYER_CLIENTS,
     SEARCH_FILTER_SONGS,
     SEARCH_FILTERS,
     SEARCH_TITLES,
@@ -460,7 +460,7 @@ class InnerTubeClient:
         return list(unique.values())
 
     def player_response(self, video_id: str, profile: dict[str, Any]) -> dict[str, Any]:
-        """POST /player as one of PLAYER_CLIENTS, retrying transient failures once.
+        """POST /player as one client profile (player_clients.py), retrying transient failures once.
 
         Raises InnerTubeError with a short reason when no response is obtained.
         """
@@ -533,11 +533,12 @@ class InnerTubeClient:
         failures: list[str] = []
         with suppress(InnerTubeError):
             self._bootstrap()
-        for profile in PLAYER_CLIENTS:
+        for profile in CATALOG.profiles():
             try:
                 payload = self.player_response(video_id, profile)
             except InnerTubeError as exc:
                 failures.append(f"{profile['name']}: {exc}")
+                CATALOG.record(profile["name"], ok=False)
                 continue
             status = payload.get("playabilityStatus", {})
             formats = (payload.get("streamingData") or {}).get("adaptiveFormats") or []
@@ -573,10 +574,14 @@ class InnerTubeClient:
                 )
                 with _STREAM_CACHE_LOCK:
                     _STREAM_CACHE[cache_key] = stream
+                CATALOG.record(profile["name"], ok=True)
                 return stream
             failures.append(
                 f"{profile['name']}: {status.get('reason') or status.get('status') or 'sem stream direto'}"
             )
+            # A track the client cannot play (age, region) says little of its health.
+            if status.get("status") == "OK":
+                CATALOG.record(profile["name"], ok=False)
         raise InnerTubeError(
             _("Não foi possível obter um stream reproduzível. {details}").format(
                 details="; ".join(failures)
