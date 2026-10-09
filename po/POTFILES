@@ -37,6 +37,7 @@ src/harmonia/settings_page/audio.py
 src/harmonia/settings_page/equalizer.py
 src/harmonia/settings_page/identity.py
 src/harmonia/settings_page/library.py
+src/harmonia/settings_page/optional.py
 src/harmonia/settings_page/social.py
 src/harmonia/settings_page/streaming.py
 src/harmonia/social.py
@@ -50,6 +51,7 @@ src/harmonia/window_actions.py
 src/harmonia/window_artist.py
 src/harmonia/window_artwork.py
 src/harmonia/window_autoplay.py
+src/harmonia/window_cast.py
 src/harmonia/window_chrome/expanded_player.py
 src/harmonia/window_chrome/header.py
 src/harmonia/window_chrome/navigation.py
@@ -72,3 +74,4 @@ src/harmonia/window_preferences.py
 src/harmonia/window_search.py
 src/harmonia/window_shelves.py
 src/harmonia/window_social.py
+src/harmonia/window_together.py
