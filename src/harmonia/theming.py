@@ -140,6 +140,30 @@ def fluent_accent(palette: list[str] | None, *, dark: bool) -> dict[str, str] | 
     return {"accent_bg": palette[4], "accent_fg": "#ffffff", "accent": palette[5]}
 
 
+def accent_shades(color: str) -> list[str]:
+    """Fluent's seven accent shades (Light3 ... Dark3) derived from one colour.
+
+    Windows provides these shades itself; other desktops give a single accent
+    colour, so the lighter ones mix it with white and the darker ones with
+    black, in the proportions of Windows' default blue palette.
+    """
+    red, green, blue = (int(color.lstrip("#")[index : index + 2], 16) for index in (0, 2, 4))
+
+    def mix(target: int, amount: float) -> str:
+        channels = (round(value + (target - value) * amount) for value in (red, green, blue))
+        return "#" + "".join(f"{channel:02x}" for channel in channels)
+
+    return [
+        mix(255, 0.65),
+        mix(255, 0.45),
+        mix(255, 0.25),
+        mix(0, 0.0),
+        mix(0, 0.25),
+        mix(0, 0.45),
+        mix(0, 0.6),
+    ]
+
+
 def accent_preset(name: str, *, dark: bool) -> dict[str, str] | None:
     preset = ACCENT_PRESETS.get(name)
     if not preset:

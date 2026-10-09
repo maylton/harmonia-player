@@ -74,20 +74,65 @@ def test_builtin_themes_load_with_the_default_first():
     assert get_theme("does-not-exist").id == DEFAULT_THEME
 
 
-def test_windows_11_theme_is_offered_only_on_windows(monkeypatch):
+def test_windows_11_theme_is_offered_on_linux_and_windows(monkeypatch):
     from harmonia import host
 
-    assert theme_catalog()["windows11"].platforms == ("windows",)
-    monkeypatch.setattr(host, "PLATFORM", "linux")
-    assert "windows11" not in builtin_themes()
-    assert get_theme("windows11").id == DEFAULT_THEME
-    saved = Preferences.load(MemoryStorage({"theme": "windows11"}))
-    assert saved.theme == DEFAULT_THEME
+    for platform in ("linux", "windows"):
+        monkeypatch.setattr(host, "PLATFORM", platform)
+        assert "windows11" in builtin_themes()
+        assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "windows11"
 
+
+def test_platform_specific_themes_are_only_offered_on_their_platform(monkeypatch):
+    from harmonia import host
+
+    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    theme = Theme.from_dict({**data, "platforms": ["windows"]})
+    monkeypatch.setattr(host, "PLATFORM", "linux")
+    assert not theme.available
     monkeypatch.setattr(host, "PLATFORM", "windows")
-    assert "windows11" in builtin_themes()
-    assert get_theme("windows11").id == "windows11"
-    assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "windows11"
+    assert theme.available
+
+
+def test_a_single_desktop_accent_becomes_fluent_shades():
+    from harmonia.theming import accent_shades
+
+    shades = accent_shades("#3584e4")  # GNOME's blue
+    assert len(shades) == 7 and shades[3] == "#3584e4"
+    assert shades[0] > shades[1] > shades[2] > shades[3] > shades[4] > shades[5] > shades[6]
+    # Dark mode fills with a light shade under black text, light mode with a
+    # dark one under white text, as with the Windows palette.
+    assert fluent_accent(shades, dark=True)["accent_bg"] == shades[1]
+    assert fluent_accent(shades, dark=False)["accent_fg"] == "#ffffff"
+
+
+def test_linux_uses_the_desktop_accent_only_when_the_desktop_has_one(monkeypatch):
+    from types import SimpleNamespace
+
+    from harmonia import host
+    from harmonia.gtk_theme import GtkThemeController
+
+    class Manager:
+        supports = True
+
+        def get_system_supports_accent_colors(self):
+            return self.supports
+
+        def get_accent_color_rgba(self):
+            return SimpleNamespace(red=0x35 / 255, green=0x84 / 255, blue=0xE4 / 255)
+
+    monkeypatch.setattr(host, "IS_WINDOWS", False)
+    controller = GtkThemeController.__new__(GtkThemeController)
+    controller.style_manager = Manager()
+    assert controller._system_accent_palette()[3] == "#3584e4"
+    controller.style_manager.supports = False
+    assert controller._system_accent_palette() is None
+
+
+def test_fluent_icons_are_an_icon_style_everywhere():
+    saved = Preferences.load(MemoryStorage({"icon_style": "fluent"}))
+    assert saved.icon_style == "fluent"
+    assert Preferences.ICON_STYLES["fluent"] == "HarmoniaFluent"
 
 
 def test_platform_names_are_validated():
