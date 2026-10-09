@@ -108,3 +108,35 @@ Ainda isentos dos limites de tamanho no `pyproject.toml`: `downloads.py` e
 5. `window_detail.py`, `window_optional.py`, `window_lyrics.py` e `app.py`.
 6. No Linux, com o app KDE aberto: `qt_backend.py` por página e as telas que
    faltam no QML.
+
+## Progresso (9 de outubro de 2026, `7e0e45c`)
+
+Passos 1 a 5 feitos, cada um com o gate (ruff + 427 testes) e o smoke do GTK
+na área de trabalho invisível:
+
+| Passo | Resultado | Commits |
+|---|---|---|
+| 1. Timer do vídeo | Só existe enquanto um vídeo toca, nos dois frontends | `18f4492` |
+| 2. `qt_integrations.py` | 795 → 327 linhas: fachada sobre `qt_lastfm`, `qt_discord`, `qt_together`, `qt_recognition` e `qt_cast`; o QML não mudou | `2f2c1b7`, `6e971d2` |
+| 3. `window_playback.py`, `window_library.py` | 745 → 495 e 797 → 332: fila em `queue_view.py`, `window_autoplay`, `window_playback_recovery`, `window_artwork`, `window_shelves`, `window_local_playlists` | `c63f3b5`, `67ce716`, `82d080b` |
+| 4. `innertube/client.py` | 723 → 289: `session.py`, `streams.py`, `edits.py`; conferido na API real | `537b403` |
+| 5. `window_detail`, `window_optional`, `window_lyrics`, `app.py` | 708 → 235, 508 → 112, 501 → 227, 526 → 327 (a janela define só 8 métodos, todos de construção) | `1e9599c`, `d662db3`, `9cfc0c5`, `7e0e45c` |
+
+Também corrigido no caminho: três textos fora do gettext ("Inscrever-se",
+a duração total do álbum e "Sincronia 0 ms") e o `Gst` importado sem versão
+em `gtk_media_variants.py`.
+
+Dívida de lint: `window_detail`, `window_library` e `window_optional` saíram
+da lista; restam `downloads.py`, `video.py` e `tools/gtk_smoke.py`.
+
+Arquivos acima de 500 linhas: de 13 para 5, todos do vídeo ou do KDE
+(`qt_backend` 1.258, `qt_video` 672, `gtk_video` 615, `qt_playback` 602,
+`qt_catalog` 560).
+
+Ainda aberto:
+
+- O acoplamento do item 2 não diminuiu: são 64 `getattr(self, …)`, a maioria
+  em `gtk_media_variants.py` (14), `gtk_video.py` (9) e
+  `window_preferences.py` (8). As divisões moveram métodos sem trocar esses
+  acessos.
+- Passo 6, que precisa do Linux com o app KDE.
