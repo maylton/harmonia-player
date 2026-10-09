@@ -5,6 +5,7 @@ from typing import ClassVar
 
 from .crossfade import clamp_seconds
 from .loudness import DEFAULT_LEVEL, LEVELS
+from .playlist_position import DEFAULT_POSITION, POSITIONS
 from .theming import ACCENTS, DEFAULT_THEME, VARIANTS, builtin_themes
 
 
@@ -23,6 +24,7 @@ class Preferences:
     speed_pitch_linked: bool = False
     skip_silence: bool = False
     crossfade: int = 0  # seconds; 0 is off
+    playlist_add_position: str = DEFAULT_POSITION  # "end" or "start"
     background_blur: bool = False
     icon_style: str = "gtk"
     theme: str = DEFAULT_THEME
@@ -73,6 +75,7 @@ class Preferences:
         accent = storage.get_setting("accent", "theme")
         backdrop = storage.get_setting("backdrop", "mica")
         normalization_level = storage.get_setting("normalization_level", DEFAULT_LEVEL)
+        position = storage.get_setting("playlist_add_position", DEFAULT_POSITION)
         return cls(
             language=storage.get_setting("language", "pt-BR"),
             region=storage.get_setting("region", "BR"),
@@ -88,6 +91,7 @@ class Preferences:
             speed_pitch_linked=boolean("speed_pitch_linked", False),
             skip_silence=boolean("skip_silence", False),
             crossfade=clamp_seconds(storage.get_setting("crossfade", "0")),
+            playlist_add_position=position if position in POSITIONS else DEFAULT_POSITION,
             background_blur=boolean("background_blur", False),
             icon_style=icon_style if icon_style in cls.ICON_STYLES else "gtk",
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
@@ -123,6 +127,7 @@ class Preferences:
             "speed_pitch_linked": "1" if self.speed_pitch_linked else "0",
             "skip_silence": "1" if self.skip_silence else "0",
             "crossfade": str(self.crossfade),
+            "playlist_add_position": self.playlist_add_position,
             "background_blur": "1" if self.background_blur else "0",
             "icon_style": self.icon_style,
             "theme": self.theme,

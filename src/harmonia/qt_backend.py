@@ -13,6 +13,7 @@ from .downloads import DownloadManager
 from .i18n import _
 from .models import ExploreData, LibraryItem
 from .mpris import MprisService
+from .playlist_position import with_item
 from .qt_activity import QtHistoryController, QtLyricsController
 from .qt_catalog import QtCatalogController
 from .qt_library import QtLibraryController
@@ -924,8 +925,9 @@ class HarmoniaQtBackend(QObject):
         except (TypeError, ValueError):
             return
         playlist = self.storage.get_local_playlist(playlist_id)
+        position = self.settings.values.playlist_add_position
         if playlist and all(value.id != item.id for value in playlist.items):
-            playlist.items.append(item)
+            playlist.items = with_item(playlist.items, item, position)
             self.storage.save_local_playlist(playlist)
             self.libraryChanged.emit()
             self._set_status(_("Adicionada a {title}.").format(title=playlist.title))

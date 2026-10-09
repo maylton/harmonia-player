@@ -16,6 +16,7 @@ from .models import (
     LibraryItem,
     LocalPlaylist,
 )
+from .playlist_position import with_item
 from .ui import (
     set_icon_selected,
 )
@@ -375,8 +376,10 @@ class WindowActionsMixin:
             if name == "add":
                 source, playlist = choices[dropdown.get_selected()]
                 if source == "local":
-                    if all(item.id != song.id for item in playlist.items):
-                        playlist.items.append(song)
+                    position = self.preferences.playlist_add_position
+                    updated = with_item(playlist.items, song, position)
+                    if len(updated) != len(playlist.items):
+                        playlist.items = updated
                         self.storage.save_local_playlist(playlist)
                     self.toast_overlay.add_toast(
                         Adw.Toast(title=_("Adicionada a {title}").format(title=playlist.title))
@@ -385,7 +388,7 @@ class WindowActionsMixin:
                     self._mutate(
                         "add-to-playlist",
                         song.id,
-                        lambda client: client.add_to_playlist(playlist.id, song.id),
+                        lambda client: self.youtube.add_to_playlist(playlist.id, song.id, client),
                         _("Adicionada a {title}").format(title=playlist.title),
                     )
 

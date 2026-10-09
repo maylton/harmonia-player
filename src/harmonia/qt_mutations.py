@@ -168,9 +168,7 @@ class QtMutationController(QObject):
         self._run(
             "add-to-playlist",
             song.id,
-            lambda: self.youtube.mutate(
-                lambda client: client.add_to_playlist(playlist.id, song.id)
-            ),
+            lambda: self.youtube.add_to_playlist(playlist.id, song.id),
             _("Adicionada a {title}").format(title=playlist.title),
         )
 

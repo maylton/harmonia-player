@@ -31,6 +31,7 @@ from ..models import (
     SearchGroup,
     StreamInfo,
 )
+from ..playlist_position import added_set_video_id, move_before_action
 from .parsers import (
     find_browse_endpoint,
     find_continuation,
@@ -637,8 +638,8 @@ class InnerTubeClient:
             raise InnerTubeError(_("O YouTube criou a playlist sem retornar o identificador"))
         return str(playlist_id)
 
-    def edit_playlist(self, playlist_id: str, actions: list[dict[str, Any]]) -> None:
-        self._api_post(
+    def edit_playlist(self, playlist_id: str, actions: list[dict[str, Any]]) -> dict[str, Any]:
+        return self._api_post(
             "browse/edit_playlist",
             {"playlistId": playlist_id.removeprefix("VL"), "actions": actions},
         )
@@ -651,8 +652,24 @@ class InnerTubeClient:
     def delete_playlist(self, playlist_id: str) -> None:
         self._api_post("playlist/delete", {"playlistId": playlist_id.removeprefix("VL")})
 
-    def add_to_playlist(self, playlist_id: str, video_id: str) -> None:
-        self.edit_playlist(playlist_id, [{"action": "ACTION_ADD_VIDEO", "addedVideoId": video_id}])
+    def add_to_playlist(self, playlist_id: str, video_id: str, at_start: bool = False) -> None:
+        """Append the track, then move it to the top when ``at_start`` (playlist_position)."""
+        payload = self.edit_playlist(
+            playlist_id, [{"action": "ACTION_ADD_VIDEO", "addedVideoId": video_id}]
+        )
+        added = added_set_video_id(payload, video_id) if at_start else None
+        if not added:
+            return
+        first = next(
+            (
+                track.set_video_id
+                for track in self.browse(playlist_id, "playlists", all_pages=False)
+                if track.set_video_id and track.set_video_id != added
+            ),
+            None,
+        )
+        if first:
+            self.edit_playlist(playlist_id, [move_before_action(added, first)])
 
     def remove_from_playlist(self, playlist_id: str, video_id: str, set_video_id: str) -> None:
         if not set_video_id:

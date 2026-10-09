@@ -23,6 +23,8 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 - **Interface em português**, com `_()` e as traduções em `po/` (pt_BR e en).
 - **Testes** para cada módulo novo. Antes de cada commit rodam `ruff check`,
   `ruff format --check` e o `pytest`.
+- **Traduções**: todo módulo com `_()` entra em `po/POTFILES`
+  (`tests/test_potfiles.py` confere).
 
 ## Visão geral
 
@@ -32,7 +34,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | 2 | Crossfade entre faixas | Alta | Feita |
 | 3 | Letras palavra por palavra e novos provedores | Alta | Feita (falta o KDE) |
 | 4 | Sincronização segura da biblioteca | Alta | Feita |
-| 5 | Pequenas melhorias de uso | Média | A fazer |
+| 5 | Pequenas melhorias de uso | Média | Feita (falta o visual no KDE) |
 | 6 | Equalizador com perfis do AutoEQ | Média | A fazer |
 | 7 | Backup antes de atualizar e escolha de conta | Média | A fazer |
 | 8 | Confiabilidade do streaming e ajustes finos | Baixa | A fazer |
@@ -147,7 +149,11 @@ Cada item é independente e pode virar um commit separado.
   Shorts, youtu.be, playlist, álbum e canal de artista. Música e vídeo tocam
   direto (`InnerTubeClient.watch_item`, que funciona até sem login); os
   outros abrem a página. GTK e KDE.
-- [ ] **Posição ao adicionar à playlist**: início ou fim, com preferência.
+- [x] **Posição ao adicionar à playlist** (`playlist_position.py`):
+  Preferências > Biblioteca > "Ao salvar numa playlist", no fim ou no início.
+  No YouTube, a faixa é adicionada e depois movida para antes da primeira
+  (`ACTION_MOVE_VIDEO_BEFORE`, com o `setVideoId` que a edição devolve); nas
+  playlists locais, entra na frente. GTK e KDE (no KDE, pelo valor salvo).
 - [x] **Velocidade e tom juntos** (`playback_speed.py`): "Velocidade muda o
   tom" usa o `rate` do elemento `pitch`, como um disco mais rápido; o seletor
   de tom fica desativado. Posição e duração seguem iguais às do modo
