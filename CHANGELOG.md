@@ -4,8 +4,10 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
 ## 0.1.0-beta.3 — 2026-10-09
 
-- tema Windows 11 disponível também no Linux: visual Fluent opaco (Mica e Acrílico continuam exclusivos do Windows) e cor de destaque do GNOME;
-- novo estilo de ícones "Fluent — ícones do Windows 11" no Linux.
+- tema Windows 11 disponível também no Linux, com a cor de destaque do GNOME;
+- Mica e Acrílico no Linux: o Mica usa o papel de parede desfocado do GNOME ou do Plasma; o Acrílico deixa a janela translúcida para o desfoque do compositor (Blur my Shell no GNOME, Force Blur no KDE);
+- novo estilo de ícones "Fluent — ícones do Windows 11" no Linux;
+- a aba ativa do player expandido mostra o indicador Fluent em vez de um fundo preenchido.
 
 ## 0.1.0-beta.2 — 2026-10-08
 

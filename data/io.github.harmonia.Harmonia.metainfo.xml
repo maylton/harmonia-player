@@ -46,8 +46,8 @@
   <releases>
     <release version="0.1.0-beta.3" date="2026-10-09" type="development">
       <description>
-        <p>O tema Windows 11 e os ícones Fluent também no Linux, com a cor de destaque do GNOME.</p>
-        <p xml:lang="en">The Windows 11 theme and the Fluent icons on Linux too, with GNOME's accent colour.</p>
+        <p>O tema Windows 11 e os ícones Fluent também no Linux, com a cor de destaque do GNOME, o Mica feito do papel de parede e o Acrílico com o desfoque do compositor.</p>
+        <p xml:lang="en">The Windows 11 theme and the Fluent icons on Linux too, with GNOME's accent colour, Mica made from the wallpaper and Acrylic with the compositor's blur.</p>
       </description>
     </release>
     <release version="0.1.0-beta.2" date="2026-10-08" type="development">

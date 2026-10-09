@@ -110,6 +110,11 @@ def _add_window_material_rows(window, group: Adw.PreferencesGroup) -> None:
     )
     window._backdrop_row.set_subtitle(
         _("Transparência do Windows 11 por trás da janela, no tema Windows 11")
+        if host.IS_WINDOWS
+        else _(
+            "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que está "
+            "atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
+        )
     )
     window._backdrop_row.set_sensitive(supported)
     group.add(window._backdrop_row)

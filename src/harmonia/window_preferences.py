@@ -154,9 +154,9 @@ class WindowPreferencesMixin:
         if not host.WINDOW_BACKDROPS:
             return False
         if getattr(self, "_window_backdrops", None) is None:
-            from .gtk_backdrop import GtkWindowBackdrops
+            from .gtk_backdrop import window_backdrops
 
-            self._window_backdrops = GtkWindowBackdrops()
+            self._window_backdrops = window_backdrops()
             # The player bar's queue and lyrics popovers float over the window
             # like Fluent flyouts, so they get the material as well.
             for name in ("queue_popover", "lyrics_popover"):
