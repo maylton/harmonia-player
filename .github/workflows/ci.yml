@@ -154,16 +154,18 @@ jobs:
       - name: Gerar .deb e .rpm
         run: bash packaging/linux/build-packages.sh
 
+      # Docker's official images through the AWS public mirror: Docker Hub
+      # rate-limits the shared runners' anonymous pulls.
       - name: Instalar o .deb no Ubuntu atual
         run: |
           version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
-          docker run --rm -v "$PWD:/src:ro" ubuntu:latest \
+          docker run --rm -v "$PWD:/src:ro" public.ecr.aws/docker/library/ubuntu:latest \
             sh /src/packaging/linux/check-install.sh "/src/build/linux/Harmonia-$version-all.deb" "$version"
 
       - name: Instalar o .rpm no Fedora atual
         run: |
           version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
-          docker run --rm -v "$PWD:/src:ro" fedora:latest \
+          docker run --rm -v "$PWD:/src:ro" public.ecr.aws/docker/library/fedora:latest \
             sh /src/packaging/linux/check-install.sh "/src/build/linux/Harmonia-$version-noarch.rpm" "$version"
 
       - name: Publicar os pacotes como artefato
