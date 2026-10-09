@@ -181,7 +181,12 @@ class WindowPreferencesMixin:
                     "realize", lambda *_: GLib.idle_add(self._reapply_appearance)
                 )
             return False
-        return self._window_backdrops.set_kind(kind, self)
+        shown = self._window_backdrops.set_kind(kind, self)
+        if getattr(self, "_backdrop_row", None) is not None:
+            from .settings_page.appearance import backdrop_subtitle
+
+            self._backdrop_row.set_subtitle(backdrop_subtitle(self))
+        return shown
 
     def _apply_expanded_material(self, translucent: bool) -> None:
         """Show the window material behind the expanded player instead of the cover.

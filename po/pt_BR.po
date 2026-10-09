@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:41-0300\n"
+"POT-Creation-Date: 2026-10-09 21:15-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -319,6 +319,30 @@ msgstr "Nov"
 msgid "Dez"
 msgstr "Dez"
 
+#: src/harmonia/linux_backdrop.py:104
+#, python-brace-format
+msgid ""
+"O papel de parede é {format} e falta o suporte a esse formato (pacote do gdk-"
+"pixbuf para {format})"
+msgstr ""
+"O papel de parede é {format} e falta o suporte a esse formato (pacote do gdk-"
+"pixbuf para {format})"
+
+#: src/harmonia/linux_backdrop.py:107
+#, python-brace-format
+msgid "Não foi possível abrir o papel de parede {name}"
+msgstr "Não foi possível abrir o papel de parede {name}"
+
+#: src/harmonia/linux_backdrop.py:206
+msgid ""
+"O Flatpak não tem acesso ao papel de parede; instale o pacote .deb ou .rpm"
+msgstr ""
+"O Flatpak não tem acesso ao papel de parede; instale o pacote .deb ou .rpm"
+
+#: src/harmonia/linux_backdrop.py:208
+msgid "Papel de parede do GNOME ou do Plasma não encontrado"
+msgstr "Papel de parede do GNOME ou do Plasma não encontrado"
+
 #: src/harmonia/player.py:36
 msgid "O elemento GStreamer playbin não está disponível"
 msgstr "O elemento GStreamer playbin não está disponível"
@@ -394,7 +418,7 @@ msgid "Downloads da coleção iniciados."
 msgstr "Downloads da coleção iniciados."
 
 #: src/harmonia/qt_backend.py:1204 src/harmonia/qt_preferences.py:165
-#: src/harmonia/window_preferences.py:334
+#: src/harmonia/window_preferences.py:339
 msgid "Validando sessão…"
 msgstr "Validando sessão…"
 
@@ -834,7 +858,7 @@ msgstr "Fundo ambiente desfocado desativado."
 msgid "Cache limpo · {size} removidos."
 msgstr "Cache limpo · {size} removidos."
 
-#: src/harmonia/qt_preferences.py:173 src/harmonia/window_preferences.py:347
+#: src/harmonia/qt_preferences.py:173 src/harmonia/window_preferences.py:352
 msgid "Sessão inválida ou expirada"
 msgstr "Sessão inválida ou expirada"
 
@@ -1098,27 +1122,11 @@ msgstr "Fluent — ícones do Windows 11"
 msgid "Estilo dos ícones"
 msgstr "Estilo dos ícones"
 
-#: src/harmonia/settings_page/appearance.py:102
-msgid "Efeito de fundo"
-msgstr "Efeito de fundo"
-
-#: src/harmonia/settings_page/appearance.py:104
-msgid "Mica"
-msgstr "Mica"
-
-#: src/harmonia/settings_page/appearance.py:105
-msgid "Acrílico (fosco)"
-msgstr "Acrílico (fosco)"
-
-#: src/harmonia/settings_page/appearance.py:106
-msgid "Nenhum"
-msgstr "Nenhum"
-
-#: src/harmonia/settings_page/appearance.py:112
+#: src/harmonia/settings_page/appearance.py:103
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 
-#: src/harmonia/settings_page/appearance.py:115
+#: src/harmonia/settings_page/appearance.py:105
 msgid ""
 "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
 "está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
@@ -1126,11 +1134,27 @@ msgstr ""
 "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
 "está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
 
-#: src/harmonia/settings_page/appearance.py:122
+#: src/harmonia/settings_page/appearance.py:115
+msgid "Efeito de fundo"
+msgstr "Efeito de fundo"
+
+#: src/harmonia/settings_page/appearance.py:117
+msgid "Mica"
+msgstr "Mica"
+
+#: src/harmonia/settings_page/appearance.py:118
+msgid "Acrílico (fosco)"
+msgstr "Acrílico (fosco)"
+
+#: src/harmonia/settings_page/appearance.py:119
+msgid "Nenhum"
+msgstr "Nenhum"
+
+#: src/harmonia/settings_page/appearance.py:128
 msgid "Capa desfocada no player expandido"
 msgstr "Capa desfocada no player expandido"
 
-#: src/harmonia/settings_page/appearance.py:123
+#: src/harmonia/settings_page/appearance.py:129
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr "Desligada, o player expandido mostra o efeito de fundo"
 
@@ -1461,7 +1485,7 @@ msgid "Exportar"
 msgstr "Exportar"
 
 #: src/harmonia/settings_page/streaming.py:85
-#: src/harmonia/window_preferences.py:415
+#: src/harmonia/window_preferences.py:420
 msgid "Restaurar"
 msgstr "Restaurar"
 
@@ -1589,7 +1613,7 @@ msgstr "SAPISID=…; __Secure-3PAPISID=…"
 #: src/harmonia/window_actions.py:144 src/harmonia/window_actions.py:310
 #: src/harmonia/window_actions.py:336 src/harmonia/window_actions.py:371
 #: src/harmonia/window_library.py:768 src/harmonia/window_library.py:785
-#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:414
+#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:419
 msgid "Cancelar"
 msgstr "Cancelar"
 
@@ -2621,65 +2645,65 @@ msgstr "Copiar relatório"
 msgid "Relatório copiado"
 msgstr "Relatório copiado"
 
-#: src/harmonia/window_preferences.py:299
+#: src/harmonia/window_preferences.py:304
 msgid "0 B armazenados"
 msgstr "0 B armazenados"
 
-#: src/harmonia/window_preferences.py:302
+#: src/harmonia/window_preferences.py:307
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr "Cache limpo · {size} removidos"
 
-#: src/harmonia/window_preferences.py:319
+#: src/harmonia/window_preferences.py:324
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] "Temporizador definido para {count} minuto"
 msgstr[1] "Temporizador definido para {count} minutos"
 
-#: src/harmonia/window_preferences.py:330
+#: src/harmonia/window_preferences.py:335
 msgid "Reprodução pausada pelo temporizador"
 msgstr "Reprodução pausada pelo temporizador"
 
-#: src/harmonia/window_preferences.py:347
+#: src/harmonia/window_preferences.py:352
 msgid "Conectada e válida"
 msgstr "Conectada e válida"
 
-#: src/harmonia/window_preferences.py:350
+#: src/harmonia/window_preferences.py:355
 msgid "Conta validada"
 msgstr "Conta validada"
 
-#: src/harmonia/window_preferences.py:352
+#: src/harmonia/window_preferences.py:357
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr "Não foi possível validar a conta{detail}"
 
-#: src/harmonia/window_preferences.py:363
+#: src/harmonia/window_preferences.py:368
 msgid "Conta desconectada"
 msgstr "Conta desconectada"
 
-#: src/harmonia/window_preferences.py:368
+#: src/harmonia/window_preferences.py:373
 msgid "Exportar backup"
 msgstr "Exportar backup"
 
-#: src/harmonia/window_preferences.py:378
+#: src/harmonia/window_preferences.py:383
 msgid "Backup exportado"
 msgstr "Backup exportado"
 
-#: src/harmonia/window_preferences.py:383
+#: src/harmonia/window_preferences.py:388
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr "Não foi possível exportar o backup: {error}"
 
-#: src/harmonia/window_preferences.py:393
+#: src/harmonia/window_preferences.py:398
 msgid "Restaurar backup"
 msgstr "Restaurar backup"
 
-#: src/harmonia/window_preferences.py:408
+#: src/harmonia/window_preferences.py:413
 msgid "Restaurar este backup?"
 msgstr "Restaurar este backup?"
 
-#: src/harmonia/window_preferences.py:410
+#: src/harmonia/window_preferences.py:415
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
@@ -2687,11 +2711,11 @@ msgstr ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
 
-#: src/harmonia/window_preferences.py:430
+#: src/harmonia/window_preferences.py:435
 msgid "Backup restaurado"
 msgstr "Backup restaurado"
 
-#: src/harmonia/window_preferences.py:435
+#: src/harmonia/window_preferences.py:440
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr "Não foi possível restaurar o backup: {error}"
