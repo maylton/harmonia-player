@@ -29,7 +29,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | Fase | Funcionalidade | Prioridade | Estado |
 |---|---|---|---|
 | 1 | Normalização de volume por faixa | Alta | Feita |
-| 2 | Crossfade entre faixas | Alta | A fazer |
+| 2 | Crossfade entre faixas | Alta | Feita |
 | 3 | Letras palavra por palavra e novos provedores | Alta | A fazer |
 | 4 | Sincronização segura da biblioteca | Alta | A fazer |
 | 5 | Pequenas melhorias de uso | Média | A fazer |
@@ -71,17 +71,26 @@ downloads offline e oferece um nível de volume.
 
 Uma faixa termina enquanto a próxima começa, com volumes cruzados.
 
-- [ ] `crossfade.py`: agenda (quando começar, curva do volume), sem GStreamer.
-- [ ] Segundo `NativePlayer` para a próxima faixa, pré-carregada alguns
-  segundos antes do fim. Os dois tocam em saídas separadas, que o sistema
-  mistura (WASAPI no Windows, PipeWire/PulseAudio no Linux).
-- [ ] Controlador que troca os papéis dos players no fim, sem que as janelas
-  percebam (posição, duração, MPRIS e SMTC seguem a faixa nova).
-- [ ] Não cruzar quando: repetir uma faixa, vídeo ativo, faixa curta, a
-  próxima ainda não foi resolvida, ou o usuário trocou de faixa à mão.
-- [ ] Preferência: duração de 0 (desligado) a 12 s. Seletor no GTK.
-- [ ] Respeitar velocidade, tom, equalizador e normalização nos dois players.
-- [ ] Testes da agenda e da troca de papéis.
+- [x] `crossfade.py`: quando começar e a curva dos volumes (potência
+  constante, sem queda no meio), sem GStreamer.
+- [x] `crossfade_player.py`: `CrossfadingPlayer`, com a interface do
+  `NativePlayer` e dois players por trás. Ele avisa o fim da faixa alguns
+  segundos antes; a janela toca a próxima como sempre, que entra no segundo
+  player enquanto a primeira some. Os dois tocam em saídas separadas, que o
+  sistema mistura (WASAPI no Windows, PipeWire/PulseAudio no Linux). O
+  segundo player só é criado no primeiro crossfade.
+- [x] Só o player ativo fala com a janela: posição, duração, MPRIS e SMTC
+  seguem a faixa nova; erros e fim da faixa que sai são ignorados.
+- [x] Não cruzar quando: vídeo ativo, transmissão (Cast/UPnP ou a do KDE),
+  faixa com menos de três vezes a duração do crossfade, ou a próxima só ficou
+  pronta depois do fim. Trocar de faixa, pausar, buscar ou parar corta a
+  faixa que sai.
+- [x] Preferência "Transição entre faixas": desligada, 3, 5, 8 ou 12 s.
+  Seletor no GTK; o KDE usa o valor salvo.
+- [x] Velocidade, tom, equalizador e normalização valem nos dois players; a
+  normalização da faixa nova não altera a que sai.
+- [x] Testes da agenda, da troca de papéis e dos cortes, e um teste real com
+  GStreamer (saída muda) conferindo o fim antecipado e a rampa dos volumes.
 
 ## Fase 3 — Letras palavra por palavra e novos provedores (alta)
 

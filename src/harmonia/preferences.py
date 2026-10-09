@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
+from .crossfade import clamp_seconds
 from .loudness import DEFAULT_LEVEL, LEVELS
 from .theming import ACCENTS, DEFAULT_THEME, VARIANTS, builtin_themes
 
@@ -19,6 +20,7 @@ class Preferences:
     speed: float = 1.0
     pitch: float = 0.0
     skip_silence: bool = False
+    crossfade: int = 0  # seconds; 0 is off
     background_blur: bool = False
     icon_style: str = "gtk"
     theme: str = DEFAULT_THEME
@@ -82,6 +84,7 @@ class Preferences:
             speed=max(0.5, min(2.0, number("speed", 1.0))),
             pitch=max(-12, min(12, number("pitch", 0.0))),
             skip_silence=boolean("skip_silence", False),
+            crossfade=clamp_seconds(storage.get_setting("crossfade", "0")),
             background_blur=boolean("background_blur", False),
             icon_style=icon_style if icon_style in cls.ICON_STYLES else "gtk",
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
@@ -115,6 +118,7 @@ class Preferences:
             "speed": str(self.speed),
             "pitch": str(self.pitch),
             "skip_silence": "1" if self.skip_silence else "0",
+            "crossfade": str(self.crossfade),
             "background_blur": "1" if self.background_blur else "0",
             "icon_style": self.icon_style,
             "theme": self.theme,

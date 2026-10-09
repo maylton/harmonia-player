@@ -77,6 +77,7 @@ class QtPreferencesController(QObject):
             speed=self.values.speed,
             pitch=self.values.pitch,
             skip_silence=self.values.skip_silence,
+            crossfade=self.values.crossfade,
         )
 
     def set_quality(self, value: str) -> None:

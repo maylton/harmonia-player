@@ -110,6 +110,7 @@ class WindowPreferencesMixin:
     def _apply_audio_preferences(self) -> None:
         if not hasattr(self, "player"):
             return
+        self.player.set_crossfade(self.preferences.crossfade)
         self.player.apply_audio_settings(
             normalization=self.preferences.normalization,
             normalization_level=self.preferences.normalization_level,
