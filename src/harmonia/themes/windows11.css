@@ -308,6 +308,11 @@ progressbar progress { min-height: 3px; border-radius: 2px; background-color: @a
   color: #ffffff;
   box-shadow: none;
   background-image: linear-gradient(@accent_bg_color, @accent_bg_color);
+  /* style.css sets these tabs with the "background" shorthand at this
+     specificity, which resets the pill's size to the whole tab. */
+  background-size: 16px 3px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
 }
 .expanded-switcher button:checked { background-color: transparent; }
 
@@ -316,10 +321,11 @@ progressbar progress { min-height: 3px; border-radius: 2px; background-color: @a
 
 /* With Mica or Acrylic behind the window (Preferences > Efeito de fundo):
    the translucent palette lets the title bar, navigation pane and player bar
-   show the material and tints the content layer. GTK's own shadow and corner
-   rounding give way to DWM's native ones, which follow the window outline. */
-window.harmonia-backdrop.csd,
-window.harmonia-backdrop.csd:backdrop {
+   show the material and tints the content layer. On Windows (harmonia-dwm)
+   GTK's own shadow and corner rounding give way to DWM's native ones, which
+   follow the window outline; on Linux the window keeps GTK's. */
+window.harmonia-backdrop.harmonia-dwm.csd,
+window.harmonia-backdrop.harmonia-dwm.csd:backdrop {
   box-shadow: none;
   margin: 0;
   border-radius: 0;
@@ -382,7 +388,8 @@ window.harmonia-backdrop .expanded-player.expanded-material-light.expanded-revea
 /* Out of focus the material gives way to opaque colours and comes back when
    the window is focused again, fading both ways, as Fluent's Mica and
    acrylic brushes swap to their fallback colour. GTK marks the unfocused
-   window :backdrop; the spread shadow covers GTK's 12px resize band. */
+   window :backdrop; on Windows the spread shadow covers GTK's 12px resize
+   band, which DWM's material would otherwise show. */
 window.harmonia-backdrop,
 window.harmonia-backdrop .app-root,
 window.harmonia-backdrop headerbar,
@@ -391,7 +398,7 @@ window.harmonia-backdrop .player-bar,
 window.harmonia-backdrop .sidebar ~ stack {
   transition: background-color 250ms ease-out, box-shadow 250ms ease-out;
 }
-window.harmonia-backdrop.csd:backdrop { box-shadow: 0 0 0 12px @harmonia_opaque_sidebar_bg; }
+window.harmonia-backdrop.harmonia-dwm.csd:backdrop { box-shadow: 0 0 0 12px @harmonia_opaque_sidebar_bg; }
 window.harmonia-backdrop:backdrop .app-root,
 window.harmonia-backdrop:backdrop .sidebar,
 window.harmonia-backdrop:backdrop .player-bar { background-color: @harmonia_opaque_sidebar_bg; }

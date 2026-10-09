@@ -18,7 +18,17 @@ LOGGER = logging.getLogger(__name__)
 # DWM draws the native shadow and rounded corners instead, and a GTK shadow
 # would show as a band of material around the window.
 CSS_CLASS = "harmonia-backdrop"
+DWM_CSS_CLASS = "harmonia-dwm"
 POPOVER_CSS_CLASS = "harmonia-backdrop-popover"
+
+
+def window_backdrops():
+    """The window materials of this platform: DWM's on Windows, simulated on Linux."""
+    if host.IS_WINDOWS:
+        return GtkWindowBackdrops()
+    from .linux_backdrop import LinuxWindowBackdrops
+
+    return LinuxWindowBackdrops()
 
 
 class GtkWindowBackdrops:
@@ -106,6 +116,7 @@ class GtkWindowBackdrops:
                 LOGGER.debug("O DWM recusou o material da janela", exc_info=True)
         else:
             windows_backdrop.remove(hwnd)
+        set_css_class(window, DWM_CSS_CLASS, applied)
         if applied:
             window.add_css_class(CSS_CLASS)
             windows_backdrop.watch(

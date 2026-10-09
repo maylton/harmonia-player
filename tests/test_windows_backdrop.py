@@ -48,7 +48,7 @@ def test_material_waits_for_the_native_window_then_reapplies(monkeypatch):
 
     monkeypatch.setattr(host, "WINDOW_BACKDROPS", True)
     monkeypatch.setattr(host, "PLATFORM", "windows")
-    monkeypatch.setattr(gtk_backdrop, "GtkWindowBackdrops", FakeBackdrops)
+    monkeypatch.setattr(gtk_backdrop, "window_backdrops", FakeBackdrops)
     monkeypatch.setattr("harmonia.window_preferences.GLib.idle_add", lambda callback: callback())
 
     window = WindowStub()

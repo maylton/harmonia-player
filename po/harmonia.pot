@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 10:04-0300\n"
+"POT-Creation-Date: 2026-10-09 11:08-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1065,47 +1065,53 @@ msgstr ""
 msgid "Windows — ícones Fluent"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:76
+#: src/harmonia/settings_page/appearance.py:78
 msgid "GTK — padrão do sistema"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:79
+#: src/harmonia/settings_page/appearance.py:81
 msgid "Material Expressive"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:83
+#: src/harmonia/settings_page/appearance.py:85
 msgid "Fluent — ícones do Windows 11"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:86
+#: src/harmonia/settings_page/appearance.py:88
 msgid "Estilo dos ícones"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:100
+#: src/harmonia/settings_page/appearance.py:102
 msgid "Efeito de fundo"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:102
+#: src/harmonia/settings_page/appearance.py:104
 msgid "Mica"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:103
+#: src/harmonia/settings_page/appearance.py:105
 msgid "Acrílico (fosco)"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:104
+#: src/harmonia/settings_page/appearance.py:106
 msgid "Nenhum"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:110
+#: src/harmonia/settings_page/appearance.py:112
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:115
+msgid ""
+"No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
+"está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:122
 msgid "Capa desfocada no player expandido"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:116
+#: src/harmonia/settings_page/appearance.py:123
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr ""
 
