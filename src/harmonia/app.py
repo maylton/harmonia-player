@@ -13,6 +13,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from .auto_backup import open_storage
 from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
 from .gtk_media_variants import GtkMediaVariantsMixin
@@ -30,7 +31,6 @@ from .models import (
 from .mpris import MprisService
 from .preferences import Preferences
 from .services import YouTubeMusicService
-from .storage import Storage
 from .theming import DEFAULT_THEME
 from .track_rows import DetailTrackRow, HomeSongRow
 from .ui import (
@@ -86,7 +86,7 @@ class HarmoniaWindow(
         super().__init__(
             application=app, title=_("Harmonia"), default_width=1080, default_height=760
         )
-        self.storage = Storage()
+        self.storage = open_storage()
         self.preferences = Preferences.load(self.storage)
         self._initialize_social()
         self.youtube = YouTubeMusicService(self.storage)

@@ -35,18 +35,26 @@ class Storage(
         cache.mkdir(parents=True, exist_ok=True)
         self.cookie_file = config / "session"
         self.library_file = cache / "library.json"
-        self.database_file = cache / "library.db"
+        self.database_file = self.default_database_file()
         self.artwork_dir = cache / "artwork"
         self.artwork_dir.mkdir(exist_ok=True)
         self.downloads_dir = cache / "downloads"
         self.downloads_dir.mkdir(exist_ok=True)
         self.web_data_dir = config / "web-auth"
         self.session_secret = SessionSecret()
+        self.initialize_tables()
+        self._migrate_json_cache()
+
+    @staticmethod
+    def default_database_file():
+        return host.cache_dir() / "library.db"
+
+    def initialize_tables(self) -> None:
+        """Create or migrate every repository's tables, also after a backup restore."""
         self._initialize_database()
         self._initialize_loudness()
         self._initialize_library_changes()
         self._initialize_eq_profiles()
-        self._migrate_json_cache()
 
     def load_cookie(self) -> str:
         secret = self.session_secret.lookup()

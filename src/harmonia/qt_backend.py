@@ -9,6 +9,7 @@ from typing import Any
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
+from .auto_backup import open_storage
 from .downloads import DownloadManager
 from .i18n import _
 from .models import ExploreData, LibraryItem
@@ -22,7 +23,6 @@ from .qt_playback import QtPlaybackController
 from .qt_preferences import QtPreferencesController
 from .qt_presenters import destination_map, history_map, insights_map, item_map
 from .services import YouTubeMusicService
-from .storage import Storage
 
 LOGGER = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class HarmoniaQtBackend(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._engine = parent
-        self.storage = Storage()
+        self.storage = open_storage()
         self.youtube = YouTubeMusicService(self.storage)
         self._executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="harmonia-qt")
         self._logged_in = bool(self.storage.load_cookie())

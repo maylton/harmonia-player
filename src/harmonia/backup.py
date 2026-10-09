@@ -17,30 +17,38 @@ class BackupError(ValueError):
     pass
 
 
+def export_database(database_file: Path, destination: Path) -> Path:
+    """A portable backup (zip with a manifest) of the database at ``database_file``."""
+    destination = destination.expanduser()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="harmonia-backup-") as temporary:
+        database = Path(temporary) / "library.db"
+        # sqlite3's context manager does not close the connection, and Windows
+        # cannot delete the temporary directory while the file is still open.
+        with (
+            closing(sqlite3.connect(database_file)) as source,
+            closing(sqlite3.connect(database)) as target,
+        ):
+            source.backup(target)
+        manifest = {
+            "format": BACKUP_FORMAT,
+            "created_at": int(time.time()),
+            "application": "Harmonia",
+            "contains_credentials": False,
+            "contains_media": False,
+        }
+        with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("manifest.json", json.dumps(manifest, indent=2))
+            archive.write(database, "library.db")
+    return destination
+
+
 class BackupManager:
     def __init__(self, storage) -> None:
         self.storage = storage
 
     def export_to(self, destination: Path) -> Path:
-        destination = destination.expanduser()
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix="harmonia-backup-") as temporary:
-            database = Path(temporary) / "library.db"
-            # sqlite3's context manager does not close the connection, and Windows
-            # cannot delete the temporary directory while the file is still open.
-            with self.storage._connect() as source, closing(sqlite3.connect(database)) as target:
-                source.backup(target)
-            manifest = {
-                "format": BACKUP_FORMAT,
-                "created_at": int(time.time()),
-                "application": "Harmonia",
-                "contains_credentials": False,
-                "contains_media": False,
-            }
-            with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr("manifest.json", json.dumps(manifest, indent=2))
-                archive.write(database, "library.db")
-        return destination
+        return export_database(self.storage.database_file, destination)
 
     def restore_from(self, source: Path) -> Path:
         source = source.expanduser()
@@ -62,7 +70,8 @@ class BackupManager:
                     shutil.copy2(restored, self.storage.database_file)
         except (OSError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
             raise BackupError("Não foi possível ler o backup do Harmonia") from exc
-        self.storage._initialize_database()
+        # A backup from an older version may lack newer tables and columns.
+        self.storage.initialize_tables()
         return self.storage.database_file
 
     @staticmethod
