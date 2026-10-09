@@ -156,9 +156,11 @@ Cada item é independente e pode virar um commit separado.
   `badges` da InnerTube (listas, buscas e fila), guardado em todas as tabelas
   de itens (coluna nova, com migração) e mostrado como "E" nas faixas do GTK.
   O KDE já recebe o dado (`explicit` no `item_map`); falta o selo no QML.
-- [ ] **Relatório de erro de reprodução** (`playback_report.py`): texto com
-  versão, sistema, cliente usado e as falhas de cada cliente, com botão de
-  copiar na mensagem de erro.
+- [x] **Relatório de erro de reprodução** (`playback_report.py`): texto com
+  as versões do Harmonia, do sistema, do Python e do GStreamer, a faixa e o
+  erro (que já lista a falha de cada cliente da InnerTube). Links de stream
+  perdem os parâmetros, que levam o IP do usuário. No GTK, a mensagem de
+  erro ganha o botão "Copiar relatório"; no KDE, falta o botão no QML.
 
 ## Fase 6 — Equalizador com perfis do AutoEQ (média)
 

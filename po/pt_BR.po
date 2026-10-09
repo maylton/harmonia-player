@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:36-0300\n"
+"POT-Creation-Date: 2026-10-09 18:39-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -45,9 +45,9 @@ msgstr "Escolha uma faixa para começar"
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
 #: src/harmonia/window_chrome/player_bar.py:180
-#: src/harmonia/window_playback.py:452 src/harmonia/window_playback.py:453
-#: src/harmonia/window_playback.py:454 src/harmonia/window_playback.py:455
-#: src/harmonia/window_playback.py:728 src/harmonia/window_playback.py:729
+#: src/harmonia/window_playback.py:453 src/harmonia/window_playback.py:454
+#: src/harmonia/window_playback.py:455 src/harmonia/window_playback.py:456
+#: src/harmonia/window_playback.py:738 src/harmonia/window_playback.py:739
 msgid "0:00"
 msgstr "0:00"
 
@@ -64,11 +64,11 @@ msgid "Escolha uma música para ver as próximas faixas."
 msgstr "Escolha uma música para ver as próximas faixas."
 
 #: src/harmonia/app.py:465 src/harmonia/window_chrome/expanded_player.py:49
-#: src/harmonia/window_playback.py:270
+#: src/harmonia/window_playback.py:271
 msgid "Relacionadas"
 msgstr "Relacionadas"
 
-#: src/harmonia/app.py:477 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:477 src/harmonia/window_playback.py:287
 msgid "Adicionar ao fim"
 msgstr "Adicionar ao fim"
 
@@ -233,12 +233,12 @@ msgstr ""
 msgid "O YouTube Music não retornou o perfil da conta ativa."
 msgstr "O YouTube Music não retornou o perfil da conta ativa."
 
-#: src/harmonia/innertube/parsers.py:398 src/harmonia/innertube/protocol.py:86
+#: src/harmonia/innertube/parsers.py:397 src/harmonia/innertube/protocol.py:86
 #: src/harmonia/qt_library.py:23 src/harmonia/window_constants.py:5
 msgid "Músicas"
 msgstr "Músicas"
 
-#: src/harmonia/innertube/parsers.py:458
+#: src/harmonia/innertube/parsers.py:457
 msgid "Artista"
 msgstr "Artista"
 
@@ -791,7 +791,7 @@ msgstr "O arquivo local não está mais disponível."
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr "Não foi possível reproduzir a faixa: {error}"
 
-#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:204
+#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:205
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr "Não foi possível continuar a rádio: {error}"
@@ -800,7 +800,7 @@ msgstr "Não foi possível continuar a rádio: {error}"
 msgid "A rádio não encontrou novas músicas."
 msgstr "A rádio não encontrou novas músicas."
 
-#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:676
+#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:677
 msgid "O stream falhou; renovando a conexão…"
 msgstr "O stream falhou; renovando a conexão…"
 
@@ -1782,12 +1782,12 @@ msgid "Expandir player"
 msgstr "Expandir player"
 
 #: src/harmonia/window_chrome/player_bar.py:153
-#: src/harmonia/window_playback.py:158 src/harmonia/window_playback.py:159
+#: src/harmonia/window_playback.py:159 src/harmonia/window_playback.py:160
 msgid "Reprodução automática ativada"
 msgstr "Reprodução automática ativada"
 
 #: src/harmonia/window_chrome/player_bar.py:209
-#: src/harmonia/window_playback.py:227
+#: src/harmonia/window_playback.py:228
 msgid "Fila de reprodução"
 msgstr "Fila de reprodução"
 
@@ -1892,11 +1892,11 @@ msgstr "Baixar"
 msgid "Mais opções"
 msgstr "Mais opções"
 
-#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:392
+#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:393
 msgid "Tocar a seguir"
 msgstr "Tocar a seguir"
 
-#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:394
+#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:395
 msgid "Adicionar à fila"
 msgstr "Adicionar à fila"
 
@@ -2277,11 +2277,11 @@ msgstr "Buscando {title}"
 msgid "Playlist local · {tracks}"
 msgstr "Playlist local · {tracks}"
 
-#: src/harmonia/window_library.py:704 src/harmonia/window_playback.py:241
+#: src/harmonia/window_library.py:704 src/harmonia/window_playback.py:242
 msgid "Mover para cima"
 msgstr "Mover para cima"
 
-#: src/harmonia/window_library.py:705 src/harmonia/window_playback.py:242
+#: src/harmonia/window_library.py:705 src/harmonia/window_playback.py:243
 msgid "Mover para baixo"
 msgstr "Mover para baixo"
 
@@ -2538,67 +2538,75 @@ msgstr "Comece a reproduzir uma faixa antes de transmitir"
 msgid "Reproduzindo em {device}"
 msgstr "Reproduzindo em {device}"
 
-#: src/harmonia/window_playback.py:165 src/harmonia/window_playback.py:166
+#: src/harmonia/window_playback.py:166 src/harmonia/window_playback.py:167
 msgid "Reprodução automática desativada"
 msgstr "Reprodução automática desativada"
 
-#: src/harmonia/window_playback.py:220
+#: src/harmonia/window_playback.py:221
 msgid "A rádio não encontrou novas músicas"
 msgstr "A rádio não encontrou novas músicas"
 
-#: src/harmonia/window_playback.py:243
+#: src/harmonia/window_playback.py:244
 msgid "Remover da fila"
 msgstr "Remover da fila"
 
-#: src/harmonia/window_playback.py:283
+#: src/harmonia/window_playback.py:284
 msgid "Tocar em seguida"
 msgstr "Tocar em seguida"
 
-#: src/harmonia/window_playback.py:307
+#: src/harmonia/window_playback.py:308
 msgid "As recomendações aparecem conforme a fila avança."
 msgstr "As recomendações aparecem conforme a fila avança."
 
-#: src/harmonia/window_playback.py:355
+#: src/harmonia/window_playback.py:356
 msgid "Nenhuma faixa para adicionar à fila"
 msgstr "Nenhuma faixa para adicionar à fila"
 
-#: src/harmonia/window_playback.py:366
+#: src/harmonia/window_playback.py:367
 #, python-brace-format
 msgid "“{title}” tocará a seguir"
 msgstr "“{title}” tocará a seguir"
 
-#: src/harmonia/window_playback.py:366
+#: src/harmonia/window_playback.py:367
 #, python-brace-format
 msgid "“{title}” adicionada à fila"
 msgstr "“{title}” adicionada à fila"
 
-#: src/harmonia/window_playback.py:370
+#: src/harmonia/window_playback.py:371
 #, python-brace-format
 msgid "{count} faixa tocará a seguir"
 msgid_plural "{count} faixas tocarão a seguir"
 msgstr[0] "{count} faixa tocará a seguir"
 msgstr[1] "{count} faixas tocarão a seguir"
 
-#: src/harmonia/window_playback.py:374
+#: src/harmonia/window_playback.py:375
 #, python-brace-format
 msgid "{count} faixa adicionada à fila"
 msgid_plural "{count} faixas adicionadas à fila"
 msgstr[0] "{count} faixa adicionada à fila"
 msgstr[1] "{count} faixas adicionadas à fila"
 
-#: src/harmonia/window_playback.py:467
+#: src/harmonia/window_playback.py:468
 msgid "O arquivo local não está mais disponível"
 msgstr "O arquivo local não está mais disponível"
 
-#: src/harmonia/window_playback.py:691
+#: src/harmonia/window_playback.py:692
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Não foi possível reproduzir: {error}"
 
-#: src/harmonia/window_playback.py:697
+#: src/harmonia/window_playback.py:698
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Não foi possível reproduzir mesmo após renovar o stream: {error}"
+
+#: src/harmonia/window_playback.py:708
+msgid "Copiar relatório"
+msgstr "Copiar relatório"
+
+#: src/harmonia/window_playback.py:717
+msgid "Relatório copiado"
+msgstr "Relatório copiado"
 
 #: src/harmonia/window_preferences.py:299
 msgid "0 B armazenados"

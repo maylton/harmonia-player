@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:36-0300\n"
+"POT-Creation-Date: 2026-10-09 18:39-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,9 +46,9 @@ msgstr ""
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
 #: src/harmonia/window_chrome/player_bar.py:180
-#: src/harmonia/window_playback.py:452 src/harmonia/window_playback.py:453
-#: src/harmonia/window_playback.py:454 src/harmonia/window_playback.py:455
-#: src/harmonia/window_playback.py:728 src/harmonia/window_playback.py:729
+#: src/harmonia/window_playback.py:453 src/harmonia/window_playback.py:454
+#: src/harmonia/window_playback.py:455 src/harmonia/window_playback.py:456
+#: src/harmonia/window_playback.py:738 src/harmonia/window_playback.py:739
 msgid "0:00"
 msgstr ""
 
@@ -65,11 +65,11 @@ msgid "Escolha uma música para ver as próximas faixas."
 msgstr ""
 
 #: src/harmonia/app.py:465 src/harmonia/window_chrome/expanded_player.py:49
-#: src/harmonia/window_playback.py:270
+#: src/harmonia/window_playback.py:271
 msgid "Relacionadas"
 msgstr ""
 
-#: src/harmonia/app.py:477 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:477 src/harmonia/window_playback.py:287
 msgid "Adicionar ao fim"
 msgstr ""
 
@@ -233,12 +233,12 @@ msgstr ""
 msgid "O YouTube Music não retornou o perfil da conta ativa."
 msgstr ""
 
-#: src/harmonia/innertube/parsers.py:398 src/harmonia/innertube/protocol.py:86
+#: src/harmonia/innertube/parsers.py:397 src/harmonia/innertube/protocol.py:86
 #: src/harmonia/qt_library.py:23 src/harmonia/window_constants.py:5
 msgid "Músicas"
 msgstr ""
 
-#: src/harmonia/innertube/parsers.py:458
+#: src/harmonia/innertube/parsers.py:457
 msgid "Artista"
 msgstr ""
 
@@ -787,7 +787,7 @@ msgstr ""
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr ""
 
-#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:204
+#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:205
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr ""
@@ -796,7 +796,7 @@ msgstr ""
 msgid "A rádio não encontrou novas músicas."
 msgstr ""
 
-#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:676
+#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:677
 msgid "O stream falhou; renovando a conexão…"
 msgstr ""
 
@@ -1771,12 +1771,12 @@ msgid "Expandir player"
 msgstr ""
 
 #: src/harmonia/window_chrome/player_bar.py:153
-#: src/harmonia/window_playback.py:158 src/harmonia/window_playback.py:159
+#: src/harmonia/window_playback.py:159 src/harmonia/window_playback.py:160
 msgid "Reprodução automática ativada"
 msgstr ""
 
 #: src/harmonia/window_chrome/player_bar.py:209
-#: src/harmonia/window_playback.py:227
+#: src/harmonia/window_playback.py:228
 msgid "Fila de reprodução"
 msgstr ""
 
@@ -1881,11 +1881,11 @@ msgstr ""
 msgid "Mais opções"
 msgstr ""
 
-#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:392
+#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:393
 msgid "Tocar a seguir"
 msgstr ""
 
-#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:394
+#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:395
 msgid "Adicionar à fila"
 msgstr ""
 
@@ -2263,11 +2263,11 @@ msgstr ""
 msgid "Playlist local · {tracks}"
 msgstr ""
 
-#: src/harmonia/window_library.py:704 src/harmonia/window_playback.py:241
+#: src/harmonia/window_library.py:704 src/harmonia/window_playback.py:242
 msgid "Mover para cima"
 msgstr ""
 
-#: src/harmonia/window_library.py:705 src/harmonia/window_playback.py:242
+#: src/harmonia/window_library.py:705 src/harmonia/window_playback.py:243
 msgid "Mover para baixo"
 msgstr ""
 
@@ -2522,66 +2522,74 @@ msgstr ""
 msgid "Reproduzindo em {device}"
 msgstr ""
 
-#: src/harmonia/window_playback.py:165 src/harmonia/window_playback.py:166
+#: src/harmonia/window_playback.py:166 src/harmonia/window_playback.py:167
 msgid "Reprodução automática desativada"
 msgstr ""
 
-#: src/harmonia/window_playback.py:220
+#: src/harmonia/window_playback.py:221
 msgid "A rádio não encontrou novas músicas"
 msgstr ""
 
-#: src/harmonia/window_playback.py:243
+#: src/harmonia/window_playback.py:244
 msgid "Remover da fila"
 msgstr ""
 
-#: src/harmonia/window_playback.py:283
+#: src/harmonia/window_playback.py:284
 msgid "Tocar em seguida"
 msgstr ""
 
-#: src/harmonia/window_playback.py:307
+#: src/harmonia/window_playback.py:308
 msgid "As recomendações aparecem conforme a fila avança."
 msgstr ""
 
-#: src/harmonia/window_playback.py:355
+#: src/harmonia/window_playback.py:356
 msgid "Nenhuma faixa para adicionar à fila"
 msgstr ""
 
-#: src/harmonia/window_playback.py:366
+#: src/harmonia/window_playback.py:367
 #, python-brace-format
 msgid "“{title}” tocará a seguir"
 msgstr ""
 
-#: src/harmonia/window_playback.py:366
+#: src/harmonia/window_playback.py:367
 #, python-brace-format
 msgid "“{title}” adicionada à fila"
 msgstr ""
 
-#: src/harmonia/window_playback.py:370
+#: src/harmonia/window_playback.py:371
 #, python-brace-format
 msgid "{count} faixa tocará a seguir"
 msgid_plural "{count} faixas tocarão a seguir"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_playback.py:374
+#: src/harmonia/window_playback.py:375
 #, python-brace-format
 msgid "{count} faixa adicionada à fila"
 msgid_plural "{count} faixas adicionadas à fila"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_playback.py:467
+#: src/harmonia/window_playback.py:468
 msgid "O arquivo local não está mais disponível"
 msgstr ""
 
-#: src/harmonia/window_playback.py:691
+#: src/harmonia/window_playback.py:692
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr ""
 
-#: src/harmonia/window_playback.py:697
+#: src/harmonia/window_playback.py:698
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
+msgstr ""
+
+#: src/harmonia/window_playback.py:708
+msgid "Copiar relatório"
+msgstr ""
+
+#: src/harmonia/window_playback.py:717
+msgid "Relatório copiado"
 msgstr ""
 
 #: src/harmonia/window_preferences.py:299
