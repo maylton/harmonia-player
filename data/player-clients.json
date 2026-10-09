@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "comment": "Client profiles Harmonia asks for streams with, in order. Fetched by src/harmonia/innertube/player_clients.py at most once a day; edit to follow YouTube changes without a release. Set enabled to false to skip a client.",
+  "clients": [
+    {
+      "name": "VISIONOS",
+      "id": "101",
+      "version": "0.1",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+      "context": {
+        "osName": "visionOS",
+        "osVersion": "1.3.21O771",
+        "deviceMake": "Apple",
+        "deviceModel": "RealityDevice14,1"
+      }
+    },
+    {
+      "name": "ANDROID_MUSIC",
+      "id": "21",
+      "version": "8.10.51",
+      "user_agent": "com.google.android.apps.youtube.music/8.10.51 (Linux; U; Android 14) gzip",
+      "context": {
+        "androidSdkVersion": 34,
+        "osName": "Android",
+        "osVersion": "14"
+      }
+    },
+    {
+      "name": "IOS",
+      "id": "5",
+      "version": "21.03.1",
+      "user_agent": "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)"
+    },
+    {
+      "name": "ANDROID_VR",
+      "id": "28",
+      "version": "1.65.10",
+      "user_agent": "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
+    },
+    {
+      "name": "WEB_REMIX",
+      "id": "67",
+      "version": "1.20260114.03.00",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0",
+      "authenticated": true,
+      "live_version": true
+    }
+  ]
+}

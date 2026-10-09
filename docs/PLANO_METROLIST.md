@@ -37,7 +37,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | 5 | Pequenas melhorias de uso | Média | Feita (falta o visual no KDE) |
 | 6 | Equalizador com perfis do AutoEQ | Média | Feita (falta importar no KDE) |
 | 7 | Backup antes de atualizar e escolha de conta | Média | Feita (falta conferir canal de marca) |
-| 8 | Confiabilidade do streaming e ajustes finos | Baixa | A fazer |
+| 8 | Confiabilidade do streaming e ajustes finos | Baixa | Feita (cifra/PoToken adiados) |
 
 ---
 
@@ -207,11 +207,30 @@ Cada item é independente e pode virar um commit separado.
 
 ## Fase 8 — Confiabilidade do streaming e ajustes finos (baixa)
 
-- [ ] Configuração dos clientes do player atualizável por um arquivo publicado
-  no repositório, para corrigir mudanças do YouTube sem nova versão.
-- [ ] Plano B de streaming: decodificação da assinatura e PoToken, se os
-  clientes atuais deixarem de entregar URLs diretas.
-- [ ] Opção para ocultar as playlists automáticas de "mais tocadas".
+- [x] Clientes do player atualizáveis sem nova versão
+  (`innertube/player_clients.py`): a lista publicada em
+  `data/player-clients.json` é baixada em segundo plano no máximo uma vez por
+  dia, validada com rigor (só nome, id, versão, user agent, contexto e duas
+  marcas; nada de URLs ou código) e guardada em cache. Qualquer problema e
+  valem os perfis embutidos. Para seguir uma mudança do YouTube, basta editar
+  o JSON no `main`.
+- [x] Saúde dos clientes, como o `ClientHealthTracker` do InnerTubeX: o último
+  cliente que entregou um stream é tentado primeiro, e um que falha três vezes
+  seguidas vai para o fim (ainda tentado). Faixas que o cliente não toca
+  (idade, região) não contam como falha.
+- [-] Decodificação da assinatura e PoToken: o Metrolist (InnerTubeX) executa
+  o JavaScript do player do YouTube num motor embutido (QuickJS) e baixa
+  "players pré-processados" de um repositório. O Harmonia é Python puro, sem
+  motor de JavaScript nos três formatos de instalação; os clientes atuais
+  entregam URLs diretas. Fica para quando eles deixarem de entregar.
+- [-] Ocultar as playlists automáticas de "mais tocadas": o Harmonia não cria
+  essas playlists (as mais tocadas ficam só em Estatísticas).
+
+**Revisão do InnerTube do Metrolist** — o erro "A sessão expirou ou o cookie
+não tem acesso" ao mostrar o vídeo de algumas faixas vinha de buscas anônimas
+que levavam o `onBehalfOfUser` da sessão (o YouTube recusa com 401); o
+InnerTubeX só envia a identidade em requisições com login. Corrigido em
+`innertube/client.py` e conferido com a API real.
 
 ## Descartado
 
