@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, GLib, Gtk
 
 from . import queue_view
 from .i18n import _, ngettext
@@ -16,12 +16,9 @@ from .models import (
     LibraryItem,
     PlaybackState,
 )
-from .playback_report import playback_report
 from .playback_state import (
-    filter_new_recommendations,
     move_queue_item,
     playback_state_snapshot,
-    radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
 )
@@ -151,77 +148,6 @@ class WindowPlaybackMixin:
         for control in self.repeat_buttons:
             set_icon_selected(control, self.repeat_enabled)
         self._save_playback_state()
-
-    def _toggle_autoplay(self, button: Gtk.Button) -> None:
-        self.autoplay_enabled = not self.autoplay_enabled
-        self._waiting_for_autoplay = False
-        if self.autoplay_enabled:
-            set_icon_selected(button, True)
-            button.set_tooltip_text(_("Reprodução automática ativada"))
-            self.toast_overlay.add_toast(Adw.Toast(title=_("Reprodução automática ativada")))
-            self._ensure_autoplay()
-        else:
-            self._autoplay_request += 1
-            self._autoplay_loading = False
-            set_icon_selected(button, False)
-            button.set_tooltip_text(_("Reprodução automática desativada"))
-            self.toast_overlay.add_toast(Adw.Toast(title=_("Reprodução automática desativada")))
-        self._save_playback_state()
-
-    def _ensure_autoplay(self, force: bool = False) -> None:
-        if not self.autoplay_enabled or not self.queue or self._autoplay_loading:
-            return
-        if self.related_items:
-            if self._waiting_for_autoplay:
-                self._waiting_for_autoplay = False
-                self._promote_related(self.related_items[0], play_next=False)
-                self._play_next()
-            return
-        seed = radio_seed_for_autoplay(self.queue, self.queue_index, force=force)
-        if seed is None:
-            return
-        self._autoplay_request += 1
-        request_id = self._autoplay_request
-        self._autoplay_loading = True
-
-        def worker():
-            try:
-                recommendations = self.youtube.radio(seed.id)
-                GLib.idle_add(self._autoplay_loaded, request_id, recommendations, None)
-            except Exception as exc:
-                GLib.idle_add(self._autoplay_loaded, request_id, None, str(exc))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _autoplay_loaded(
-        self, request_id: int, recommendations: list[LibraryItem] | None, error: str | None
-    ):
-        if request_id != self._autoplay_request:
-            return False
-        self._autoplay_loading = False
-        if error:
-            if self._waiting_for_autoplay:
-                self.toast_overlay.add_toast(
-                    Adw.Toast(
-                        title=_("Não foi possível continuar a rádio: {error}").format(error=error),
-                        timeout=5,
-                    )
-                )
-            self._waiting_for_autoplay = False
-            return False
-        self.related_items = filter_new_recommendations(self.queue, recommendations)
-        self._render_queue()
-        self._save_playback_state()
-        if self._waiting_for_autoplay and self.related_items:
-            self._waiting_for_autoplay = False
-            self._promote_related(self.related_items[0], play_next=False)
-            self._play_next()
-        elif self._waiting_for_autoplay:
-            self._waiting_for_autoplay = False
-            self.toast_overlay.add_toast(
-                Adw.Toast(title=_("A rádio não encontrou novas músicas"), timeout=4)
-            )
-        return False
 
     def _queue_actions(self, select=None) -> queue_view.QueueActions:
         return queue_view.QueueActions(
@@ -460,49 +386,10 @@ class WindowPlaybackMixin:
         self.mpris.update(self.current_item, (duration_ms or 0) * 1000)
         return False
 
-    def _register_qualified_playback(
-        self,
-        request_id: int,
-        item: LibraryItem,
-        tracking_url: str | None,
-    ) -> bool:
-        if (
-            request_id != self._play_request
-            or request_id != self._history_tracking_request
-            or self._playback_position_us() < 28_000_000
-            or not self.storage.history_enabled()
-        ):
-            return False
-        if self._history_recorded_request == request_id:
-            return False
-        self.storage.record_history(item, self._playback_position_us() // 1000)
-        self._history_recorded_request = request_id
-        if tracking_url:
-            threading.Thread(
-                target=lambda: self._register_remote_playback(tracking_url, item.playlist_id),
-                daemon=True,
-                name="playback-history",
-            ).start()
-        return False
-
-    def _register_remote_playback(self, tracking_url: str, playlist_id: str | None) -> None:
-        try:
-            self.youtube.register_playback(tracking_url, playlist_id)
-        except Exception:
-            LOGGER.debug(
-                "Não foi possível registrar a reprodução remota; o histórico local foi mantido",
-                exc_info=True,
-            )
-
     def _apply_pending_seek(self, request_id: int, position_ms: int) -> bool:
         if request_id == self._play_request and self.current_duration_ms > position_ms:
             self._seek_playback(position_ms * 1000)
         self._pending_seek_ms = 0
-        return False
-
-    def _play_request_error(self, request_id: int, error: str):
-        if request_id == self._play_request:
-            return self._player_error(error)
         return False
 
     def _toggle_player(self) -> None:
@@ -578,58 +465,6 @@ class WindowPlaybackMixin:
             self._optional_toggle_player()
         elif not self.player.playing:
             self._toggle_player()
-
-    def _player_error(self, error: str):
-        self._stream_ready = False
-        item = getattr(self, "current_item", None)
-        if item is not None and self._stream_recovery_attempts < 1:
-            self._stream_recovery_attempts += 1
-            request_id = self._play_request
-            self.play_button.set_sensitive(False)
-            self.expanded_play_button.set_sensitive(False)
-            self.toast_overlay.add_toast(
-                Adw.Toast(
-                    title=_("O stream falhou; renovando a conexão…"),
-                    timeout=3,
-                )
-            )
-
-            def recover() -> None:
-                try:
-                    self._deliver_stream(
-                        request_id, self.youtube.resolve_stream(item.id, force=True)
-                    )
-                except Exception as exc:
-                    GLib.idle_add(self._player_recovery_failed, request_id, str(exc))
-
-            threading.Thread(target=recover, daemon=True, name="stream-recovery").start()
-            return False
-        self._show_play_failure(_("Não foi possível reproduzir: {error}").format(error=error))
-        return False
-
-    def _player_recovery_failed(self, request_id: int, error: str) -> bool:
-        if request_id == self._play_request:
-            self._show_play_failure(
-                _("Não foi possível reproduzir mesmo após renovar o stream: {error}").format(
-                    error=error
-                )
-            )
-        return False
-
-    def _show_play_failure(self, message: str) -> None:
-        for button in (self.play_button, self.expanded_play_button):
-            button.set_sensitive(True)
-            button.set_icon_name("media-playback-start-symbolic")
-        toast = Adw.Toast(title=message, timeout=8, button_label=_("Copiar relatório"))
-        report = playback_report(message, getattr(self, "current_item", None))
-        toast.connect("button-clicked", lambda *_: self._copy_playback_report(report))
-        self.toast_overlay.add_toast(toast)
-
-    def _copy_playback_report(self, report: str) -> None:
-        display = Gdk.Display.get_default()
-        if display is not None:
-            display.get_clipboard().set(report)
-            self.toast_overlay.add_toast(Adw.Toast(title=_("Relatório copiado"), timeout=2))
 
     def _stop_player(self) -> None:
         self._optional_stop()

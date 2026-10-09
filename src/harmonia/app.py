@@ -39,6 +39,7 @@ from .ui import (
 )
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
+from .window_autoplay import WindowAutoplayMixin
 from .window_chrome import (
     build_expanded_player,
     build_header,
@@ -54,6 +55,7 @@ from .window_library import WindowLibraryMixin
 from .window_lyrics import WindowLyricsMixin
 from .window_optional import WindowOptionalMixin
 from .window_playback import WindowPlaybackMixin
+from .window_playback_recovery import WindowPlaybackRecoveryMixin
 from .window_preferences import WindowPreferencesMixin
 from .window_search import WindowSearchMixin
 from .window_social import WindowSocialMixin
@@ -78,6 +80,8 @@ class HarmoniaWindow(
     WindowActionsMixin,
     WindowLyricsMixin,
     WindowPlaybackMixin,
+    WindowAutoplayMixin,
+    WindowPlaybackRecoveryMixin,
     WindowOptionalMixin,
     WindowSocialMixin,
     WindowAccountMixin,
