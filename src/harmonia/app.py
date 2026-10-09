@@ -58,6 +58,8 @@ from .window_item_menu import WindowItemMenuMixin
 from .window_library import WindowLibraryMixin
 from .window_local_playlists import WindowLocalPlaylistsMixin
 from .window_lyrics import WindowLyricsMixin
+from .window_lyrics_follow import WindowLyricsFollowMixin
+from .window_lyrics_tools import WindowLyricsToolsMixin
 from .window_optional import WindowOptionalMixin
 from .window_playback import WindowPlaybackMixin
 from .window_playback_recovery import WindowPlaybackRecoveryMixin
@@ -91,6 +93,8 @@ class HarmoniaWindow(
     WindowItemMenuMixin,
     WindowActionsMixin,
     WindowLyricsMixin,
+    WindowLyricsFollowMixin,
+    WindowLyricsToolsMixin,
     WindowPlaybackMixin,
     WindowAutoplayMixin,
     WindowPlaybackRecoveryMixin,

@@ -67,6 +67,7 @@ src/harmonia/window_item_menu.py
 src/harmonia/window_library.py
 src/harmonia/window_local_playlists.py
 src/harmonia/window_lyrics.py
+src/harmonia/window_lyrics_tools.py
 src/harmonia/window_optional.py
 src/harmonia/window_playback.py
 src/harmonia/window_playback_recovery.py

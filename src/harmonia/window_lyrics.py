@@ -1,36 +1,28 @@
+"""Lyrics: loading them for the current track and building the popover view.
+
+The active-line follower lives in window_lyrics_follow.py and the toolbar
+(provider, translation, offset) in window_lyrics_tools.py.
+"""
+
 from __future__ import annotations
 
 import logging
 import threading
-import time
 from html import escape
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, GLib, Gtk
 
-from .gtk_lyric_words import LyricWordHighlighter
 from .i18n import _
-from .lyrics_state import (
-    active_lyric_index,
-    clamp_lyrics_offset,
-    lyric_seek_target,
-    lyrics_copy_text,
-    next_lyrics_provider,
-    remove_translation,
-    with_translations,
-)
 from .models import (
     LibraryItem,
     LyricsDocument,
 )
 from .ui import (
     action_button,
-    set_css_class,
-    style_action,
-    style_icon_button,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -124,14 +116,6 @@ class WindowLyricsMixin:
             self._render_lyrics(item, document)
         return False
 
-    def _lyric_words(self) -> LyricWordHighlighter:
-        highlighter = getattr(self, "_word_highlighter", None)
-        if highlighter is None:
-            highlighter = self._word_highlighter = LyricWordHighlighter(
-                lambda: self._playback_position_us() // 1000 + self.lyrics_offset_ms
-            )
-        return highlighter
-
     def _render_lyrics(self, item: LibraryItem, document: LyricsDocument) -> None:
         self._lyric_words().clear()
         self.current_lyrics_document = document
@@ -182,48 +166,7 @@ class WindowLyricsMixin:
         body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
         body.add_css_class("synced-lyrics" if document.is_synced else "plain-lyrics")
         if document.is_synced:
-            if expanded:
-                lead = Gtk.Box(height_request=180)
-                lead.add_css_class("lyrics-breathing-space")
-                body.append(lead)
-            rows: list[Gtk.Button] = []
-            texts: list[Gtk.Label] = []
-            for line in document.synced:
-                row = Gtk.Button()
-                row.add_css_class("flat")
-                row.add_css_class("lyrics-line")
-                row.set_tooltip_text(
-                    _("Ir para {time}").format(time=self._format_time(line.start_ms))
-                )
-                row.connect("clicked", lambda _button, value=line.start_ms: self._seek_lyric(value))
-                labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-                original = Gtk.Label(label=line.text, xalign=0, wrap=True)
-                original.add_css_class("lyrics-line-text")
-                labels.append(original)
-                texts.append(original)
-                if line.translation:
-                    translated = Gtk.Label(label=line.translation, xalign=0, wrap=True)
-                    translated.add_css_class("lyrics-line-translation")
-                    labels.append(translated)
-                row.set_child(labels)
-                body.append(row)
-                rows.append(row)
-            if expanded:
-                tail = Gtk.Box(height_request=240)
-                tail.add_css_class("lyrics-breathing-space")
-                body.append(tail)
-            self._lyric_views.append(
-                {
-                    "rows": rows,
-                    "texts": texts,
-                    "expanded": expanded,
-                    "body": body,
-                    "scroll": None,
-                    "animation": 0,
-                    "generation": 0,
-                    "follow_generation": 0,
-                }
-            )
+            self._fill_synced_lyrics(body, document, expanded)
         else:
             original = Gtk.Label(
                 label=document.display_text, xalign=0, yalign=0, wrap=True, selectable=True
@@ -240,262 +183,45 @@ class WindowLyricsMixin:
         content.append(body)
         return content
 
-    def _lyrics_actions(self, expanded: bool) -> Gtk.Widget:
-        bar = Adw.WrapBox(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            child_spacing=4,
-            line_spacing=4,
-            natural_line_length=620 if expanded else 400,
-            wrap_policy=Adw.WrapPolicy.NATURAL,
+    def _fill_synced_lyrics(self, body: Gtk.Box, document: LyricsDocument, expanded: bool) -> None:
+        """One seekable row per line, registered as a view the follower scrolls."""
+        if expanded:
+            lead = Gtk.Box(height_request=180)
+            lead.add_css_class("lyrics-breathing-space")
+            body.append(lead)
+        rows: list[Gtk.Button] = []
+        texts: list[Gtk.Label] = []
+        for line in document.synced:
+            row = Gtk.Button()
+            row.add_css_class("flat")
+            row.add_css_class("lyrics-line")
+            row.set_tooltip_text(_("Ir para {time}").format(time=self._format_time(line.start_ms)))
+            row.connect("clicked", lambda _button, value=line.start_ms: self._seek_lyric(value))
+            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            original = Gtk.Label(label=line.text, xalign=0, wrap=True)
+            original.add_css_class("lyrics-line-text")
+            labels.append(original)
+            texts.append(original)
+            if line.translation:
+                translated = Gtk.Label(label=line.translation, xalign=0, wrap=True)
+                translated.add_css_class("lyrics-line-translation")
+                labels.append(translated)
+            row.set_child(labels)
+            body.append(row)
+            rows.append(row)
+        if expanded:
+            tail = Gtk.Box(height_request=240)
+            tail.add_css_class("lyrics-breathing-space")
+            body.append(tail)
+        self._lyric_views.append(
+            {
+                "rows": rows,
+                "texts": texts,
+                "expanded": expanded,
+                "body": body,
+                "scroll": None,
+                "animation": 0,
+                "generation": 0,
+                "follow_generation": 0,
+            }
         )
-        bar.add_css_class("lyrics-actions")
-        provider_names = {
-            "auto": _("Automática"),
-            "lyricsplus": "LyricsPlus",
-            "lrclib": "LRCLIB",
-            "youtube": "YouTube",
-        }
-        provider = Gtk.Button(
-            label=_("Fonte: {provider}").format(
-                provider=provider_names.get(self.lyrics_provider, _("Automática"))
-            ),
-            tooltip_text=_("Alternar provedor de letras"),
-        )
-        style_action(provider, "secondary")
-        provider.connect("clicked", lambda *_: self._cycle_lyrics_provider())
-        bar.append(provider)
-        translate = Gtk.Button(
-            icon_name="accessories-dictionary-symbolic", tooltip_text=_("Traduzir para português")
-        )
-        style_icon_button(translate, "sm")
-        translate.connect("clicked", lambda *_: self._translate_current_lyrics())
-        bar.append(translate)
-        copy = Gtk.Button(icon_name="edit-copy-symbolic", tooltip_text=_("Copiar letra"))
-        style_icon_button(copy, "sm")
-        copy.connect("clicked", lambda *_: self._copy_current_lyrics())
-        bar.append(copy)
-        earlier = Gtk.Button(
-            icon_name="list-remove-symbolic", tooltip_text=_("Adiantar letra em 250 ms")
-        )
-        style_icon_button(earlier, "sm")
-        earlier.connect("clicked", lambda *_: self._change_lyrics_offset(-250))
-        bar.append(earlier)
-        offset = Gtk.Button(label=self._offset_label(), tooltip_text=_("Zerar ajuste de tempo"))
-        style_action(offset, "secondary")
-        offset.add_css_class("lyrics-offset")
-        offset.connect("clicked", lambda *_: self._set_lyrics_offset(0))
-        bar.append(offset)
-        later = Gtk.Button(icon_name="list-add-symbolic", tooltip_text=_("Atrasar letra em 250 ms"))
-        style_icon_button(later, "sm")
-        later.connect("clicked", lambda *_: self._change_lyrics_offset(250))
-        bar.append(later)
-        return bar
-
-    def _cycle_lyrics_provider(self) -> None:
-        self.lyrics_provider = next_lyrics_provider(self.lyrics_provider)
-        self.storage.set_setting("lyrics_provider", self.lyrics_provider)
-        self._load_current_lyrics(force=False)
-
-    def _offset_label(self) -> str:
-        return "Sincronia 0 ms" if not self.lyrics_offset_ms else f"{self.lyrics_offset_ms:+d} ms"
-
-    def _change_lyrics_offset(self, delta: int) -> None:
-        self._set_lyrics_offset(clamp_lyrics_offset(self.lyrics_offset_ms + delta))
-
-    def _set_lyrics_offset(self, value: int) -> None:
-        self.lyrics_offset_ms = value
-        self.storage.set_setting("lyrics_offset_ms", str(value))
-        item = getattr(self, "current_item", None)
-        if item and self.current_lyrics_document:
-            self._render_lyrics(item, self.current_lyrics_document)
-
-    def _seek_lyric(self, start_ms: int) -> None:
-        position_ms = lyric_seek_target(start_ms, self.lyrics_offset_ms)
-        if self.player.seek(position_ms * 1000):
-            self._update_synced_lyrics(position_ms, allow_backward=True)
-
-    def _copy_current_lyrics(self) -> None:
-        document = self.current_lyrics_document
-        display = Gdk.Display.get_default()
-        if not document or not display:
-            return
-        display.get_clipboard().set(lyrics_copy_text(document))
-        self.toast_overlay.add_toast(Adw.Toast(title=_("Letra copiada"), timeout=2))
-
-    def _translate_current_lyrics(self) -> None:
-        item = getattr(self, "current_item", None)
-        document = self.current_lyrics_document
-        if not item or not document:
-            return
-        if remove_translation(document):
-            self.storage.save_lyrics_document(item.id, document)
-            self._render_lyrics(item, document)
-            return
-        self.toast_overlay.add_toast(Adw.Toast(title=_("Traduzindo letra…"), timeout=2))
-        request_id = self._lyrics_request
-        lines = [line.text for line in document.synced] or document.display_text.splitlines()
-
-        def worker():
-            try:
-                result = self.translation_client.translate(lines, "pt")
-                GLib.idle_add(self._lyrics_translated, request_id, item.id, result, None)
-            except Exception as exc:
-                GLib.idle_add(self._lyrics_translated, request_id, item.id, None, str(exc))
-
-        threading.Thread(target=worker, daemon=True, name="lyrics-translation").start()
-
-    def _lyrics_translated(self, request_id, video_id, result, error):
-        item = getattr(self, "current_item", None)
-        document = self.current_lyrics_document
-        if request_id != self._lyrics_request or not item or item.id != video_id or not document:
-            return False
-        if error or not result or not any(result):
-            self.toast_overlay.add_toast(
-                Adw.Toast(
-                    title=_("Não foi possível traduzir: {error}").format(
-                        error=error or _("resposta vazia")
-                    ),
-                    timeout=5,
-                )
-            )
-            return False
-        if document.synced:
-            document.synced = with_translations(document.synced, result)
-        else:
-            document.translation = "\n".join(result)
-        document.translation_language = "pt"
-        self.storage.save_lyrics_document(item.id, document)
-        self._render_lyrics(item, document)
-        self.toast_overlay.add_toast(Adw.Toast(title=_("Letra traduzida"), timeout=2))
-        return False
-
-    def _update_synced_lyrics(self, position_ms: int, *, allow_backward: bool = False) -> None:
-        document = self.current_lyrics_document
-        if not document or not document.synced:
-            return
-        active = active_lyric_index(
-            document.synced,
-            position_ms,
-            self.lyrics_offset_ms,
-            floor_at_zero=False,
-        )
-        # GStreamer can briefly report an older/zero position while a network
-        # stream is buffering. Lyrics naturally move forward during playback,
-        # so accepting that transient value would animate the footer back to
-        # the beginning. Real user seeks opt in to backwards movement.
-        if (
-            not allow_backward
-            and self._active_lyric_index >= 0
-            and active < self._active_lyric_index
-        ):
-            return
-        if active == self._active_lyric_index:
-            return
-        self._active_lyric_index = active
-        self._lyric_words().follow(
-            document.synced[active] if active >= 0 else None,
-            [view["texts"][active] for view in self._lyric_views if active < len(view["texts"])],
-        )
-        for view in self._lyric_views:
-            for index, row in enumerate(view["rows"]):
-                set_css_class(row, "lyrics-line-active", index == active)
-            if active >= 0:
-                should_follow = (
-                    view["expanded"]
-                    and self.expanded_revealer.get_reveal_child()
-                    and self.expanded_stack.get_visible_child_name() == "lyrics"
-                ) or (not view["expanded"] and self.lyrics_button.get_active())
-                if should_follow:
-                    self._queue_lyric_follow(view, active)
-
-    def _follow_visible_lyric_views(self) -> None:
-        """Resume following without replacing either lyrics scroller."""
-        if self._active_lyric_index < 0:
-            self._update_synced_lyrics(self._playback_position_us() // 1000)
-            return
-        for view in self._lyric_views:
-            visible = (
-                view["expanded"]
-                and self.expanded_revealer.get_reveal_child()
-                and self.expanded_stack.get_visible_child_name() == "lyrics"
-            ) or (not view["expanded"] and self.lyrics_button.get_active())
-            if visible:
-                self._queue_lyric_follow(view, self._active_lyric_index)
-
-    def _queue_lyric_follow(self, view: dict, index: int) -> None:
-        """Keep only the newest allocation-time scroll request for a view."""
-        view["follow_generation"] += 1
-        generation = view["follow_generation"]
-        GLib.idle_add(self._follow_lyric_line, view, index, generation)
-
-    @staticmethod
-    def _lyric_scroll_destination(
-        row_top: float,
-        row_height: float,
-        viewport_height: float,
-        lower: float,
-        upper: float,
-        *,
-        expanded: bool,
-    ) -> float:
-        """Place expanded lyrics centrally and footer lyrics slightly above center."""
-        anchor = 0.50 if expanded else 0.42
-        target = row_top + row_height / 2 - viewport_height * anchor
-        return max(lower, min(target, max(lower, upper - viewport_height)))
-
-    def _follow_lyric_line(
-        self, view: dict, index: int, follow_generation: int | None = None
-    ) -> bool:
-        if follow_generation is not None and follow_generation != view["follow_generation"]:
-            return GLib.SOURCE_REMOVE
-        scroll = view.get("scroll")
-        if scroll is None or index >= len(view["rows"]):
-            return GLib.SOURCE_REMOVE
-        scroll_content = scroll.get_child()
-        if scroll_content is None:
-            return GLib.SOURCE_REMOVE
-        ok, bounds = view["rows"][index].compute_bounds(scroll_content)
-        adjustment = scroll.get_vadjustment()
-        if not ok or adjustment.get_page_size() <= 1:
-            return GLib.SOURCE_REMOVE
-        # GTK reports bounds after the scrolled-window transform, therefore Y
-        # is relative to the visible viewport once the adjustment is non-zero.
-        # Convert it back to a stable content coordinate before calculating the
-        # next destination; otherwise consecutive lines oscillate toward zero.
-        row_top = bounds.get_y() + adjustment.get_value()
-        destination = self._lyric_scroll_destination(
-            row_top,
-            bounds.get_height(),
-            adjustment.get_page_size(),
-            adjustment.get_lower(),
-            adjustment.get_upper(),
-            expanded=view["expanded"],
-        )
-        self._animate_lyric_scroll(view, adjustment, destination)
-        return GLib.SOURCE_REMOVE
-
-    def _animate_lyric_scroll(
-        self,
-        view: dict,
-        adjustment: Gtk.Adjustment,
-        destination: float,
-        duration_ms: int = 420,
-    ) -> None:
-        """Animate the adjustment without stealing keyboard focus from the player."""
-        view["generation"] += 1
-        generation = view["generation"]
-        start = adjustment.get_value()
-        distance = destination - start
-        if abs(distance) < 1:
-            return
-        started = time.monotonic()
-
-        def tick() -> bool:
-            if generation != view["generation"]:
-                return GLib.SOURCE_REMOVE
-            progress = min(1.0, (time.monotonic() - started) * 1000 / duration_ms)
-            eased = 1 - (1 - progress) ** 3
-            adjustment.set_value(start + distance * eased)
-            return GLib.SOURCE_CONTINUE if progress < 1 else GLib.SOURCE_REMOVE
-
-        view["animation"] = GLib.timeout_add(16, tick)
