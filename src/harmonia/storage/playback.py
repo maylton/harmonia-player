@@ -16,7 +16,7 @@ from ..models import (
     LibraryItem,
     PlaybackState,
 )
-from .database import ITEM_COLUMNS, Database
+from .database import ITEM_COLUMNS, ITEM_PLACEHOLDERS, Database
 
 
 class PlaybackRecords(Database):
@@ -27,7 +27,7 @@ class PlaybackRecords(Database):
                 db.executemany(
                     f"""INSERT INTO playback_queue
                     (queue_group,position,{ITEM_COLUMNS})
-                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    VALUES (?,?,{ITEM_PLACEHOLDERS})""",
                     [
                         (queue_group, position, *self._item_values(item))
                         for position, item in enumerate(items)
@@ -98,7 +98,7 @@ class PlaybackRecords(Database):
             cursor = db.execute(
                 f"""INSERT INTO play_history
                 ({ITEM_COLUMNS},played_at,position_ms)
-                VALUES (?,?,?,?,?,?,?,?,?)""",
+                VALUES ({ITEM_PLACEHOLDERS},?,?)""",
                 (*self._item_values(item), int(time.time()), max(0, position_ms)),
             )
             db.execute(

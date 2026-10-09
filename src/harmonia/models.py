@@ -19,6 +19,8 @@ class LibraryItem:
     # Every linked credit in byline order, as (kind, name, browse_id) with kind
     # "artist" or "album", so each artist of a collaboration is navigable.
     links: tuple[tuple[str, str, str], ...] = ()
+    # YouTube Music's explicit-content badge.
+    explicit: bool = False
 
     def __post_init__(self) -> None:
         # JSON round trips (listen together, caches) turn tuples into lists.

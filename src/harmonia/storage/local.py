@@ -74,8 +74,9 @@ class LocalMedia(Database):
         db.execute("DELETE FROM local_playlist_items WHERE playlist_id = ?", (playlist_id,))
         db.executemany(
             """INSERT INTO local_playlist_items
-            (playlist_id,position,item_id,title,subtitle,thumbnail,kind,remote_playlist_id,set_video_id)
-            VALUES(?,?,?,?,?,?,?,?,?)""",
+            (playlist_id,position,item_id,title,subtitle,thumbnail,kind,remote_playlist_id,
+             set_video_id,explicit)
+            VALUES(?,?,?,?,?,?,?,?,?,?)""",
             [
                 (playlist_id, position, *self._item_values(item))
                 for position, item in enumerate(items)

@@ -8,7 +8,7 @@ import time
 from ..models import (
     DownloadRecord,
 )
-from .database import ITEM_COLUMNS, Database
+from .database import ITEM_COLUMNS, ITEM_PLACEHOLDERS, Database
 
 
 class DownloadRecords(Database):
@@ -18,10 +18,11 @@ class DownloadRecords(Database):
                 f"""INSERT INTO downloads
                 ({ITEM_COLUMNS},status,file_path,
                  downloaded_bytes,total_bytes,account_hash,error,updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(item_id) DO UPDATE SET
+                VALUES ({ITEM_PLACEHOLDERS},?,?,?,?,?,?,?) ON CONFLICT(item_id) DO UPDATE SET
                 title=excluded.title, subtitle=excluded.subtitle, thumbnail=excluded.thumbnail,
                 kind=excluded.kind, playlist_id=excluded.playlist_id,
-                set_video_id=excluded.set_video_id, status=excluded.status,
+                set_video_id=excluded.set_video_id, explicit=excluded.explicit,
+                status=excluded.status,
                 file_path=excluded.file_path, downloaded_bytes=excluded.downloaded_bytes,
                 total_bytes=excluded.total_bytes, account_hash=excluded.account_hash,
                 error=excluded.error, updated_at=excluded.updated_at""",

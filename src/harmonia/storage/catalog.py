@@ -15,7 +15,7 @@ from ..models import (
     HomeSection,
     LibraryItem,
 )
-from .database import ITEM_COLUMNS, Database
+from .database import ITEM_COLUMNS, ITEM_PLACEHOLDERS, Database
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class CatalogCache(Database):
                 db.executemany(
                     f"""INSERT INTO library_items
                     (category,{ITEM_COLUMNS},position,synced_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    VALUES (?,{ITEM_PLACEHOLDERS},?,?)""",
                     [
                         (category, *self._item_values(item), position, now)
                         for position, item in enumerate(items)
@@ -86,7 +86,7 @@ class CatalogCache(Database):
             db.executemany(
                 f"""INSERT INTO {table}
                 (section_position,section_title,item_position,{ITEM_COLUMNS},synced_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                VALUES (?,?,?,{ITEM_PLACEHOLDERS},?)""",
                 [
                     (section_position, section.title, item_position, *self._item_values(item), now)
                     for item_position, item in enumerate(section.items)

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:33-0300\n"
+"POT-Creation-Date: 2026-10-09 18:36-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -229,12 +229,12 @@ msgstr "Track does not contain playlistSetVideoId and cannot be safely removed"
 msgid "O YouTube Music não retornou o perfil da conta ativa."
 msgstr "YouTube Music did not return the active account profile."
 
-#: src/harmonia/innertube/parsers.py:387 src/harmonia/innertube/protocol.py:86
+#: src/harmonia/innertube/parsers.py:398 src/harmonia/innertube/protocol.py:86
 #: src/harmonia/qt_library.py:23 src/harmonia/window_constants.py:5
 msgid "Músicas"
 msgstr "Songs"
 
-#: src/harmonia/innertube/parsers.py:447
+#: src/harmonia/innertube/parsers.py:458
 msgid "Artista"
 msgstr "Artist"
 
@@ -644,8 +644,8 @@ msgstr[1] "{count} devices found."
 msgid "Reproduzindo em {name}."
 msgstr "Playing on {name}."
 
-#: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:76
-#: src/harmonia/qt_presenters.py:77 src/harmonia/settings_page/account.py:28
+#: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:77
+#: src/harmonia/qt_presenters.py:78 src/harmonia/settings_page/account.py:28
 #: src/harmonia/window_history.py:208 src/harmonia/window_library.py:75
 msgid "YouTube Music"
 msgstr "YouTube Music"
@@ -1478,21 +1478,25 @@ msgstr "Invalid Listen Together link"
 msgid "Link Listen Together incompleto"
 msgstr "Incomplete Listen Together link"
 
-#: src/harmonia/track_rows.py:71
+#: src/harmonia/track_rows.py:76
+msgid "Conteúdo explícito"
+msgstr "Explicit content"
+
+#: src/harmonia/track_rows.py:83
 msgid "Opções da faixa"
 msgstr "Track options"
 
-#: src/harmonia/track_rows.py:242 src/harmonia/window_actions.py:85
+#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:85
 msgid "Remover das músicas curtidas"
 msgstr "Remove from liked songs"
 
-#: src/harmonia/track_rows.py:242 src/harmonia/window_actions.py:85
+#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:85
 #: src/harmonia/window_chrome/expanded_player.py:177
 #: src/harmonia/window_item_menu.py:97
 msgid "Curtir música"
 msgstr "Like song"
 
-#: src/harmonia/track_rows.py:268
+#: src/harmonia/track_rows.py:280
 #, python-brace-format
 msgid "Reproduzir {title}"
 msgstr "Play {title}"

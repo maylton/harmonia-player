@@ -137,6 +137,14 @@ def _linked_pages(renderer: dict[str, Any]) -> dict[str, str]:
     return links
 
 
+def _is_explicit(renderer: dict[str, Any]) -> bool:
+    """Whether the renderer carries YouTube Music's explicit-content badge."""
+    badges = [renderer.get("badges"), renderer.get("subtitleBadges")]
+    return any(
+        (node.get("icon") or {}).get("iconType") == "MUSIC_EXPLICIT_BADGE" for node in _walk(badges)
+    )
+
+
 def _kind_for_id(item_id: str, default: str) -> str:
     if item_id.startswith("MPSP"):
         return "podcasts"
@@ -220,6 +228,7 @@ def parse_library_items(payload: dict[str, Any], kind: str = "item") -> list[Lib
                     playlist_id,
                     _set_video_id(renderer),
                     **_linked_pages(renderer),
+                    explicit=_is_explicit(renderer),
                 )
             )
     return items
@@ -334,6 +343,7 @@ def parse_watch_queue(payload: dict[str, Any], audio_only: bool = True) -> list[
                 _best_thumbnail(renderer),
                 "songs",
                 **_linked_pages(renderer),
+                explicit=_is_explicit(renderer),
             )
         )
     return items
