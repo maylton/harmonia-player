@@ -11,21 +11,31 @@ from pathlib import Path
 LOGGER = logging.getLogger(__name__)
 GNOME_SCHEMA = "org.gnome.desktop.background"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".jxl", ".avif", ".bmp"}
+# Plasma's own wallpaper when the look-and-feel package names none.
+PLASMA_DEFAULT_WALLPAPER = "Next"
 
 
-def wallpaper_path(*, dark: bool) -> Path | None:
-    """The current wallpaper image (the dark variant in dark mode), or None."""
-    for finder in (gnome_wallpaper, kde_wallpaper):
+def in_flatpak() -> bool:
+    return Path("/.flatpak-info").exists()
+
+
+def wallpaper_candidates(*, dark: bool) -> list[Path]:
+    """Images the desktop shows, the dark variant first in dark mode.
+
+    The light variant follows the dark one: if the image loaders cannot open
+    one (GNOME's are JPEG XL), the other may still do.
+    """
+    found: list[Path] = []
+    for finder in (gnome_wallpapers, kde_wallpapers):
         try:
-            path = finder(dark=dark)
+            paths = finder(dark=dark)
         except Exception:
             LOGGER.debug(
                 "Não foi possível ler o papel de parede (%s)", finder.__name__, exc_info=True
             )
             continue
-        if path is not None and path.is_file():
-            return path
-    return None
+        found.extend(path for path in paths if path.is_file() and path not in found)
+    return found
 
 
 def local_path(uri: str) -> Path | None:
@@ -65,7 +75,7 @@ def resolve_image(path: Path, *, dark: bool) -> Path | None:
     return path if path.suffix.lower() in IMAGE_SUFFIXES else None
 
 
-def gnome_wallpaper(*, dark: bool) -> Path | None:
+def gnome_wallpapers(*, dark: bool) -> list[Path]:
     import gi
 
     gi.require_version("Gio", "2.0")
@@ -74,30 +84,65 @@ def gnome_wallpaper(*, dark: bool) -> Path | None:
     source = Gio.SettingsSchemaSource.get_default()
     schema = source.lookup(GNOME_SCHEMA, True) if source is not None else None
     if schema is None:
-        return None
+        return []
     settings = Gio.Settings.new(GNOME_SCHEMA)
-    keys = ["picture-uri-dark", "picture-uri"] if dark else ["picture-uri"]
+    keys = ["picture-uri-dark", "picture-uri"] if dark else ["picture-uri", "picture-uri-dark"]
+    found = []
     for key in keys:
         if not schema.has_key(key):
             continue
         path = local_path(settings.get_string(key))
-        if path is not None and path.exists():
-            return resolve_image(path, dark=dark)
-    return None
+        image = resolve_image(path, dark=dark) if path is not None and path.exists() else None
+        if image is not None:
+            found.append(image)
+    return found
 
 
-def kde_wallpaper(*, dark: bool) -> Path | None:
-    """The image of Plasma's first desktop with the image wallpaper plugin."""
+def kde_wallpapers(*, dark: bool) -> list[Path]:
+    """Plasma's first image wallpaper, or the look-and-feel's default one."""
     config_home = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
     config = config_home / "plasma-org.kde.plasma.desktop-appletsrc"
-    if not config.is_file():
-        return None
-    parser = configparser.ConfigParser(interpolation=None, strict=False)
-    parser.read(config, encoding="utf-8")
-    for section in parser.sections():
-        # configparser drops the outer brackets of "[Containments][1][...]".
-        if f"[{section}]".endswith("[Wallpaper][org.kde.image][General]"):
-            path = local_path(parser.get(section, "Image", fallback=""))
-            if path is not None and path.exists():
-                return resolve_image(path, dark=dark)
+    if config.is_file():
+        parser = configparser.ConfigParser(interpolation=None, strict=False)
+        parser.read(config, encoding="utf-8")
+        for section in parser.sections():
+            # configparser drops the outer brackets of "[Containments][1][...]".
+            if f"[{section}]".endswith("[Wallpaper][org.kde.image][General]"):
+                path = local_path(parser.get(section, "Image", fallback=""))
+                image = (
+                    resolve_image(path, dark=dark) if path is not None and path.exists() else None
+                )
+                if image is not None:
+                    return [image]
+    if config.is_file() or "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
+        # A wallpaper never changed is not written to the config at all.
+        default = plasma_default_wallpaper(config_home)
+        image = resolve_image(default, dark=dark) if default is not None else None
+        return [image] if image is not None else []
+    return []
+
+
+def _data_dirs() -> list[Path]:
+    home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    system = os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share"
+    return [home, *(Path(value) for value in system.split(":") if value)]
+
+
+def plasma_default_wallpaper(config_home: Path) -> Path | None:
+    """The wallpaper package Plasma shows before the user picks one."""
+    globals_ = configparser.ConfigParser(interpolation=None, strict=False)
+    globals_.read(config_home / "kdeglobals", encoding="utf-8")
+    package = globals_.get("KDE", "LookAndFeelPackage", fallback="org.kde.breeze.desktop")
+    name = PLASMA_DEFAULT_WALLPAPER
+    for data in _data_dirs():
+        defaults = data / "plasma" / "look-and-feel" / package / "contents" / "defaults"
+        if defaults.is_file():
+            parser = configparser.ConfigParser(interpolation=None, strict=False)
+            parser.read(defaults, encoding="utf-8")
+            name = parser.get("Wallpaper", "Image", fallback=name) or name
+            break
+    for data in _data_dirs():
+        candidate = data / "wallpapers" / name
+        if candidate.exists():
+            return candidate
     return None

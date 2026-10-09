@@ -7,6 +7,7 @@ src/harmonia/innertube/client.py
 src/harmonia/innertube/parsers.py
 src/harmonia/innertube/protocol.py
 src/harmonia/insights.py
+src/harmonia/linux_backdrop.py
 src/harmonia/player.py
 src/harmonia/qt_activity.py
 src/harmonia/qt_backend.py

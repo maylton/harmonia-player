@@ -14,7 +14,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - opção "Velocidade muda o tom", para ouvir como um disco tocado mais rápido ou mais devagar;
 - selo "E" nas faixas com conteúdo explícito;
 - erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
-- Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início.
+- Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início;
+- Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF.
 
 ## 0.1.0-beta.3 — 2026-10-09
 

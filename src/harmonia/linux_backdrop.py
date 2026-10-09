@@ -30,6 +30,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
 
 from . import desktop_wallpaper, host  # noqa: E402
+from .i18n import _  # noqa: E402
 from .theming import get_theme  # noqa: E402
 from .ui import set_css_class  # noqa: E402
 
@@ -46,13 +47,35 @@ MICA_SHRINK = 14  # pixels of the longest side the wallpaper is reduced to
 MICA_SIZE = 640  # size of the smoothed image the window scales to cover
 
 
+def load_scaled(wallpaper: Path, size: int = 320) -> GdkPixbuf.Pixbuf:
+    """The image at most ``size`` pixels wide or tall.
+
+    GdkPixbuf opens what its installed loaders know (JPEG XL, WebP and AVIF
+    need extra packages); GTK's own decoder is tried after it.
+    """
+    try:
+        return GdkPixbuf.Pixbuf.new_from_file_at_scale(str(wallpaper), size, size, True)
+    except GLib.Error:
+        texture = Gdk.Texture.new_from_filename(str(wallpaper))
+        loader = GdkPixbuf.PixbufLoader.new_with_type("png")
+        loader.set_size(*_fit(texture.get_width(), texture.get_height(), size))
+        loader.write_bytes(texture.save_to_png_bytes())
+        loader.close()
+        return loader.get_pixbuf()
+
+
+def _fit(width: int, height: int, size: int) -> tuple[int, int]:
+    scale = min(1.0, size / max(width, height, 1))
+    return max(1, round(width * scale)), max(1, round(height * scale))
+
+
 def mica_image(wallpaper: Path, cache: Path) -> Path:
     """The wallpaper heavily blurred, cached by path and modification time."""
     stamp = f"{wallpaper}:{wallpaper.stat().st_mtime_ns}"
     target = cache / f"mica-{hashlib.sha1(stamp.encode()).hexdigest()[:16]}.png"
     if target.is_file():
         return target
-    source = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(wallpaper), 320, 320, True)
+    source = load_scaled(wallpaper)
     width, height = source.get_width(), source.get_height()
     scale = MICA_SHRINK / max(width, height)
     tiny = source.scale_simple(
@@ -69,6 +92,19 @@ def mica_image(wallpaper: Path, cache: Path) -> Path:
         old.unlink(missing_ok=True)
     smooth.savev(str(target), "png", [], [])
     return target
+
+
+FORMAT_PACKAGES = {".jxl": "JPEG XL", ".webp": "WebP", ".avif": "AVIF"}
+
+
+def unreadable_reason(wallpaper: Path) -> str:
+    image_format = FORMAT_PACKAGES.get(wallpaper.suffix.lower())
+    if image_format:
+        return _(
+            "O papel de parede é {format} e falta o suporte a esse formato "
+            "(pacote do gdk-pixbuf para {format})"
+        ).format(format=image_format)
+    return _("Não foi possível abrir o papel de parede {name}").format(name=wallpaper.name)
 
 
 def rgba(color: str, alpha: float) -> str:
@@ -104,6 +140,8 @@ class LinuxWindowBackdrops:
     def __init__(self) -> None:
         self.kind = "none"
         self.active = False
+        # Why the chosen material is not shown, for Preferences; "" when it is.
+        self.reason = ""
         self._window: Gtk.Window | None = None
         self._provider = Gtk.CssProvider()
         self._provider_display = None
@@ -141,14 +179,7 @@ class LinuxWindowBackdrops:
             return False
         self._install_provider(window)
         dark = self._style.get_dark()
-        image = None
-        if self.kind == "mica":
-            wallpaper = desktop_wallpaper.wallpaper_path(dark=dark)
-            if wallpaper is not None:
-                try:
-                    image = mica_image(wallpaper, host.cache_dir() / "mica")
-                except (GLib.Error, OSError):
-                    LOGGER.debug("Não foi possível desfocar %s", wallpaper, exc_info=True)
+        image, self.reason = self._mica(dark) if self.kind == "mica" else (None, "")
         css = material_css(self.kind, self._tint(dark), image) if self.kind != "none" else ""
         self._provider.load_from_string(css)
         applied = bool(css)
@@ -156,6 +187,25 @@ class LinuxWindowBackdrops:
         set_css_class(window, LINUX_CSS_CLASS, applied)
         self.active = applied
         return applied
+
+    @staticmethod
+    def _mica(dark: bool) -> tuple[Path | None, str]:
+        """The blurred wallpaper, or None and why there is none."""
+        candidates = desktop_wallpaper.wallpaper_candidates(dark=dark)
+        for wallpaper in candidates:
+            try:
+                return mica_image(wallpaper, host.cache_dir() / "mica"), ""
+            except (GLib.Error, OSError):
+                LOGGER.warning(
+                    "Não foi possível abrir o papel de parede %s", wallpaper, exc_info=True
+                )
+        if candidates:
+            return None, unreadable_reason(candidates[0])
+        if desktop_wallpaper.in_flatpak():
+            return None, _(
+                "O Flatpak não tem acesso ao papel de parede; instale o pacote .deb ou .rpm"
+            )
+        return None, _("Papel de parede do GNOME ou do Plasma não encontrado")
 
     def _install_provider(self, window: Gtk.Window) -> None:
         display = window.get_display() or Gdk.Display.get_default()

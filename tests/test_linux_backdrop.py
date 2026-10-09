@@ -21,19 +21,83 @@ def test_plasma_wallpaper_files_and_packages(monkeypatch, tmp_path):
     config = tmp_path / "config"
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
     write_kde_config(config, image.as_uri())
-    assert desktop_wallpaper.kde_wallpaper(dark=False) == image
+    assert desktop_wallpaper.kde_wallpapers(dark=False) == [image]
 
-    package = tmp_path / "Next"
+    package = make_package(tmp_path / "Next")
+    write_kde_config(config, str(package))
+    # The largest image, from images_dark in dark mode.
+    (light,) = desktop_wallpaper.kde_wallpapers(dark=False)
+    assert (light.parent.name, light.name) == ("images", "3840x2160.png")
+    assert desktop_wallpaper.kde_wallpapers(dark=True)[0].parent.name == "images_dark"
+
+
+def make_package(package):
     (package / "contents" / "images").mkdir(parents=True)
     (package / "contents" / "images_dark").mkdir(parents=True)
     (package / "contents" / "images" / "1920x1080.png").write_bytes(b"x" * 10)
     (package / "contents" / "images" / "3840x2160.png").write_bytes(b"x" * 40)
     (package / "contents" / "images_dark" / "3840x2160.png").write_bytes(b"x" * 30)
-    write_kde_config(config, str(package))
-    # The largest image, from images_dark in dark mode.
-    assert desktop_wallpaper.kde_wallpaper(dark=False).parent.name == "images"
-    assert desktop_wallpaper.kde_wallpaper(dark=False).name == "3840x2160.png"
-    assert desktop_wallpaper.kde_wallpaper(dark=True).parent.name == "images_dark"
+    return package
+
+
+def test_plasma_default_wallpaper_when_none_was_chosen(monkeypatch, tmp_path):
+    from harmonia import desktop_wallpaper
+
+    config, data = tmp_path / "config", tmp_path / "data"
+    config.mkdir()
+    # Plasma writes no Image key until the user picks a wallpaper.
+    (config / "plasma-org.kde.plasma.desktop-appletsrc").write_text(
+        "[Containments][1][Wallpaper][org.kde.image][General]\nSlidePaths=/x\n",
+        encoding="utf-8",
+    )
+    (config / "kdeglobals").write_text(
+        "[KDE]\nLookAndFeelPackage=org.example.desktop\n", encoding="utf-8"
+    )
+    defaults = data / "plasma" / "look-and-feel" / "org.example.desktop" / "contents"
+    defaults.mkdir(parents=True)
+    (defaults / "defaults").write_text("[Wallpaper]\nImage=Flow\n", encoding="utf-8")
+    make_package(data / "wallpapers" / "Flow")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
+    monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    monkeypatch.setenv("XDG_DATA_DIRS", str(tmp_path / "none"))
+    (image,) = desktop_wallpaper.kde_wallpapers(dark=True)
+    assert image.parts[-4:] == ("Flow", "contents", "images_dark", "3840x2160.png")
+
+
+def test_mica_reports_why_it_is_not_shown(monkeypatch, tmp_path):
+    from harmonia import desktop_wallpaper, linux_backdrop
+
+    monkeypatch.setattr(desktop_wallpaper, "wallpaper_candidates", lambda *, dark: [])
+    monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: False)
+    assert "não encontrado" in linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: True)
+    assert "Flatpak" in linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+
+    broken = tmp_path / "adwaita-d.jxl"
+    broken.write_bytes(b"not an image")
+    monkeypatch.setattr(desktop_wallpaper, "wallpaper_candidates", lambda *, dark: [broken])
+    monkeypatch.setattr(linux_backdrop.host, "cache_dir", lambda: tmp_path / "cache")
+    image, reason = linux_backdrop.LinuxWindowBackdrops._mica(True)
+    assert image is None and "JPEG XL" in reason
+
+
+def test_gtk_decodes_what_gdkpixbuf_cannot(monkeypatch, tmp_path):
+    gi.require_version("GdkPixbuf", "2.0")
+    from gi.repository import GdkPixbuf, GLib
+
+    from harmonia import linux_backdrop
+
+    wallpaper = tmp_path / "wallpaper.png"
+    source = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, 800, 400)
+    source.fill(0x3366CCFF)
+    source.savev(str(wallpaper), "png", [], [])
+
+    def no_loader(*_args):
+        raise GLib.Error("formato desconhecido")
+
+    monkeypatch.setattr(GdkPixbuf.Pixbuf, "new_from_file_at_scale", no_loader)
+    scaled = linux_backdrop.load_scaled(wallpaper, 320)
+    assert (scaled.get_width(), scaled.get_height()) == (320, 160)
 
 
 def test_gnome_slideshows_resolve_to_their_first_image(tmp_path):
