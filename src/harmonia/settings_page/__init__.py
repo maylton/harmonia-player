@@ -12,6 +12,7 @@ from .account import account_group  # noqa: E402
 from .appearance import appearance_group  # noqa: E402
 from .audio import audio_group  # noqa: E402
 from .library import library_group  # noqa: E402
+from .optional import cast_group, recognition_group, together_group  # noqa: E402
 from .social import social_group  # noqa: E402
 from .streaming import backup_group, streaming_group  # noqa: E402
 
@@ -26,9 +27,11 @@ def build_settings_page(window) -> Adw.PreferencesPage:
         library_group,
         backup_group,
         social_group,
+        together_group,
+        recognition_group,
+        cast_group,
+        audio_group,
     )
     for group in groups:
         page.add(group(window))
-    window._append_optional_preferences(page)
-    page.add(audio_group(window))
     return page

@@ -42,6 +42,7 @@ from .window_actions import WindowActionsMixin
 from .window_artist import WindowArtistMixin
 from .window_artwork import WindowArtworkMixin
 from .window_autoplay import WindowAutoplayMixin
+from .window_cast import WindowCastMixin
 from .window_chrome import (
     build_expanded_player,
     build_header,
@@ -64,6 +65,7 @@ from .window_preferences import WindowPreferencesMixin
 from .window_search import WindowSearchMixin
 from .window_shelves import WindowShelvesMixin
 from .window_social import WindowSocialMixin
+from .window_together import WindowTogetherMixin
 
 LOGGER = logging.getLogger(__name__)
 APP_ID = "io.github.harmonia.Harmonia"
@@ -93,6 +95,8 @@ class HarmoniaWindow(
     WindowAutoplayMixin,
     WindowPlaybackRecoveryMixin,
     WindowOptionalMixin,
+    WindowTogetherMixin,
+    WindowCastMixin,
     WindowSocialMixin,
     WindowAccountMixin,
     Adw.ApplicationWindow,

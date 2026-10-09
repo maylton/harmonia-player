@@ -13,30 +13,30 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/harmonia/app.py:102 src/harmonia/app.py:536
+#: src/harmonia/app.py:106 src/harmonia/app.py:540
 #: src/harmonia/window_chrome/sidebar.py:56
 msgid "Harmonia"
 msgstr "Harmonia"
 
-#: src/harmonia/app.py:296 src/harmonia/settings_page/account.py:20
+#: src/harmonia/app.py:300 src/harmonia/settings_page/account.py:20
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr "Account"
 
-#: src/harmonia/app.py:335
+#: src/harmonia/app.py:339
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr "Account — {name}"
 
-#: src/harmonia/app.py:364 src/harmonia/qt_backend.py:700
+#: src/harmonia/app.py:368 src/harmonia/qt_backend.py:700
 msgid "Nenhuma música reproduzindo"
 msgstr "Nothing playing"
 
-#: src/harmonia/app.py:365 src/harmonia/qt_backend.py:708
+#: src/harmonia/app.py:369 src/harmonia/qt_backend.py:708
 msgid "Escolha uma faixa para começar"
 msgstr "Choose a track to start"
 
-#: src/harmonia/app.py:371 src/harmonia/app.py:372
+#: src/harmonia/app.py:375 src/harmonia/app.py:376
 #: src/harmonia/window_chrome/expanded_player.py:187
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
@@ -440,8 +440,8 @@ msgid "Comece a reproduzir uma faixa antes de transmitir."
 msgstr "Start playing a track before casting."
 
 #: src/harmonia/qt_cast.py:79 src/harmonia/qt_cast.py:175
-#: src/harmonia/window_optional.py:356 src/harmonia/window_optional.py:376
-#: src/harmonia/window_optional.py:415
+#: src/harmonia/window_cast.py:58 src/harmonia/window_cast.py:78
+#: src/harmonia/window_cast.py:117
 #, python-brace-format
 msgid "Não foi possível transmitir: {error}"
 msgstr "Couldn't cast: {error}"
@@ -851,7 +851,7 @@ msgstr "AudD token saved in the system keyring."
 msgid "Configure o token do AudD primeiro."
 msgstr "Set up the AudD token first."
 
-#: src/harmonia/qt_recognition.py:59 src/harmonia/window_optional.py:283
+#: src/harmonia/qt_recognition.py:59 src/harmonia/window_optional.py:48
 msgid "Ouvindo por 12 segundos…"
 msgstr "Listening for 12 seconds…"
 
@@ -863,24 +863,24 @@ msgstr "Couldn't recognize the song"
 msgid "Nenhuma música reconhecida."
 msgstr "No song recognized."
 
-#: src/harmonia/qt_recognition.py:70 src/harmonia/window_optional.py:303
+#: src/harmonia/qt_recognition.py:70 src/harmonia/window_optional.py:68
 #, python-brace-format
 msgid "Encontrada: {title} — {artist}"
 msgstr "Found: {title} — {artist}"
 
-#: src/harmonia/qt_together.py:33 src/harmonia/window_optional.py:169
+#: src/harmonia/qt_together.py:33 src/harmonia/window_together.py:17
 msgid "Você está compartilhando a reprodução"
 msgstr "You are sharing playback"
 
-#: src/harmonia/qt_together.py:35 src/harmonia/window_optional.py:171
+#: src/harmonia/qt_together.py:35 src/harmonia/window_together.py:19
 msgid "Sincronizado com o anfitrião"
 msgstr "Synchronized with the host"
 
-#: src/harmonia/qt_together.py:36 src/harmonia/window_optional.py:172
+#: src/harmonia/qt_together.py:36 src/harmonia/window_together.py:20
 msgid "Nenhuma sessão ativa"
 msgstr "No active session"
 
-#: src/harmonia/qt_together.py:45 src/harmonia/window_optional.py:183
+#: src/harmonia/qt_together.py:45 src/harmonia/window_together.py:31
 #, python-brace-format
 msgid "Não foi possível criar a sessão: {error}"
 msgstr "Couldn't create the session: {error}"
@@ -1008,7 +1008,7 @@ msgstr "No audio was captured"
 msgid "Configure o token do AudD nas Preferências"
 msgstr "Configure the AudD token in Preferences"
 
-#: src/harmonia/settings_page/__init__.py:20
+#: src/harmonia/settings_page/__init__.py:21
 #: src/harmonia/window_chrome/navigation.py:41
 msgid "Preferências"
 msgstr "Preferences"
@@ -1034,8 +1034,8 @@ msgid "Validar"
 msgstr "Validate"
 
 #: src/harmonia/settings_page/account.py:39
+#: src/harmonia/settings_page/optional.py:126
 #: src/harmonia/settings_page/social.py:58 src/harmonia/window_account.py:71
-#: src/harmonia/window_optional.py:156
 msgid "Desconectar"
 msgstr "Disconnect"
 
@@ -1368,6 +1368,115 @@ msgstr "Add at the end"
 msgid "Adicionar no início"
 msgstr "Add at the start"
 
+#: src/harmonia/settings_page/optional.py:25
+msgid "Listen Together"
+msgstr "Listen Together"
+
+#: src/harmonia/settings_page/optional.py:26
+msgid "Sincroniza fila e reprodução entre dispositivos na mesma rede local."
+msgstr ""
+"Synchronizes the queue and playback between devices on the same local "
+"network."
+
+#: src/harmonia/settings_page/optional.py:28
+msgid "Sessão compartilhada"
+msgstr "Shared session"
+
+#: src/harmonia/settings_page/optional.py:30
+msgid "Sair"
+msgstr "Leave"
+
+#: src/harmonia/settings_page/optional.py:32
+msgid "Criar sessão"
+msgstr "Create session"
+
+#: src/harmonia/settings_page/optional.py:35
+msgid "Entrar com link"
+msgstr "Join with link"
+
+#: src/harmonia/settings_page/optional.py:36
+msgid "Cole o link harmonia:// enviado pelo anfitrião"
+msgstr "Paste the harmonia:// link sent by the host"
+
+#: src/harmonia/settings_page/optional.py:42
+msgid "Entrar"
+msgstr "Join"
+
+#: src/harmonia/settings_page/optional.py:46
+msgid "Link da sessão"
+msgstr "Session link"
+
+#: src/harmonia/settings_page/optional.py:49
+msgid "Copiar"
+msgstr "Copy"
+
+#: src/harmonia/settings_page/optional.py:60
+msgid "Reconhecimento de música"
+msgstr "Music recognition"
+
+#: src/harmonia/settings_page/optional.py:61
+msgid "Captura temporariamente 12 segundos do microfone e apaga a amostra."
+msgstr ""
+"Temporarily captures 12 seconds from the microphone and deletes the sample."
+
+#: src/harmonia/settings_page/optional.py:64
+msgid "Provedor"
+msgstr "Provider"
+
+#: src/harmonia/settings_page/optional.py:65
+msgid "API compatível com AudD"
+msgstr "AudD-compatible API"
+
+#: src/harmonia/settings_page/optional.py:76
+msgid "Endpoint do provedor"
+msgstr "Provider endpoint"
+
+#: src/harmonia/settings_page/optional.py:77
+msgid "Usado somente no modo de API compatível"
+msgstr "Used only in compatible API mode"
+
+#: src/harmonia/settings_page/optional.py:99
+msgid "Token da API AudD"
+msgstr "AudD API token"
+
+#: src/harmonia/settings_page/optional.py:99
+#: src/harmonia/settings_page/social.py:72
+msgid "Armazenado no chaveiro do sistema"
+msgstr "Stored in the system keyring"
+
+#: src/harmonia/settings_page/optional.py:102
+#: src/harmonia/settings_page/social.py:75
+msgid "Configurado"
+msgstr "Configured"
+
+#: src/harmonia/settings_page/optional.py:102
+msgid "Token"
+msgstr "Token"
+
+#: src/harmonia/settings_page/optional.py:112
+msgid "Reconhecer agora"
+msgstr "Recognize now"
+
+#: src/harmonia/settings_page/optional.py:118
+msgid "Transmitir para dispositivo"
+msgstr "Cast to device"
+
+#: src/harmonia/settings_page/optional.py:119
+msgid "Descobre Media Renderers UPnP/DLNA na rede local."
+msgstr "Discovers UPnP/DLNA Media Renderers on the local network."
+
+#: src/harmonia/settings_page/optional.py:122
+msgid "Dispositivo de reprodução"
+msgstr "Playback device"
+
+#: src/harmonia/settings_page/optional.py:123
+msgid "Este computador"
+msgstr "This computer"
+
+#: src/harmonia/settings_page/optional.py:127
+msgid "Procurar"
+msgstr "Scan"
+
 #: src/harmonia/settings_page/social.py:17
 msgid "Integrações sociais"
 msgstr "Social integrations"
@@ -1421,14 +1530,6 @@ msgstr "Finish"
 #: src/harmonia/settings_page/social.py:71
 msgid "Segredo da API do Last.fm"
 msgstr "Last.fm API secret"
-
-#: src/harmonia/settings_page/social.py:72 src/harmonia/window_optional.py:122
-msgid "Armazenado no chaveiro do sistema"
-msgstr "Stored in the system keyring"
-
-#: src/harmonia/settings_page/social.py:75 src/harmonia/window_optional.py:125
-msgid "Configurado"
-msgstr "Configured"
 
 #: src/harmonia/settings_page/social.py:75
 msgid "Secret"
@@ -1692,9 +1793,9 @@ msgstr "SAPISID=…; __Secure-3PAPISID=…"
 #: src/harmonia/window_account.py:69 src/harmonia/window_actions.py:118
 #: src/harmonia/window_actions.py:144 src/harmonia/window_actions.py:310
 #: src/harmonia/window_actions.py:336 src/harmonia/window_actions.py:371
-#: src/harmonia/window_local_playlists.py:140
+#: src/harmonia/window_cast.py:33 src/harmonia/window_local_playlists.py:140
 #: src/harmonia/window_local_playlists.py:157
-#: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:420
+#: src/harmonia/window_preferences.py:420
 msgid "Cancelar"
 msgstr "Cancel"
 
@@ -1865,6 +1966,41 @@ msgstr "Autoplay disabled"
 #: src/harmonia/window_autoplay.py:89
 msgid "A rádio não encontrou novas músicas"
 msgstr "The radio didn't find new songs"
+
+#: src/harmonia/window_cast.py:18
+msgid "Procurando na rede local…"
+msgstr "Scanning the local network…"
+
+#: src/harmonia/window_cast.py:23
+#, python-brace-format
+msgid "Não foi possível procurar dispositivos: {error}"
+msgstr "Couldn't search for devices: {error}"
+
+#: src/harmonia/window_cast.py:27
+msgid "Nenhum dispositivo encontrado"
+msgstr "No device found"
+
+#: src/harmonia/window_cast.py:30
+msgid "Escolha um dispositivo"
+msgstr "Choose a device"
+
+#: src/harmonia/window_cast.py:31
+msgid "A faixa atual será transferida para o dispositivo selecionado."
+msgstr "The current track will be transferred to the selected device."
+
+#: src/harmonia/window_cast.py:43
+#, python-brace-format
+msgid "{count} dispositivo(s) encontrado(s)"
+msgstr "{count} device(s) found"
+
+#: src/harmonia/window_cast.py:51
+msgid "Comece a reproduzir uma faixa antes de transmitir"
+msgstr "Start playing a track before casting"
+
+#: src/harmonia/window_cast.py:83
+#, python-brace-format
+msgid "Reproduzindo em {device}"
+msgstr "Playing on {device}"
 
 #: src/harmonia/window_chrome/expanded_player.py:45
 #: src/harmonia/window_chrome/expanded_player.py:258
@@ -2497,165 +2633,18 @@ msgstr "Copied lyrics"
 msgid "Letra traduzida"
 msgstr "Translated lyrics"
 
-#: src/harmonia/window_optional.py:43
-msgid "Listen Together"
-msgstr "Listen Together"
-
-#: src/harmonia/window_optional.py:44
-msgid "Sincroniza fila e reprodução entre dispositivos na mesma rede local."
-msgstr ""
-"Synchronizes the queue and playback between devices on the same local "
-"network."
-
 #: src/harmonia/window_optional.py:46
-msgid "Sessão compartilhada"
-msgstr "Shared session"
-
-#: src/harmonia/window_optional.py:48
-msgid "Sair"
-msgstr "Leave"
-
-#: src/harmonia/window_optional.py:53
-msgid "Criar sessão"
-msgstr "Create session"
-
-#: src/harmonia/window_optional.py:60
-msgid "Entrar com link"
-msgstr "Join with link"
-
-#: src/harmonia/window_optional.py:61
-msgid "Cole o link harmonia:// enviado pelo anfitrião"
-msgstr "Paste the harmonia:// link sent by the host"
-
-#: src/harmonia/window_optional.py:68
-msgid "Entrar"
-msgstr "Join"
-
-#: src/harmonia/window_optional.py:76
-msgid "Link da sessão"
-msgstr "Session link"
-
-#: src/harmonia/window_optional.py:77
-msgid "Copiar"
-msgstr "Copy"
-
-#: src/harmonia/window_optional.py:88
-msgid "Reconhecimento de música"
-msgstr "Music recognition"
-
-#: src/harmonia/window_optional.py:89
-msgid "Captura temporariamente 12 segundos do microfone e apaga a amostra."
-msgstr ""
-"Temporarily captures 12 seconds from the microphone and deletes the sample."
-
-#: src/harmonia/window_optional.py:92
-msgid "Provedor"
-msgstr "Provider"
-
-#: src/harmonia/window_optional.py:93
-msgid "API compatível com AudD"
-msgstr "AudD-compatible API"
-
-#: src/harmonia/window_optional.py:104
-msgid "Endpoint do provedor"
-msgstr "Provider endpoint"
-
-#: src/harmonia/window_optional.py:105
-msgid "Usado somente no modo de API compatível"
-msgstr "Used only in compatible API mode"
-
-#: src/harmonia/window_optional.py:122
-msgid "Token da API AudD"
-msgstr "AudD API token"
-
-#: src/harmonia/window_optional.py:125
-msgid "Token"
-msgstr "Token"
-
-#: src/harmonia/window_optional.py:139
-msgid "Reconhecer agora"
-msgstr "Recognize now"
-
-#: src/harmonia/window_optional.py:148
-msgid "Transmitir para dispositivo"
-msgstr "Cast to device"
-
-#: src/harmonia/window_optional.py:149
-msgid "Descobre Media Renderers UPnP/DLNA na rede local."
-msgstr "Discovers UPnP/DLNA Media Renderers on the local network."
-
-#: src/harmonia/window_optional.py:152
-msgid "Dispositivo de reprodução"
-msgstr "Playback device"
-
-#: src/harmonia/window_optional.py:153
-msgid "Este computador"
-msgstr "This computer"
-
-#: src/harmonia/window_optional.py:160
-msgid "Procurar"
-msgstr "Scan"
-
-#: src/harmonia/window_optional.py:179
-msgid "Sessão Listen Together criada"
-msgstr "Listen Together session created"
-
-#: src/harmonia/window_optional.py:197
-#, python-brace-format
-msgid "Não foi possível entrar na sessão: {error}"
-msgstr "Couldn't join the session: {error}"
-
-#: src/harmonia/window_optional.py:205
-msgid "Listen Together conectado"
-msgstr "Listen Together connected"
-
-#: src/harmonia/window_optional.py:281
 msgid "Configure o token do AudD primeiro"
 msgstr "Configure the AudD token first"
 
-#: src/harmonia/window_optional.py:295
+#: src/harmonia/window_optional.py:60
 #, python-brace-format
 msgid "Não foi possível reconhecer a música: {error}"
 msgstr "Couldn't recognize the song: {error}"
 
-#: src/harmonia/window_optional.py:299
+#: src/harmonia/window_optional.py:64
 msgid "Nenhuma música reconhecida"
 msgstr "No music recognized"
-
-#: src/harmonia/window_optional.py:316
-msgid "Procurando na rede local…"
-msgstr "Scanning the local network…"
-
-#: src/harmonia/window_optional.py:321
-#, python-brace-format
-msgid "Não foi possível procurar dispositivos: {error}"
-msgstr "Couldn't search for devices: {error}"
-
-#: src/harmonia/window_optional.py:325
-msgid "Nenhum dispositivo encontrado"
-msgstr "No device found"
-
-#: src/harmonia/window_optional.py:328
-msgid "Escolha um dispositivo"
-msgstr "Choose a device"
-
-#: src/harmonia/window_optional.py:329
-msgid "A faixa atual será transferida para o dispositivo selecionado."
-msgstr "The current track will be transferred to the selected device."
-
-#: src/harmonia/window_optional.py:341
-#, python-brace-format
-msgid "{count} dispositivo(s) encontrado(s)"
-msgstr "{count} device(s) found"
-
-#: src/harmonia/window_optional.py:349
-msgid "Comece a reproduzir uma faixa antes de transmitir"
-msgstr "Start playing a track before casting"
-
-#: src/harmonia/window_optional.py:381
-#, python-brace-format
-msgid "Reproduzindo em {device}"
-msgstr "Playing on {device}"
 
 #: src/harmonia/window_playback.py:209
 msgid "Nenhuma faixa para adicionar à fila"
@@ -2853,6 +2842,19 @@ msgstr "Last.fm connected as {username}"
 #: src/harmonia/window_social.py:126
 msgid "Last.fm desconectado"
 msgstr "Last.fm disconnected"
+
+#: src/harmonia/window_together.py:27
+msgid "Sessão Listen Together criada"
+msgstr "Listen Together session created"
+
+#: src/harmonia/window_together.py:45
+#, python-brace-format
+msgid "Não foi possível entrar na sessão: {error}"
+msgstr "Couldn't join the session: {error}"
+
+#: src/harmonia/window_together.py:53
+msgid "Listen Together conectado"
+msgstr "Listen Together connected"
 
 #: src/harmonia/qml/AppTopBar.qml:172
 msgid "Sincronizar"
