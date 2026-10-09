@@ -39,6 +39,7 @@ from .ui import (
 )
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
+from .window_artist import WindowArtistMixin
 from .window_artwork import WindowArtworkMixin
 from .window_autoplay import WindowAutoplayMixin
 from .window_chrome import (
@@ -48,6 +49,7 @@ from .window_chrome import (
     build_sidebar,
 )
 from .window_detail import WindowDetailMixin
+from .window_detail_header import WindowDetailHeaderMixin
 from .window_history import WindowHistoryMixin
 from .window_home import WindowHomeMixin
 from .window_insights import WindowInsightsMixin
@@ -81,6 +83,8 @@ class HarmoniaWindow(
     WindowShelvesMixin,
     WindowArtworkMixin,
     WindowDetailMixin,
+    WindowDetailHeaderMixin,
+    WindowArtistMixin,
     WindowSearchMixin,
     WindowItemMenuMixin,
     WindowActionsMixin,
