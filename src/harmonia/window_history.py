@@ -14,6 +14,7 @@ from .i18n import _, ngettext
 from .models import (
     DownloadRecord,
     HistoryEntry,
+    LibraryItem,
 )
 from .ui import (
     action_button,
@@ -277,3 +278,37 @@ class WindowHistoryMixin:
             return False
 
         threading.Thread(target=worker, daemon=True, name="remove-history").start()
+
+    def _register_qualified_playback(
+        self,
+        request_id: int,
+        item: LibraryItem,
+        tracking_url: str | None,
+    ) -> bool:
+        if (
+            request_id != self._play_request
+            or request_id != self._history_tracking_request
+            or self._playback_position_us() < 28_000_000
+            or not self.storage.history_enabled()
+        ):
+            return False
+        if self._history_recorded_request == request_id:
+            return False
+        self.storage.record_history(item, self._playback_position_us() // 1000)
+        self._history_recorded_request = request_id
+        if tracking_url:
+            threading.Thread(
+                target=lambda: self._register_remote_playback(tracking_url, item.playlist_id),
+                daemon=True,
+                name="playback-history",
+            ).start()
+        return False
+
+    def _register_remote_playback(self, tracking_url: str, playlist_id: str | None) -> None:
+        try:
+            self.youtube.register_playback(tracking_url, playlist_id)
+        except Exception:
+            LOGGER.debug(
+                "Não foi possível registrar a reprodução remota; o histórico local foi mantido",
+                exc_info=True,
+            )

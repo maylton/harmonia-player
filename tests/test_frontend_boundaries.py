@@ -104,10 +104,12 @@ def test_both_frontends_use_shared_playback_state_rules() -> None:
         "radio_seed_for_autoplay",
         "playback_state_snapshot",
     )
-    for filename in ("qt_playback.py", "window_playback.py"):
-        source = _source(PACKAGE / filename)
-        assert "from .playback_state import (" in source
+    # GTK keeps autoplay in a module of its own.
+    frontends = {"qt": ("qt_playback.py",), "gtk": ("window_playback.py", "window_autoplay.py")}
+    for name, filenames in frontends.items():
+        source = "\n".join(_source(PACKAGE / filename) for filename in filenames)
+        assert "from .playback_state import" in source, name
         for helper in helpers:
-            assert helper in source, f"{filename}: {helper}"
-        assert "playback_state_snapshot(" in source, filename
-        assert "PlaybackState(" not in source, filename
+            assert helper in source, f"{name}: {helper}"
+        assert "playback_state_snapshot(" in source, name
+        assert "PlaybackState(" not in source, name
