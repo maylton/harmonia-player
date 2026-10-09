@@ -188,8 +188,13 @@ Cada item é independente e pode virar um commit separado.
 
 ## Fase 7 — Backup antes de atualizar e escolha de conta (média)
 
-- [ ] Backup automático do banco quando a versão do app muda
-  (`backup.py` já existe: só o gatilho e a rotação, mantendo os 3 últimos).
+- [x] Backup automático do banco quando a versão do app muda
+  (`auto_backup.py`): o arquivo é copiado antes de o `Storage` abri-lo, ainda
+  como a versão anterior o deixou, só se houver biblioteca, histórico ou
+  playlists locais; os 3 últimos ficam em `backups/`, junto ao banco, e se
+  restauram por Preferências > Dados e backup. Uma falha no backup não impede
+  o app de abrir. Restaurar um backup antigo agora recria as tabelas novas
+  (`Storage.initialize_tables`).
 - [ ] Escolha da conta ou do canal da marca após o login, quando houver mais
   de um (`accounts.py`).
 
