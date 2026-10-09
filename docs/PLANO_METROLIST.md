@@ -30,7 +30,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 |---|---|---|---|
 | 1 | Normalização de volume por faixa | Alta | Feita |
 | 2 | Crossfade entre faixas | Alta | Feita |
-| 3 | Letras palavra por palavra e novos provedores | Alta | A fazer |
+| 3 | Letras palavra por palavra e novos provedores | Alta | Feita (falta o KDE) |
 | 4 | Sincronização segura da biblioteca | Alta | A fazer |
 | 5 | Pequenas melhorias de uso | Média | A fazer |
 | 6 | Equalizador com perfis do AutoEQ | Média | A fazer |
@@ -94,16 +94,29 @@ Uma faixa termina enquanto a próxima começa, com volumes cruzados.
 
 ## Fase 3 — Letras palavra por palavra e novos provedores (alta)
 
-- [ ] `models.LyricWord` e `LyricLine.words`: tempo de cada palavra.
-- [ ] Parser de LRC estendido (`<mm:ss.xx>` por palavra) em `lyrics_words.py`.
-- [ ] Provedor de letras com tempo por palavra em `lyrics_providers/`, um
-  módulo por provedor (avaliar Better Lyrics, KuGou e o formato do Apple Music
-  quando houver API pública utilizável).
-- [ ] Mover `LrcLibClient` para `lyrics_providers/lrclib.py`, com o resolvedor
-  escolhendo os provedores em ordem.
-- [ ] Destaque da palavra atual na tela de letras (GTK e QML).
-- [ ] Cache: guardar as palavras no `lyrics_documents` (coluna nova).
-- [ ] Testes do parser e do resolvedor.
+- [x] `models.LyricWord` e `LyricLine.words`: tempo de cada palavra.
+- [x] `lrc.py` (parser de LRC, saído de `lyrics.py`) entende as marcas de
+  palavra do LRC estendido (`<mm:ss.xx>`), que antes apareciam no texto.
+  `lyrics_words.py` tem o que é comum: palavras cantadas e o markup.
+- [x] `lyrics_providers/`, um módulo por provedor: `lrclib.py` (movido),
+  `lyricsplus.py` (novo) e `common.py`.
+  - LyricsPlus: o espelho `binimum` traz as letras do Apple Music com tempo por
+    palavra (inclusive músicas brasileiras); o `prjktla` traz as do Musixmatch
+    por linha. Conferido com respostas reais.
+  - [-] Better Lyrics: a API passou a exigir chave para o que não está em cache.
+  - [-] KuGou: só por linha e pouco útil para músicas ocidentais e brasileiras.
+- [x] Ordem automática: LyricsPlus por palavra, LRCLIB, LyricsPlus por linha,
+  YouTube Music. A fonte "LyricsPlus" pode ser escolhida na tela de letras.
+- [x] Destaque da palavra atual no GTK (`gtk_lyric_words.py`): a linha ativa
+  acende palavra por palavra, com um timer próprio de 60 ms que só repinta
+  quando outra palavra começa e a letra está visível.
+- [ ] Destaque por palavra no KDE (QML): as palavras já chegam no documento;
+  falta a tela, a testar no Linux.
+- [x] Cache: as palavras ficam no JSON de `lyrics_documents`, e a escolha
+  automática do cache prefere letras com tempo por palavra. A tradução
+  preserva as palavras.
+- [x] Testes do parser, do LyricsPlus (espelhos, falhas, vocais de fundo), do
+  resolvedor, do cache e da tradução.
 
 ## Fase 4 — Sincronização segura da biblioteca (alta)
 

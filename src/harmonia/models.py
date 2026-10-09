@@ -40,10 +40,21 @@ class AccountProfile:
 
 
 @dataclass(frozen=True, slots=True)
+class LyricWord:
+    """A word (or syllable) sung in a lyric line; ``text`` keeps its own spacing."""
+
+    start_ms: int
+    end_ms: int
+    text: str
+
+
+@dataclass(frozen=True, slots=True)
 class LyricLine:
     start_ms: int
     text: str
     translation: str = ""
+    # Filled by providers with per-word timing; see lyrics_words.py.
+    words: tuple[LyricWord, ...] = ()
 
 
 @dataclass(slots=True)

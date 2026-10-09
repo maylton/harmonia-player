@@ -15,9 +15,11 @@ from .lyrics_state import (
     lyric_seek_target,
     lyrics_copy_text,
     next_lyrics_provider,
+    normalize_lyrics_provider,
     remove_translation,
+    with_translations,
 )
-from .models import HistoryEntry, LibraryItem, LyricLine
+from .models import HistoryEntry, LibraryItem
 from .services import YouTubeMusicService
 from .storage import Storage
 
@@ -193,9 +195,7 @@ class QtLyricsController(QObject):
         self.loading = False
         self.request = 0
         self.active_index = -1
-        self.provider = self.storage.get_setting("lyrics_provider", "auto")
-        if self.provider not in {"auto", "lrclib", "youtube"}:
-            self.provider = "auto"
+        self.provider = normalize_lyrics_provider(self.storage.get_setting("lyrics_provider"))
         try:
             self.offset_ms = int(self.storage.get_setting("lyrics_offset_ms", "0"))
         except ValueError:
@@ -260,7 +260,7 @@ class QtLyricsController(QObject):
             )
 
     def set_provider(self, provider: str) -> None:
-        if provider not in {"auto", "lrclib", "youtube"} or provider == self.provider:
+        if provider != normalize_lyrics_provider(provider) or provider == self.provider:
             return
         self.provider = provider
         self.storage.set_setting("lyrics_provider", provider)
@@ -337,14 +337,7 @@ class QtLyricsController(QObject):
             )
             return
         if document.synced:
-            document.synced = [
-                LyricLine(
-                    line.start_ms,
-                    line.text,
-                    result[index] if index < len(result) else "",
-                )
-                for index, line in enumerate(document.synced)
-            ]
+            document.synced = with_translations(document.synced, result)
         else:
             document.translation = "\n".join(result)
         document.translation_language = "pt"

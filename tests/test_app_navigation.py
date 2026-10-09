@@ -131,6 +131,7 @@ class LyricsProgressStub:
     )
     _lyric_views = []
     _active_lyric_index = 2
+    _lyric_words = HarmoniaWindow._lyric_words
 
 
 def test_synced_lyrics_ignore_transient_backward_player_position():

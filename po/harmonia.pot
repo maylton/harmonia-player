@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 17:52-0300\n"
+"POT-Creation-Date: 2026-10-09 18:18-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,30 +18,30 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/harmonia/app.py:86 src/harmonia/app.py:563
+#: src/harmonia/app.py:87 src/harmonia/app.py:564
 #: src/harmonia/window_chrome/sidebar.py:56
 msgid "Harmonia"
 msgstr ""
 
-#: src/harmonia/app.py:280 src/harmonia/settings_page/account.py:19
+#: src/harmonia/app.py:281 src/harmonia/settings_page/account.py:19
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr ""
 
-#: src/harmonia/app.py:319
+#: src/harmonia/app.py:320
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr ""
 
-#: src/harmonia/app.py:348 src/harmonia/qt_backend.py:699
+#: src/harmonia/app.py:349 src/harmonia/qt_backend.py:699
 msgid "Nenhuma música reproduzindo"
 msgstr ""
 
-#: src/harmonia/app.py:349 src/harmonia/qt_backend.py:707
+#: src/harmonia/app.py:350 src/harmonia/qt_backend.py:707
 msgid "Escolha uma faixa para começar"
 msgstr ""
 
-#: src/harmonia/app.py:355 src/harmonia/app.py:356
+#: src/harmonia/app.py:356 src/harmonia/app.py:357
 #: src/harmonia/window_chrome/expanded_player.py:187
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
@@ -52,24 +52,24 @@ msgstr ""
 msgid "0:00"
 msgstr ""
 
-#: src/harmonia/app.py:441
+#: src/harmonia/app.py:442
 msgid "Fila"
 msgstr ""
 
-#: src/harmonia/app.py:448
+#: src/harmonia/app.py:449
 msgid "Nada na fila"
 msgstr ""
 
-#: src/harmonia/app.py:449
+#: src/harmonia/app.py:450
 msgid "Escolha uma música para ver as próximas faixas."
 msgstr ""
 
-#: src/harmonia/app.py:464 src/harmonia/window_chrome/expanded_player.py:49
+#: src/harmonia/app.py:465 src/harmonia/window_chrome/expanded_player.py:49
 #: src/harmonia/window_playback.py:270
 msgid "Relacionadas"
 msgstr ""
 
-#: src/harmonia/app.py:476 src/harmonia/window_playback.py:286
+#: src/harmonia/app.py:477 src/harmonia/window_playback.py:286
 msgid "Adicionar ao fim"
 msgstr ""
 
@@ -327,13 +327,13 @@ msgid ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:105 src/harmonia/window_history.py:144
+#: src/harmonia/qt_activity.py:107 src/harmonia/window_history.py:144
 #, python-brace-format
 msgid ""
 "O histórico local foi preservado; não foi possível carregar o remoto: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:145
+#: src/harmonia/qt_activity.py:147
 #, python-brace-format
 msgid "Não foi possível remover do histórico: {error}"
 msgstr ""
@@ -347,20 +347,20 @@ msgstr ""
 msgid "Letra copiada."
 msgstr ""
 
-#: src/harmonia/qt_activity.py:308 src/harmonia/window_lyrics.py:316
+#: src/harmonia/qt_activity.py:308 src/harmonia/window_lyrics.py:334
 msgid "Traduzindo letra…"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics.py:337
+#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics.py:355
 #, python-brace-format
 msgid "Não foi possível traduzir: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics.py:338
+#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics.py:356
 msgid "resposta vazia"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:353
+#: src/harmonia/qt_activity.py:346
 msgid "Letra traduzida."
 msgstr ""
 
@@ -1660,7 +1660,7 @@ msgstr ""
 #: src/harmonia/window_chrome/expanded_player.py:258
 #: src/harmonia/window_chrome/player_bar.py:196
 #: src/harmonia/window_chrome/player_bar.py:204
-#: src/harmonia/window_lyrics.py:61
+#: src/harmonia/window_lyrics.py:62
 msgid "Letras"
 msgstr ""
 
@@ -1695,7 +1695,7 @@ msgstr ""
 
 #: src/harmonia/window_chrome/expanded_player.py:259
 #: src/harmonia/window_chrome/player_bar.py:205
-#: src/harmonia/window_lyrics.py:62
+#: src/harmonia/window_lyrics.py:63
 msgid "Comece a reproduzir uma música para ver a letra."
 msgstr ""
 
@@ -1795,7 +1795,7 @@ msgstr ""
 msgid "Mostrar tudo"
 msgstr ""
 
-#: src/harmonia/window_detail.py:266 src/harmonia/window_lyrics.py:113
+#: src/harmonia/window_detail.py:266 src/harmonia/window_lyrics.py:114
 msgid "Não foi possível carregar"
 msgstr ""
 
@@ -2265,78 +2265,78 @@ msgstr ""
 msgid "Renomear playlist local"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:49
+#: src/harmonia/window_lyrics.py:50
 msgid "Tentar novamente"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:86
+#: src/harmonia/window_lyrics.py:87
 msgid "Carregando letra…"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:118
+#: src/harmonia/window_lyrics.py:119
 msgid "Letra indisponível"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:119
+#: src/harmonia/window_lyrics.py:120
 msgid "Nenhum dos provedores encontrou uma letra para esta faixa."
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:161
+#: src/harmonia/window_lyrics.py:171
 msgid "sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:161
+#: src/harmonia/window_lyrics.py:171
 msgid "não sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:163
+#: src/harmonia/window_lyrics.py:173
 #, python-brace-format
 msgid "{provider} · Letra {mode}"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:185
+#: src/harmonia/window_lyrics.py:196
 #, python-brace-format
 msgid "Ir para {time}"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:239 src/harmonia/window_lyrics.py:242
+#: src/harmonia/window_lyrics.py:253 src/harmonia/window_lyrics.py:260
 msgid "Automática"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:241
+#: src/harmonia/window_lyrics.py:259
 #, python-brace-format
 msgid "Fonte: {provider}"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:244
+#: src/harmonia/window_lyrics.py:262
 msgid "Alternar provedor de letras"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:250
+#: src/harmonia/window_lyrics.py:268
 msgid "Traduzir para português"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:255
+#: src/harmonia/window_lyrics.py:273
 msgid "Copiar letra"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:260
+#: src/harmonia/window_lyrics.py:278
 msgid "Adiantar letra em 250 ms"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:265
+#: src/harmonia/window_lyrics.py:283
 msgid "Zerar ajuste de tempo"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:270
+#: src/harmonia/window_lyrics.py:288
 msgid "Atrasar letra em 250 ms"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:305
+#: src/harmonia/window_lyrics.py:323
 msgid "Letra copiada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:354
+#: src/harmonia/window_lyrics.py:369
 msgid "Letra traduzida"
 msgstr ""
 
@@ -2978,35 +2978,35 @@ msgstr ""
 msgid "Recarregar letra"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:83
+#: src/harmonia/qml/LyricsView.qml:85
 msgid "Alterar fonte da letra"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:115
+#: src/harmonia/qml/LyricsView.qml:117
 msgid "Traduzir"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:211
+#: src/harmonia/qml/LyricsView.qml:213
 msgid "−250 ms"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:225
+#: src/harmonia/qml/LyricsView.qml:227
 msgid "Zerar ajuste de sincronia"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:229
+#: src/harmonia/qml/LyricsView.qml:231
 msgid "+250 ms"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:361
+#: src/harmonia/qml/LyricsView.qml:363
 msgid "Letra não encontrada"
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:363
+#: src/harmonia/qml/LyricsView.qml:365
 msgid "Tente recarregar ou altere o provedor de letras."
 msgstr ""
 
-#: src/harmonia/qml/LyricsView.qml:364
+#: src/harmonia/qml/LyricsView.qml:366
 msgid "Escolha uma faixa para ver a letra."
 msgstr ""
 

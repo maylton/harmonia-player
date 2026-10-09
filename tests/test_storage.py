@@ -81,6 +81,16 @@ def test_advanced_lyrics_cache_keeps_providers_and_translation(monkeypatch, tmp_
     assert storage.load_lyrics_document("video", "youtube") == native
     assert storage.load_lyrics_document("video", "auto") == synced
 
+    # Lyrics timed by word keep their words and win the automatic choice.
+    from harmonia.models import LyricWord
+
+    words = (LyricWord(1000, 1400, "One "), LyricWord(1400, 2400, "more"))
+    karaoke = LyricsDocument("One more", "LyricsPlus", [LyricLine(1000, "One more", words=words)])
+    storage.save_lyrics_document("video", karaoke)
+    assert storage.load_lyrics_document("video", "auto") == karaoke
+    assert storage.load_lyrics_document("video", "lyricsplus") == karaoke
+    assert storage.load_lyrics_document("video", "lrclib") == synced
+
 
 def test_explore_cache_roundtrip(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))

@@ -65,9 +65,11 @@ Item {
                 id: providerButton
                 property string actionText: backend.selectedLyricsProvider === "lrclib"
                                             ? "LRCLIB"
-                                            : backend.selectedLyricsProvider === "youtube"
-                                              ? "YouTube"
-                                              : i18n.tr("Automática")
+                                            : backend.selectedLyricsProvider === "lyricsplus"
+                                              ? "LyricsPlus"
+                                              : backend.selectedLyricsProvider === "youtube"
+                                                ? "YouTube"
+                                                : i18n.tr("Automática")
                 hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing
