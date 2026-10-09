@@ -116,111 +116,111 @@ msgstr "Couldn't open the video: {error}"
 msgid "A camada de vídeo do GStreamer não está disponível."
 msgstr "The GStreamer video layer is not available."
 
-#: src/harmonia/gtk_video.py:312 src/harmonia/qt_video.py:451
+#: src/harmonia/gtk_video.py:312 src/harmonia/qt_video.py:452
 msgid "A camada de vídeo não conseguiu iniciar o preroll"
 msgstr "The video layer could not start prerolling"
 
-#: src/harmonia/gtk_video.py:328 src/harmonia/qt_video.py:466
+#: src/harmonia/gtk_video.py:329 src/harmonia/qt_video.py:467
 msgid "O GStreamer falhou ao preparar os frames do vídeo."
 msgstr "GStreamer failed to prepare the video frames."
 
-#: src/harmonia/gtk_video.py:339 src/harmonia/qt_video.py:472
+#: src/harmonia/gtk_video.py:340 src/harmonia/qt_video.py:473
 msgid "O vídeo demorou demais para iniciar."
 msgstr "The video took too long to start."
 
-#: src/harmonia/gtk_video.py:360
+#: src/harmonia/gtk_video.py:361
 msgid "O fluxo de vídeo não conseguiu preparar a sincronização."
 msgstr "The video stream could not prepare synchronization."
 
-#: src/harmonia/gtk_video.py:374
+#: src/harmonia/gtk_video.py:375
 msgid "O vídeo falhou enquanto preparava a sincronização."
 msgstr "The video failed while preparing synchronization."
 
-#: src/harmonia/gtk_video.py:403 src/harmonia/qt_video.py:481
+#: src/harmonia/gtk_video.py:404 src/harmonia/qt_video.py:482
 msgid "O fluxo de vídeo não ficou disponível para sincronização."
 msgstr "The video stream did not become available for synchronization."
 
-#: src/harmonia/gtk_video.py:442 src/harmonia/qt_video.py:511
+#: src/harmonia/gtk_video.py:443 src/harmonia/qt_video.py:512
 msgid "O GStreamer falhou durante a sincronização do vídeo."
 msgstr "GStreamer failed while synchronizing the video."
 
-#: src/harmonia/gtk_video.py:484 src/harmonia/qt_video.py:550
+#: src/harmonia/gtk_video.py:485 src/harmonia/qt_video.py:551
 msgid "Não foi possível sincronizar o vídeo com a música."
 msgstr "Couldn't synchronize the video with the song."
 
-#: src/harmonia/gtk_video.py:557
+#: src/harmonia/gtk_video.py:567
 msgid "O vídeo falhou; voltando para a música…"
 msgstr "The video failed; returning to the song…"
 
-#: src/harmonia/gtk_video.py:576 src/harmonia/qt_video.py:642
+#: src/harmonia/gtk_video.py:586 src/harmonia/qt_video.py:646
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "The video ended before the audio track."
 
-#: src/harmonia/innertube/client.py:194
+#: src/harmonia/innertube/client.py:201
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr ""
 "The session has expired or the cookie no longer has access to YouTube Music."
 
-#: src/harmonia/innertube/client.py:198
+#: src/harmonia/innertube/client.py:205
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr "YouTube Music responded HTTP {code}: {detail}"
 
-#: src/harmonia/innertube/client.py:205
+#: src/harmonia/innertube/client.py:212
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr "Couldn't connect to YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:208
+#: src/harmonia/innertube/client.py:215
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr "Couldn't complete the request to YouTube Music."
 
-#: src/harmonia/innertube/client.py:223
+#: src/harmonia/innertube/client.py:230
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Couldn't sign in to YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:255
+#: src/harmonia/innertube/client.py:262
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Unknown search category: {category}"
 
-#: src/harmonia/innertube/client.py:328
+#: src/harmonia/innertube/client.py:335
 msgid "O artista não possui um identificador"
 msgstr "The artist does not have an ID"
 
-#: src/harmonia/innertube/client.py:358
+#: src/harmonia/innertube/client.py:365
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "YouTube Music did not provide a removal token"
 
-#: src/harmonia/innertube/client.py:416
+#: src/harmonia/innertube/client.py:423
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Unknown category: {category}"
 
-#: src/harmonia/innertube/client.py:515
+#: src/harmonia/innertube/client.py:522
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "The track does not contain a playable identifier."
 
-#: src/harmonia/innertube/client.py:574
+#: src/harmonia/innertube/client.py:586
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Couldn't obtain a playable stream. {details}"
 
-#: src/harmonia/innertube/client.py:631
+#: src/harmonia/innertube/client.py:643
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Couldn't register playback: {error}"
 
-#: src/harmonia/innertube/client.py:654
+#: src/harmonia/innertube/client.py:666
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "The playlist name cannot be empty"
 
-#: src/harmonia/innertube/client.py:661
+#: src/harmonia/innertube/client.py:673
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "YouTube created the playlist without returning its ID"
 
-#: src/harmonia/innertube/client.py:700
+#: src/harmonia/innertube/client.py:712
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr "Track does not contain playlistSetVideoId and cannot be safely removed"
@@ -437,6 +437,58 @@ msgstr "Couldn't connect: {error}"
 msgid "Conta desconectada."
 msgstr "Account disconnected."
 
+#: src/harmonia/qt_cast.py:40
+msgid "Procurando dispositivos UPnP/DLNA na rede local…"
+msgstr "Looking for UPnP/DLNA devices on the local network…"
+
+#: src/harmonia/qt_cast.py:46
+msgid "Não foi possível procurar dispositivos"
+msgstr "Couldn't search for devices"
+
+#: src/harmonia/qt_cast.py:55
+msgid "Nenhum dispositivo UPnP/DLNA encontrado."
+msgstr "No UPnP/DLNA devices found."
+
+#: src/harmonia/qt_cast.py:60
+#, python-brace-format
+msgid "{count} dispositivo encontrado."
+msgid_plural "{count} dispositivos encontrados."
+msgstr[0] "{count} device found."
+msgstr[1] "{count} devices found."
+
+#: src/harmonia/qt_cast.py:69
+msgid "Comece a reproduzir uma faixa antes de transmitir."
+msgstr "Start playing a track before casting."
+
+#: src/harmonia/qt_cast.py:79 src/harmonia/qt_cast.py:175
+#: src/harmonia/window_optional.py:356 src/harmonia/window_optional.py:376
+#: src/harmonia/window_optional.py:415
+#, python-brace-format
+msgid "Não foi possível transmitir: {error}"
+msgstr "Couldn't cast: {error}"
+
+#: src/harmonia/qt_cast.py:100
+#, python-brace-format
+msgid "Conectando a {name}…"
+msgstr "Connecting to {name}…"
+
+#: src/harmonia/qt_cast.py:106
+msgid "Não foi possível transmitir"
+msgstr "Couldn't cast"
+
+#: src/harmonia/qt_cast.py:115
+#, python-brace-format
+msgid "Reproduzindo em {name}."
+msgstr "Playing on {name}."
+
+#: src/harmonia/qt_cast.py:136
+msgid "Reprodução devolvida a este computador."
+msgstr "Playback returned to this computer."
+
+#: src/harmonia/qt_cast.py:184
+msgid "Não foi possível trocar a faixa no dispositivo"
+msgstr "Couldn't change the track on the device"
+
 #: src/harmonia/qt_catalog.py:96
 msgid "Sincronizando biblioteca, Início e Explorar…"
 msgstr "Syncing library, Home and Explore…"
@@ -511,170 +563,56 @@ msgstr "Couldn't open {title}: {error}"
 msgid "Não foi possível carregar a seção: {error}"
 msgstr "Couldn't load the section: {error}"
 
-#: src/harmonia/qt_integrations.py:141 src/harmonia/social.py:109
-#: src/harmonia/window_social.py:39
-msgid "A conta do Last.fm ainda não foi autorizada"
-msgstr "The Last.fm account has not been authorized yet"
-
-#: src/harmonia/qt_integrations.py:172
-msgid "Segredo da API do Last.fm salvo no chaveiro do sistema."
-msgstr "Last.fm API secret saved in the system keyring."
-
-#: src/harmonia/qt_integrations.py:176
-msgid "Iniciando autorização do Last.fm…"
-msgstr "Starting Last.fm authorization…"
-
-#: src/harmonia/qt_integrations.py:189
-msgid "Inicie a autorização do Last.fm primeiro."
-msgstr "Start the Last.fm authorization first."
-
-#: src/harmonia/qt_integrations.py:191
-msgid "Concluindo autorização do Last.fm…"
-msgstr "Finishing Last.fm authorization…"
-
-#: src/harmonia/qt_integrations.py:208
-msgid "Last.fm desconectado."
-msgstr "Last.fm disconnected."
-
-#: src/harmonia/qt_integrations.py:330 src/harmonia/window_optional.py:169
-msgid "Você está compartilhando a reprodução"
-msgstr "You are sharing playback"
-
-#: src/harmonia/qt_integrations.py:332 src/harmonia/window_optional.py:171
-msgid "Sincronizado com o anfitrião"
-msgstr "Synchronized with the host"
-
-#: src/harmonia/qt_integrations.py:333 src/harmonia/window_optional.py:172
-msgid "Nenhuma sessão ativa"
-msgstr "No active session"
-
-#: src/harmonia/qt_integrations.py:364 src/harmonia/window_optional.py:183
-#, python-brace-format
-msgid "Não foi possível criar a sessão: {error}"
-msgstr "Couldn't create the session: {error}"
-
-#: src/harmonia/qt_integrations.py:368
-msgid "Sessão Listen Together criada."
-msgstr "Listen Together session created."
-
-#: src/harmonia/qt_integrations.py:379
-msgid "Entrando na sessão Listen Together…"
-msgstr "Joining the Listen Together session…"
-
-#: src/harmonia/qt_integrations.py:388
+#: src/harmonia/qt_integrations.py:221
 msgid "Sessão Listen Together encerrada."
 msgstr "Listen Together session ended."
 
-#: src/harmonia/qt_integrations.py:469
-msgid "Token do AudD salvo no chaveiro do sistema."
-msgstr "AudD token saved in the system keyring."
-
-#: src/harmonia/qt_integrations.py:475
-msgid "Configure o token do AudD primeiro."
-msgstr "Set up the AudD token first."
-
-#: src/harmonia/qt_integrations.py:483 src/harmonia/window_optional.py:283
-msgid "Ouvindo por 12 segundos…"
-msgstr "Listening for 12 seconds…"
-
-#: src/harmonia/qt_integrations.py:504
-msgid "Procurando dispositivos UPnP/DLNA na rede local…"
-msgstr "Looking for UPnP/DLNA devices on the local network…"
-
-#: src/harmonia/qt_integrations.py:512
-msgid "Comece a reproduzir uma faixa antes de transmitir."
-msgstr "Start playing a track before casting."
-
-#: src/harmonia/qt_integrations.py:525 src/harmonia/qt_integrations.py:586
-#: src/harmonia/window_optional.py:356 src/harmonia/window_optional.py:376
-#: src/harmonia/window_optional.py:415
-#, python-brace-format
-msgid "Não foi possível transmitir: {error}"
-msgstr "Couldn't cast: {error}"
-
-#: src/harmonia/qt_integrations.py:549
-#, python-brace-format
-msgid "Conectando a {name}…"
-msgstr "Connecting to {name}…"
-
-#: src/harmonia/qt_integrations.py:645
-msgid "Reprodução devolvida a este computador."
-msgstr "Playback returned to this computer."
-
-#: src/harmonia/qt_integrations.py:696
-msgid "Não foi possível iniciar o Last.fm"
-msgstr "Couldn't start Last.fm"
-
-#: src/harmonia/qt_integrations.py:697
-msgid "Não foi possível conectar ao Last.fm"
-msgstr "Couldn't connect to Last.fm"
-
-#: src/harmonia/qt_integrations.py:698
-msgid "Não foi possível entrar na sessão"
-msgstr "Couldn't join the session"
-
-#: src/harmonia/qt_integrations.py:699 src/harmonia/recognition.py:125
-msgid "Não foi possível reconhecer a música"
-msgstr "Couldn't recognize the song"
-
-#: src/harmonia/qt_integrations.py:700
-msgid "Não foi possível procurar dispositivos"
-msgstr "Couldn't search for devices"
-
-#: src/harmonia/qt_integrations.py:701
-msgid "Não foi possível transmitir"
-msgstr "Couldn't cast"
-
-#: src/harmonia/qt_integrations.py:702
-msgid "Não foi possível trocar a faixa no dispositivo"
-msgstr "Couldn't change the track on the device"
-
-#: src/harmonia/qt_integrations.py:704 src/harmonia/qt_preferences.py:248
-msgid "Não foi possível concluir a operação"
-msgstr "Couldn't complete the operation"
-
-#: src/harmonia/qt_integrations.py:705 src/harmonia/qt_preferences.py:249
+#: src/harmonia/qt_integrations.py:307 src/harmonia/qt_preferences.py:249
 #, python-brace-format
 msgid "{label}: {error}"
 msgstr "{label}: {error}"
 
-#: src/harmonia/qt_integrations.py:712
+#: src/harmonia/qt_lastfm.py:51 src/harmonia/social.py:109
+#: src/harmonia/window_social.py:39
+msgid "A conta do Last.fm ainda não foi autorizada"
+msgstr "The Last.fm account has not been authorized yet"
+
+#: src/harmonia/qt_lastfm.py:74
+msgid "Segredo da API do Last.fm salvo no chaveiro do sistema."
+msgstr "Last.fm API secret saved in the system keyring."
+
+#: src/harmonia/qt_lastfm.py:79
+msgid "Iniciando autorização do Last.fm…"
+msgstr "Starting Last.fm authorization…"
+
+#: src/harmonia/qt_lastfm.py:91
+msgid "Não foi possível iniciar o Last.fm"
+msgstr "Couldn't start Last.fm"
+
+#: src/harmonia/qt_lastfm.py:100
 msgid "Autorize no navegador e depois clique em Concluir."
 msgstr "Authorize in the browser, then click Finish."
 
-#: src/harmonia/qt_integrations.py:719
+#: src/harmonia/qt_lastfm.py:105
+msgid "Inicie a autorização do Last.fm primeiro."
+msgstr "Start the Last.fm authorization first."
+
+#: src/harmonia/qt_lastfm.py:107
+msgid "Concluindo autorização do Last.fm…"
+msgstr "Finishing Last.fm authorization…"
+
+#: src/harmonia/qt_lastfm.py:119
+msgid "Não foi possível conectar ao Last.fm"
+msgstr "Couldn't connect to Last.fm"
+
+#: src/harmonia/qt_lastfm.py:129
 #, python-brace-format
 msgid "Last.fm conectado como {username}."
 msgstr "Last.fm connected as {username}."
 
-#: src/harmonia/qt_integrations.py:730
-msgid "Listen Together conectado."
-msgstr "Listen Together connected."
-
-#: src/harmonia/qt_integrations.py:740
-msgid "Nenhuma música reconhecida."
-msgstr "No song recognized."
-
-#: src/harmonia/qt_integrations.py:743 src/harmonia/window_optional.py:303
-#, python-brace-format
-msgid "Encontrada: {title} — {artist}"
-msgstr "Found: {title} — {artist}"
-
-#: src/harmonia/qt_integrations.py:751
-msgid "Nenhum dispositivo UPnP/DLNA encontrado."
-msgstr "No UPnP/DLNA devices found."
-
-#: src/harmonia/qt_integrations.py:756
-#, python-brace-format
-msgid "{count} dispositivo encontrado."
-msgid_plural "{count} dispositivos encontrados."
-msgstr[0] "{count} device found."
-msgstr[1] "{count} devices found."
-
-#: src/harmonia/qt_integrations.py:767
-#, python-brace-format
-msgid "Reproduzindo em {name}."
-msgstr "Playing on {name}."
+#: src/harmonia/qt_lastfm.py:137
+msgid "Last.fm desconectado."
+msgstr "Last.fm disconnected."
 
 #: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:77
 #: src/harmonia/qt_presenters.py:78 src/harmonia/settings_page/account.py:29
@@ -905,6 +843,10 @@ msgstr "Couldn't export the backup"
 msgid "Não foi possível restaurar o backup"
 msgstr "Couldn't restore the backup"
 
+#: src/harmonia/qt_preferences.py:248
+msgid "Não foi possível concluir a operação"
+msgstr "Couldn't complete the operation"
+
 #: src/harmonia/qt_preferences.py:252
 msgid "Conta conectada e válida."
 msgstr "Account connected and valid."
@@ -921,6 +863,64 @@ msgstr "Backup exported to {path}."
 #: src/harmonia/qt_preferences.py:260
 msgid "Backup restaurado."
 msgstr "Backup restored."
+
+#: src/harmonia/qt_recognition.py:46
+msgid "Token do AudD salvo no chaveiro do sistema."
+msgstr "AudD token saved in the system keyring."
+
+#: src/harmonia/qt_recognition.py:51
+msgid "Configure o token do AudD primeiro."
+msgstr "Set up the AudD token first."
+
+#: src/harmonia/qt_recognition.py:59 src/harmonia/window_optional.py:283
+msgid "Ouvindo por 12 segundos…"
+msgstr "Listening for 12 seconds…"
+
+#: src/harmonia/qt_recognition.py:61 src/harmonia/recognition.py:125
+msgid "Não foi possível reconhecer a música"
+msgstr "Couldn't recognize the song"
+
+#: src/harmonia/qt_recognition.py:67
+msgid "Nenhuma música reconhecida."
+msgstr "No song recognized."
+
+#: src/harmonia/qt_recognition.py:70 src/harmonia/window_optional.py:303
+#, python-brace-format
+msgid "Encontrada: {title} — {artist}"
+msgstr "Found: {title} — {artist}"
+
+#: src/harmonia/qt_together.py:33 src/harmonia/window_optional.py:169
+msgid "Você está compartilhando a reprodução"
+msgstr "You are sharing playback"
+
+#: src/harmonia/qt_together.py:35 src/harmonia/window_optional.py:171
+msgid "Sincronizado com o anfitrião"
+msgstr "Synchronized with the host"
+
+#: src/harmonia/qt_together.py:36 src/harmonia/window_optional.py:172
+msgid "Nenhuma sessão ativa"
+msgstr "No active session"
+
+#: src/harmonia/qt_together.py:45 src/harmonia/window_optional.py:183
+#, python-brace-format
+msgid "Não foi possível criar a sessão: {error}"
+msgstr "Couldn't create the session: {error}"
+
+#: src/harmonia/qt_together.py:49
+msgid "Sessão Listen Together criada."
+msgstr "Listen Together session created."
+
+#: src/harmonia/qt_together.py:59
+msgid "Entrando na sessão Listen Together…"
+msgstr "Joining the Listen Together session…"
+
+#: src/harmonia/qt_together.py:65
+msgid "Não foi possível entrar na sessão"
+msgstr "Couldn't join the session"
+
+#: src/harmonia/qt_together.py:120
+msgid "Listen Together conectado."
+msgstr "Listen Together connected."
 
 #: src/harmonia/qt_video.py:39
 msgid "Não foi possível obter o ponteiro nativo do objeto GStreamer"
@@ -967,7 +967,7 @@ msgstr "Couldn't prepare the video output: {detail}"
 msgid "nenhum vídeo correspondente foi encontrado"
 msgstr "no matching video was found"
 
-#: src/harmonia/qt_video.py:619
+#: src/harmonia/qt_video.py:623
 #, python-brace-format
 msgid "Não foi possível exibir o vídeo: {detail}"
 msgstr "Couldn't show the video: {detail}"
@@ -1636,7 +1636,7 @@ msgstr "YouTube Music found no video for this track."
 msgid "Nenhum vídeo correspondente foi encontrado para esta faixa."
 msgstr "No matching video was found for this track."
 
-#: src/harmonia/video.py:428
+#: src/harmonia/video.py:430
 #, python-brace-format
 msgid "Não foi possível obter o vídeo correspondente. {details}"
 msgstr "Couldn't get the matching video. {details}"
