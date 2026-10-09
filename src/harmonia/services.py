@@ -140,6 +140,11 @@ class YouTubeMusicService:
         category = "albums" if item.kind == "albums" else "playlists"
         self.storage.record_library_change(category, item, saved)
 
+    def add_to_playlist(self, playlist_id: str, video_id: str, client=None) -> None:
+        """At the end or the start, as Preferences > Biblioteca says."""
+        at_start = Preferences.load(self.storage).playlist_add_position == "start"
+        (client or self.client()).add_to_playlist(playlist_id, video_id, at_start=at_start)
+
     def delete_playlist(self, item: LibraryItem, client=None) -> None:
         (client or self.client()).delete_playlist(item.id)
         self.storage.record_library_change("playlists", item, False)

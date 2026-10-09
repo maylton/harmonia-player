@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 18:39-0300\n"
+"POT-Creation-Date: 2026-10-09 18:41-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -32,11 +32,11 @@ msgstr "Conta"
 msgid "Conta — {name}"
 msgstr "Conta — {name}"
 
-#: src/harmonia/app.py:349 src/harmonia/qt_backend.py:699
+#: src/harmonia/app.py:349 src/harmonia/qt_backend.py:700
 msgid "Nenhuma música reproduzindo"
 msgstr "Nenhuma música reproduzindo"
 
-#: src/harmonia/app.py:350 src/harmonia/qt_backend.py:707
+#: src/harmonia/app.py:350 src/harmonia/qt_backend.py:708
 msgid "Escolha uma faixa para começar"
 msgstr "Escolha uma faixa para começar"
 
@@ -160,70 +160,70 @@ msgstr "O vídeo falhou; voltando para a música…"
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "O vídeo terminou antes da faixa de áudio."
 
-#: src/harmonia/innertube/client.py:171
+#: src/harmonia/innertube/client.py:172
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 
-#: src/harmonia/innertube/client.py:175
+#: src/harmonia/innertube/client.py:176
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr "YouTube Music respondeu HTTP {code}: {detail}"
 
-#: src/harmonia/innertube/client.py:182
+#: src/harmonia/innertube/client.py:183
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr "Não foi possível conectar ao YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:185
+#: src/harmonia/innertube/client.py:186
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr "Não foi possível concluir a requisição ao YouTube Music."
 
-#: src/harmonia/innertube/client.py:200
+#: src/harmonia/innertube/client.py:201
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:231
+#: src/harmonia/innertube/client.py:232
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Categoria de busca desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:304
+#: src/harmonia/innertube/client.py:305
 msgid "O artista não possui um identificador"
 msgstr "O artista não possui um identificador"
 
-#: src/harmonia/innertube/client.py:334
+#: src/harmonia/innertube/client.py:335
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "O YouTube Music não forneceu um token de remoção"
 
-#: src/harmonia/innertube/client.py:392
+#: src/harmonia/innertube/client.py:393
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Categoria desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:491
+#: src/harmonia/innertube/client.py:492
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "A faixa não contém um identificador reproduzível."
 
-#: src/harmonia/innertube/client.py:550
+#: src/harmonia/innertube/client.py:551
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Não foi possível obter um stream reproduzível. {details}"
 
-#: src/harmonia/innertube/client.py:607
+#: src/harmonia/innertube/client.py:608
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Não foi possível registrar a reprodução: {error}"
 
-#: src/harmonia/innertube/client.py:630
+#: src/harmonia/innertube/client.py:631
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "O nome da playlist não pode ficar vazio"
 
-#: src/harmonia/innertube/client.py:637
+#: src/harmonia/innertube/client.py:638
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "O YouTube criou a playlist sem retornar o identificador"
 
-#: src/harmonia/innertube/client.py:660
+#: src/harmonia/innertube/client.py:677
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr ""
@@ -368,46 +368,46 @@ msgstr "resposta vazia"
 msgid "Letra traduzida."
 msgstr "Letra traduzida."
 
-#: src/harmonia/qt_backend.py:308 src/harmonia/qt_backend.py:1246
+#: src/harmonia/qt_backend.py:309 src/harmonia/qt_backend.py:1248
 #: src/harmonia/qt_catalog.py:60 src/harmonia/qt_catalog.py:121
 #: src/harmonia/qt_catalog.py:526 src/harmonia/window_chrome/navigation.py:18
 #: src/harmonia/window_home.py:34
 msgid "Explorar"
 msgstr "Explorar"
 
-#: src/harmonia/qt_backend.py:755
+#: src/harmonia/qt_backend.py:756
 msgid "Conecte sua conta para sincronizar o Harmonia."
 msgstr "Conecte sua conta para sincronizar o Harmonia."
 
-#: src/harmonia/qt_backend.py:931
+#: src/harmonia/qt_backend.py:933
 #, python-brace-format
 msgid "Adicionada a {title}."
 msgstr "Adicionada a {title}."
 
-#: src/harmonia/qt_backend.py:1093
+#: src/harmonia/qt_backend.py:1095
 #, python-brace-format
 msgid "Download de {title} iniciado."
 msgstr "Download de {title} iniciado."
 
-#: src/harmonia/qt_backend.py:1105
+#: src/harmonia/qt_backend.py:1107
 msgid "Downloads da coleção iniciados."
 msgstr "Downloads da coleção iniciados."
 
-#: src/harmonia/qt_backend.py:1202 src/harmonia/qt_preferences.py:165
+#: src/harmonia/qt_backend.py:1204 src/harmonia/qt_preferences.py:165
 #: src/harmonia/window_preferences.py:334
 msgid "Validando sessão…"
 msgstr "Validando sessão…"
 
-#: src/harmonia/qt_backend.py:1209
+#: src/harmonia/qt_backend.py:1211
 msgid "Cookie inválido ou incompleto"
 msgstr "Cookie inválido ou incompleto"
 
-#: src/harmonia/qt_backend.py:1222
+#: src/harmonia/qt_backend.py:1224
 #, python-brace-format
 msgid "Não foi possível conectar: {error}"
 msgstr "Não foi possível conectar: {error}"
 
-#: src/harmonia/qt_backend.py:1250
+#: src/harmonia/qt_backend.py:1252
 msgid "Conta desconectada."
 msgstr "Conta desconectada."
 
@@ -721,29 +721,29 @@ msgstr "qml6glsink não conseguiu inicializar o contexto OpenGL do Qt"
 msgid "glsinkbin não conseguiu inicializar"
 msgstr "glsinkbin não conseguiu inicializar"
 
-#: src/harmonia/qt_mutations.py:54 src/harmonia/window_actions.py:31
+#: src/harmonia/qt_mutations.py:54 src/harmonia/window_actions.py:32
 msgid "Enviando alteração ao YouTube Music…"
 msgstr "Enviando alteração ao YouTube Music…"
 
-#: src/harmonia/qt_mutations.py:71 src/harmonia/window_actions.py:47
+#: src/harmonia/qt_mutations.py:71 src/harmonia/window_actions.py:48
 #, python-brace-format
 msgid "Alteração não aplicada: {error}"
 msgstr "Alteração não aplicada: {error}"
 
-#: src/harmonia/qt_mutations.py:83 src/harmonia/window_actions.py:62
+#: src/harmonia/qt_mutations.py:83 src/harmonia/window_actions.py:63
 msgid "Música adicionada à biblioteca"
 msgstr "Música adicionada à biblioteca"
 
-#: src/harmonia/qt_mutations.py:83 src/harmonia/window_actions.py:62
+#: src/harmonia/qt_mutations.py:83 src/harmonia/window_actions.py:63
 msgid "Música removida da biblioteca"
 msgstr "Música removida da biblioteca"
 
-#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:101
+#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:102
 #: src/harmonia/window_detail.py:216
 msgid "Inscrição realizada"
 msgstr "Inscrição realizada"
 
-#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:101
+#: src/harmonia/qt_mutations.py:92 src/harmonia/window_actions.py:102
 #: src/harmonia/window_detail.py:216
 msgid "Inscrição cancelada"
 msgstr "Inscrição cancelada"
@@ -760,25 +760,25 @@ msgstr "Adicionado à biblioteca"
 msgid "Removido da biblioteca"
 msgstr "Removido da biblioteca"
 
-#: src/harmonia/qt_mutations.py:127 src/harmonia/window_actions.py:129
+#: src/harmonia/qt_mutations.py:127 src/harmonia/window_actions.py:130
 msgid "Playlist criada"
 msgstr "Playlist criada"
 
-#: src/harmonia/qt_mutations.py:150 src/harmonia/window_actions.py:321
+#: src/harmonia/qt_mutations.py:150 src/harmonia/window_actions.py:322
 msgid "Playlist renomeada"
 msgstr "Playlist renomeada"
 
-#: src/harmonia/qt_mutations.py:163 src/harmonia/window_actions.py:346
+#: src/harmonia/qt_mutations.py:163 src/harmonia/window_actions.py:347
 msgid "Playlist excluída"
 msgstr "Playlist excluída"
 
-#: src/harmonia/qt_mutations.py:174 src/harmonia/window_actions.py:382
-#: src/harmonia/window_actions.py:389
+#: src/harmonia/qt_mutations.py:172 src/harmonia/window_actions.py:385
+#: src/harmonia/window_actions.py:392
 #, python-brace-format
 msgid "Adicionada a {title}"
 msgstr "Adicionada a {title}"
 
-#: src/harmonia/qt_mutations.py:193 src/harmonia/window_actions.py:402
+#: src/harmonia/qt_mutations.py:191 src/harmonia/window_actions.py:405
 msgid "Faixa removida da playlist"
 msgstr "Faixa removida da playlist"
 
@@ -958,7 +958,7 @@ msgstr "Nenhum áudio foi capturado"
 msgid "Configure o token do AudD nas Preferências"
 msgstr "Configure o token do AudD nas Preferências"
 
-#: src/harmonia/settings_page/__init__.py:19
+#: src/harmonia/settings_page/__init__.py:20
 #: src/harmonia/window_chrome/navigation.py:41
 msgid "Preferências"
 msgstr "Preferências"
@@ -1247,6 +1247,24 @@ msgstr "1 hora"
 msgid "1 hora e 30"
 msgstr "1 hora e 30"
 
+#: src/harmonia/settings_page/library.py:16
+#: src/harmonia/window_chrome/navigation.py:19
+#: src/harmonia/window_library.py:61
+msgid "Biblioteca"
+msgstr "Biblioteca"
+
+#: src/harmonia/settings_page/library.py:19
+msgid "Ao salvar numa playlist"
+msgstr "Ao salvar numa playlist"
+
+#: src/harmonia/settings_page/library.py:20
+msgid "Adicionar no fim"
+msgstr "Adicionar no fim"
+
+#: src/harmonia/settings_page/library.py:20
+msgid "Adicionar no início"
+msgstr "Adicionar no início"
+
 #: src/harmonia/settings_page/social.py:17
 msgid "Integrações sociais"
 msgstr "Integrações sociais"
@@ -1492,11 +1510,11 @@ msgstr "Conteúdo explícito"
 msgid "Opções da faixa"
 msgstr "Opções da faixa"
 
-#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:85
+#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:86
 msgid "Remover das músicas curtidas"
 msgstr "Remover das músicas curtidas"
 
-#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:85
+#: src/harmonia/track_rows.py:254 src/harmonia/window_actions.py:86
 #: src/harmonia/window_chrome/expanded_player.py:177
 #: src/harmonia/window_item_menu.py:97
 msgid "Curtir música"
@@ -1567,9 +1585,9 @@ msgstr ""
 msgid "SAPISID=…; __Secure-3PAPISID=…"
 msgstr "SAPISID=…; __Secure-3PAPISID=…"
 
-#: src/harmonia/window_account.py:69 src/harmonia/window_actions.py:117
-#: src/harmonia/window_actions.py:143 src/harmonia/window_actions.py:309
-#: src/harmonia/window_actions.py:335 src/harmonia/window_actions.py:370
+#: src/harmonia/window_account.py:69 src/harmonia/window_actions.py:118
+#: src/harmonia/window_actions.py:144 src/harmonia/window_actions.py:310
+#: src/harmonia/window_actions.py:336 src/harmonia/window_actions.py:371
 #: src/harmonia/window_library.py:768 src/harmonia/window_library.py:785
 #: src/harmonia/window_optional.py:331 src/harmonia/window_preferences.py:414
 msgid "Cancelar"
@@ -1600,95 +1618,95 @@ msgid_plural "Biblioteca atualizada · {count} itens"
 msgstr[0] "Biblioteca atualizada · {count} item"
 msgstr[1] "Biblioteca atualizada · {count} itens"
 
-#: src/harmonia/window_actions.py:112 src/harmonia/window_chrome/sidebar.py:40
+#: src/harmonia/window_actions.py:113 src/harmonia/window_chrome/sidebar.py:40
 msgid "Nova playlist"
 msgstr "Nova playlist"
 
-#: src/harmonia/window_actions.py:113
+#: src/harmonia/window_actions.py:114
 msgid "Ela será criada como privada na sua conta do YouTube Music."
 msgstr "Ela será criada como privada na sua conta do YouTube Music."
 
-#: src/harmonia/window_actions.py:115 src/harmonia/window_actions.py:141
+#: src/harmonia/window_actions.py:116 src/harmonia/window_actions.py:142
 msgid "Nome da playlist"
 msgstr "Nome da playlist"
 
-#: src/harmonia/window_actions.py:118 src/harmonia/window_actions.py:144
+#: src/harmonia/window_actions.py:119 src/harmonia/window_actions.py:145
 msgid "Criar"
 msgstr "Criar"
 
-#: src/harmonia/window_actions.py:138 src/harmonia/window_library.py:137
+#: src/harmonia/window_actions.py:139 src/harmonia/window_library.py:137
 msgid "Nova playlist local"
 msgstr "Nova playlist local"
 
-#: src/harmonia/window_actions.py:139
+#: src/harmonia/window_actions.py:140
 msgid "A playlist ficará somente neste computador."
 msgstr "A playlist ficará somente neste computador."
 
-#: src/harmonia/window_actions.py:160
+#: src/harmonia/window_actions.py:161
 msgid "Arquivos de áudio"
 msgstr "Arquivos de áudio"
 
-#: src/harmonia/window_actions.py:167
+#: src/harmonia/window_actions.py:168
 msgid "Adicionar arquivos de áudio"
 msgstr "Adicionar arquivos de áudio"
 
-#: src/harmonia/window_actions.py:192 src/harmonia/window_library.py:132
+#: src/harmonia/window_actions.py:193 src/harmonia/window_library.py:132
 msgid "Importar playlist"
 msgstr "Importar playlist"
 
-#: src/harmonia/window_actions.py:193
+#: src/harmonia/window_actions.py:194
 msgid "Playlists M3U ou JSON"
 msgstr "Playlists M3U ou JSON"
 
-#: src/harmonia/window_actions.py:243
+#: src/harmonia/window_actions.py:244
 #, python-brace-format
 msgid "Não foi possível importar: {error}"
 msgstr "Não foi possível importar: {error}"
 
-#: src/harmonia/window_actions.py:251
+#: src/harmonia/window_actions.py:252
 msgid "Exportar playlist"
 msgstr "Exportar playlist"
 
-#: src/harmonia/window_actions.py:294
+#: src/harmonia/window_actions.py:295
 msgid "Playlist exportada"
 msgstr "Playlist exportada"
 
-#: src/harmonia/window_actions.py:298
+#: src/harmonia/window_actions.py:299
 #, python-brace-format
 msgid "Não foi possível exportar: {error}"
 msgstr "Não foi possível exportar: {error}"
 
-#: src/harmonia/window_actions.py:306 src/harmonia/window_detail.py:538
+#: src/harmonia/window_actions.py:307 src/harmonia/window_detail.py:538
 #: src/harmonia/window_library.py:674
 msgid "Renomear playlist"
 msgstr "Renomear playlist"
 
-#: src/harmonia/window_actions.py:310 src/harmonia/window_library.py:786
+#: src/harmonia/window_actions.py:311 src/harmonia/window_library.py:786
 msgid "Renomear"
 msgstr "Renomear"
 
-#: src/harmonia/window_actions.py:330
+#: src/harmonia/window_actions.py:331
 msgid "Excluir playlist?"
 msgstr "Excluir playlist?"
 
-#: src/harmonia/window_actions.py:331
+#: src/harmonia/window_actions.py:332
 #, python-brace-format
 msgid "“{title}” será removida permanentemente da sua conta."
 msgstr "“{title}” será removida permanentemente da sua conta."
 
-#: src/harmonia/window_actions.py:336 src/harmonia/window_library.py:769
+#: src/harmonia/window_actions.py:337 src/harmonia/window_library.py:769
 msgid "Excluir"
 msgstr "Excluir"
 
-#: src/harmonia/window_actions.py:357
+#: src/harmonia/window_actions.py:358
 msgid "Crie uma playlist primeiro"
 msgstr "Crie uma playlist primeiro"
 
-#: src/harmonia/window_actions.py:359
+#: src/harmonia/window_actions.py:360
 msgid "Adicionar à playlist"
 msgstr "Adicionar à playlist"
 
-#: src/harmonia/window_actions.py:371
+#: src/harmonia/window_actions.py:372
 msgid "Adicionar"
 msgstr "Adicionar"
 
@@ -1750,11 +1768,6 @@ msgstr "Navegação"
 #: src/harmonia/window_chrome/navigation.py:17 src/harmonia/window_home.py:164
 msgid "Início"
 msgstr "Início"
-
-#: src/harmonia/window_chrome/navigation.py:19
-#: src/harmonia/window_library.py:61
-msgid "Biblioteca"
-msgstr "Biblioteca"
 
 #: src/harmonia/window_chrome/navigation.py:20
 msgid "Músicas curtidas"

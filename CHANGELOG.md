@@ -13,7 +13,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - colar um link do YouTube ou do YouTube Music na busca toca a música ou abre a playlist, o álbum ou o artista;
 - opção "Velocidade muda o tom", para ouvir como um disco tocado mais rápido ou mais devagar;
 - selo "E" nas faixas com conteúdo explícito;
-- erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema.
+- erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
+- Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início.
 
 ## 0.1.0-beta.3 — 2026-10-09
 
