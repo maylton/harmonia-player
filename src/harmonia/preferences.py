@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
+from .loudness import DEFAULT_LEVEL, LEVELS
 from .theming import ACCENTS, DEFAULT_THEME, VARIANTS, builtin_themes
 
 
@@ -13,6 +14,7 @@ class Preferences:
     quality: str = "high"
     proxy: str = ""
     normalization: bool = False
+    normalization_level: str = DEFAULT_LEVEL
     equalizer: str = "flat"
     speed: float = 1.0
     pitch: float = 0.0
@@ -66,12 +68,16 @@ class Preferences:
         theme_variant = storage.get_setting("theme_variant", "theme")
         accent = storage.get_setting("accent", "theme")
         backdrop = storage.get_setting("backdrop", "mica")
+        normalization_level = storage.get_setting("normalization_level", DEFAULT_LEVEL)
         return cls(
             language=storage.get_setting("language", "pt-BR"),
             region=storage.get_setting("region", "BR"),
             quality=quality if quality in cls.QUALITY_BITRATES else "high",
             proxy=storage.get_setting("proxy", ""),
             normalization=boolean("normalization", False),
+            normalization_level=(
+                normalization_level if normalization_level in LEVELS else DEFAULT_LEVEL
+            ),
             equalizer=equalizer,
             speed=max(0.5, min(2.0, number("speed", 1.0))),
             pitch=max(-12, min(12, number("pitch", 0.0))),
@@ -104,6 +110,7 @@ class Preferences:
             "quality": self.quality,
             "proxy": self.proxy,
             "normalization": "1" if self.normalization else "0",
+            "normalization_level": self.normalization_level,
             "equalizer": self.equalizer,
             "speed": str(self.speed),
             "pitch": str(self.pitch),

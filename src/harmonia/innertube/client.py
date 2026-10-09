@@ -18,6 +18,7 @@ from typing import Any
 
 from .. import host
 from ..i18n import _
+from ..loudness import loudness_from_player
 from ..models import (
     AccountProfile,
     ArtistPage,
@@ -521,6 +522,7 @@ class InnerTubeClient:
                             or {}
                         ).get("baseUrl")
                     ),
+                    loudness_db=loudness_from_player(payload, selected),
                 )
                 with _STREAM_CACHE_LOCK:
                     _STREAM_CACHE[cache_key] = stream

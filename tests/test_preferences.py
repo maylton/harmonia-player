@@ -22,6 +22,7 @@ def test_preferences_roundtrip_and_bounds():
     preferences.region = "US"
     preferences.quality = "medium"
     preferences.normalization = True
+    preferences.normalization_level = "loud"
     preferences.background_blur = True
     preferences.icon_style = "material"
     preferences.lastfm_enabled = True
@@ -34,6 +35,10 @@ def test_preferences_roundtrip_and_bounds():
     restored = Preferences.load(storage)
     assert (restored.language, restored.region, restored.max_bitrate) == ("en-US", "US", 160_000)
     assert restored.normalization is True
+    assert restored.normalization_level == "loud"
+    assert Preferences.load(SettingsMemory({"normalization_level": "x"})).normalization_level == (
+        "standard"
+    )
     assert restored.background_blur is True
     assert restored.icon_style == "material"
     assert restored.lastfm_enabled is True
@@ -54,7 +59,7 @@ def test_audio_processing_graph_applies_all_controls():
     from harmonia.player import NativePlayer
 
     player = NativePlayer()
-    required = {"pitch", "equalizer", "replaygain", "silence"}
+    required = {"pitch", "equalizer", "replaygain", "limiter", "silence"}
     missing = sorted(required.difference(player._audio_elements))
     if missing:
         player.close()
@@ -66,6 +71,14 @@ def test_audio_processing_graph_applies_all_controls():
     assert player._audio_elements["pitch"].get_property("tempo") == 1.25
     assert round(player._audio_elements["pitch"].get_property("pitch"), 2) == 2.0
     assert player._audio_elements["equalizer"].get_property("band0") == 6.0
-    assert player._audio_elements["replaygain"].get_property("fallback-gain") == -6.0
     assert player._audio_elements["silence"].get_property("remove") is True
+    replaygain = player._audio_elements["replaygain"]
+    # Without a known loudness the track only gets the level (standard: 0 dB).
+    assert replaygain.get_property("fallback-gain") + replaygain.get_property("pre-amp") == 0
+    # A track 6 dB above YouTube's reference is turned down by 6 dB.
+    player.set_track_loudness(6.0)
+    assert replaygain.get_property("fallback-gain") + replaygain.get_property("pre-amp") == -6
+    assert player._audio_elements["limiter"].get_property("enabled") is True
+    player.apply_audio_settings(normalization=False)
+    assert replaygain.get_property("fallback-gain") == replaygain.get_property("pre-amp") == 0
     player.close()

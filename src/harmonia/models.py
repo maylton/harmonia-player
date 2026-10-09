@@ -115,6 +115,8 @@ class StreamInfo:
     itag: int | None = None
     expires_at: int | None = None
     playback_tracking_url: str | None = None
+    # dB above YouTube's loudness reference; see loudness.py.
+    loudness_db: float | None = None
 
     def valid_at(self, timestamp: int, margin: int = 90) -> bool:
         return self.expires_at is None or timestamp + margin < self.expires_at

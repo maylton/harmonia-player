@@ -11,6 +11,7 @@ import gi
 gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
+from . import loudness
 from .i18n import _
 from .stream_relay import StreamRelay
 
@@ -33,6 +34,8 @@ class NativePlayer:
         if self._playbin is None:
             raise RuntimeError(_("O elemento GStreamer playbin não está disponível"))
         self._audio_elements: dict[str, Gst.Element] = {}
+        self._normalization: tuple[bool, str] = (False, loudness.DEFAULT_LEVEL)
+        self._track_loudness: float | None = None
         self._video_sink: Gst.Element | None = None
         self._replace_generation = 0
         self._install_audio_filter()
@@ -52,6 +55,7 @@ class NativePlayer:
             ("pitch", "pitch"),
             ("equalizer", "equalizer-10bands"),
             ("replaygain", "rgvolume"),
+            ("limiter", "rglimiter"),
             ("convert-mid", "audioconvert"),
             ("silence", "removesilence"),
             ("convert-out", "audioconvert"),
@@ -78,12 +82,15 @@ class NativePlayer:
         self,
         *,
         normalization: bool = False,
+        normalization_level: str = loudness.DEFAULT_LEVEL,
         equalizer: str = "flat",
         speed: float = 1.0,
         pitch: float = 0.0,
         skip_silence: bool = False,
     ) -> None:
         """Apply processing atomically; safe when optional plugins are absent."""
+        self._normalization = (normalization, normalization_level)
+        self._apply_normalization()
         pitch_filter = self._audio_elements.get("pitch")
         if pitch_filter:
             pitch_filter.set_property("tempo", max(0.5, min(2.0, speed)))
@@ -93,16 +100,28 @@ class NativePlayer:
             bands = self.EQ_PRESETS.get(equalizer, self.EQ_PRESETS["flat"])
             for index, gain in enumerate(bands):
                 equalizer_filter.set_property(f"band{index}", float(gain))
-        replaygain = self._audio_elements.get("replaygain")
-        if replaygain:
-            replaygain.set_property("album-mode", False)
-            replaygain.set_property("fallback-gain", -6.0 if normalization else 0.0)
-            replaygain.set_property("headroom", 1.0 if normalization else 0.0)
         silence = self._audio_elements.get("silence")
         if silence:
             silence.set_property("remove", skip_silence)
             silence.set_property("squash", skip_silence)
             silence.set_property("minimum-silence-time", 1_500_000_000 if skip_silence else 0)
+
+    def set_track_loudness(self, loudness_db: float | None) -> None:
+        """The loudness of the track about to play, None when unknown."""
+        self._track_loudness = loudness_db
+        self._apply_normalization()
+
+    def _apply_normalization(self) -> None:
+        settings = loudness.replaygain_settings(*self._normalization, self._track_loudness)
+        replaygain = self._audio_elements.get("replaygain")
+        if replaygain:
+            replaygain.set_property("album-mode", False)
+            replaygain.set_property("pre-amp", settings.pre_amp)
+            replaygain.set_property("fallback-gain", settings.fallback_gain)
+            replaygain.set_property("headroom", settings.headroom)
+        limiter = self._audio_elements.get("limiter")
+        if limiter:
+            limiter.set_property("enabled", settings.limiter)
 
     @property
     def video_sink(self) -> Gst.Element | None:

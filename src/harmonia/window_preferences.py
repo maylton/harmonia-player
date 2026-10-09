@@ -112,6 +112,7 @@ class WindowPreferencesMixin:
             return
         self.player.apply_audio_settings(
             normalization=self.preferences.normalization,
+            normalization_level=self.preferences.normalization_level,
             equalizer=self.preferences.equalizer,
             speed=self.preferences.speed,
             pitch=self.preferences.pitch,

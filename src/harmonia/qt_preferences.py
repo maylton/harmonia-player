@@ -72,6 +72,7 @@ class QtPreferencesController(QObject):
     def apply_audio(self) -> None:
         self.playback.apply_audio_settings(
             normalization=self.values.normalization,
+            normalization_level=self.values.normalization_level,
             equalizer=self.values.equalizer,
             speed=self.values.speed,
             pitch=self.values.pitch,
