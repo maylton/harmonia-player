@@ -93,7 +93,23 @@ EOF
     cp "$top"/RPMS/noarch/*.rpm "$OUT/Harmonia-${VERSION}-noarch.rpm"
 }
 
+# Both packages must carry the launcher, the desktop entry, the code and the
+# translations.
+check_contents() {
+    local listing=$1
+    for expected in \
+        usr/bin/harmonia \
+        usr/share/applications/io.github.harmonia.Harmonia.desktop \
+        usr/share/harmonia/python/harmonia/frontend.py \
+        usr/share/locale/pt_BR/LC_MESSAGES/harmonia.mo \
+        usr/share/locale/en/LC_MESSAGES/harmonia.mo; do
+        grep -q "$expected\$" <<<"$listing" || { echo "Missing $expected" >&2; exit 1; }
+    done
+}
+
 build_deb
 build_rpm
+check_contents "$(dpkg-deb --contents "$OUT/Harmonia-${VERSION}-all.deb")"
+check_contents "$(rpm -qlp "$OUT/Harmonia-${VERSION}-noarch.rpm")"
 (cd "$OUT" && for package in Harmonia-*.deb Harmonia-*.rpm; do sha256sum "$package" > "$package.sha256"; done)
 ls -l "$OUT"/Harmonia-*

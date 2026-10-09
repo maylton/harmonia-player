@@ -1,0 +1,4 @@
+# Shell scripts run on Linux and in MSYS2's dash; Git for Windows would
+# otherwise check them out with CRLF line endings, which shells reject.
+*.sh text eol=lf
+*.in text eol=lf

@@ -44,8 +44,10 @@ def fake_tools(folder: Path, tools: dict[str, str]) -> str:
         tool = folder / name
         tool.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8", newline="\n")
         tool.chmod(0o755)
-    # Only the fakes and the basic tools: no real package manager is found.
-    return f'PATH="{shell_path(folder)}:/usr/bin:/bin"\n'
+    # The fakes come first on PATH; "has" only sees them, so the package
+    # managers of the machine running the tests are ignored.
+    folder_path = shell_path(folder)
+    return f'PATH="{folder_path}:$PATH"\nhas() {{ [ -x "{folder_path}/$1" ]; }}\n'
 
 
 @pytest.mark.parametrize(
