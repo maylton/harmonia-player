@@ -4,8 +4,11 @@ src/harmonia/auth_webview2.py
 src/harmonia/gtk_media_variants.py
 src/harmonia/gtk_video.py
 src/harmonia/innertube/client.py
+src/harmonia/innertube/edits.py
 src/harmonia/innertube/parsers.py
 src/harmonia/innertube/protocol.py
+src/harmonia/innertube/session.py
+src/harmonia/innertube/streams.py
 src/harmonia/insights.py
 src/harmonia/linux_backdrop.py
 src/harmonia/player.py
