@@ -1,5 +1,8 @@
 #!@PYTHON@
 import os
+import sys
+
+@PYTHONPATH@
 os.environ.setdefault("HARMONIA_LOCALE_DIR", "@LOCALEDIR@")
 from harmonia.frontend import main
 raise SystemExit(main())

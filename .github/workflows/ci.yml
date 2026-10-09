@@ -139,6 +139,43 @@ jobs:
           meson setup build --buildtype=release
           meson compile -C build
 
+  # The .deb and .rpm, built from the Meson install and installed into the
+  # current Ubuntu and Fedora, where libadwaita is new enough for them.
+  linux-packages:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar ferramentas de empacotamento
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build gettext python3 rpm
+
+      - name: Gerar .deb e .rpm
+        run: bash packaging/linux/build-packages.sh
+
+      - name: Instalar o .deb no Ubuntu atual
+        run: |
+          version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
+          docker run --rm -v "$PWD:/src:ro" ubuntu:latest \
+            sh /src/packaging/linux/check-install.sh "/src/build/linux/Harmonia-$version-all.deb" "$version"
+
+      - name: Instalar o .rpm no Fedora atual
+        run: |
+          version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
+          docker run --rm -v "$PWD:/src:ro" fedora:latest \
+            sh /src/packaging/linux/check-install.sh "/src/build/linux/Harmonia-$version-noarch.rpm" "$version"
+
+      - name: Publicar os pacotes como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: harmonia-linux-packages
+          path: |
+            build/linux/Harmonia-*.deb
+            build/linux/Harmonia-*.rpm
+            build/linux/*.sha256
+          if-no-files-found: error
+
   # The Windows port runs from MSYS2 UCRT64, with the same packages a
   # developer installs (see packaging/windows/build.sh). There libadwaita is
   # recent enough for the full GTK smoke, which the pytest run includes.

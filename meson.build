@@ -1,15 +1,28 @@
-project('harmonia', version: '0.1.0-beta.1', meson_version: '>= 0.62')
+project('harmonia', version: '0.1.0-beta.2', meson_version: '>= 0.62')
 
 gnome = import('gnome')
 python = import('python').find_installation('python3')
 
+if get_option('private_python')
+  # Packages (.deb, .rpm) keep the code out of the versioned site-packages, so
+  # one build works with whichever Python 3 the distribution ships.
+  python_dir = get_option('prefix') / get_option('datadir') / 'harmonia' / 'python'
+  python_path = 'sys.path.insert(0, "@0@")'.format(python_dir)
+  # The interpreter of the target system, not the one that built the package.
+  python_command = '/usr/bin/python3'
+else
+  python_dir = python.get_install_dir()
+  python_path = ''
+  python_command = python.full_path()
+endif
 install_subdir(
   'src/harmonia',
-  install_dir: python.get_install_dir(),
+  install_dir: python_dir,
   exclude_directories: ['__pycache__'],
 )
 launcher_config = configuration_data({
-  'PYTHON': python.full_path(),
+  'PYTHON': python_command,
+  'PYTHONPATH': python_path,
   'LOCALEDIR': get_option('prefix') / get_option('datadir') / 'locale',
   'BINDIR': get_option('prefix') / get_option('bindir'),
 })
