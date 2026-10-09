@@ -19,6 +19,7 @@ def item_map(item: LibraryItem, *, index: int = -1, liked: bool = False) -> dict
         "setVideoId": item.set_video_id or "",
         "index": index,
         "liked": liked,
+        "explicit": item.explicit,
     }
 
 

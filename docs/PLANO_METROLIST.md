@@ -152,8 +152,10 @@ Cada item é independente e pode virar um commit separado.
   tom" usa o `rate` do elemento `pitch`, como um disco mais rápido; o seletor
   de tom fica desativado. Posição e duração seguem iguais às do modo
   separado (conferido com GStreamer).
-- [ ] **Selo de conteúdo explícito** nas linhas de faixa, a partir do
-  `badges` da InnerTube.
+- [x] **Selo de conteúdo explícito**: `LibraryItem.explicit`, lido do
+  `badges` da InnerTube (listas, buscas e fila), guardado em todas as tabelas
+  de itens (coluna nova, com migração) e mostrado como "E" nas faixas do GTK.
+  O KDE já recebe o dado (`explicit` no `item_map`); falta o selo no QML.
 - [ ] **Relatório de erro de reprodução** (`playback_report.py`): texto com
   versão, sistema, cliente usado e as falhas de cada cliente, com botão de
   copiar na mensagem de erro.

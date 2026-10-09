@@ -11,7 +11,17 @@ from ..models import (
 )
 
 # Columns of every table that stores a LibraryItem, in _item_values order.
-ITEM_COLUMNS = "item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id"
+ITEM_COLUMNS = "item_id,title,subtitle,thumbnail,kind,playlist_id,set_video_id,explicit"
+ITEM_PLACEHOLDERS = ",".join("?" * len(ITEM_COLUMNS.split(",")))
+ITEM_TABLES = (
+    "library_items",
+    "home_items",
+    "explore_items",
+    "playback_queue",
+    "play_history",
+    "downloads",
+    "local_playlist_items",
+)
 
 
 class Database:
@@ -125,6 +135,12 @@ class Database:
                 db.execute(
                     "ALTER TABLE lyrics_documents ADD COLUMN translated_lyrics TEXT NOT NULL DEFAULT ''"
                 )
+            for table in ITEM_TABLES:
+                columns = {row[1] for row in db.execute(f"PRAGMA table_info({table})").fetchall()}
+                if "explicit" not in columns:
+                    db.execute(
+                        f"ALTER TABLE {table} ADD COLUMN explicit INTEGER NOT NULL DEFAULT 0"
+                    )
 
     @staticmethod
     def _item_values(item: LibraryItem) -> tuple:
@@ -136,6 +152,7 @@ class Database:
             item.kind,
             item.playlist_id,
             item.set_video_id,
+            int(item.explicit),
         )
 
     @staticmethod
@@ -148,4 +165,5 @@ class Database:
             row["kind"],
             row[playlist_column],
             row["set_video_id"],
+            explicit=bool(row["explicit"]),
         )
