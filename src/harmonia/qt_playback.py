@@ -145,7 +145,7 @@ class QtPlaybackController(QObject):
         *,
         normalization: bool,
         normalization_level: str,
-        equalizer: str,
+        equalizer: str | tuple[float, ...],
         speed: float,
         pitch: float,
         skip_silence: bool,

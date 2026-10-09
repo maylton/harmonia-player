@@ -35,7 +35,7 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
 | 3 | Letras palavra por palavra e novos provedores | Alta | Feita (falta o KDE) |
 | 4 | Sincronização segura da biblioteca | Alta | Feita |
 | 5 | Pequenas melhorias de uso | Média | Feita (falta o visual no KDE) |
-| 6 | Equalizador com perfis do AutoEQ | Média | A fazer |
+| 6 | Equalizador com perfis do AutoEQ | Média | Feita (falta importar no KDE) |
 | 7 | Backup antes de atualizar e escolha de conta | Média | A fazer |
 | 8 | Confiabilidade do streaming e ajustes finos | Baixa | A fazer |
 
@@ -170,12 +170,21 @@ Cada item é independente e pode virar um commit separado.
 
 ## Fase 6 — Equalizador com perfis do AutoEQ (média)
 
-- [ ] `autoeq.py`: lê o formato "ParametricEQ"/"GraphicEQ" do AutoEQ e
-  converte para as 10 bandas do `equalizer-10bands`.
-- [ ] Importar um arquivo de perfil pelo seletor de arquivos (GTK e QML).
-- [ ] Perfis importados salvos em um repositório próprio e listados junto às
+- [x] `autoeq.py`: lê ParametricEQ, FixedBandEQ e GraphicEQ do AutoEQ e
+  converte para as 10 bandas do `equalizer-10bands` (30 Hz a 15 kHz,
+  conferidas no GStreamer): a resposta dos filtros (biquads do RBJ Audio EQ
+  Cookbook, a 48 kHz) ou da curva gráfica é calculada como média dentro de
+  cada banda e somada ao pré-amplificador, para não saturar.
+- [x] `equalizer.py`: predefinições e perfis; a preferência guarda
+  `autoeq:<nome>`, e os dois frontends passam ao player os ganhos das bandas.
+- [x] Perfis salvos em `storage/eq_profiles.py` e listados junto às
   predefinições.
-- [ ] Testes de conversão com perfis reais.
+- [x] GTK: Preferências > Áudio > "Perfis do AutoEQ", com Importar (seletor de
+  arquivos) e Remover (`settings_page/equalizer.py`). No KDE o perfil
+  escolhido vale, mas falta o botão de importar no QML.
+- [x] Testes com os filtros do cookbook e com o HD 600; conferido com os
+  arquivos reais do AutoEQ: ParametricEQ e GraphicEQ do mesmo fone dão bandas
+  com até ~1 dB de diferença.
 
 ## Fase 7 — Backup antes de atualizar e escolha de conta (média)
 

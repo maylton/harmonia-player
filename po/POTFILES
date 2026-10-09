@@ -26,6 +26,7 @@ src/harmonia/settings_page/__init__.py
 src/harmonia/settings_page/account.py
 src/harmonia/settings_page/appearance.py
 src/harmonia/settings_page/audio.py
+src/harmonia/settings_page/equalizer.py
 src/harmonia/settings_page/library.py
 src/harmonia/settings_page/social.py
 src/harmonia/settings_page/streaming.py

@@ -9,6 +9,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from .backup import BackupManager
 from .downloads import DownloadManager
+from .equalizer import equalizer_gains
 from .i18n import _
 from .preferences import Preferences
 from .qt_playback import QtPlaybackController
@@ -73,7 +74,7 @@ class QtPreferencesController(QObject):
         self.playback.apply_audio_settings(
             normalization=self.values.normalization,
             normalization_level=self.values.normalization_level,
-            equalizer=self.values.equalizer,
+            equalizer=equalizer_gains(self.values.equalizer, self.storage.eq_profiles()),
             speed=self.values.speed,
             pitch=self.values.pitch,
             skip_silence=self.values.skip_silence,

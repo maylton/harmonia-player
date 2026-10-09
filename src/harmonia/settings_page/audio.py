@@ -9,6 +9,7 @@ from gi.repository import Adw, GObject  # noqa: E402
 
 from ..crossfade import CHOICES as CROSSFADE_CHOICES  # noqa: E402
 from ..i18n import _  # noqa: E402
+from .equalizer import EqualizerRows  # noqa: E402
 from .rows import combo_row, scale_row, switch_row  # noqa: E402
 
 
@@ -22,19 +23,9 @@ def audio_group(window) -> Adw.PreferencesGroup:
         title=_("Áudio"),
         description=_("Processamento nativo em tempo real pelo GStreamer."),
     )
-    group.add(
-        combo_row(
-            _("Equalizador"),
-            [
-                (_("Plano"), "flat"),
-                (_("Graves"), "bass"),
-                (_("Voz"), "vocal"),
-                (_("Agudos"), "treble"),
-            ],
-            preferences.equalizer,
-            changed("equalizer"),
-        )
-    )
+    window._equalizer_rows = EqualizerRows(window)
+    for row in window._equalizer_rows.rows:
+        group.add(row)
     normalization = switch_row(
         _("Normalização de volume"),
         _("Iguala o volume das faixas com a medição do YouTube Music"),
