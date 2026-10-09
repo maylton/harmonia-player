@@ -16,6 +16,7 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
 - Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início;
 - Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF;
+- escolha do canal do YouTube Music (pessoal ou de marca) em Preferências > Conta, quando o login tem mais de um;
 - backup automático do banco de dados quando o Harmonia é atualizado (os três últimos ficam guardados), e restaurar um backup de uma versão antiga recria as tabelas novas;
 - perfis do AutoEQ no equalizador: importe o ParametricEQ, o FixedBandEQ ou o GraphicEQ do seu fone em Preferências > Áudio, e ele vira uma opção do equalizador;
 - Mica também no Flatpak: o app lê, só para leitura, a configuração do papel de parede (dconf do GNOME ou configuração do Plasma), as imagens do sistema e as pastas de papéis de parede do usuário; quando a imagem está em outra pasta, as Preferências mostram o comando `flatpak override` que a libera.

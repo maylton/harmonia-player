@@ -567,11 +567,26 @@ class _FakeService:
             time.sleep(self.delay)
 
     def connect(self, cookie: str) -> bool:
-        self.storage.save_cookie(cookie)
+        self.save_session(cookie)
         return True
+
+    def save_session(self, cookie: str) -> None:
+        self.storage.save_cookie(cookie)
 
     def disconnect(self) -> None:
         self.storage.clear_cookie()
+
+    def identities(self):
+        from harmonia.accounts import YouTubeIdentity
+
+        return [
+            YouTubeIdentity("Ouvinte", "111||111", handle="@ouvinte", selected=True),
+            YouTubeIdentity("Selo da banda", "222||111", handle="@selo"),
+        ]
+
+    def set_identity(self, identity) -> None:
+        self.storage.set_setting("youtube_identity", identity.id)
+        self.storage.clear_library()
 
     def validate_account(self) -> bool:
         return True

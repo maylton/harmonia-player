@@ -22,7 +22,7 @@ msgstr ""
 msgid "Harmonia"
 msgstr "Harmonia"
 
-#: src/harmonia/app.py:281 src/harmonia/settings_page/account.py:19
+#: src/harmonia/app.py:281 src/harmonia/settings_page/account.py:20
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr "Conta"
@@ -160,70 +160,70 @@ msgstr "O vídeo falhou; voltando para a música…"
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "O vídeo terminou antes da faixa de áudio."
 
-#: src/harmonia/innertube/client.py:172
+#: src/harmonia/innertube/client.py:194
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 
-#: src/harmonia/innertube/client.py:176
+#: src/harmonia/innertube/client.py:198
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr "YouTube Music respondeu HTTP {code}: {detail}"
 
-#: src/harmonia/innertube/client.py:183
+#: src/harmonia/innertube/client.py:205
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr "Não foi possível conectar ao YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:186
+#: src/harmonia/innertube/client.py:208
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr "Não foi possível concluir a requisição ao YouTube Music."
 
-#: src/harmonia/innertube/client.py:201
+#: src/harmonia/innertube/client.py:223
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
 
-#: src/harmonia/innertube/client.py:232
+#: src/harmonia/innertube/client.py:255
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Categoria de busca desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:305
+#: src/harmonia/innertube/client.py:328
 msgid "O artista não possui um identificador"
 msgstr "O artista não possui um identificador"
 
-#: src/harmonia/innertube/client.py:335
+#: src/harmonia/innertube/client.py:358
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "O YouTube Music não forneceu um token de remoção"
 
-#: src/harmonia/innertube/client.py:393
+#: src/harmonia/innertube/client.py:416
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Categoria desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:492
+#: src/harmonia/innertube/client.py:515
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "A faixa não contém um identificador reproduzível."
 
-#: src/harmonia/innertube/client.py:551
+#: src/harmonia/innertube/client.py:574
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Não foi possível obter um stream reproduzível. {details}"
 
-#: src/harmonia/innertube/client.py:608
+#: src/harmonia/innertube/client.py:631
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Não foi possível registrar a reprodução: {error}"
 
-#: src/harmonia/innertube/client.py:631
+#: src/harmonia/innertube/client.py:654
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "O nome da playlist não pode ficar vazio"
 
-#: src/harmonia/innertube/client.py:638
+#: src/harmonia/innertube/client.py:661
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "O YouTube criou a playlist sem retornar o identificador"
 
-#: src/harmonia/innertube/client.py:677
+#: src/harmonia/innertube/client.py:700
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr ""
@@ -683,7 +683,7 @@ msgid "Reproduzindo em {name}."
 msgstr "Reproduzindo em {name}."
 
 #: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:77
-#: src/harmonia/qt_presenters.py:78 src/harmonia/settings_page/account.py:28
+#: src/harmonia/qt_presenters.py:78 src/harmonia/settings_page/account.py:29
 #: src/harmonia/window_history.py:208 src/harmonia/window_library.py:75
 msgid "YouTube Music"
 msgstr "YouTube Music"
@@ -995,33 +995,33 @@ msgstr "Configure o token do AudD nas Preferências"
 msgid "Preferências"
 msgstr "Preferências"
 
-#: src/harmonia/settings_page/account.py:21
+#: src/harmonia/settings_page/account.py:22
 msgid "Sessão protegida pelo Gerenciador de Credenciais do Windows."
 msgstr "Sessão protegida pelo Gerenciador de Credenciais do Windows."
 
-#: src/harmonia/settings_page/account.py:23
+#: src/harmonia/settings_page/account.py:24
 msgid "Sessão protegida pelo chaveiro Secret Service do sistema."
 msgstr "Sessão protegida pelo chaveiro Secret Service do sistema."
 
-#: src/harmonia/settings_page/account.py:29
+#: src/harmonia/settings_page/account.py:30
 msgid "Conectada"
 msgstr "Conectada"
 
-#: src/harmonia/settings_page/account.py:29
+#: src/harmonia/settings_page/account.py:30
 msgid "Não conectada"
 msgstr "Não conectada"
 
-#: src/harmonia/settings_page/account.py:34
+#: src/harmonia/settings_page/account.py:35
 msgid "Validar"
 msgstr "Validar"
 
-#: src/harmonia/settings_page/account.py:38
+#: src/harmonia/settings_page/account.py:39
 #: src/harmonia/settings_page/social.py:58 src/harmonia/window_account.py:71
 #: src/harmonia/window_optional.py:156
 msgid "Desconectar"
 msgstr "Desconectar"
 
-#: src/harmonia/settings_page/account.py:46 src/harmonia/window_account.py:73
+#: src/harmonia/settings_page/account.py:47 src/harmonia/window_account.py:73
 msgid "Conectar"
 msgstr "Conectar"
 
@@ -1317,6 +1317,19 @@ msgstr "Perfil “{name}” importado"
 #, python-brace-format
 msgid "Perfil “{name}” removido"
 msgstr "Perfil “{name}” removido"
+
+#: src/harmonia/settings_page/identity.py:23
+msgid "Canal do YouTube Music"
+msgstr "Canal do YouTube Music"
+
+#: src/harmonia/settings_page/identity.py:24
+msgid "A biblioteca, o histórico e as curtidas são os do canal escolhido"
+msgstr "A biblioteca, o histórico e as curtidas são os do canal escolhido"
+
+#: src/harmonia/settings_page/identity.py:45
+#, python-brace-format
+msgid "Usando o canal {name}. Sincronizando…"
+msgstr "Usando o canal {name}. Sincronizando…"
 
 #: src/harmonia/settings_page/library.py:16
 #: src/harmonia/window_chrome/navigation.py:19

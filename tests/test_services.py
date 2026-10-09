@@ -6,6 +6,13 @@ class MemoryStorage:
     def __init__(self):
         self.cookie = "SAPISID=test"
         self.library = None
+        self.settings = {}
+
+    def get_setting(self, key, default=""):
+        return self.settings.get(key, default)
+
+    def set_setting(self, key, value):
+        self.settings[key] = value
 
     def load_cookie(self):
         return self.cookie
@@ -165,6 +172,7 @@ def test_service_passes_connection_preferences_to_client():
         "gl": "US",
         "max_bitrate": 160_000,
         "proxy": "http://127.0.0.1:8080",
+        "identity": "",
     }
 
 

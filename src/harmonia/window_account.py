@@ -42,7 +42,7 @@ class WindowAccountMixin:
             self.manual_login_dialog()
 
     def _integrated_login_done(self, cookie: str) -> None:
-        self.storage.save_cookie(cookie)
+        self.youtube.save_session(cookie)
         self._load_account_avatar("")
         self._refresh_account_avatar()
         self.sections = {}
