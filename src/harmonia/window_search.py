@@ -12,6 +12,7 @@ from gi.repository import Adw, GLib, Gtk
 
 from .i18n import _
 from .models import (
+    LibraryItem,
     SearchGroup,
     SearchResults,
 )
@@ -21,6 +22,7 @@ from .ui import (
     page_header,
     page_shell,
 )
+from .youtube_links import YouTubeLink, parse_link
 
 LOGGER = logging.getLogger(__name__)
 
@@ -104,6 +106,10 @@ class WindowSearchMixin:
         if not query:
             return
         self.search_suggestions.popdown()
+        link = parse_link(query)
+        if link is not None:
+            self._open_link(link)
+            return
         self._searched_query = query
         self._suggestion_request += 1  # drop suggestions still in flight
         self._search_request += 1
@@ -126,6 +132,38 @@ class WindowSearchMixin:
                 GLib.idle_add(self._show_search, request_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="universal-search").start()
+
+    def _open_link(self, link: YouTubeLink) -> None:
+        """A pasted link: play the track, or open the playlist, album or artist."""
+        if link.kind != "songs":
+            self.open_item(link.as_item(_("Link do YouTube")))
+            return
+        self._search_request += 1
+        request_id = self._search_request
+
+        def worker() -> None:
+            try:
+                GLib.idle_add(self._link_resolved, request_id, self.youtube.watch_item(link.id), "")
+            except Exception as exc:
+                GLib.idle_add(self._link_resolved, request_id, None, str(exc))
+
+        threading.Thread(target=worker, daemon=True, name="youtube-link").start()
+
+    def _link_resolved(self, request_id: int, item: LibraryItem | None, error: str) -> bool:
+        if request_id != self._search_request:
+            return False
+        if item is None:
+            self.toast_overlay.add_toast(
+                Adw.Toast(
+                    title=_("Não foi possível abrir o link: {error}").format(
+                        error=error or _("faixa não encontrada")
+                    ),
+                    timeout=5,
+                )
+            )
+        else:
+            self.set_queue([item], 0)
+        return False
 
     def _show_search(
         self,

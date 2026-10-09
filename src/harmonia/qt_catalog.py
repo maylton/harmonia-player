@@ -11,6 +11,7 @@ from .models import ArtistPage, ExploreData, LibraryItem, LocalPlaylist, SearchR
 from .qt_presenters import section_map, unique_items
 from .services import YouTubeMusicService
 from .storage import Storage
+from .youtube_links import YouTubeLink, parse_link
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class QtCatalogController(QObject):
     _detailReady = Signal(int, object, object, str)
     _detailSectionReady = Signal(int, int, object, str)
     _discoveryReady = Signal(int, object, object, str)
+    _linkReady = Signal(int, object, str)
 
     def __init__(
         self,
@@ -81,6 +83,7 @@ class QtCatalogController(QObject):
         self._detailReady.connect(self._apply_detail)
         self._detailSectionReady.connect(self._apply_detail_section)
         self._discoveryReady.connect(self._apply_discovery)
+        self._linkReady.connect(self._apply_link)
 
     def liked_ids(self) -> set[str]:
         return {item.id for item in self.library.get("songs", [])}
@@ -161,6 +164,10 @@ class QtCatalogController(QObject):
             self.search_results = SearchResults("", [])
             self.searchChanged.emit()
             return
+        link = parse_link(query)
+        if link is not None:
+            self._open_link(link, request_id)
+            return
         self.set_busy(True)
         self.set_status(_("Pesquisando por “{query}”…").format(query=query))
 
@@ -173,6 +180,29 @@ class QtCatalogController(QObject):
                 self._searchReady.emit(request_id, SearchResults(query, []), str(exc))
 
         self.executor.submit(worker)
+
+    def _open_link(self, link: YouTubeLink, request_id: int) -> None:
+        """A pasted link: play the track, or open the playlist, album or artist."""
+        if link.kind != "songs":
+            self.open_detail(link.as_item(_("Link do YouTube")))
+            return
+
+        def worker() -> None:
+            try:
+                self._linkReady.emit(request_id, self.youtube.watch_item(link.id), "")
+            except Exception as exc:
+                self._linkReady.emit(request_id, None, str(exc))
+
+        self.executor.submit(worker)
+
+    def _apply_link(self, request_id: int, item, error: str) -> None:
+        if request_id != self._search_request:
+            return
+        if item is None:
+            message = _("Não foi possível abrir o link: {error}")
+            self.set_status(message.format(error=error or _("faixa não encontrada")), error=True)
+        else:
+            self.play_queue([item], 0)
 
     def _apply_search(self, request_id: int, results, error: str) -> None:
         if request_id != self._search_request:
