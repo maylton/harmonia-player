@@ -109,12 +109,21 @@ def test_action_row_subtitles_become_clickable():
 def test_card_subtitles_live_outside_the_card_button():
     _adw, Gtk = gtk_or_skip()
     from harmonia.ui import CreditsLabel
+    from harmonia.window_artwork import WindowArtworkMixin
     from harmonia.window_home import WindowHomeMixin
     from harmonia.window_item_menu import WindowItemMenuMixin
     from harmonia.window_library import WindowLibraryMixin
     from harmonia.window_playback import WindowPlaybackMixin
+    from harmonia.window_shelves import WindowShelvesMixin
 
-    class Window(WindowLibraryMixin, WindowHomeMixin, WindowItemMenuMixin, WindowPlaybackMixin):
+    class Window(
+        WindowLibraryMixin,
+        WindowShelvesMixin,
+        WindowArtworkMixin,
+        WindowHomeMixin,
+        WindowItemMenuMixin,
+        WindowPlaybackMixin,
+    ):
         def navigate_credit(self, *_args):
             pass
 

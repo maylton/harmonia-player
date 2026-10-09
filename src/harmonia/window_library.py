@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import logging
-import re
 import threading
-import urllib.request
 from html import escape
-from pathlib import Path
 
 import gi
 
@@ -13,26 +10,17 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from . import blur_textures
-from .i18n import _, ngettext
+from .i18n import _
 from .models import (
     LibraryItem,
-    LocalPlaylist,
 )
 from .ui import (
-    CreditsLabel,
     action_button,
-    icon_button,
-    link_row_subtitle,
-    page_header,
     page_shell,
-    section_link,
-    style_icon_button,
 )
-from .window_constants import ICONS, LABELS, LIKED_ICON
+from .window_constants import LABELS
 
 LOGGER = logging.getLogger(__name__)
-ARTWORK_DOWNLOADS = threading.BoundedSemaphore(6)
 
 
 class WindowLibraryMixin:
@@ -48,6 +36,18 @@ class WindowLibraryMixin:
             return
         shell = page_shell("content", spacing=22)
         page, content = shell.scroll, shell.content
+        content.append(self._library_header())
+        if self.library_origin == "local":
+            content.append(self._local_library_actions())
+        content.append(self._library_body())
+        old = self.stack.get_child_by_name("library")
+        if old:
+            self.stack.remove(old)
+        self.stack.add_named(page, "library")
+        self.stack.set_visible_child_name("library")
+
+    def _library_header(self) -> Gtk.Widget:
+        """Title and description, with the origin, sorting and category controls."""
         hero = Adw.WrapBox(
             orientation=Gtk.Orientation.HORIZONTAL,
             child_spacing=18,
@@ -65,6 +65,10 @@ class WindowLibraryMixin:
         subtitle.add_css_class("hero-subtitle")
         copy.append(subtitle)
         hero.append(copy)
+        hero.append(self._library_controls())
+        return hero
+
+    def _library_controls(self) -> Gtk.Widget:
         controls = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, valign=Gtk.Align.END)
         source_row = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL, spacing=8, halign=Gtk.Align.END
@@ -113,61 +117,46 @@ class WindowLibraryMixin:
             )
             filters.append(button)
         controls.append(filters)
-        hero.append(controls)
-        content.append(hero)
-        if self.library_origin == "local":
-            actions = Adw.WrapBox(
-                orientation=Gtk.Orientation.HORIZONTAL,
-                child_spacing=8,
-                line_spacing=8,
-                natural_line_length=620,
-                wrap_policy=Adw.WrapPolicy.NATURAL,
-            )
-            add_files = action_button(
-                _("Adicionar arquivos"), "document-open-symbolic", role="secondary"
-            )
-            add_files.connect("clicked", lambda *_: self._add_local_files_dialog())
-            actions.append(add_files)
-            import_playlist = action_button(
-                _("Importar playlist"), "document-open-symbolic", role="secondary"
-            )
-            import_playlist.connect("clicked", lambda *_: self._import_local_playlist_dialog())
-            actions.append(import_playlist)
-            create_playlist = action_button(
-                _("Nova playlist local"), "list-add-symbolic", role="primary"
-            )
-            create_playlist.connect("clicked", lambda *_: self._create_local_playlist_dialog())
-            actions.append(create_playlist)
-            content.append(actions)
+        return controls
+
+    def _local_library_actions(self) -> Gtk.Widget:
+        actions = Adw.WrapBox(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            child_spacing=8,
+            line_spacing=8,
+            natural_line_length=620,
+            wrap_policy=Adw.WrapPolicy.NATURAL,
+        )
+        for label, icon, role, open_dialog in (
+            (_("Adicionar arquivos"), "document-open-symbolic", "secondary",
+             self._add_local_files_dialog),
+            (_("Importar playlist"), "document-open-symbolic", "secondary",
+             self._import_local_playlist_dialog),
+            (_("Nova playlist local"), "list-add-symbolic", "primary",
+             self._create_local_playlist_dialog),
+        ):  # fmt: skip
+            button = action_button(label, icon, role=role)
+            button.connect("clicked", lambda *_args, run=open_dialog: run())
+            actions.append(button)
+        return actions
+
+    def _library_body(self) -> Gtk.Widget:
         items = self._library_items_for_view()
         if not self.sections and self.library_origin in ("youtube", "uploads", "podcasts"):
-            status = Adw.StatusPage(
+            return Adw.StatusPage(
                 icon_name="view-refresh-symbolic",
                 title=_("Sincronizando…"),
                 description=_("Buscando sua biblioteca no YouTube Music"),
             )
-            content.append(status)
-        elif not items:
-            content.append(
-                Adw.StatusPage(
-                    icon_name="folder-music-symbolic",
-                    title=_("Nada nesta visualização"),
-                    description=_("Altere a origem ou adicione conteúdo à biblioteca."),
-                )
+        if not items:
+            return Adw.StatusPage(
+                icon_name="folder-music-symbolic",
+                title=_("Nada nesta visualização"),
+                description=_("Altere a origem ou adicione conteúdo à biblioteca."),
             )
-        else:
-            if self.library_filter == "songs":
-                content.append(self._song_section(self._library_description(), items, items))
-            else:
-                section_kind = (
-                    "playlists" if self.library_filter == "playlists" else self.library_filter
-                )
-                content.append(self._section(section_kind, items, limit=len(items)))
-        old = self.stack.get_child_by_name("library")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(page, "library")
-        self.stack.set_visible_child_name("library")
+        if self.library_filter == "songs":
+            return self._song_section(self._library_description(), items, items)
+        return self._section(self.library_filter, items, limit=len(items))
 
     def _library_description(self) -> str:
         if self.library_origin != "youtube":
@@ -269,259 +258,6 @@ class WindowLibraryMixin:
         page.set_child(button)
         return page
 
-    def _section_header(self, title: str, on_all=None) -> Gtk.Widget:
-        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        heading = Gtk.Label(label=title, xalign=0, hexpand=True)
-        heading.add_css_class("section-title")
-        header.append(heading)
-        if on_all:
-            header.append(section_link(_("Mostrar tudo"), on_all))
-        return header
-
-    def _section(self, key: str, items: list[LibraryItem], limit: int = 8) -> Gtk.Widget:
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        box.append(self._section_header(LABELS[key], lambda: self.show_category(key)))
-        flow = Gtk.FlowBox(
-            selection_mode=Gtk.SelectionMode.NONE,
-            column_spacing=16,
-            row_spacing=18,
-            min_children_per_line=2,
-            max_children_per_line=5,
-            homogeneous=False,
-        )
-        for item in items[:limit]:
-            flow.append(
-                self._media_card_button(item, 140, lambda selected=item: self.open_item(selected))
-            )
-        box.append(flow)
-        return box
-
-    def _media_card_button(
-        self,
-        item: LibraryItem,
-        size: int,
-        activate,
-    ) -> Gtk.Widget:
-        """One card interaction shared by Home, Library and artist shelves.
-
-        The subtitle sits below the button, not inside it: GtkButton claims
-        clicks in the capture phase, so links inside it could never be used.
-        """
-        button = Gtk.Button()
-        button.add_css_class("media-card-button")
-        button.set_halign(Gtk.Align.START)
-        button.set_valign(Gtk.Align.START)
-        button.set_hexpand(False)
-        button.set_size_request(size, -1)
-        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=7)
-        card.add_css_class("media-card")
-        card.set_size_request(size, -1)
-
-        cover = self._square_cover(item, size=size)
-        cover.add_css_class("media-card-cover")
-        # The labels below can be wider than the artwork.  Keep the overlay on
-        # the artwork's exact allocation; otherwise GtkBox stretches it to the
-        # card width and a mathematically centred action appears shifted right.
-        cover_overlay = Gtk.Overlay(
-            halign=Gtk.Align.START,
-            valign=Gtk.Align.START,
-            hexpand=False,
-            vexpand=False,
-        )
-        cover_overlay.set_size_request(size, size)
-        cover_overlay.set_hexpand_set(True)
-        cover_overlay.set_vexpand_set(True)
-        cover_overlay.set_child(cover)
-        hint = Gtk.CenterBox(halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
-        hint.set_size_request(48, 48)
-        hint.set_hexpand(False)
-        hint.set_vexpand(False)
-        hint.add_css_class("home-cover-action")
-        hint.add_css_class("media-card-action")
-        hint.set_opacity(0)
-        hint.set_can_target(False)
-        icon_name = (
-            "media-playback-start-symbolic"
-            if item.kind in ("songs", "videos")
-            else "go-next-symbolic"
-        )
-        action_icon = Gtk.Image.new_from_icon_name(icon_name)
-        action_icon.set_pixel_size(26)
-        hint.set_center_widget(action_icon)
-        cover_overlay.add_overlay(hint)
-        card.append(cover_overlay)
-
-        width_chars = 20 if size >= 160 else 17
-        title = Gtk.Label(
-            label=item.title,
-            xalign=0,
-            ellipsize=3,
-            width_chars=width_chars,
-            max_width_chars=width_chars,
-        )
-        title.add_css_class("card-title")
-        card.append(title)
-        if item.subtitle:
-            subtitle = CreditsLabel(
-                self.navigate_credit,
-                xalign=0,
-                ellipsize=3,
-                width_chars=width_chars,
-                max_width_chars=width_chars,
-            )
-            subtitle.show_item(item)
-            subtitle.add_css_class("card-subtitle")
-        else:
-            subtitle = None
-        button.set_child(card)
-        button.connect("clicked", lambda *_: activate())
-        # The options button overlays the card instead of living inside it,
-        # because GtkButton would swallow its clicks. Hover is tracked on the
-        # overlay, so moving onto the options button keeps the card hovered.
-        surface = Gtk.Overlay(halign=Gtk.Align.START, valign=Gtk.Align.START)
-        surface.set_child(button)
-        options = self._media_card_options(item)
-        if options:
-            surface.add_overlay(options)
-
-        def hovered(state: bool) -> None:
-            active = bool(options and options.get_active())
-            self._home_card_hover(cover, hint, state or active)
-            if options:
-                options.set_opacity(1.0 if state or active else 0.0)
-                options.set_can_target(state or active)
-
-        hover = Gtk.EventControllerMotion()
-        hover.connect("enter", lambda *_args: hovered(True))
-        hover.connect("leave", lambda *_args: hovered(False))
-        surface.add_controller(hover)
-        if options:
-            options.connect("notify::active", lambda *_: hovered(hover.contains_pointer()))
-            hovered(False)
-        shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=7)
-        shell.add_css_class("media-card-shell")
-        shell.set_halign(Gtk.Align.START)
-        shell.set_valign(Gtk.Align.START)
-        shell.set_hexpand(False)
-        shell.set_size_request(size, -1)
-        shell.append(surface)
-        if subtitle:
-            shell.append(subtitle)
-        return shell
-
-    def _media_card_options(self, item: LibraryItem, *, on_cover: bool = True):
-        """The shared item menu as a card overlay or as a list-row suffix."""
-        options = self.item_options_button(item)
-        if options is None:
-            return None
-        if on_cover:
-            options.set_halign(Gtk.Align.END)
-            options.set_valign(Gtk.Align.START)
-            options.set_margin_top(8)
-            options.set_margin_end(8)
-            options.add_css_class("media-card-menu")
-        else:
-            options.set_valign(Gtk.Align.CENTER)
-            style_icon_button(options, "sm")
-        return options
-
-    def _square_cover(self, item: LibraryItem, size: int = 140, fixed: bool = False) -> Gtk.Widget:
-        """Create conventional 1:1 music artwork, circular only for artists."""
-        # Detail artwork has an exact desktop size.  A plain overlay keeps it
-        # from reserving the hero's full cross-axis size, while cards continue
-        # to use AspectFrame so their 1:1 ratio survives responsive layouts.
-        frame = Gtk.Overlay() if fixed else Gtk.AspectFrame(ratio=1.0, obey_child=False)
-        frame.set_size_request(size, size)
-        frame.set_halign(Gtk.Align.START)
-        frame.set_valign(Gtk.Align.START)
-        if fixed:
-            frame.set_hexpand(False)
-            frame.set_hexpand_set(True)
-            frame.set_vexpand(False)
-            frame.set_vexpand_set(True)
-        frame.set_overflow(Gtk.Overflow.HIDDEN)
-        frame.add_css_class("artist-cover" if item.kind == "artists" else "square-cover")
-        overlay = Gtk.Overlay(hexpand=True, vexpand=True)
-        placeholder = Gtk.Image.new_from_icon_name(ICONS.get(item.kind, "audio-x-generic-symbolic"))
-        placeholder.set_pixel_size(min(42, max(16, size // 2)))
-        placeholder.add_css_class("cover-placeholder")
-        overlay.set_child(placeholder)
-        if item.thumbnail:
-            picture = Gtk.Picture(
-                content_fit=Gtk.ContentFit.COVER, can_shrink=True, hexpand=True, vexpand=True
-            )
-            picture.add_css_class("cover-art")
-            overlay.add_overlay(picture)
-            # Thumbnails in track lists only need a small image.
-            self._load_artwork(
-                item.thumbnail, picture, size=size * 3 if size < 64 else max(256, size * 2)
-            )
-        frame.set_child(overlay)
-        return frame
-
-    def _song_section(
-        self, title: str, items: list[LibraryItem], source: list[LibraryItem]
-    ) -> Gtk.Widget:
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        box.append(self._section_header(title, lambda: self.show_category("songs")))
-        listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        listing.add_css_class("boxed-list")
-        for item in items:
-            row = Adw.ActionRow()
-            row.add_css_class("media-row")
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            link_row_subtitle(row, item, self.navigate_credit)
-            row.add_css_class("song-row")
-            row.set_activatable(True)
-            thumb = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
-            thumb.set_size_request(52, 52)
-            thumb.set_can_shrink(True)
-            thumb.set_overflow(Gtk.Overflow.HIDDEN)
-            thumb.add_css_class("row-cover")
-            if item.thumbnail:
-                self._load_artwork(item.thumbnail, thumb, size=128)
-            row.add_prefix(thumb)
-            if self.library_origin == "local":
-                remove = icon_button(
-                    "user-trash-symbolic",
-                    _("Remover da biblioteca local"),
-                    size="sm",
-                    destructive=True,
-                )
-                remove.connect(
-                    "clicked",
-                    lambda _button, selected=item: GLib.idle_add(
-                        self._remove_local_library_item, selected
-                    ),
-                )
-                row.add_suffix(remove)
-            elif self.library_origin == "downloads":
-                remove = icon_button(
-                    "user-trash-symbolic", _("Excluir download"), size="sm", destructive=True
-                )
-                remove.connect(
-                    "clicked", lambda _button, selected=item: self.downloads.remove(selected.id)
-                )
-                row.add_suffix(remove)
-            elif self.library_origin == "youtube":
-                remove = icon_button(LIKED_ICON, _("Remover das músicas marcadas"), size="sm")
-                remove.connect(
-                    "clicked", lambda _button, selected=item: self._toggle_song(selected, False)
-                )
-                row.add_suffix(remove)
-            row.add_suffix(Gtk.Image.new_from_icon_name("media-playback-start-symbolic"))
-            row.connect(
-                "activated",
-                lambda _row, selected=item, queue=source: self.set_queue(
-                    queue, queue.index(selected)
-                ),
-            )
-            listing.append(row)
-        box.append(listing)
-        return box
-
     def _remove_local_library_item(self, item: LibraryItem) -> None:
         self.storage.remove_local_media(item.id)
         self._render()
@@ -541,67 +277,6 @@ class WindowLibraryMixin:
         self.library_filter = key
         self.show_library()
         self._set_active_nav(key if key in self.nav_buttons else "library")
-
-    @staticmethod
-    def _sized_artwork_url(url: str, size: int | None = None) -> str:
-        """Request a sharper Google/YouTube thumbnail without changing its asset."""
-        if not size or not any(
-            domain in url
-            for domain in (
-                "googleusercontent.com",
-                "ggpht.com",
-            )
-        ):
-            return url
-        size = max(64, min(1280, int(size)))
-        result = re.sub(r"([=-])w\d+(?=-|$)", rf"\1w{size}", url)
-        result = re.sub(r"([=-])h\d+(?=-|$)", rf"\1h{size}", result)
-        result = re.sub(r"=s\d+(?=-|$)", f"=s{size}", result)
-        return result
-
-    def _set_artwork_if_current(
-        self,
-        picture: Gtk.Picture,
-        target: Path,
-        request_key: str,
-    ) -> bool:
-        if self._artwork_requests.get(id(picture)) == request_key and target.exists():
-            self._show_artwork_file(picture, target)
-        return GLib.SOURCE_REMOVE
-
-    @staticmethod
-    def _show_artwork_file(picture: Gtk.Picture, target: Path) -> None:
-        if not blur_textures.show(picture, str(target)):
-            picture.set_filename(str(target))
-
-    def _load_artwork(
-        self,
-        url: str,
-        picture: Gtk.Picture,
-        *,
-        size: int | None = None,
-    ) -> None:
-        request_url = self._sized_artwork_url(url, size)
-        target = self.storage.artwork_path(request_url)
-        request_key = str(target)
-        self._artwork_requests[id(picture)] = request_key
-        if target.exists():
-            self._show_artwork_file(picture, target)
-            return
-
-        def worker():
-            try:
-                request = urllib.request.Request(request_url, headers={"User-Agent": "Mozilla/5.0"})
-                # Long track lists request many covers at once; cap the
-                # parallel downloads instead of opening one connection each.
-                with ARTWORK_DOWNLOADS, urllib.request.urlopen(request, timeout=15) as response:
-                    data = response.read(12 * 1024 * 1024)
-                target.write_bytes(data)
-                GLib.idle_add(self._set_artwork_if_current, picture, target, request_key)
-            except Exception:
-                LOGGER.debug("Não foi possível carregar a arte de %s", request_url, exc_info=True)
-
-        threading.Thread(target=worker, daemon=True).start()
 
     def navigate_credit(self, kind: str, target: str, name: str) -> None:
         """Open an artist or album named in a subtitle, from anywhere in the app."""
@@ -655,143 +330,3 @@ class WindowLibraryMixin:
                 GLib.idle_add(self._show_detail, item, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True).start()
-
-    def _show_local_playlist(self, playlist: LocalPlaylist) -> None:
-        self.main_view = "local-playlist"
-        self.back.set_visible(True)
-        old = self.stack.get_child_by_name("local-playlist")
-        if old:
-            self.stack.remove(old)
-        shell = page_shell("reading", spacing=22)
-        scroll, content = shell.scroll, shell.content
-        play = action_button(_("Reproduzir"), "media-playback-start-symbolic", role="primary")
-        play.set_sensitive(bool(playlist.items))
-        play.connect("clicked", lambda *_: playlist.items and self.set_queue(playlist.items, 0))
-        add = action_button(_("Adicionar arquivos"), "list-add-symbolic", role="secondary")
-        add.connect("clicked", lambda *_: self._add_local_files_dialog(playlist))
-        export = action_button(_("Exportar"), "document-save-symbolic", role="secondary")
-        export.connect("clicked", lambda *_: self._export_local_playlist_dialog(playlist))
-        rename = icon_button("document-edit-symbolic", _("Renomear playlist"), size="md")
-        rename.connect("clicked", lambda *_: self._rename_local_playlist_dialog(playlist))
-        delete = icon_button(
-            "user-trash-symbolic", _("Excluir playlist"), size="md", destructive=True
-        )
-        delete.connect("clicked", lambda *_: self._confirm_delete_local_playlist(playlist))
-        track_count = ngettext("{count} faixa", "{count} faixas", len(playlist.items)).format(
-            count=len(playlist.items)
-        )
-        content.append(
-            page_header(
-                playlist.title,
-                _("Playlist local · {tracks}").format(tracks=track_count),
-                actions=(play, add, export, rename, delete),
-            )
-        )
-        group = Adw.PreferencesGroup(title=track_count)
-        for position, item in enumerate(playlist.items):
-            row = Adw.ActionRow()
-            row.add_css_class("media-row")
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            link_row_subtitle(row, item, self.navigate_credit)
-            row.set_activatable(True)
-            row.connect(
-                "activated",
-                lambda _row, selected=position: self.set_queue(playlist.items, selected),
-            )
-            controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-            up = icon_button("go-up-symbolic", _("Mover para cima"), size="sm")
-            down = icon_button("go-down-symbolic", _("Mover para baixo"), size="sm")
-            remove = icon_button("list-remove-symbolic", _("Remover"), size="sm")
-            for button in (up, down, remove):
-                controls.append(button)
-            up.set_sensitive(position > 0)
-            down.set_sensitive(position + 1 < len(playlist.items))
-            up.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(
-                    self._move_local_playlist_item, playlist, selected, -1
-                ),
-            )
-            down.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(
-                    self._move_local_playlist_item, playlist, selected, 1
-                ),
-            )
-            remove.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(
-                    self._remove_local_playlist_item, playlist, selected
-                ),
-            )
-            row.add_suffix(controls)
-            group.add(row)
-        content.append(group)
-        self.stack.add_named(scroll, "local-playlist")
-        self.stack.set_visible_child_name("local-playlist")
-
-    def _move_local_playlist_item(
-        self, playlist: LocalPlaylist, position: int, direction: int
-    ) -> None:
-        target = position + direction
-        if target < 0 or target >= len(playlist.items):
-            return
-        playlist.items[position], playlist.items[target] = (
-            playlist.items[target],
-            playlist.items[position],
-        )
-        self.storage.save_local_playlist(playlist)
-        self._show_local_playlist(playlist)
-
-    def _remove_local_playlist_item(self, playlist: LocalPlaylist, position: int) -> None:
-        if 0 <= position < len(playlist.items):
-            playlist.items.pop(position)
-            self.storage.save_local_playlist(playlist)
-            self._show_local_playlist(playlist)
-
-    def _delete_local_playlist(self, playlist: LocalPlaylist) -> None:
-        if playlist.id is not None:
-            self.storage.delete_local_playlist(playlist.id)
-        self.library_origin = "local"
-        self.library_filter = "playlists"
-        self.show_library()
-
-    def _confirm_delete_local_playlist(self, playlist: LocalPlaylist) -> None:
-        dialog = Adw.AlertDialog(
-            heading=_("Excluir playlist local?"),
-            body=_(
-                "“{title}” será removida deste dispositivo. Os arquivos de áudio serão preservados."
-            ).format(title=playlist.title),
-        )
-        dialog.add_response("cancel", _("Cancelar"))
-        dialog.add_response("delete", _("Excluir"))
-        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
-        dialog.set_default_response("cancel")
-        dialog.set_close_response("cancel")
-        dialog.connect(
-            "response",
-            lambda _dialog, response: (
-                response == "delete" and self._delete_local_playlist(playlist)
-            ),
-        )
-        dialog.present(self)
-
-    def _rename_local_playlist_dialog(self, playlist: LocalPlaylist) -> None:
-        dialog = Adw.AlertDialog(heading=_("Renomear playlist local"))
-        entry = Gtk.Entry(text=playlist.title)
-        dialog.set_extra_child(entry)
-        dialog.add_response("cancel", _("Cancelar"))
-        dialog.add_response("rename", _("Renomear"))
-        dialog.set_response_appearance("rename", Adw.ResponseAppearance.SUGGESTED)
-
-        def response(_dialog, name: str) -> None:
-            title = entry.get_text().strip()
-            if name == "rename" and title:
-                playlist.title = title
-                self.storage.save_local_playlist(playlist)
-                self._show_local_playlist(playlist)
-
-        dialog.connect("response", response)
-        dialog.present(self)
