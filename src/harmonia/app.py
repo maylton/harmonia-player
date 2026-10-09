@@ -39,6 +39,7 @@ from .ui import (
 )
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
+from .window_artwork import WindowArtworkMixin
 from .window_autoplay import WindowAutoplayMixin
 from .window_chrome import (
     build_expanded_player,
@@ -52,12 +53,14 @@ from .window_home import WindowHomeMixin
 from .window_insights import WindowInsightsMixin
 from .window_item_menu import WindowItemMenuMixin
 from .window_library import WindowLibraryMixin
+from .window_local_playlists import WindowLocalPlaylistsMixin
 from .window_lyrics import WindowLyricsMixin
 from .window_optional import WindowOptionalMixin
 from .window_playback import WindowPlaybackMixin
 from .window_playback_recovery import WindowPlaybackRecoveryMixin
 from .window_preferences import WindowPreferencesMixin
 from .window_search import WindowSearchMixin
+from .window_shelves import WindowShelvesMixin
 from .window_social import WindowSocialMixin
 
 LOGGER = logging.getLogger(__name__)
@@ -74,6 +77,9 @@ class HarmoniaWindow(
     WindowInsightsMixin,
     WindowHomeMixin,
     WindowLibraryMixin,
+    WindowLocalPlaylistsMixin,
+    WindowShelvesMixin,
+    WindowArtworkMixin,
     WindowDetailMixin,
     WindowSearchMixin,
     WindowItemMenuMixin,
