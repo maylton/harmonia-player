@@ -1,0 +1,6 @@
+option(
+  'private_python',
+  type: 'boolean',
+  value: false,
+  description: 'Install the harmonia package under datadir/harmonia/python instead of the interpreter\'s site-packages, so one .deb or .rpm works with any Python 3 the distribution ships',
+)

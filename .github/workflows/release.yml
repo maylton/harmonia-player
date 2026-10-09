@@ -81,6 +81,36 @@ jobs:
             build/windows/*-setup.exe.sha256
           if-no-files-found: error
 
+  linux-packages:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Conferir a versão da tag
+        run: |
+          version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
+          if [ "v$version" != "$TAG" ]; then
+            echo "A tag $TAG não corresponde à versão $version do meson.build" >&2
+            exit 1
+          fi
+
+      - name: Gerar .deb e .rpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build gettext python3 rpm
+          bash packaging/linux/build-packages.sh "${TAG#v}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            build/linux/Harmonia-*.deb
+            build/linux/Harmonia-*.rpm
+            build/linux/*.sha256
+          if-no-files-found: error
+
   linux:
     runs-on: ubuntu-24.04
     steps:
@@ -122,7 +152,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [windows, linux]
+    needs: [windows, linux, linux-packages]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
