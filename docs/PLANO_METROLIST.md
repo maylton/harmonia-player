@@ -1,0 +1,150 @@
+# Plano: funcionalidades inspiradas no Metrolist
+
+O [Metrolist](https://github.com/MetrolistGroup/Metrolist) é um cliente de
+YouTube Music para Android (Kotlin, GPL-3.0). Este plano lista o que dele faz
+sentido no Harmonia, por prioridade. Nada é copiado: as ideias são
+reimplementadas em Python sobre a arquitetura do Harmonia.
+
+Legenda: `[x]` feito · `[ ]` a fazer · `[-]` descartado (com o motivo).
+
+## Regras para todas as fases
+
+- **Windows e Linux.** Toda funcionalidade funciona nos dois sistemas, com o
+  mesmo código. O que depende do sistema fica atrás de `host.py`.
+- **Um módulo por funcionalidade.** A lógica fica em um módulo próprio,
+  independente de GTK e Qt e testável sem interface. As janelas só ligam a
+  funcionalidade à interface. Módulos novos devem ficar abaixo de ~300 linhas.
+  Se um arquivo existente passar de ~500 linhas, a parte nova vai para um
+  módulo novo, nunca para ele.
+- **Persistência por domínio.** Dados novos ganham um repositório próprio em
+  `storage/`, com a sua tabela, como os que já existem.
+- **GTK e KDE (Qt).** A lógica compartilhada serve aos dois frontends. Quando
+  só um ganha interface, o plano diz qual.
+- **Interface em português**, com `_()` e as traduções em `po/` (pt_BR e en).
+- **Testes** para cada módulo novo. Antes de cada commit rodam `ruff check`,
+  `ruff format --check` e o `pytest`.
+
+## Visão geral
+
+| Fase | Funcionalidade | Prioridade | Estado |
+|---|---|---|---|
+| 1 | Normalização de volume por faixa | Alta | Feita |
+| 2 | Crossfade entre faixas | Alta | A fazer |
+| 3 | Letras palavra por palavra e novos provedores | Alta | A fazer |
+| 4 | Sincronização segura da biblioteca | Alta | A fazer |
+| 5 | Pequenas melhorias de uso | Média | A fazer |
+| 6 | Equalizador com perfis do AutoEQ | Média | A fazer |
+| 7 | Backup antes de atualizar e escolha de conta | Média | A fazer |
+| 8 | Confiabilidade do streaming e ajustes finos | Baixa | A fazer |
+
+---
+
+## Fase 1 — Normalização de volume por faixa (alta)
+
+**Problema.** A opção "Normalização de volume" usava o `rgvolume` do
+GStreamer, que depende de etiquetas ReplayGain. Os streams do YouTube não têm
+essas etiquetas, então a opção só baixava todas as faixas 6 dB por igual.
+
+**Solução.** O YouTube informa na resposta do player quanto cada faixa está
+acima da sua referência (`playerConfig.audioConfig.loudnessDb`). O Harmonia
+transforma esse valor em ganho para o `rgvolume`, guarda o valor para tocar
+downloads offline e oferece um nível de volume.
+
+- [x] `loudness.py`: lê o `loudnessDb` da resposta do player e calcula o ganho
+  (só atenua, como o YouTube; o nível desloca tudo). Os clientes iOS e
+  visionOS só informam o valor por formato ou como volume absoluto menos o
+  alvo; os três formatos são lidos (conferido com respostas reais). Também alinha arquivos
+  locais com etiquetas ReplayGain (referência −18 LUFS) aos streams (−14 LUFS).
+- [x] `StreamInfo.loudness_db`, preenchido por `innertube/client.py`.
+- [x] `storage/loudness.py`: repositório `LoudnessRecords`, tabela
+  `track_loudness`, para os downloads offline.
+- [x] `player.py`: `rglimiter` após o `rgvolume`, para nada saturar quando o
+  nível aumenta o volume; `set_track_loudness()` por faixa.
+- [x] GTK e KDE: o ganho da faixa é aplicado ao iniciar cada stream (online,
+  offline e local).
+- [x] Preferência `normalization_level` (Suave, Padrão, Alto), com seletor no
+  GTK. O frontend KDE ainda não tem página de áudio; ele usa o valor salvo.
+- [x] Testes: cálculo do ganho, leitura da resposta, repositório e regra das
+  preferências.
+
+## Fase 2 — Crossfade entre faixas (alta)
+
+Uma faixa termina enquanto a próxima começa, com volumes cruzados.
+
+- [ ] `crossfade.py`: agenda (quando começar, curva do volume), sem GStreamer.
+- [ ] Segundo `NativePlayer` para a próxima faixa, pré-carregada alguns
+  segundos antes do fim. Os dois tocam em saídas separadas, que o sistema
+  mistura (WASAPI no Windows, PipeWire/PulseAudio no Linux).
+- [ ] Controlador que troca os papéis dos players no fim, sem que as janelas
+  percebam (posição, duração, MPRIS e SMTC seguem a faixa nova).
+- [ ] Não cruzar quando: repetir uma faixa, vídeo ativo, faixa curta, a
+  próxima ainda não foi resolvida, ou o usuário trocou de faixa à mão.
+- [ ] Preferência: duração de 0 (desligado) a 12 s. Seletor no GTK.
+- [ ] Respeitar velocidade, tom, equalizador e normalização nos dois players.
+- [ ] Testes da agenda e da troca de papéis.
+
+## Fase 3 — Letras palavra por palavra e novos provedores (alta)
+
+- [ ] `models.LyricWord` e `LyricLine.words`: tempo de cada palavra.
+- [ ] Parser de LRC estendido (`<mm:ss.xx>` por palavra) em `lyrics_words.py`.
+- [ ] Provedor de letras com tempo por palavra em `lyrics_providers/`, um
+  módulo por provedor (avaliar Better Lyrics, KuGou e o formato do Apple Music
+  quando houver API pública utilizável).
+- [ ] Mover `LrcLibClient` para `lyrics_providers/lrclib.py`, com o resolvedor
+  escolhendo os provedores em ordem.
+- [ ] Destaque da palavra atual na tela de letras (GTK e QML).
+- [ ] Cache: guardar as palavras no `lyrics_documents` (coluna nova).
+- [ ] Testes do parser e do resolvedor.
+
+## Fase 4 — Sincronização segura da biblioteca (alta)
+
+- [ ] `library_sync.py`: compara o que veio do YouTube com o cache local.
+- [ ] Remoções feitas no YouTube são aplicadas no app.
+- [ ] Itens que só existem localmente não são apagados.
+- [ ] Resposta incompleta (paginação falhou, lista vazia por erro) não apaga
+  curtidas nem playlists locais.
+- [ ] Testes com respostas completas, parciais e vazias.
+
+## Fase 5 — Pequenas melhorias de uso (média)
+
+Cada item é independente e pode virar um commit separado.
+
+- [ ] **Colar link na busca** (`youtube_links.py`): reconhece links de
+  música, vídeo, playlist, álbum e artista e abre ou toca direto.
+- [ ] **Posição ao adicionar à playlist**: início ou fim, com preferência.
+- [ ] **Velocidade e tom juntos**: opção que muda os dois ao mesmo tempo, como
+  um disco mais rápido.
+- [ ] **Selo de conteúdo explícito** nas linhas de faixa, a partir do
+  `badges` da InnerTube.
+- [ ] **Relatório de erro de reprodução** (`playback_report.py`): texto com
+  versão, sistema, cliente usado e as falhas de cada cliente, com botão de
+  copiar na mensagem de erro.
+
+## Fase 6 — Equalizador com perfis do AutoEQ (média)
+
+- [ ] `autoeq.py`: lê o formato "ParametricEQ"/"GraphicEQ" do AutoEQ e
+  converte para as 10 bandas do `equalizer-10bands`.
+- [ ] Importar um arquivo de perfil pelo seletor de arquivos (GTK e QML).
+- [ ] Perfis importados salvos em um repositório próprio e listados junto às
+  predefinições.
+- [ ] Testes de conversão com perfis reais.
+
+## Fase 7 — Backup antes de atualizar e escolha de conta (média)
+
+- [ ] Backup automático do banco quando a versão do app muda
+  (`backup.py` já existe: só o gatilho e a rotação, mantendo os 3 últimos).
+- [ ] Escolha da conta ou do canal da marca após o login, quando houver mais
+  de um (`accounts.py`).
+
+## Fase 8 — Confiabilidade do streaming e ajustes finos (baixa)
+
+- [ ] Configuração dos clientes do player atualizável por um arquivo publicado
+  no repositório, para corrigir mudanças do YouTube sem nova versão.
+- [ ] Plano B de streaming: decodificação da assinatura e PoToken, se os
+  clientes atuais deixarem de entregar URLs diretas.
+- [ ] Opção para ocultar as playlists automáticas de "mais tocadas".
+
+## Descartado
+
+- [-] Android Auto, widget da tela inicial, escala para tablet e ícone
+  dinâmico: são do Android e não se aplicam ao desktop.
