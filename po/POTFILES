@@ -47,6 +47,7 @@ src/harmonia/ui.py
 src/harmonia/video.py
 src/harmonia/window_account.py
 src/harmonia/window_actions.py
+src/harmonia/window_artist.py
 src/harmonia/window_artwork.py
 src/harmonia/window_autoplay.py
 src/harmonia/window_chrome/expanded_player.py
@@ -56,6 +57,7 @@ src/harmonia/window_chrome/player_bar.py
 src/harmonia/window_chrome/sidebar.py
 src/harmonia/window_constants.py
 src/harmonia/window_detail.py
+src/harmonia/window_detail_header.py
 src/harmonia/window_history.py
 src/harmonia/window_home.py
 src/harmonia/window_insights.py
