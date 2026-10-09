@@ -25,6 +25,7 @@ src/harmonia/qt_presenters.py
 src/harmonia/qt_recognition.py
 src/harmonia/qt_together.py
 src/harmonia/qt_video.py
+src/harmonia/queue_view.py
 src/harmonia/recognition.py
 src/harmonia/settings_page/__init__.py
 src/harmonia/settings_page/account.py

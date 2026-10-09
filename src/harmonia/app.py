@@ -13,6 +13,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from . import queue_view
 from .auto_backup import open_storage
 from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
@@ -437,57 +438,14 @@ class HarmoniaWindow(
             return
         while child := self.expanded_related_container.get_first_child():
             self.expanded_related_container.remove(child)
-        clamp = Adw.Clamp(maximum_size=760, tightening_threshold=620)
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        heading = Gtk.Label(label=_("Fila"), xalign=0)
-        heading.add_css_class("expanded-related-title")
-        box.append(heading)
-        if not self.queue:
-            box.append(
-                Adw.StatusPage(
-                    icon_name="media-playlist-consecutive-symbolic",
-                    title=_("Nada na fila"),
-                    description=_("Escolha uma música para ver as próximas faixas."),
-                )
+        self.expanded_related_container.append(
+            queue_view.expanded_content(
+                self.queue,
+                self.queue_index,
+                self.related_items,
+                self._queue_actions(select=self._select_expanded_queue_item),
             )
-        else:
-            listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-            listing.add_css_class("boxed-list")
-            for position, item in enumerate(self.queue):
-                row = self._queue_row(position, item)
-                row.add_css_class("media-row")
-                row.connect(
-                    "activated",
-                    lambda _row, selected=position: self._select_expanded_queue_item(selected),
-                )
-                listing.append(row)
-            box.append(listing)
-            related_heading = Gtk.Label(label=_("Relacionadas"), xalign=0)
-            related_heading.add_css_class("expanded-related-title")
-            box.append(related_heading)
-            if self.related_items:
-                related = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-                related.add_css_class("boxed-list")
-                for item in self.related_items:
-                    row = Adw.ActionRow()
-                    row.set_use_markup(False)
-                    row.set_title(item.title)
-                    row.set_subtitle(item.subtitle)
-                    add = Gtk.Button(
-                        icon_name="list-add-symbolic", tooltip_text=_("Adicionar ao fim")
-                    )
-                    add.add_css_class("flat")
-                    add.connect(
-                        "clicked",
-                        lambda *_args, selected=item: GLib.idle_add(
-                            self._promote_related, selected, False
-                        ),
-                    )
-                    row.add_suffix(add)
-                    related.append(row)
-                box.append(related)
-        clamp.set_child(box)
-        self.expanded_related_container.append(clamp)
+        )
 
     def _select_expanded_queue_item(self, position: int) -> None:
         self.queue_index = position

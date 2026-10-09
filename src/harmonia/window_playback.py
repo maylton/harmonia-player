@@ -10,6 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
+from . import queue_view
 from .i18n import _, ngettext
 from .models import (
     LibraryItem,
@@ -222,94 +223,20 @@ class WindowPlaybackMixin:
             )
         return False
 
-    def _render_queue(self) -> None:
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        box.add_css_class("queue-popover")
-        heading = Gtk.Label(label=_("Fila de reprodução"), xalign=0)
-        heading.add_css_class("section-title")
-        box.append(heading)
-        scroll = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.NEVER,
-            min_content_width=360,
-            max_content_height=430,
-            propagate_natural_height=True,
+    def _queue_actions(self, select=None) -> queue_view.QueueActions:
+        return queue_view.QueueActions(
+            select=select or self._select_queue_item,
+            move=self._move_queue_item,
+            remove=self._remove_queue_item,
+            promote=self._promote_related,
         )
-        listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        listing.add_css_class("boxed-list")
-        for position, item in enumerate(self.queue):
-            row = self._queue_row(position, item)
-            controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-            up = Gtk.Button(icon_name="go-up-symbolic", tooltip_text=_("Mover para cima"))
-            down = Gtk.Button(icon_name="go-down-symbolic", tooltip_text=_("Mover para baixo"))
-            remove = Gtk.Button(icon_name="user-trash-symbolic", tooltip_text=_("Remover da fila"))
-            for control in (up, down, remove):
-                control.add_css_class("flat")
-                controls.append(control)
-            up.set_sensitive(position > 0)
-            down.set_sensitive(position + 1 < len(self.queue))
-            up.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(
-                    self._move_queue_item, selected, -1
-                ),
+
+    def _render_queue(self) -> None:
+        self.queue_popover.set_child(
+            queue_view.popover_content(
+                self.queue, self.queue_index, self.related_items, self._queue_actions()
             )
-            down.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(self._move_queue_item, selected, 1),
-            )
-            remove.connect(
-                "clicked",
-                lambda *_args, selected=position: GLib.idle_add(self._remove_queue_item, selected),
-            )
-            row.add_suffix(controls)
-            row.connect(
-                "activated", lambda _row, selected=position: self._select_queue_item(selected)
-            )
-            listing.append(row)
-        scroll.set_child(listing)
-        box.append(scroll)
-        related_heading = Gtk.Label(label=_("Relacionadas"), xalign=0)
-        related_heading.add_css_class("section-title")
-        box.append(related_heading)
-        if self.related_items:
-            related = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-            related.add_css_class("boxed-list")
-            for item in self.related_items[:12]:
-                row = Adw.ActionRow()
-                row.set_use_markup(False)
-                row.set_title(item.title)
-                row.set_subtitle(item.subtitle)
-                next_button = Gtk.Button(
-                    icon_name="media-playlist-consecutive-symbolic",
-                    tooltip_text=_("Tocar em seguida"),
-                )
-                add_button = Gtk.Button(
-                    icon_name="list-add-symbolic", tooltip_text=_("Adicionar ao fim")
-                )
-                for button in (next_button, add_button):
-                    button.add_css_class("flat")
-                    row.add_suffix(button)
-                next_button.connect(
-                    "clicked",
-                    lambda *_args, selected=item: GLib.idle_add(
-                        self._promote_related, selected, True
-                    ),
-                )
-                add_button.connect(
-                    "clicked",
-                    lambda *_args, selected=item: GLib.idle_add(
-                        self._promote_related, selected, False
-                    ),
-                )
-                related.append(row)
-            box.append(related)
-        else:
-            note = Gtk.Label(
-                label=_("As recomendações aparecem conforme a fila avança."), xalign=0, wrap=True
-            )
-            note.add_css_class("dim-label")
-            box.append(note)
-        self.queue_popover.set_child(box)
+        )
         self._render_expanded_related()
 
     def _move_queue_item(self, position: int, direction: int) -> None:
@@ -495,18 +422,6 @@ class WindowPlaybackMixin:
             stream.playback_tracking_url,
             stream.loudness_db,
         )
-
-    def _queue_row(self, position: int, item: LibraryItem) -> Adw.ActionRow:
-        """A queue entry, marked when it is the track playing."""
-        row = Adw.ActionRow()
-        row.set_use_markup(False)
-        row.set_title(item.title)
-        row.set_subtitle(item.subtitle)
-        row.set_activatable(True)
-        if position == self.queue_index:
-            row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
-            row.add_css_class("current-track")
-        return row
 
     def _start_stream(
         self,

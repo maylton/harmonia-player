@@ -13,60 +13,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/harmonia/app.py:87 src/harmonia/app.py:564
+#: src/harmonia/app.py:88 src/harmonia/app.py:522
 #: src/harmonia/window_chrome/sidebar.py:56
 msgid "Harmonia"
 msgstr "Harmonia"
 
-#: src/harmonia/app.py:281 src/harmonia/settings_page/account.py:20
+#: src/harmonia/app.py:282 src/harmonia/settings_page/account.py:20
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr "Account"
 
-#: src/harmonia/app.py:320
+#: src/harmonia/app.py:321
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr "Account — {name}"
 
-#: src/harmonia/app.py:349 src/harmonia/qt_backend.py:700
+#: src/harmonia/app.py:350 src/harmonia/qt_backend.py:700
 msgid "Nenhuma música reproduzindo"
 msgstr "Nothing playing"
 
-#: src/harmonia/app.py:350 src/harmonia/qt_backend.py:708
+#: src/harmonia/app.py:351 src/harmonia/qt_backend.py:708
 msgid "Escolha uma faixa para começar"
 msgstr "Choose a track to start"
 
-#: src/harmonia/app.py:356 src/harmonia/app.py:357
+#: src/harmonia/app.py:357 src/harmonia/app.py:358
 #: src/harmonia/window_chrome/expanded_player.py:187
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
 #: src/harmonia/window_chrome/player_bar.py:180
-#: src/harmonia/window_playback.py:453 src/harmonia/window_playback.py:454
-#: src/harmonia/window_playback.py:455 src/harmonia/window_playback.py:456
-#: src/harmonia/window_playback.py:738 src/harmonia/window_playback.py:739
+#: src/harmonia/window_playback.py:380 src/harmonia/window_playback.py:381
+#: src/harmonia/window_playback.py:382 src/harmonia/window_playback.py:383
+#: src/harmonia/window_playback.py:653 src/harmonia/window_playback.py:654
 msgid "0:00"
 msgstr "0:00"
-
-#: src/harmonia/app.py:442
-msgid "Fila"
-msgstr "Queue"
-
-#: src/harmonia/app.py:449
-msgid "Nada na fila"
-msgstr "Nothing in the queue"
-
-#: src/harmonia/app.py:450
-msgid "Escolha uma música para ver as próximas faixas."
-msgstr "Choose a song to see upcoming tracks."
-
-#: src/harmonia/app.py:465 src/harmonia/window_chrome/expanded_player.py:49
-#: src/harmonia/window_playback.py:271
-msgid "Relacionadas"
-msgstr "Related"
-
-#: src/harmonia/app.py:477 src/harmonia/window_playback.py:287
-msgid "Adicionar ao fim"
-msgstr "Add to end of queue"
 
 #: src/harmonia/auth.py:21 src/harmonia/auth_webview2.py:187
 #: src/harmonia/window_account.py:59 src/harmonia/window_library.py:266
@@ -755,7 +734,7 @@ msgstr "The local file is no longer available."
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr "Couldn't play the track: {error}"
 
-#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:205
+#: src/harmonia/qt_playback.py:480 src/harmonia/window_playback.py:206
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr "Couldn't continue radio: {error}"
@@ -764,7 +743,7 @@ msgstr "Couldn't continue radio: {error}"
 msgid "A rádio não encontrou novas músicas."
 msgstr "The radio found no new songs."
 
-#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:677
+#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback.py:592
 msgid "O stream falhou; renovando a conexão…"
 msgstr "The stream failed; renewing the connection…"
 
@@ -971,6 +950,51 @@ msgstr "no matching video was found"
 #, python-brace-format
 msgid "Não foi possível exibir o vídeo: {detail}"
 msgstr "Couldn't show the video: {detail}"
+
+#: src/harmonia/queue_view.py:63
+msgid "Tocar em seguida"
+msgstr "Play next"
+
+#: src/harmonia/queue_view.py:66
+msgid "Adicionar ao fim"
+msgstr "Add to end of queue"
+
+#: src/harmonia/queue_view.py:91 src/harmonia/window_library.py:704
+msgid "Mover para cima"
+msgstr "Move up"
+
+#: src/harmonia/queue_view.py:92 src/harmonia/window_library.py:705
+msgid "Mover para baixo"
+msgstr "Move down"
+
+#: src/harmonia/queue_view.py:93
+msgid "Remover da fila"
+msgstr "Remove from queue"
+
+#: src/harmonia/queue_view.py:112 src/harmonia/window_chrome/player_bar.py:209
+msgid "Fila de reprodução"
+msgstr "Play queue"
+
+#: src/harmonia/queue_view.py:126 src/harmonia/queue_view.py:165
+#: src/harmonia/window_chrome/expanded_player.py:49
+msgid "Relacionadas"
+msgstr "Related"
+
+#: src/harmonia/queue_view.py:135
+msgid "As recomendações aparecem conforme a fila avança."
+msgstr "Recommendations appear as the queue progresses."
+
+#: src/harmonia/queue_view.py:148
+msgid "Fila"
+msgstr "Queue"
+
+#: src/harmonia/queue_view.py:153
+msgid "Nada na fila"
+msgstr "Nothing in the queue"
+
+#: src/harmonia/queue_view.py:154
+msgid "Escolha uma música para ver as próximas faixas."
+msgstr "Choose a song to see upcoming tracks."
 
 #: src/harmonia/recognition.py:75
 msgid "A captura de áudio não terminou a tempo"
@@ -1874,14 +1898,9 @@ msgid "Expandir player"
 msgstr "Expand player"
 
 #: src/harmonia/window_chrome/player_bar.py:153
-#: src/harmonia/window_playback.py:159 src/harmonia/window_playback.py:160
+#: src/harmonia/window_playback.py:160 src/harmonia/window_playback.py:161
 msgid "Reprodução automática ativada"
 msgstr "Autoplay enabled"
-
-#: src/harmonia/window_chrome/player_bar.py:209
-#: src/harmonia/window_playback.py:228
-msgid "Fila de reprodução"
-msgstr "Play queue"
 
 #: src/harmonia/window_chrome/player_bar.py:225
 msgid "Parar"
@@ -1984,11 +2003,11 @@ msgstr "Download"
 msgid "Mais opções"
 msgstr "More options"
 
-#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:393
+#: src/harmonia/window_detail.py:527 src/harmonia/window_playback.py:320
 msgid "Tocar a seguir"
 msgstr "Play next"
 
-#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:395
+#: src/harmonia/window_detail.py:528 src/harmonia/window_playback.py:322
 msgid "Adicionar à fila"
 msgstr "Add to queue"
 
@@ -2368,14 +2387,6 @@ msgstr "Searching for {title}"
 msgid "Playlist local · {tracks}"
 msgstr "Local playlist · {tracks}"
 
-#: src/harmonia/window_library.py:704 src/harmonia/window_playback.py:242
-msgid "Mover para cima"
-msgstr "Move up"
-
-#: src/harmonia/window_library.py:705 src/harmonia/window_playback.py:243
-msgid "Mover para baixo"
-msgstr "Move down"
-
 #: src/harmonia/window_library.py:763
 msgid "Excluir playlist local?"
 msgstr "Delete local playlist?"
@@ -2627,73 +2638,61 @@ msgstr "Start playing a track before casting"
 msgid "Reproduzindo em {device}"
 msgstr "Playing on {device}"
 
-#: src/harmonia/window_playback.py:166 src/harmonia/window_playback.py:167
+#: src/harmonia/window_playback.py:167 src/harmonia/window_playback.py:168
 msgid "Reprodução automática desativada"
 msgstr "Autoplay disabled"
 
-#: src/harmonia/window_playback.py:221
+#: src/harmonia/window_playback.py:222
 msgid "A rádio não encontrou novas músicas"
 msgstr "The radio didn't find new songs"
 
-#: src/harmonia/window_playback.py:244
-msgid "Remover da fila"
-msgstr "Remove from queue"
-
-#: src/harmonia/window_playback.py:284
-msgid "Tocar em seguida"
-msgstr "Play next"
-
-#: src/harmonia/window_playback.py:308
-msgid "As recomendações aparecem conforme a fila avança."
-msgstr "Recommendations appear as the queue progresses."
-
-#: src/harmonia/window_playback.py:356
+#: src/harmonia/window_playback.py:283
 msgid "Nenhuma faixa para adicionar à fila"
 msgstr "No tracks to add to the queue"
 
-#: src/harmonia/window_playback.py:367
+#: src/harmonia/window_playback.py:294
 #, python-brace-format
 msgid "“{title}” tocará a seguir"
 msgstr "“{title}” will play next"
 
-#: src/harmonia/window_playback.py:367
+#: src/harmonia/window_playback.py:294
 #, python-brace-format
 msgid "“{title}” adicionada à fila"
 msgstr "“{title}” added to the queue"
 
-#: src/harmonia/window_playback.py:371
+#: src/harmonia/window_playback.py:298
 #, python-brace-format
 msgid "{count} faixa tocará a seguir"
 msgid_plural "{count} faixas tocarão a seguir"
 msgstr[0] "{count} track will play next"
 msgstr[1] "{count} tracks will play next"
 
-#: src/harmonia/window_playback.py:375
+#: src/harmonia/window_playback.py:302
 #, python-brace-format
 msgid "{count} faixa adicionada à fila"
 msgid_plural "{count} faixas adicionadas à fila"
 msgstr[0] "{count} track added to the queue"
 msgstr[1] "{count} tracks added to the queue"
 
-#: src/harmonia/window_playback.py:468
+#: src/harmonia/window_playback.py:395
 msgid "O arquivo local não está mais disponível"
 msgstr "Local file is no longer available"
 
-#: src/harmonia/window_playback.py:692
+#: src/harmonia/window_playback.py:607
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Couldn't play: {error}"
 
-#: src/harmonia/window_playback.py:698
+#: src/harmonia/window_playback.py:613
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Couldn't play even after renewing the stream: {error}"
 
-#: src/harmonia/window_playback.py:708
+#: src/harmonia/window_playback.py:623
 msgid "Copiar relatório"
 msgstr "Copy report"
 
-#: src/harmonia/window_playback.py:717
+#: src/harmonia/window_playback.py:632
 msgid "Relatório copiado"
 msgstr "Report copied"
 
