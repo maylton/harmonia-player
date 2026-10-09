@@ -118,6 +118,7 @@ class WindowPreferencesMixin:
             speed=self.preferences.speed,
             pitch=self.preferences.pitch,
             skip_silence=self.preferences.skip_silence,
+            speed_pitch_linked=self.preferences.speed_pitch_linked,
         )
 
     def _preference_changed(self, name: str, value, *, audio: bool = False) -> None:

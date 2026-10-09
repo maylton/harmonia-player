@@ -19,6 +19,8 @@ class Preferences:
     equalizer: str = "flat"
     speed: float = 1.0
     pitch: float = 0.0
+    # The speed changes the pitch too, like a record; see playback_speed.py.
+    speed_pitch_linked: bool = False
     skip_silence: bool = False
     crossfade: int = 0  # seconds; 0 is off
     background_blur: bool = False
@@ -83,6 +85,7 @@ class Preferences:
             equalizer=equalizer,
             speed=max(0.5, min(2.0, number("speed", 1.0))),
             pitch=max(-12, min(12, number("pitch", 0.0))),
+            speed_pitch_linked=boolean("speed_pitch_linked", False),
             skip_silence=boolean("skip_silence", False),
             crossfade=clamp_seconds(storage.get_setting("crossfade", "0")),
             background_blur=boolean("background_blur", False),
@@ -117,6 +120,7 @@ class Preferences:
             "equalizer": self.equalizer,
             "speed": str(self.speed),
             "pitch": str(self.pitch),
+            "speed_pitch_linked": "1" if self.speed_pitch_linked else "0",
             "skip_silence": "1" if self.skip_silence else "0",
             "crossfade": str(self.crossfade),
             "background_blur": "1" if self.background_blur else "0",

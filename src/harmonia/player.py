@@ -13,6 +13,7 @@ from gi.repository import GLib, Gst
 
 from . import loudness
 from .i18n import _
+from .playback_speed import pitch_properties
 from .stream_relay import StreamRelay
 
 LOGGER = logging.getLogger(__name__)
@@ -87,14 +88,15 @@ class NativePlayer:
         speed: float = 1.0,
         pitch: float = 0.0,
         skip_silence: bool = False,
+        speed_pitch_linked: bool = False,
     ) -> None:
         """Apply processing atomically; safe when optional plugins are absent."""
         self._normalization = (normalization, normalization_level)
         self._apply_normalization()
         pitch_filter = self._audio_elements.get("pitch")
         if pitch_filter:
-            pitch_filter.set_property("tempo", max(0.5, min(2.0, speed)))
-            pitch_filter.set_property("pitch", 2 ** (max(-12, min(12, pitch)) / 12))
+            for name, value in pitch_properties(speed, pitch, speed_pitch_linked).items():
+                pitch_filter.set_property(name, value)
         equalizer_filter = self._audio_elements.get("equalizer")
         if equalizer_filter:
             bands = self.EQ_PRESETS.get(equalizer, self.EQ_PRESETS["flat"])
