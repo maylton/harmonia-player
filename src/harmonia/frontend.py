@@ -58,6 +58,11 @@ def ignore_foreign_gtk_theme(environ=os.environ) -> str | None:
 
 
 def main() -> int:
+    if "--version" in sys.argv[1:]:
+        from . import __version__
+
+        print(f"Harmonia {__version__}")
+        return 0
     frontend = selected_frontend()
     forced_qt = "--qt" in sys.argv[1:] or os.environ.get("HARMONIA_FRONTEND", "").lower() == "qt"
     sys.argv[:] = [arg for arg in sys.argv if arg not in {"--gtk", "--qt"}]

@@ -2,6 +2,16 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## 0.1.0-beta.2 — 2026-10-08
+
+- pacotes `.deb` (Debian/Ubuntu) e `.rpm` (Fedora/openSUSE), além do Flatpak;
+- `install.sh` baixa o release mais recente e escolhe o formato pelo sistema: `.deb` ou `.rpm` quando a libadwaita da distribuição é 1.7 ou mais nova, Flatpak nas demais, ou build com Meson (`--method source`);
+- versão para Windows (instalador Inno Setup), com tema Windows 11, Mica, ícones Fluent e login pelo WebView2;
+- releases publicados automaticamente a cada tag, com checksums SHA-256;
+- menus de item no estilo do YouTube Music, com "Tocar a seguir" e "Adicionar à fila";
+- player expandido mais leve e opção de mostrar o efeito de fundo do Windows no lugar da capa;
+- reorganização interna do código em módulos menores, sem mudanças de comportamento.
+
 ## 0.1.0-beta.1 — 2026-08-13
 
 Primeira versão beta pública.
