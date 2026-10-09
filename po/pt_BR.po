@@ -139,70 +139,33 @@ msgstr "O vídeo falhou; voltando para a música…"
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "O vídeo terminou antes da faixa de áudio."
 
-#: src/harmonia/innertube/client.py:201
-msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
-msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
-
-#: src/harmonia/innertube/client.py:205
-#, python-brace-format
-msgid "YouTube Music respondeu HTTP {code}: {detail}"
-msgstr "YouTube Music respondeu HTTP {code}: {detail}"
-
-#: src/harmonia/innertube/client.py:212
-#, python-brace-format
-msgid "Não foi possível conectar ao YouTube Music: {error}"
-msgstr "Não foi possível conectar ao YouTube Music: {error}"
-
-#: src/harmonia/innertube/client.py:215
-msgid "Não foi possível concluir a requisição ao YouTube Music."
-msgstr "Não foi possível concluir a requisição ao YouTube Music."
-
-#: src/harmonia/innertube/client.py:230
-#, python-brace-format
-msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
-msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
-
-#: src/harmonia/innertube/client.py:262
+#: src/harmonia/innertube/client.py:91
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Categoria de busca desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:335
+#: src/harmonia/innertube/client.py:164
 msgid "O artista não possui um identificador"
 msgstr "O artista não possui um identificador"
 
-#: src/harmonia/innertube/client.py:365
+#: src/harmonia/innertube/client.py:194
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "O YouTube Music não forneceu um token de remoção"
 
-#: src/harmonia/innertube/client.py:423
+#: src/harmonia/innertube/client.py:252
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Categoria desconhecida: {category}"
 
-#: src/harmonia/innertube/client.py:522
-msgid "A faixa não contém um identificador reproduzível."
-msgstr "A faixa não contém um identificador reproduzível."
-
-#: src/harmonia/innertube/client.py:586
-#, python-brace-format
-msgid "Não foi possível obter um stream reproduzível. {details}"
-msgstr "Não foi possível obter um stream reproduzível. {details}"
-
-#: src/harmonia/innertube/client.py:643
-#, python-brace-format
-msgid "Não foi possível registrar a reprodução: {error}"
-msgstr "Não foi possível registrar a reprodução: {error}"
-
-#: src/harmonia/innertube/client.py:666
+#: src/harmonia/innertube/edits.py:37
 msgid "O nome da playlist não pode ficar vazio"
 msgstr "O nome da playlist não pode ficar vazio"
 
-#: src/harmonia/innertube/client.py:673
+#: src/harmonia/innertube/edits.py:44
 msgid "O YouTube criou a playlist sem retornar o identificador"
 msgstr "O YouTube criou a playlist sem retornar o identificador"
 
-#: src/harmonia/innertube/client.py:712
+#: src/harmonia/innertube/edits.py:83
 msgid ""
 "A faixa não contém playlistSetVideoId e não pode ser removida com segurança"
 msgstr ""
@@ -249,6 +212,43 @@ msgid ""
 msgstr ""
 "O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
 "o cookie completo."
+
+#: src/harmonia/innertube/session.py:146
+msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
+msgstr "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
+
+#: src/harmonia/innertube/session.py:150
+#, python-brace-format
+msgid "YouTube Music respondeu HTTP {code}: {detail}"
+msgstr "YouTube Music respondeu HTTP {code}: {detail}"
+
+#: src/harmonia/innertube/session.py:157
+#, python-brace-format
+msgid "Não foi possível conectar ao YouTube Music: {error}"
+msgstr "Não foi possível conectar ao YouTube Music: {error}"
+
+#: src/harmonia/innertube/session.py:160
+msgid "Não foi possível concluir a requisição ao YouTube Music."
+msgstr "Não foi possível concluir a requisição ao YouTube Music."
+
+#: src/harmonia/innertube/session.py:175
+#, python-brace-format
+msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
+msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
+
+#: src/harmonia/innertube/streams.py:100
+msgid "A faixa não contém um identificador reproduzível."
+msgstr "A faixa não contém um identificador reproduzível."
+
+#: src/harmonia/innertube/streams.py:164
+#, python-brace-format
+msgid "Não foi possível obter um stream reproduzível. {details}"
+msgstr "Não foi possível obter um stream reproduzível. {details}"
+
+#: src/harmonia/innertube/streams.py:221
+#, python-brace-format
+msgid "Não foi possível registrar a reprodução: {error}"
+msgstr "Não foi possível registrar a reprodução: {error}"
 
 #: src/harmonia/insights.py:51
 msgid "Jan"
