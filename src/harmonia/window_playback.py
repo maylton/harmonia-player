@@ -8,13 +8,14 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gdk, GLib, Gtk
 
 from .i18n import _, ngettext
 from .models import (
     LibraryItem,
     PlaybackState,
 )
+from .playback_report import playback_report
 from .playback_state import (
     filter_new_recommendations,
     move_queue_item,
@@ -704,7 +705,16 @@ class WindowPlaybackMixin:
         for button in (self.play_button, self.expanded_play_button):
             button.set_sensitive(True)
             button.set_icon_name("media-playback-start-symbolic")
-        self.toast_overlay.add_toast(Adw.Toast(title=message, timeout=6))
+        toast = Adw.Toast(title=message, timeout=8, button_label=_("Copiar relatório"))
+        report = playback_report(message, getattr(self, "current_item", None))
+        toast.connect("button-clicked", lambda *_: self._copy_playback_report(report))
+        self.toast_overlay.add_toast(toast)
+
+    def _copy_playback_report(self, report: str) -> None:
+        display = Gdk.Display.get_default()
+        if display is not None:
+            display.get_clipboard().set(report)
+            self.toast_overlay.add_toast(Adw.Toast(title=_("Relatório copiado"), timeout=2))
 
     def _stop_player(self) -> None:
         self._optional_stop()
