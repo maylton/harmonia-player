@@ -113,7 +113,7 @@ class QtVideoController(QObject):
         self._sync_timer = QTimer(self)
         self._sync_timer.setInterval(200)
         self._sync_timer.timeout.connect(self._sync_video_transport)
-        self._sync_timer.start()
+        # Runs only while a video plays; _start_video_layer starts it.
 
     @Property(str, notify=modeChanged)
     def mode(self) -> str:
@@ -439,6 +439,7 @@ class QtVideoController(QObject):
         self._video_generation += 1
         generation = self._video_generation
         self._video_last_sync_seek = 0.0
+        self._sync_timer.start()  # stops itself when the music comes back
         try:
             self._video_player.set_state(Gst.State.READY)
             source_uri = self.playback.player._source_uri(
@@ -572,7 +573,10 @@ class QtVideoController(QObject):
         )
 
     def _sync_video_transport(self) -> None:
-        if self._mode != "video" or self._loading or self._video_player is None:
+        if self._mode != "video":
+            self._sync_timer.stop()
+            return
+        if self._loading or self._video_player is None:
             return
 
         _result, state, _pending = self._video_player.get_state(0)

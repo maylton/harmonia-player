@@ -62,7 +62,7 @@ class GtkVideoMixin:
                     else None
                 ),
             )
-        self._gtk_video_sync_source = GLib.timeout_add(200, self._sync_gtk_video_transport)
+        self._gtk_video_sync_source = 0
         self._sync_media_mode_ui()
 
     def _build_media_switch(self, frame: Gtk.AspectFrame, artwork: Gtk.Widget) -> Gtk.Picture:
@@ -314,6 +314,7 @@ class GtkVideoMixin:
             self._gtk_video_failed(str(exc))
             return
 
+        self._watch_gtk_video_transport()
         GLib.timeout_add(40, self._finish_gtk_video_preroll, generation, 0)
 
     def _finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
@@ -507,8 +508,17 @@ class GtkVideoMixin:
             audio_us - video_us if video_us >= 0 else -1,
         )
 
+    def _watch_gtk_video_transport(self) -> None:
+        """Keep the video in step with the audio while the video mode lasts."""
+        if not self._gtk_video_sync_source:
+            self._gtk_video_sync_source = GLib.timeout_add(200, self._sync_gtk_video_transport)
+
     def _sync_gtk_video_transport(self) -> bool:
-        if self._media_mode != "video" or self._media_switch_loading:
+        if self._media_mode != "video":
+            # Back to the music: stop until a video starts again.
+            self._gtk_video_sync_source = 0
+            return GLib.SOURCE_REMOVE
+        if self._media_switch_loading:
             return GLib.SOURCE_CONTINUE
         video_player = self._gtk_video_player
         if video_player is None:
