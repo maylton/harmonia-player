@@ -11,7 +11,13 @@ from gi.repository import Gtk  # noqa: E402
 
 from .i18n import _  # noqa: E402
 from .models import LibraryItem  # noqa: E402
-from .ui import CreditsLabel, set_css_class, style_icon_button, track_byline  # noqa: E402
+from .ui import (  # noqa: E402
+    CreditsLabel,
+    set_css_class,
+    style_icon_button,
+    title_with_badge,
+    track_byline,
+)
 
 TRACK_COVER_SIZE = 40
 
@@ -67,18 +73,6 @@ class TrackRow:
         raise NotImplementedError
 
 
-def _title_line(track: LibraryItem, title: Gtk.Label) -> Gtk.Widget:
-    """The title, followed by the explicit-content badge when the track has it."""
-    if not track.explicit:
-        return title
-    line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    line.append(title)
-    badge = Gtk.Label(label="E", valign=Gtk.Align.CENTER, tooltip_text=_("Conteúdo explícito"))
-    badge.add_css_class("explicit-badge")
-    line.append(badge)
-    return line
-
-
 def _options_button(css_class: str) -> tuple[Gtk.MenuButton, Gtk.Popover]:
     options = Gtk.MenuButton(icon_name="view-more-symbolic", tooltip_text=_("Opções da faixa"))
     style_icon_button(options, "sm")
@@ -109,7 +103,7 @@ class HomeSongRow(TrackRow):
         subtitle = CreditsLabel(window.navigate_credit, xalign=0, ellipsize=3)
         subtitle.show_item(track, track.subtitle or "YouTube Music")
         subtitle.add_css_class("home-song-subtitle")
-        copy.append(_title_line(track, self.title))
+        copy.append(title_with_badge(self.title, track))
         copy.append(subtitle)
         row.append(copy)
 
@@ -225,7 +219,7 @@ class DetailTrackRow(TrackRow):
         text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, valign=Gtk.Align.CENTER)
         self.title = Gtk.Label(label=track.title, xalign=0, ellipsize=3)
         self.title.add_css_class("detail-track-title")
-        text.append(_title_line(track, self.title))
+        text.append(title_with_badge(self.title, track))
         byline = track_byline(track)
         if byline:
             subtitle = CreditsLabel(window.navigate_credit, xalign=0, ellipsize=3)

@@ -9,7 +9,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk
 
 from ..i18n import _
-from ..ui import CreditsLabel, icon_button
+from ..ui import CreditsLabel, explicit_badge, icon_button
 
 
 def build_expanded_player(window) -> None:
@@ -171,7 +171,12 @@ def _heading(window) -> Gtk.Widget:
     window.expanded_title.add_css_class("expanded-title")
     window.expanded_subtitle = CreditsLabel(window.navigate_credit, xalign=0, ellipsize=3)
     window.expanded_subtitle.add_css_class("expanded-subtitle")
-    title_box.append(window.expanded_title)
+    window.expanded_explicit = explicit_badge()
+    window.expanded_explicit.set_visible(False)
+    title_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+    title_line.append(window.expanded_title)
+    title_line.append(window.expanded_explicit)
+    title_box.append(title_line)
     title_box.append(window.expanded_subtitle)
     heading.append(title_box)
     window.expanded_like_button = icon_button("non-starred-symbolic", _("Curtir música"), size="md")

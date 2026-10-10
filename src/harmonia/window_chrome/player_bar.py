@@ -9,7 +9,13 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk
 
 from ..i18n import _
-from ..ui import CreditsLabel, icon_button, set_icon_selected, style_icon_button
+from ..ui import (
+    CreditsLabel,
+    explicit_badge,
+    icon_button,
+    set_icon_selected,
+    style_icon_button,
+)
 
 
 def build_player_bar(window) -> None:
@@ -65,7 +71,12 @@ def _track_section(window) -> Gtk.Widget:
         window.navigate_credit, xalign=0, ellipsize=3, max_width_chars=28
     )
     window.now_subtitle.add_css_class("card-subtitle")
-    copy.append(window.now_title)
+    window.now_explicit = explicit_badge()
+    window.now_explicit.set_visible(False)
+    title_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    title_line.append(window.now_title)
+    title_line.append(window.now_explicit)
+    copy.append(title_line)
     copy.append(window.now_subtitle)
     track.append(copy)
 

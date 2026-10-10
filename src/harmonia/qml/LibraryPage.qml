@@ -140,11 +140,20 @@ Item {
                             Layout.fillWidth: true
                             spacing: 0
 
-                            Controls.Label {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                text: modelData.title
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
+                                spacing: Kirigami.Units.smallSpacing
+
+                                Controls.Label {
+                                    Layout.fillWidth: true
+                                    text: modelData.title
+                                    font.weight: Font.DemiBold
+                                    elide: Text.ElideRight
+                                }
+
+                                ExplicitBadge {
+                                    visible: modelData.explicit === true
+                                }
                             }
 
                             Controls.Label {
@@ -275,11 +284,20 @@ Item {
                             }
                         }
 
-                        Controls.Label {
+                        RowLayout {
                             width: parent.width
-                            text: modelData.title
-                            font.weight: Font.DemiBold
-                            elide: Text.ElideRight
+                            spacing: Kirigami.Units.smallSpacing
+
+                            Controls.Label {
+                                Layout.fillWidth: true
+                                text: modelData.title
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+
+                            ExplicitBadge {
+                                visible: modelData.explicit === true
+                            }
                         }
 
                         Controls.Label {

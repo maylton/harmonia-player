@@ -19,6 +19,7 @@ from .models import (
 from .ui import (
     action_button,
     link_row_subtitle,
+    mark_explicit,
     page_header,
     page_shell,
 )
@@ -231,6 +232,7 @@ class WindowSearchMixin:
             link_row_subtitle(row, item, self.navigate_credit)
             row.set_activatable(True)
             row.add_prefix(self._square_cover(item, size=48, fixed=True))
+            mark_explicit(row, item)
             icon = (
                 "media-playback-start-symbolic"
                 if item.kind in ("songs", "videos")

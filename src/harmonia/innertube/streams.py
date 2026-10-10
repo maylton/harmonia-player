@@ -12,6 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import suppress
+from dataclasses import replace
 from typing import Any
 
 from ..i18n import _
@@ -19,6 +20,7 @@ from ..loudness import loudness_from_player
 from ..models import (
     StreamInfo,
 )
+from .alternatives import alternative_ids, song_details
 from .player_clients import CATALOG
 from .protocol import (
     API_URL,
@@ -35,7 +37,8 @@ _STREAM_CACHE_LOCK = threading.Lock()
 
 
 class AgeRestrictedError(InnerTubeError):
-    """No client returned a stream and YouTube asked to confirm the listener's age.
+    """No client returned a stream, YouTube asked to confirm the listener's age
+    and no unrestricted publication of the same song was found.
 
     The clients that give direct URLs refuse such tracks even when signed in;
     the web player that accepts the session needs signature deobfuscation and
@@ -107,8 +110,57 @@ class StreamsMixin:
             time.sleep(0.2 * (2**attempt))
         raise AssertionError("unreachable")
 
-    def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
-        """Resolve audio with cache, transient retries and ordered client fallback."""
+    def _audio_stream(self, payload: dict[str, Any], client_name: str) -> StreamInfo | None:
+        """The best direct audio format of a playable /player response, if any."""
+        if (payload.get("playabilityStatus") or {}).get("status") != "OK":
+            return None
+        formats = (payload.get("streamingData") or {}).get("adaptiveFormats") or []
+        audio = [
+            fmt
+            for fmt in formats
+            if str(fmt.get("mimeType", "")).startswith("audio/") and fmt.get("url")
+        ]
+        if not audio:
+            return None
+        within_quality = [
+            fmt for fmt in audio if int(fmt.get("bitrate", 0) or 0) <= self.max_bitrate
+        ]
+        selected = max(within_quality or audio, key=lambda fmt: int(fmt.get("bitrate", 0) or 0))
+        duration = selected.get("approxDurationMs")
+        url = str(selected["url"])
+        tracking = (payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl") or {}
+        return StreamInfo(
+            url=url,
+            duration_ms=int(duration) if duration else None,
+            client=client_name,
+            mime_type=str(selected.get("mimeType") or ""),
+            bitrate=int(selected.get("bitrate", 0) or 0),
+            itag=int(selected["itag"]) if selected.get("itag") is not None else None,
+            expires_at=stream_expiration(url),
+            playback_tracking_url=tracking.get("baseUrl"),
+            loudness_db=loudness_from_player(payload, selected),
+        )
+
+    def _substitute_stream(
+        self, video_id: str, details: tuple[str, str, int | None]
+    ) -> StreamInfo | None:
+        """The stream of an unrestricted publication of the same song (alternatives.py)."""
+        for candidate in alternative_ids(self, details, exclude=video_id)[:3]:
+            try:
+                stream = self.resolve_stream(candidate, force=True, substitute=False)
+            except InnerTubeError:
+                continue
+            return replace(stream, substitute_id=candidate)
+        return None
+
+    def resolve_stream(
+        self, video_id: str, force: bool = False, *, substitute: bool = True
+    ) -> StreamInfo:
+        """Resolve audio with cache, transient retries and ordered client fallback.
+
+        An age-restricted track plays from another publication of the same song
+        when one exists, unless *substitute* is False.
+        """
         if not video_id:
             raise InnerTubeError(_("A faixa não contém um identificador reproduzível."))
         cache_key = f"{self.gl}:{self.max_bitrate}:{video_id}"
@@ -123,6 +175,7 @@ class StreamsMixin:
 
         failures: list[str] = []
         age_gated = False
+        details = None
         with suppress(InnerTubeError):
             self._bootstrap()
         for profile in CATALOG.profiles():
@@ -134,37 +187,9 @@ class StreamsMixin:
                 continue
             status = payload.get("playabilityStatus", {})
             age_gated = age_gated or is_age_gated(status)
-            formats = (payload.get("streamingData") or {}).get("adaptiveFormats") or []
-            audio = [
-                fmt
-                for fmt in formats
-                if str(fmt.get("mimeType", "")).startswith("audio/") and fmt.get("url")
-            ]
-            if status.get("status") == "OK" and audio:
-                within_quality = [
-                    fmt for fmt in audio if int(fmt.get("bitrate", 0) or 0) <= self.max_bitrate
-                ]
-                selected = max(
-                    within_quality or audio, key=lambda fmt: int(fmt.get("bitrate", 0) or 0)
-                )
-                duration = selected.get("approxDurationMs")
-                url = str(selected["url"])
-                stream = StreamInfo(
-                    url=url,
-                    duration_ms=int(duration) if duration else None,
-                    client=str(profile["name"]),
-                    mime_type=str(selected.get("mimeType") or ""),
-                    bitrate=int(selected.get("bitrate", 0) or 0),
-                    itag=int(selected["itag"]) if selected.get("itag") is not None else None,
-                    expires_at=stream_expiration(url),
-                    playback_tracking_url=(
-                        (
-                            (payload.get("playbackTracking") or {}).get("videostatsPlaybackUrl")
-                            or {}
-                        ).get("baseUrl")
-                    ),
-                    loudness_db=loudness_from_player(payload, selected),
-                )
+            details = details or song_details(payload)
+            stream = self._audio_stream(payload, str(profile["name"]))
+            if stream is not None:
                 with _STREAM_CACHE_LOCK:
                     _STREAM_CACHE[cache_key] = stream
                 CATALOG.record(profile["name"], ok=True)
@@ -175,6 +200,12 @@ class StreamsMixin:
             # A track the client cannot play (age, region) says little of its health.
             if status.get("status") == "OK":
                 CATALOG.record(profile["name"], ok=False)
+        if age_gated and substitute and details:
+            stream = self._substitute_stream(video_id, details)
+            if stream is not None:
+                with _STREAM_CACHE_LOCK:
+                    _STREAM_CACHE[cache_key] = stream
+                return stream
         if age_gated:
             raise AgeRestrictedError(
                 _(

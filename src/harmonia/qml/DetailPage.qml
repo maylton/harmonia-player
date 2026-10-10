@@ -243,14 +243,23 @@ Item {
                                 Layout.fillWidth: true
                                 spacing: 0
 
-                                Controls.Label {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    text: modelData.title
-                                    font.weight: Font.DemiBold
-                                    color: backend.currentId === modelData.id
-                                         ? Kirigami.Theme.highlightColor
-                                         : Kirigami.Theme.textColor
-                                    elide: Text.ElideRight
+                                    spacing: Kirigami.Units.smallSpacing
+
+                                    Controls.Label {
+                                        Layout.fillWidth: true
+                                        text: modelData.title
+                                        font.weight: Font.DemiBold
+                                        color: backend.currentId === modelData.id
+                                             ? Kirigami.Theme.highlightColor
+                                             : Kirigami.Theme.textColor
+                                        elide: Text.ElideRight
+                                    }
+
+                                    ExplicitBadge {
+                                        visible: modelData.explicit === true
+                                    }
                                 }
 
                                 Controls.Label {

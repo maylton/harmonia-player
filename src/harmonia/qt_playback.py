@@ -10,6 +10,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from .crossfade_player import CrossfadingPlayer
 from .downloads import DownloadManager
 from .i18n import _
+from .innertube.alternatives import substitute_notice
 from .models import HistoryEntry, LibraryItem
 from .playback_state import (
     filter_new_recommendations,
@@ -347,6 +348,8 @@ class QtPlaybackController(QObject):
             stream.playback_tracking_url,
             stream.loudness_db,
         )
+        if getattr(stream, "substitute_id", None):
+            self.set_status(substitute_notice())
 
     def toggle_playback(self) -> None:
         if self.current_item is None:

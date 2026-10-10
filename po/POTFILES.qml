@@ -2,6 +2,7 @@ src/harmonia/qml/AppTopBar.qml
 src/harmonia/qml/DetailPage.qml
 src/harmonia/qml/DownloadsPage.qml
 src/harmonia/qml/ExpandedPlayer.qml
+src/harmonia/qml/ExplicitBadge.qml
 src/harmonia/qml/ExplorePage.qml
 src/harmonia/qml/HistoryPage.qml
 src/harmonia/qml/HomePage.qml

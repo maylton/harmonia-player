@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import re
 import threading
 import time
-import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -21,8 +19,16 @@ from .innertube import (
     is_age_gated,
     stream_expiration,
 )
+from .innertube.alternatives import alternative_ids, song_details
 from .innertube.player_clients import CATALOG
 from .models import LibraryItem
+from .song_match import (
+    ARTIST_CONNECTORS,
+    NON_CANONICAL_MARKERS,
+    artist_hint,
+    duration_hint,
+    normalize,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,54 +61,12 @@ _VIDEO_ID_CACHE: dict[str, str] = {}
 _VIDEO_STREAM_CACHE: dict[str, VideoStreamInfo] = {}
 _VIDEO_CACHE_LOCK = threading.Lock()
 
-_DURATION_SUFFIX = re.compile(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$")
-_DURATION_VALUE = re.compile(r"(?:(\d+):)?([0-5]?\d):([0-5]\d)\s*$")
-_NON_ARTIST_SUBTITLE = re.compile(
-    r"^(?:tocou|played|reproduziu|reproduzido|ouviu|ouvido)\b", re.IGNORECASE
-)
-_ARTIST_CONNECTORS = {"e", "and", "feat", "ft", "com"}
-_NON_CANONICAL_VIDEO_MARKERS = {
-    "ao vivo": 3.0,
-    "audio": 2.0,
-    "cover": 4.0,
-    "demo": 4.0,
-    "instrumental": 5.0,
-    "karaoke": 5.0,
-    "live": 3.0,
-    "lyric": 4.0,
-    "lyrics": 4.0,
-    "preview": 4.0,
-    "reaction": 5.0,
-    "remix": 3.0,
-    "reverb": 3.0,
-    "slowed": 4.0,
-    "snippet": 4.0,
-    "sped up": 4.0,
-    "visualizer": 1.0,
-}
-_NON_WORD = re.compile(r"[^a-z0-9]+")
+_ARTIST_CONNECTORS = ARTIST_CONNECTORS
+_NON_CANONICAL_VIDEO_MARKERS = NON_CANONICAL_MARKERS
 _OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
-
-
-def _normalize(value: str) -> str:
-    value = unicodedata.normalize("NFKD", value or "")
-    value = "".join(char for char in value if not unicodedata.combining(char))
-    return _NON_WORD.sub(" ", value.casefold()).strip()
-
-
-def _artist_hint(subtitle: str) -> str:
-    value = _DURATION_SUFFIX.sub("", subtitle or "")
-    if _NON_ARTIST_SUBTITLE.match(value.strip()):
-        return ""
-    return re.split(r"\s*[·•]\s*", value, maxsplit=1)[0].strip()
-
-
-def _duration_hint(value: str) -> int | None:
-    match = _DURATION_VALUE.search(value or "")
-    if not match:
-        return None
-    hours, minutes, seconds = match.groups()
-    return (int(hours or 0) * 60 + int(minutes)) * 60 + int(seconds)
+_normalize = normalize
+_artist_hint = artist_hint
+_duration_hint = duration_hint
 
 
 def _candidate_score(item: LibraryItem, candidate: LibraryItem) -> float:
@@ -310,8 +274,13 @@ def resolve_video_stream(
     max_height: int = 720,
     force: bool = False,
     allow_video_only: bool = False,
+    substitute: bool = True,
 ) -> VideoStreamInfo:
-    """Resolve a direct stream for the matching music video."""
+    """Resolve a direct stream for the matching music video.
+
+    An age-restricted video is replaced by an unrestricted publication of the
+    same song when one exists (innertube/alternatives.py).
+    """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
     mode_key = "adaptive" if allow_video_only else "muxed"
@@ -327,6 +296,7 @@ def resolve_video_stream(
 
     failures: list[str] = []
     age_gated = False
+    details = None
     with suppress(InnerTubeError):
         client._bootstrap()
 
@@ -340,6 +310,7 @@ def resolve_video_stream(
             continue
         status = payload.get("playabilityStatus") or {}
         age_gated = age_gated or is_age_gated(status)
+        details = details or song_details(payload)
         streaming = payload.get("streamingData") or {}
         progressive = [
             fmt
@@ -430,6 +401,17 @@ def resolve_video_stream(
             _VIDEO_STREAM_CACHE[cache_key] = stream
         return stream
 
+    if age_gated and substitute and details:
+        for candidate in alternative_ids(client, details, exclude=video_id)[:3]:
+            with suppress(InnerTubeError):
+                return resolve_video_stream(
+                    client,
+                    LibraryItem(candidate, details[0], kind="videos"),
+                    max_height=max_height,
+                    force=force,
+                    allow_video_only=allow_video_only,
+                    substitute=False,
+                )
     if age_gated:
         raise AgeRestrictedError(
             _("Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia.")
