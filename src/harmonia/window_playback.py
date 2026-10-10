@@ -12,6 +12,7 @@ from gi.repository import Adw, GLib, Gtk
 
 from . import queue_view
 from .i18n import _, ngettext
+from .innertube import AgeRestrictedError
 from .models import (
     LibraryItem,
     PlaybackState,
@@ -333,6 +334,9 @@ class WindowPlaybackMixin:
                     )
                     return
                 self._deliver_stream(request_id, self.youtube.resolve_stream(item.id))
+            except AgeRestrictedError as exc:
+                # Renewing cannot lift the restriction: say so at once.
+                GLib.idle_add(self._play_request_error, request_id, str(exc), False)
             except Exception as exc:
                 GLib.idle_add(self._play_request_error, request_id, str(exc))
 

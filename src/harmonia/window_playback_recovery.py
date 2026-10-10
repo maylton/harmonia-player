@@ -17,10 +17,14 @@ from .playback_report import playback_report
 class WindowPlaybackRecoveryMixin:
     """A stream that fails is resolved again once (its URL may have expired)."""
 
-    def _play_request_error(self, request_id: int, error: str):
-        if request_id == self._play_request:
-            return self._player_error(error)
-        return False
+    def _play_request_error(self, request_id: int, error: str, renewable: bool = True):
+        if request_id != self._play_request:
+            return False
+        if not renewable:
+            self._stream_ready = False
+            self._show_play_failure(error)
+            return False
+        return self._player_error(error)
 
     def _player_error(self, error: str):
         self._stream_ready = False

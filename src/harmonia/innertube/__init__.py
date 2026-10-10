@@ -32,6 +32,7 @@ from .protocol import (
     sapisid_hash,
     stream_expiration,
 )
+from .streams import AgeRestrictedError, is_age_gated
 
 __all__ = [
     "API_URL",
@@ -45,11 +46,13 @@ __all__ = [
     "SEARCH_FILTER_SONGS",
     "SEARCH_TITLES",
     "USER_AGENT",
+    "AgeRestrictedError",
     "InnerTubeClient",
     "InnerTubeError",
     "find_browse_endpoint",
     "find_continuation",
     "find_video_counterpart",
+    "is_age_gated",
     "parse_account_profile",
     "parse_artist_page",
     "parse_cookie",
