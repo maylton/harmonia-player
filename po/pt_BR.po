@@ -35,9 +35,9 @@ msgstr "Escolha uma faixa para começar"
 #: src/harmonia/window_chrome/expanded_player.py:197
 #: src/harmonia/window_chrome/player_bar.py:170
 #: src/harmonia/window_chrome/player_bar.py:180
-#: src/harmonia/window_playback.py:306 src/harmonia/window_playback.py:307
-#: src/harmonia/window_playback.py:308 src/harmonia/window_playback.py:309
-#: src/harmonia/window_playback.py:488 src/harmonia/window_playback.py:489
+#: src/harmonia/window_playback.py:307 src/harmonia/window_playback.py:308
+#: src/harmonia/window_playback.py:309 src/harmonia/window_playback.py:310
+#: src/harmonia/window_playback.py:492 src/harmonia/window_playback.py:493
 msgid "0:00"
 msgstr "0:00"
 
@@ -55,7 +55,7 @@ msgstr "Voltar"
 msgid "Usar cookie manualmente"
 msgstr "Usar cookie manualmente"
 
-#: src/harmonia/gtk_media_variants.py:74 src/harmonia/qt_media_variants.py:160
+#: src/harmonia/gtk_media_variants.py:80 src/harmonia/qt_media_variants.py:160
 msgid "Não foi possível preservar o áudio original da música."
 msgstr "Não foi possível preservar o áudio original da música."
 
@@ -226,16 +226,24 @@ msgstr "Não foi possível concluir a requisição ao YouTube Music."
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Não foi possível iniciar a sessão do YouTube Music: {error}"
 
-#: src/harmonia/innertube/streams.py:100
+#: src/harmonia/innertube/streams.py:113
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "A faixa não contém um identificador reproduzível."
 
-#: src/harmonia/innertube/streams.py:164
+#: src/harmonia/innertube/streams.py:181
+msgid ""
+"Esta faixa tem restrição de idade e o YouTube não libera o áudio dela para o "
+"Harmonia."
+msgstr ""
+"Esta faixa tem restrição de idade e o YouTube não libera o áudio dela para o "
+"Harmonia."
+
+#: src/harmonia/innertube/streams.py:186
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Não foi possível obter um stream reproduzível. {details}"
 
-#: src/harmonia/innertube/streams.py:221
+#: src/harmonia/innertube/streams.py:243
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Não foi possível registrar a reprodução: {error}"
@@ -739,7 +747,7 @@ msgstr "Não foi possível continuar a rádio: {error}"
 msgid "A rádio não encontrou novas músicas."
 msgstr "A rádio não encontrou novas músicas."
 
-#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback_recovery.py:35
+#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback_recovery.py:39
 msgid "O stream falhou; renovando a conexão…"
 msgstr "O stream falhou; renovando a conexão…"
 
@@ -1747,19 +1755,25 @@ msgstr "Buscar {name}"
 msgid "Ir para o artista {name}"
 msgstr "Ir para o artista {name}"
 
-#: src/harmonia/video.py:152
+#: src/harmonia/video.py:154
 msgid "Esta faixa local não possui um vídeo do YouTube associado."
 msgstr "Esta faixa local não possui um vídeo do YouTube associado."
 
-#: src/harmonia/video.py:202
+#: src/harmonia/video.py:204
 msgid "O YouTube Music não encontrou um vídeo para esta faixa."
 msgstr "O YouTube Music não encontrou um vídeo para esta faixa."
 
-#: src/harmonia/video.py:227
+#: src/harmonia/video.py:229
 msgid "Nenhum vídeo correspondente foi encontrado para esta faixa."
 msgstr "Nenhum vídeo correspondente foi encontrado para esta faixa."
 
-#: src/harmonia/video.py:430
+#: src/harmonia/video.py:435
+msgid ""
+"Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia."
+msgstr ""
+"Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia."
+
+#: src/harmonia/video.py:438
 #, python-brace-format
 msgid "Não foi possível obter o vídeo correspondente. {details}"
 msgstr "Não foi possível obter o vídeo correspondente. {details}"
@@ -2185,11 +2199,11 @@ msgstr "Baixar"
 msgid "Mais opções"
 msgstr "Mais opções"
 
-#: src/harmonia/window_detail_header.py:194 src/harmonia/window_playback.py:246
+#: src/harmonia/window_detail_header.py:194 src/harmonia/window_playback.py:247
 msgid "Tocar a seguir"
 msgstr "Tocar a seguir"
 
-#: src/harmonia/window_detail_header.py:195 src/harmonia/window_playback.py:248
+#: src/harmonia/window_detail_header.py:195 src/harmonia/window_playback.py:249
 msgid "Adicionar à fila"
 msgstr "Adicionar à fila"
 
@@ -2655,53 +2669,53 @@ msgstr "Não foi possível reconhecer a música: {error}"
 msgid "Nenhuma música reconhecida"
 msgstr "Nenhuma música reconhecida"
 
-#: src/harmonia/window_playback.py:209
+#: src/harmonia/window_playback.py:210
 msgid "Nenhuma faixa para adicionar à fila"
 msgstr "Nenhuma faixa para adicionar à fila"
 
-#: src/harmonia/window_playback.py:220
+#: src/harmonia/window_playback.py:221
 #, python-brace-format
 msgid "“{title}” tocará a seguir"
 msgstr "“{title}” tocará a seguir"
 
-#: src/harmonia/window_playback.py:220
+#: src/harmonia/window_playback.py:221
 #, python-brace-format
 msgid "“{title}” adicionada à fila"
 msgstr "“{title}” adicionada à fila"
 
-#: src/harmonia/window_playback.py:224
+#: src/harmonia/window_playback.py:225
 #, python-brace-format
 msgid "{count} faixa tocará a seguir"
 msgid_plural "{count} faixas tocarão a seguir"
 msgstr[0] "{count} faixa tocará a seguir"
 msgstr[1] "{count} faixas tocarão a seguir"
 
-#: src/harmonia/window_playback.py:228
+#: src/harmonia/window_playback.py:229
 #, python-brace-format
 msgid "{count} faixa adicionada à fila"
 msgid_plural "{count} faixas adicionadas à fila"
 msgstr[0] "{count} faixa adicionada à fila"
 msgstr[1] "{count} faixas adicionadas à fila"
 
-#: src/harmonia/window_playback.py:321
+#: src/harmonia/window_playback.py:322
 msgid "O arquivo local não está mais disponível"
 msgstr "O arquivo local não está mais disponível"
 
-#: src/harmonia/window_playback_recovery.py:50
+#: src/harmonia/window_playback_recovery.py:54
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Não foi possível reproduzir: {error}"
 
-#: src/harmonia/window_playback_recovery.py:56
+#: src/harmonia/window_playback_recovery.py:60
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 
-#: src/harmonia/window_playback_recovery.py:66
+#: src/harmonia/window_playback_recovery.py:70
 msgid "Copiar relatório"
 msgstr "Copiar relatório"
 
-#: src/harmonia/window_playback_recovery.py:75
+#: src/harmonia/window_playback_recovery.py:79
 msgid "Relatório copiado"
 msgstr "Relatório copiado"
 

@@ -34,6 +34,19 @@ _STREAM_CACHE: dict[str, StreamInfo] = {}
 _STREAM_CACHE_LOCK = threading.Lock()
 
 
+class AgeRestrictedError(InnerTubeError):
+    """No client returned a stream and YouTube asked to confirm the listener's age.
+
+    The clients that give direct URLs refuse such tracks even when signed in;
+    the web player that accepts the session needs signature deobfuscation and
+    a PO token, which Harmonia does not have. Retrying cannot help.
+    """
+
+
+def is_age_gated(status: dict[str, Any]) -> bool:
+    return "desktopLegacyAgeGateReason" in status or status.get("status") == "AGE_CHECK_REQUIRED"
+
+
 class StreamsMixin:
     """Needs InnerTubeSession's _api_post, _bootstrap and session attributes."""
 
@@ -109,6 +122,7 @@ class StreamsMixin:
                 _STREAM_CACHE.pop(cache_key, None)
 
         failures: list[str] = []
+        age_gated = False
         with suppress(InnerTubeError):
             self._bootstrap()
         for profile in CATALOG.profiles():
@@ -119,6 +133,7 @@ class StreamsMixin:
                 CATALOG.record(profile["name"], ok=False)
                 continue
             status = payload.get("playabilityStatus", {})
+            age_gated = age_gated or is_age_gated(status)
             formats = (payload.get("streamingData") or {}).get("adaptiveFormats") or []
             audio = [
                 fmt
@@ -160,6 +175,13 @@ class StreamsMixin:
             # A track the client cannot play (age, region) says little of its health.
             if status.get("status") == "OK":
                 CATALOG.record(profile["name"], ok=False)
+        if age_gated:
+            raise AgeRestrictedError(
+                _(
+                    "Esta faixa tem restrição de idade e o YouTube não libera o áudio "
+                    "dela para o Harmonia."
+                )
+            )
         raise InnerTubeError(
             _("Não foi possível obter um stream reproduzível. {details}").format(
                 details="; ".join(failures)

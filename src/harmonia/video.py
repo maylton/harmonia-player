@@ -15,8 +15,10 @@ from typing import Any
 from .i18n import _
 from .innertube import (
     ORIGIN,
+    AgeRestrictedError,
     InnerTubeClient,
     InnerTubeError,
+    is_age_gated,
     stream_expiration,
 )
 from .innertube.player_clients import CATALOG
@@ -324,6 +326,7 @@ def resolve_video_stream(
             _VIDEO_STREAM_CACHE.pop(cache_key, None)
 
     failures: list[str] = []
+    age_gated = False
     with suppress(InnerTubeError):
         client._bootstrap()
 
@@ -336,6 +339,7 @@ def resolve_video_stream(
             failures.append(f"{profile['name']}: {exc}")
             continue
         status = payload.get("playabilityStatus") or {}
+        age_gated = age_gated or is_age_gated(status)
         streaming = payload.get("streamingData") or {}
         progressive = [
             fmt
@@ -426,6 +430,10 @@ def resolve_video_stream(
             _VIDEO_STREAM_CACHE[cache_key] = stream
         return stream
 
+    if age_gated:
+        raise AgeRestrictedError(
+            _("Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia.")
+        )
     raise InnerTubeError(
         _("Não foi possível obter o vídeo correspondente. {details}").format(
             details="; ".join(failures)
