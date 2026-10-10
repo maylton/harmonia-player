@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="0.1.0-beta.4" date="2026-10-09" type="development">
+      <description>
+        <p>Normalização de volume por faixa, transição entre faixas, letras palavra por palavra, perfis do AutoEQ, selo de conteúdo explícito, escolha do canal da conta e músicas com restrição de idade tocando por outra publicação da mesma gravação.</p>
+        <p xml:lang="en">Per-track loudness normalization, crossfade, word-by-word lyrics, AutoEQ profiles, the explicit-content badge, choosing the account's channel and age-restricted songs playing from another upload of the same recording.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.3" date="2026-10-09" type="development">
       <description>
         <p>O tema Windows 11 e os ícones Fluent também no Linux, com a cor de destaque do GNOME, o Mica feito do papel de parede e o Acrílico com o desfoque do compositor.</p>
