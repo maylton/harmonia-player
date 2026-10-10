@@ -104,7 +104,7 @@ def parse_cookie(raw: str) -> dict[str, str]:
     return result
 
 
-def sapisid_hash(cookie: str, timestamp: int | None = None) -> str:
+def sapisid_hash(cookie: str, timestamp: int | None = None, origin: str = ORIGIN) -> str:
     cookies = parse_cookie(cookie)
     sapisid = cookies.get("SAPISID") or cookies.get("__Secure-3PAPISID")
     if not sapisid:
@@ -115,7 +115,7 @@ def sapisid_hash(cookie: str, timestamp: int | None = None) -> str:
             )
         )
     now = int(time.time()) if timestamp is None else timestamp
-    digest = hashlib.sha1(f"{now} {sapisid} {ORIGIN}".encode()).hexdigest()
+    digest = hashlib.sha1(f"{now} {sapisid} {origin}".encode()).hexdigest()
     return f"SAPISIDHASH {now}_{digest}"
 
 

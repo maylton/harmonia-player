@@ -19,8 +19,9 @@ from .innertube import (
     is_age_gated,
     stream_expiration,
 )
-from .innertube.alternatives import alternative_ids, song_details
+from .innertube.challenges import NoJsRuntimeError
 from .innertube.player_clients import CATALOG
+from .innertube.restricted import TV_CLIENT
 from .models import LibraryItem
 from .song_match import (
     ARTIST_CONNECTORS,
@@ -64,6 +65,11 @@ _VIDEO_CACHE_LOCK = threading.Lock()
 _ARTIST_CONNECTORS = ARTIST_CONNECTORS
 _NON_CANONICAL_VIDEO_MARKERS = NON_CANONICAL_MARKERS
 _OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
+# The age-restricted formats come from the TV client; a browser fetches them.
+_RESTRICTED_PROFILE = {
+    "name": TV_CLIENT["name"],
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0",
+}
 _normalize = normalize
 _artist_hint = artist_hint
 _duration_hint = duration_hint
@@ -274,12 +280,11 @@ def resolve_video_stream(
     max_height: int = 720,
     force: bool = False,
     allow_video_only: bool = False,
-    substitute: bool = True,
 ) -> VideoStreamInfo:
     """Resolve a direct stream for the matching music video.
 
-    An age-restricted video is replaced by an unrestricted publication of the
-    same song when one exists (innertube/alternatives.py).
+    An age-restricted video gets its original formats from the TV client
+    (innertube/restricted.py), as the audio does.
     """
     video_id = find_video_variant(client, item, force=force)
     max_height = max(144, int(max_height or 720))
@@ -296,7 +301,7 @@ def resolve_video_stream(
 
     failures: list[str] = []
     age_gated = False
-    details = None
+    restricted_error: InnerTubeError | None = None
     with suppress(InnerTubeError):
         client._bootstrap()
 
@@ -309,8 +314,16 @@ def resolve_video_stream(
             failures.append(f"{profile['name']}: {exc}")
             continue
         status = payload.get("playabilityStatus") or {}
-        age_gated = age_gated or is_age_gated(status)
-        details = details or song_details(payload)
+        if is_age_gated(status) and not age_gated:
+            # Once: the TV client's decrypted formats stand in for this answer.
+            age_gated = True
+            try:
+                payload = client.restricted_player_response(video_id)
+            except InnerTubeError as exc:
+                restricted_error = exc
+            else:
+                profile = _RESTRICTED_PROFILE
+                status = payload.get("playabilityStatus") or {}
         streaming = payload.get("streamingData") or {}
         progressive = [
             fmt
@@ -328,6 +341,9 @@ def resolve_video_stream(
         ]
         adaptive = [fmt for fmt in adaptive_all if not _is_otf_video(fmt)]
         candidates: list[tuple[dict[str, Any], bool]] = [(fmt, True) for fmt in progressive]
+        if allow_video_only and profile is _RESTRICTED_PROFILE and adaptive:
+            # The TV client's only muxed format is 360p; its indexed ones go to 1080p.
+            candidates = []
         if allow_video_only:
             candidates.extend((fmt, False) for fmt in adaptive)
 
@@ -401,20 +417,18 @@ def resolve_video_stream(
             _VIDEO_STREAM_CACHE[cache_key] = stream
         return stream
 
-    if age_gated and substitute and details:
-        for candidate in alternative_ids(client, details, exclude=video_id)[:3]:
-            with suppress(InnerTubeError):
-                return resolve_video_stream(
-                    client,
-                    LibraryItem(candidate, details[0], kind="videos"),
-                    max_height=max_height,
-                    force=force,
-                    allow_video_only=allow_video_only,
-                    substitute=False,
-                )
+    if isinstance(restricted_error, NoJsRuntimeError):
+        raise AgeRestrictedError(
+            _(
+                "Este vídeo tem restrição de idade e falta um interpretador JavaScript "
+                "para abri-lo. Instale o QuickJS ou o Node.js."
+            )
+        ) from restricted_error
     if age_gated:
         raise AgeRestrictedError(
-            _("Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia.")
+            _("Este vídeo tem restrição de idade e o stream original não abriu: {error}").format(
+                error=restricted_error or "; ".join(failures)
+            )
         )
     raise InnerTubeError(
         _("Não foi possível obter o vídeo correspondente. {details}").format(

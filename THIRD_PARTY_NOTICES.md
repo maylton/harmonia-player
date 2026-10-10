@@ -53,6 +53,29 @@ render blank. All other icons keep coming from the installed theme.
 The browser itself is the Microsoft Edge WebView2 runtime installed with
 Windows; it is not bundled.
 
+## yt-dlp/ejs (YouTube player challenge solver)
+
+- Project: yt-dlp/ejs 0.8.0, as published in the `yt-dlp-ejs` package
+- Source: https://github.com/yt-dlp/ejs
+- License: Unlicense (public domain), `src/harmonia/innertube/ejs/LICENSE`
+- Bundled dependencies, with their notices in the header of `lib.min.js`:
+  meriyah 6.1.4 (ISC, Copyright (c) 2019 and later, KFlash and others) and
+  astring 1.9.0 (MIT, Copyright (c) 2015, David Bonnet)
+- Used by: `src/harmonia/innertube/challenges.py`, to open the original stream
+  of age-restricted tracks
+
+## QuickJS-ng
+
+- Project: QuickJS-ng, as packaged by MSYS2 (`mingw-w64-ucrt-x86_64-quickjs-ng`)
+  and built from source in the KDE Flatpak
+- Source: https://github.com/quickjs-ng/quickjs
+- License: MIT (Copyright (c) 2017-2026 Fabrice Bellard, Charlie Gordon,
+  Ben Noordhuis and others); the license ships in the Windows installer under
+  `licenses/quickjs-ng`
+- Used by: the Windows build and the KDE Flatpak, to run the solver above
+  (`src/harmonia/js_runtime.py`); elsewhere Harmonia uses the system's
+  JavaScriptCore
+
 ## Iconify
 
 Iconify provides the development-time API used to retrieve and normalize the

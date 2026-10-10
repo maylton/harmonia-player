@@ -65,6 +65,13 @@ datas += [
     (str(ROOT / "licenses/Fluent-UI-System-Icons-MIT.txt"), "licenses"),
 ]
 binaries = [(str(MSYS_PREFIX / "bin/WebView2Loader.dll"), ".")]
+# QuickJS runs YouTube's player code for age-restricted tracks (js_runtime.py
+# looks for qjs.exe next to the application); it is a process, not an import.
+binaries += [
+    (str(MSYS_PREFIX / "bin/qjs.exe"), "."),
+    (str(MSYS_PREFIX / "bin/libqjs-0.dll"), "."),
+]
+datas += [(str(MSYS_PREFIX / "share/licenses/quickjs-ng/LICENSE"), "licenses/quickjs-ng")]
 datas += tree(ROOT / "data" / "icons" / "hicolor", "share/icons/hicolor", skip={"1024x1024"})
 datas += tree(STAGING / "locale", "share/locale")
 datas += [

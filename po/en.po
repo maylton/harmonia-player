@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 21:45-0300\n"
+"POT-Creation-Date: 2026-10-09 22:32-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -31,9 +31,9 @@ msgstr "Choose a track to start"
 #: src/harmonia/window_chrome/expanded_player.py:202
 #: src/harmonia/window_chrome/player_bar.py:181
 #: src/harmonia/window_chrome/player_bar.py:191
-#: src/harmonia/window_playback.py:310 src/harmonia/window_playback.py:311
-#: src/harmonia/window_playback.py:312 src/harmonia/window_playback.py:313
-#: src/harmonia/window_playback.py:502 src/harmonia/window_playback.py:503
+#: src/harmonia/window_playback.py:309 src/harmonia/window_playback.py:310
+#: src/harmonia/window_playback.py:311 src/harmonia/window_playback.py:312
+#: src/harmonia/window_playback.py:494 src/harmonia/window_playback.py:495
 msgid "0:00"
 msgstr "0:00"
 
@@ -125,24 +125,20 @@ msgstr "The video failed; returning to the song…"
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "The video ended before the audio track."
 
-#: src/harmonia/innertube/alternatives.py:24
-msgid "Faixa com restrição de idade: tocando outra publicação da mesma música"
-msgstr "Age-restricted track: playing another upload of the same song"
-
-#: src/harmonia/innertube/client.py:91
+#: src/harmonia/innertube/client.py:92
 #, python-brace-format
 msgid "Categoria de busca desconhecida: {category}"
 msgstr "Unknown search category: {category}"
 
-#: src/harmonia/innertube/client.py:164
+#: src/harmonia/innertube/client.py:165
 msgid "O artista não possui um identificador"
 msgstr "The artist does not have an ID"
 
-#: src/harmonia/innertube/client.py:194
+#: src/harmonia/innertube/client.py:195
 msgid "O YouTube Music não forneceu um token de remoção"
 msgstr "YouTube Music did not provide a removal token"
 
-#: src/harmonia/innertube/client.py:252
+#: src/harmonia/innertube/client.py:253
 #, python-brace-format
 msgid "Categoria desconhecida: {category}"
 msgstr "Unknown category: {category}"
@@ -226,24 +222,43 @@ msgstr "Couldn't complete the request to YouTube Music."
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr "Couldn't sign in to YouTube Music: {error}"
 
-#: src/harmonia/innertube/streams.py:165
+#: src/harmonia/innertube/streams.py:146
+msgid ""
+"Esta faixa tem restrição de idade: entre na sua conta do YouTube Music para "
+"ouvi-la."
+msgstr ""
+"This track is age-restricted: sign in to your YouTube Music account to "
+"listen to it."
+
+#: src/harmonia/innertube/streams.py:154
+msgid ""
+"Esta faixa tem restrição de idade e falta um interpretador JavaScript para "
+"abri-la. Instale o QuickJS ou o Node.js."
+msgstr ""
+"This track is age-restricted and a JavaScript engine is needed to open it. "
+"Install QuickJS or Node.js."
+
+#: src/harmonia/innertube/streams.py:161 src/harmonia/innertube/streams.py:168
+#, python-brace-format
+msgid ""
+"Esta faixa tem restrição de idade e o stream original não abriu: {error}"
+msgstr ""
+"This track is age-restricted and its original stream did not open: {error}"
+
+#: src/harmonia/innertube/streams.py:169
+msgid "sem formato de áudio"
+msgstr "no audio format"
+
+#: src/harmonia/innertube/streams.py:180
 msgid "A faixa não contém um identificador reproduzível."
 msgstr "The track does not contain a playable identifier."
 
-#: src/harmonia/innertube/streams.py:212
-msgid ""
-"Esta faixa tem restrição de idade e o YouTube não libera o áudio dela para o "
-"Harmonia."
-msgstr ""
-"This track is age-restricted and YouTube does not release its audio to "
-"Harmonia."
-
-#: src/harmonia/innertube/streams.py:217
+#: src/harmonia/innertube/streams.py:218
 #, python-brace-format
 msgid "Não foi possível obter um stream reproduzível. {details}"
 msgstr "Couldn't obtain a playable stream. {details}"
 
-#: src/harmonia/innertube/streams.py:274
+#: src/harmonia/innertube/streams.py:275
 #, python-brace-format
 msgid "Não foi possível registrar a reprodução: {error}"
 msgstr "Couldn't register playback: {error}"
@@ -727,29 +742,29 @@ msgstr "Added to {title}"
 msgid "Faixa removida da playlist"
 msgstr "Track removed from playlist"
 
-#: src/harmonia/qt_playback.py:278
+#: src/harmonia/qt_playback.py:277
 msgid "O arquivo local não está mais disponível."
 msgstr "The local file is no longer available."
 
-#: src/harmonia/qt_playback.py:341
+#: src/harmonia/qt_playback.py:340
 #, python-brace-format
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr "Couldn't play the track: {error}"
 
-#: src/harmonia/qt_playback.py:483 src/harmonia/window_autoplay.py:73
+#: src/harmonia/qt_playback.py:480 src/harmonia/window_autoplay.py:73
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr "Couldn't continue radio: {error}"
 
-#: src/harmonia/qt_playback.py:495
+#: src/harmonia/qt_playback.py:492
 msgid "A rádio não encontrou novas músicas."
 msgstr "The radio found no new songs."
 
-#: src/harmonia/qt_playback.py:581 src/harmonia/window_playback_recovery.py:39
+#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback_recovery.py:39
 msgid "O stream falhou; renovando a conexão…"
 msgstr "The stream failed; renewing the connection…"
 
-#: src/harmonia/qt_playback.py:595
+#: src/harmonia/qt_playback.py:592
 #, python-brace-format
 msgid "Erro de reprodução: {error}"
 msgstr "Playback error: {error}"
@@ -1757,25 +1772,34 @@ msgstr "Go to artist {name}"
 msgid "Conteúdo explícito"
 msgstr "Explicit content"
 
-#: src/harmonia/video.py:118
+#: src/harmonia/video.py:124
 msgid "Esta faixa local não possui um vídeo do YouTube associado."
 msgstr "This local track has no associated YouTube video."
 
-#: src/harmonia/video.py:168
+#: src/harmonia/video.py:174
 msgid "O YouTube Music não encontrou um vídeo para esta faixa."
 msgstr "YouTube Music found no video for this track."
 
-#: src/harmonia/video.py:193
+#: src/harmonia/video.py:199
 msgid "Nenhum vídeo correspondente foi encontrado para esta faixa."
 msgstr "No matching video was found for this track."
 
-#: src/harmonia/video.py:417
+#: src/harmonia/video.py:423
 msgid ""
-"Este vídeo tem restrição de idade e o YouTube não o libera para o Harmonia."
+"Este vídeo tem restrição de idade e falta um interpretador JavaScript para "
+"abri-lo. Instale o QuickJS ou o Node.js."
 msgstr ""
-"This video is age-restricted and YouTube does not release it to Harmonia."
+"This video is age-restricted and a JavaScript engine is needed to open it. "
+"Install QuickJS or Node.js."
 
-#: src/harmonia/video.py:420
+#: src/harmonia/video.py:429
+#, python-brace-format
+msgid ""
+"Este vídeo tem restrição de idade e o stream original não abriu: {error}"
+msgstr ""
+"This video is age-restricted and its original stream did not open: {error}"
+
+#: src/harmonia/video.py:434
 #, python-brace-format
 msgid "Não foi possível obter o vídeo correspondente. {details}"
 msgstr "Couldn't get the matching video. {details}"
@@ -2201,11 +2225,11 @@ msgstr "Download"
 msgid "Mais opções"
 msgstr "More options"
 
-#: src/harmonia/window_detail_header.py:195 src/harmonia/window_playback.py:249
+#: src/harmonia/window_detail_header.py:195 src/harmonia/window_playback.py:248
 msgid "Tocar a seguir"
 msgstr "Play next"
 
-#: src/harmonia/window_detail_header.py:196 src/harmonia/window_playback.py:251
+#: src/harmonia/window_detail_header.py:196 src/harmonia/window_playback.py:250
 msgid "Adicionar à fila"
 msgstr "Add to queue"
 
@@ -2669,35 +2693,35 @@ msgstr "Couldn't recognize the song: {error}"
 msgid "Nenhuma música reconhecida"
 msgstr "No music recognized"
 
-#: src/harmonia/window_playback.py:212
+#: src/harmonia/window_playback.py:211
 msgid "Nenhuma faixa para adicionar à fila"
 msgstr "No tracks to add to the queue"
 
-#: src/harmonia/window_playback.py:223
+#: src/harmonia/window_playback.py:222
 #, python-brace-format
 msgid "“{title}” tocará a seguir"
 msgstr "“{title}” will play next"
 
-#: src/harmonia/window_playback.py:223
+#: src/harmonia/window_playback.py:222
 #, python-brace-format
 msgid "“{title}” adicionada à fila"
 msgstr "“{title}” added to the queue"
 
-#: src/harmonia/window_playback.py:227
+#: src/harmonia/window_playback.py:226
 #, python-brace-format
 msgid "{count} faixa tocará a seguir"
 msgid_plural "{count} faixas tocarão a seguir"
 msgstr[0] "{count} track will play next"
 msgstr[1] "{count} tracks will play next"
 
-#: src/harmonia/window_playback.py:231
+#: src/harmonia/window_playback.py:230
 #, python-brace-format
 msgid "{count} faixa adicionada à fila"
 msgid_plural "{count} faixas adicionadas à fila"
 msgstr[0] "{count} track added to the queue"
 msgstr[1] "{count} tracks added to the queue"
 
-#: src/harmonia/window_playback.py:325
+#: src/harmonia/window_playback.py:324
 msgid "O arquivo local não está mais disponível"
 msgstr "Local file is no longer available"
 

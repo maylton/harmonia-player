@@ -2,6 +2,10 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## Não publicado
+
+- músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, como no Metrolist e no yt-dlp: o Harmonia decifra o player do YouTube com o JavaScriptCore no Linux e com o QuickJS incluído no Windows e no Flatpak do KDE (no áudio e no vídeo); a beta.4 tocava outra publicação da mesma música no lugar, o que podia ser uma versão sem o conteúdo explícito.
+
 ## 0.1.0-beta.4 — 2026-10-09
 
 - músicas com restrição de idade tocam: quando o YouTube bloqueia a faixa, o Harmonia toca outra publicação da mesma gravação (mesmo título, artistas e duração; nunca ao vivo, cover ou remix) e avisa; sem nenhuma, diz que a faixa tem restrição de idade em vez de "o stream falhou";
