@@ -43,6 +43,23 @@ import harmonia.app  # noqa: E402,F401
 import harmonia.auth  # noqa: E402,F401
 
 print("Harmonia imports with libadwaita", Adw.MAJOR_VERSION, Adw.MINOR_VERSION)
+
+# Age-restricted tracks need a JavaScript engine for YouTube's player code:
+# the package's JavaScriptCore must load the challenge solver.
+from pathlib import Path  # noqa: E402
+
+from harmonia.js_runtime import find_runtime  # noqa: E402
+
+runtime = find_runtime()
+assert runtime is not None and runtime.name == "JavaScriptCore", runtime
+solver = Path("/usr/share/harmonia/python/harmonia/innertube/ejs")
+body = "\n".join((
+    (solver / "lib.min.js").read_text(encoding="utf-8"),
+    "Object.assign(globalThis, lib);",
+    (solver / "core.min.js").read_text(encoding="utf-8"),
+))
+assert runtime.run(body, "typeof jsc") == "function"
+print("JavaScriptCore runs the player challenge solver")
 EOF
 
 test -f /usr/share/applications/io.github.harmonia.Harmonia.desktop

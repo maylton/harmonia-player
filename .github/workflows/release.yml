@@ -60,6 +60,7 @@ jobs:
             mingw-w64-ucrt-x86_64-pyinstaller
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-gobject
+            mingw-w64-ucrt-x86_64-quickjs-ng
             mingw-w64-ucrt-x86_64-webview2-loader
 
       - name: Instalar Inno Setup

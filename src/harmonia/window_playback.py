@@ -13,7 +13,6 @@ from gi.repository import Adw, GLib, Gtk
 from . import queue_view
 from .i18n import _, ngettext
 from .innertube import AgeRestrictedError
-from .innertube.alternatives import substitute_notice
 from .models import (
     LibraryItem,
     PlaybackState,
@@ -355,13 +354,6 @@ class WindowPlaybackMixin:
             stream.playback_tracking_url,
             stream.loudness_db,
         )
-        if getattr(stream, "substitute_id", None):
-            GLib.idle_add(self._announce_substitute, request_id)
-
-    def _announce_substitute(self, request_id: int) -> bool:
-        if request_id == self._play_request:
-            self.toast_overlay.add_toast(Adw.Toast(title=substitute_notice(), timeout=4))
-        return GLib.SOURCE_REMOVE
 
     def _start_stream(
         self,

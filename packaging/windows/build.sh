@@ -28,6 +28,13 @@ pyinstaller --noconfirm --clean \
 # up on the user's machine, when its namespace is first imported.
 python packaging/windows/check_typelibs.py "$STAGING/dist/Harmonia/_internal/gi_typelibs"
 
+# The bundled QuickJS must load the player challenge solver that opens
+# age-restricted tracks (js_runtime.py, innertube/challenges.py).
+SOLVER="src/harmonia/innertube/ejs"
+{ cat "$SOLVER/lib.min.js"; echo "Object.assign(globalThis, lib);"; cat "$SOLVER/core.min.js"
+  echo "console.log(typeof jsc);"; } > "$STAGING/solver-check.js"
+test "$("$STAGING/dist/Harmonia/_internal/qjs.exe" --script "$STAGING/solver-check.js" | tr -d '\r')" = "function"
+
 # Inno Setup wants a numeric x.y.z.w file version; "0.1.0-beta.1" -> "0.1.0.1".
 NUMERIC="$(python - "$VERSION" <<'EOF'
 import re, sys

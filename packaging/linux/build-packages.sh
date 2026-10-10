@@ -49,7 +49,7 @@ Installed-Size: ${size}
 Section: sound
 Priority: optional
 Homepage: ${HOMEPAGE}
-Depends: python3 (>= 3.11), python3-gi, gir1.2-glib-2.0, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.7), gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gir1.2-secret-1, gir1.2-webkit-6.0
+Depends: python3 (>= 3.11), python3-gi, gir1.2-glib-2.0, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.7), gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gir1.2-secret-1, gir1.2-webkit-6.0, gir1.2-javascriptcoregtk-6.0
 Recommends: gstreamer1.0-plugins-bad, gstreamer1.0-libav, gstreamer1.0-gtk4, libjxl-gdk-pixbuf, webp-pixbuf-loader, libavif-gdk-pixbuf
 Description: ${SUMMARY}
 $(printf '%s\n' "$DESCRIPTION" | sed 's/^/ /')
@@ -77,7 +77,7 @@ License: GPL-3.0-or-later
 URL: ${HOMEPAGE}
 BuildArch: noarch
 AutoReqProv: no
-Requires: python3 >= 3.11, python3-gobject, gobject-introspection, gtk4, libadwaita >= 1.7, gstreamer1, gstreamer1-plugins-base, gstreamer1-plugins-good, libsecret, webkitgtk6.0
+Requires: python3 >= 3.11, python3-gobject, gobject-introspection, gtk4, libadwaita >= 1.7, gstreamer1, gstreamer1-plugins-base, gstreamer1-plugins-good, libsecret, webkitgtk6.0, javascriptcoregtk6.0
 Recommends: gstreamer1-plugins-bad-free, gstreamer1-plugin-libav, gstreamer1-plugin-gtk4, jxl-pixbuf-loader, webp-pixbuf-loader, avif-pixbuf-loader
 
 %description

@@ -45,16 +45,17 @@ from .protocol import (
     SEARCH_FILTERS,
     SEARCH_TITLES,
 )
+from .restricted import RestrictedStreamsMixin
 from .session import InnerTubeSession
 from .streams import _STREAM_CACHE, StreamsMixin
 
 __all__ = ["_STREAM_CACHE", "InnerTubeClient"]
 
 
-class InnerTubeClient(StreamsMixin, EditsMixin, InnerTubeSession):
+class InnerTubeClient(StreamsMixin, RestrictedStreamsMixin, EditsMixin, InnerTubeSession):
     """The InnerTube API as Harmonia uses it: browsing and search here, the
-    session (session.py), streams (streams.py) and account changes (edits.py)
-    in their own modules."""
+    session (session.py), streams (streams.py, restricted.py) and account
+    changes (edits.py) in their own modules."""
 
     def account_profile(self) -> AccountProfile:
         return parse_account_profile(self._api_post("account/account_menu", {}))

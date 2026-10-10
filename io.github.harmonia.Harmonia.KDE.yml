@@ -94,6 +94,24 @@ modules:
         url: https://files.pythonhosted.org/packages/source/p/pygobject/pygobject-3.56.3.tar.gz
         sha256: 12760e4a0e3d04b6eb95e06f7a27e362c826d567ea613373a92c003b6c70d2d6
 
+  # Runs YouTube's player code for age-restricted tracks (js_runtime.py); the
+  # GNOME runtime has JavaScriptCore for that, the KDE one does not.
+  - name: quickjs-ng
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    cleanup:
+      - /bin/qjsc
+      - /include
+      - /lib/cmake
+      - /lib/*.a
+      - /share/doc/quickjs/examples
+      - /share/man
+    sources:
+      - type: archive
+        url: https://github.com/quickjs-ng/quickjs/archive/refs/tags/v0.17.0.tar.gz
+        sha256: 559bc4c420475e55c7ab4510adbc562f55d7524d75e8e89d79ce4bb02f5687d9
+
   - name: harmonia
     buildsystem: meson
     sources:

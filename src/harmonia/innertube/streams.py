@@ -12,7 +12,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import suppress
-from dataclasses import replace
 from typing import Any
 
 from ..i18n import _
@@ -20,7 +19,7 @@ from ..loudness import loudness_from_player
 from ..models import (
     StreamInfo,
 )
-from .alternatives import alternative_ids, song_details
+from .challenges import NoJsRuntimeError
 from .player_clients import CATALOG
 from .protocol import (
     API_URL,
@@ -31,18 +30,16 @@ from .protocol import (
     sapisid_hash,
     stream_expiration,
 )
+from .restricted import TV_CLIENT
 
 _STREAM_CACHE: dict[str, StreamInfo] = {}
 _STREAM_CACHE_LOCK = threading.Lock()
 
 
 class AgeRestrictedError(InnerTubeError):
-    """No client returned a stream, YouTube asked to confirm the listener's age
-    and no unrestricted publication of the same song was found.
-
-    The clients that give direct URLs refuse such tracks even when signed in;
-    the web player that accepts the session needs signature deobfuscation and
-    a PO token, which Harmonia does not have. Retrying cannot help.
+    """YouTube age-restricts the track and its original stream could not be
+    opened (no session, no JavaScript engine, or the TV client failed).
+    Retrying cannot help.
     """
 
 
@@ -141,25 +138,43 @@ class StreamsMixin:
             loudness_db=loudness_from_player(payload, selected),
         )
 
-    def _substitute_stream(
-        self, video_id: str, details: tuple[str, str, int | None]
-    ) -> StreamInfo | None:
-        """The stream of an unrestricted publication of the same song (alternatives.py)."""
-        for candidate in alternative_ids(self, details, exclude=video_id)[:3]:
-            try:
-                stream = self.resolve_stream(candidate, force=True, substitute=False)
-            except InnerTubeError:
-                continue
-            return replace(stream, substitute_id=candidate)
-        return None
+    def _restricted_stream(self, video_id: str) -> StreamInfo:
+        """The original stream of an age-restricted track (restricted.py)."""
+        if not self.authenticated:
+            raise AgeRestrictedError(
+                _(
+                    "Esta faixa tem restrição de idade: entre na sua conta do YouTube Music para ouvi-la."
+                )
+            )
+        try:
+            payload = self.restricted_player_response(video_id)
+        except NoJsRuntimeError as exc:
+            raise AgeRestrictedError(
+                _(
+                    "Esta faixa tem restrição de idade e falta um interpretador JavaScript "
+                    "para abri-la. Instale o QuickJS ou o Node.js."
+                )
+            ) from exc
+        except InnerTubeError as exc:
+            raise AgeRestrictedError(
+                _(
+                    "Esta faixa tem restrição de idade e o stream original não abriu: {error}"
+                ).format(error=exc)
+            ) from exc
+        stream = self._audio_stream(payload, TV_CLIENT["name"])
+        if stream is None:
+            raise AgeRestrictedError(
+                _(
+                    "Esta faixa tem restrição de idade e o stream original não abriu: {error}"
+                ).format(error=_("sem formato de áudio"))
+            )
+        return stream
 
-    def resolve_stream(
-        self, video_id: str, force: bool = False, *, substitute: bool = True
-    ) -> StreamInfo:
+    def resolve_stream(self, video_id: str, force: bool = False) -> StreamInfo:
         """Resolve audio with cache, transient retries and ordered client fallback.
 
-        An age-restricted track plays from another publication of the same song
-        when one exists, unless *substitute* is False.
+        An age-restricted track gets its original stream from the TV client
+        (restricted.py), or raises AgeRestrictedError saying why it could not.
         """
         if not video_id:
             raise InnerTubeError(_("A faixa não contém um identificador reproduzível."))
@@ -174,8 +189,6 @@ class StreamsMixin:
                 _STREAM_CACHE.pop(cache_key, None)
 
         failures: list[str] = []
-        age_gated = False
-        details = None
         with suppress(InnerTubeError):
             self._bootstrap()
         for profile in CATALOG.profiles():
@@ -186,13 +199,14 @@ class StreamsMixin:
                 CATALOG.record(profile["name"], ok=False)
                 continue
             status = payload.get("playabilityStatus", {})
-            age_gated = age_gated or is_age_gated(status)
-            details = details or song_details(payload)
             stream = self._audio_stream(payload, str(profile["name"]))
+            if stream is None and is_age_gated(status):
+                # The other clients refuse it the same way: go to the one that plays it.
+                stream = self._restricted_stream(video_id)
             if stream is not None:
                 with _STREAM_CACHE_LOCK:
                     _STREAM_CACHE[cache_key] = stream
-                CATALOG.record(profile["name"], ok=True)
+                CATALOG.record(profile["name"], ok=stream.client == profile["name"])
                 return stream
             failures.append(
                 f"{profile['name']}: {status.get('reason') or status.get('status') or 'sem stream direto'}"
@@ -200,19 +214,6 @@ class StreamsMixin:
             # A track the client cannot play (age, region) says little of its health.
             if status.get("status") == "OK":
                 CATALOG.record(profile["name"], ok=False)
-        if age_gated and substitute and details:
-            stream = self._substitute_stream(video_id, details)
-            if stream is not None:
-                with _STREAM_CACHE_LOCK:
-                    _STREAM_CACHE[cache_key] = stream
-                return stream
-        if age_gated:
-            raise AgeRestrictedError(
-                _(
-                    "Esta faixa tem restrição de idade e o YouTube não libera o áudio "
-                    "dela para o Harmonia."
-                )
-            )
         raise InnerTubeError(
             _("Não foi possível obter um stream reproduzível. {details}").format(
                 details="; ".join(failures)
