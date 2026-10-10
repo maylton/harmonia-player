@@ -20,6 +20,7 @@ from .ui import (
     action_button,
     deliver_to_main,
     icon_button,
+    mark_explicit,
     page_header,
     page_shell,
 )
@@ -91,6 +92,7 @@ class WindowHistoryMixin:
                 row.set_title(record.item.title)
                 row.set_subtitle(subtitle)
                 row.add_prefix(self._square_cover(record.item, size=48, fixed=True))
+                mark_explicit(row, record.item)
                 controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
                 if record.status == "downloading":
                     pause = icon_button("media-playback-pause-symbolic", _("Pausar"), size="sm")
@@ -211,6 +213,7 @@ class WindowHistoryMixin:
                 )
                 row.set_activatable(True)
                 row.add_prefix(self._square_cover(entry.item, size=48, fixed=True))
+                mark_explicit(row, entry.item)
                 remove = icon_button(
                     "user-trash-symbolic", _("Remover do histórico"), size="sm", destructive=True
                 )

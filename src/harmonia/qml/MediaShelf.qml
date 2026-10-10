@@ -125,12 +125,21 @@ Column {
                     }
                 }
 
-                Controls.Label {
+                RowLayout {
                     width: parent.width
-                    text: modelData.title
-                    font.weight: Font.DemiBold
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
+                    spacing: Kirigami.Units.smallSpacing
+
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: modelData.title
+                        font.weight: Font.DemiBold
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                    }
+
+                    ExplicitBadge {
+                        visible: modelData.explicit === true
+                    }
                 }
 
                 Controls.Label {

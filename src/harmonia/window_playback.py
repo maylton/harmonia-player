@@ -13,6 +13,7 @@ from gi.repository import Adw, GLib, Gtk
 from . import queue_view
 from .i18n import _, ngettext
 from .innertube import AgeRestrictedError
+from .innertube.alternatives import substitute_notice
 from .models import (
     LibraryItem,
     PlaybackState,
@@ -67,6 +68,7 @@ class WindowPlaybackMixin:
         self._restored_position_ms = state.position_ms
         self.current_item = self.queue[self.queue_index]
         self.now_title.set_label(self.current_item.title)
+        self.now_explicit.set_visible(self.current_item.explicit)
         self.now_subtitle.show_item(
             self.current_item, self.current_item.subtitle or "YouTube Music"
         )
@@ -290,6 +292,7 @@ class WindowPlaybackMixin:
         self._refresh_home_song_rows()
         self._set_footer_item_state(True)
         self.now_title.set_label(item.title)
+        self.now_explicit.set_visible(item.explicit)
         self.now_subtitle.show_item(item, item.subtitle or "YouTube Music")
         if item.thumbnail:
             self._load_artwork(item.thumbnail, self.now_cover, size=128)
@@ -352,6 +355,13 @@ class WindowPlaybackMixin:
             stream.playback_tracking_url,
             stream.loudness_db,
         )
+        if getattr(stream, "substitute_id", None):
+            GLib.idle_add(self._announce_substitute, request_id)
+
+    def _announce_substitute(self, request_id: int) -> bool:
+        if request_id == self._play_request:
+            self.toast_overlay.add_toast(Adw.Toast(title=substitute_notice(), timeout=4))
+        return GLib.SOURCE_REMOVE
 
     def _start_stream(
         self,

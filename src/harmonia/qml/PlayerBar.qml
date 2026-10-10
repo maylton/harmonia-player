@@ -77,11 +77,20 @@ Rectangle {
                 contentItem: ColumnLayout {
                     spacing: 0
 
-                    Controls.Label {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: backend.currentTitle
-                        font.weight: Font.DemiBold
-                        elide: Text.ElideRight
+                        spacing: Kirigami.Units.smallSpacing
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: backend.currentTitle
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+
+                        ExplicitBadge {
+                            visible: backend.currentExplicit
+                        }
                     }
 
                     Controls.Label {

@@ -336,6 +336,32 @@ class CreditsLabel(Gtk.Label):
         connect_credit_links(self, linked, self._navigate)
 
 
+def explicit_badge() -> Gtk.Label:
+    """YouTube Music's "E" for explicit content."""
+    badge = Gtk.Label(label="E", valign=Gtk.Align.CENTER, tooltip_text=_("Conteúdo explícito"))
+    badge.add_css_class("explicit-badge")
+    return badge
+
+
+def title_with_badge(title: Gtk.Widget, item: LibraryItem) -> Gtk.Widget:
+    """The title, followed by the explicit-content badge when the item has it."""
+    if not item.explicit:
+        return title
+    line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    line.append(title)
+    line.append(explicit_badge())
+    return line
+
+
+def mark_explicit(row: Adw.ActionRow, item: LibraryItem) -> None:
+    """Put the explicit badge just before an AdwActionRow's title.
+
+    Call it after adding the row's cover, so the badge sits between the two.
+    """
+    if item.explicit:
+        row.add_prefix(explicit_badge())
+
+
 def link_row_subtitle(
     row: Adw.ActionRow, item: LibraryItem, navigate: Callable[[str, str, str], None]
 ) -> None:

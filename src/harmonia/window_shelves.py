@@ -18,8 +18,10 @@ from .ui import (
     CreditsLabel,
     icon_button,
     link_row_subtitle,
+    mark_explicit,
     section_link,
     style_icon_button,
+    title_with_badge,
 )
 from .window_constants import LABELS, LIKED_ICON
 
@@ -65,8 +67,9 @@ def _cover_with_action_hint(
     return overlay, hint
 
 
-def _card_labels(item: LibraryItem, size: int, navigate) -> tuple[Gtk.Label, Gtk.Widget | None]:
-    """The card's title, and its credits with links (None without a subtitle)."""
+def _card_labels(item: LibraryItem, size: int, navigate) -> tuple[Gtk.Widget, Gtk.Widget | None]:
+    """The card's title (with the explicit badge), and its credits with links
+    (None without a subtitle)."""
     width_chars = 20 if size >= 160 else 17
     title = Gtk.Label(
         label=item.title,
@@ -76,6 +79,11 @@ def _card_labels(item: LibraryItem, size: int, navigate) -> tuple[Gtk.Label, Gtk
         max_width_chars=width_chars,
     )
     title.add_css_class("card-title")
+    if item.explicit:
+        # Room for the badge within the card's width.
+        title.set_width_chars(width_chars - 3)
+        title.set_max_width_chars(width_chars - 3)
+    title = title_with_badge(title, item)
     if not item.subtitle:
         return title, None
     subtitle = CreditsLabel(
@@ -212,6 +220,7 @@ class WindowShelvesMixin:
             if item.thumbnail:
                 self._load_artwork(item.thumbnail, thumb, size=128)
             row.add_prefix(thumb)
+            mark_explicit(row, item)
             if self.library_origin == "local":
                 remove = icon_button(
                     "user-trash-symbolic",

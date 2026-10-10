@@ -48,6 +48,7 @@ class WindowExpandedPlayerMixin:
         if item is None:
             return
         self.expanded_title.set_label(item.title)
+        self.expanded_explicit.set_visible(item.explicit)
         subtitle = re.sub(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$", "", item.subtitle or "")
         self.expanded_subtitle.show_item(item, subtitle or "YouTube Music")
         if item.thumbnail:

@@ -22,6 +22,7 @@ from .ui import (
     menu_action_button,
     set_icon_selected,
     style_icon_button,
+    title_with_badge,
 )
 
 
@@ -60,7 +61,7 @@ class WindowDetailHeaderMixin:
         title = Gtk.Label(label=item.title, xalign=0, wrap=True)
         title.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
         title.add_css_class("detail-title")
-        copy.append(title)
+        copy.append(title_with_badge(title, item))
         copy.append(self._detail_metadata(item, tracks))
         copy.append(self._detail_actions(item, tracks))
         hero.append(copy)

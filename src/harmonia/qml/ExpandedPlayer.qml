@@ -230,11 +230,23 @@ Controls.Dialog {
                                 Layout.fillWidth: true
                                 spacing: Kirigami.Units.smallSpacing
 
-                                Kirigami.Heading {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    text: backend.currentTitle
-                                    level: 1
-                                    wrapMode: Text.WordWrap
+                                    spacing: Kirigami.Units.largeSpacing
+
+                                    Kirigami.Heading {
+                                        Layout.fillWidth: true
+                                        text: backend.currentTitle
+                                        level: 1
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                    ExplicitBadge {
+                                        Layout.alignment: Qt.AlignTop
+                                        Layout.topMargin: Kirigami.Units.smallSpacing
+                                        large: true
+                                        visible: backend.currentExplicit
+                                    }
                                 }
 
                                 Controls.Label {
@@ -471,11 +483,20 @@ Controls.Dialog {
                                         Layout.fillWidth: true
                                         spacing: 0
 
-                                        Controls.Label {
+                                        RowLayout {
                                             Layout.fillWidth: true
-                                            text: modelData.title
-                                            font.weight: Font.DemiBold
-                                            elide: Text.ElideRight
+                                            spacing: Kirigami.Units.smallSpacing
+
+                                            Controls.Label {
+                                                Layout.fillWidth: true
+                                                text: modelData.title
+                                                font.weight: Font.DemiBold
+                                                elide: Text.ElideRight
+                                            }
+
+                                            ExplicitBadge {
+                                                visible: modelData.explicit === true
+                                            }
                                         }
 
                                         Controls.Label {

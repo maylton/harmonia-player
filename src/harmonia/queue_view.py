@@ -18,6 +18,7 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from .i18n import _  # noqa: E402
 from .models import LibraryItem  # noqa: E402
+from .ui import mark_explicit  # noqa: E402
 
 RELATED_IN_POPOVER = 12
 
@@ -51,6 +52,7 @@ def queue_row(item: LibraryItem, current: bool) -> Adw.ActionRow:
     if current:
         row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-high-symbolic"))
         row.add_css_class("current-track")
+    mark_explicit(row, item)
     return row
 
 
@@ -59,6 +61,7 @@ def related_row(item: LibraryItem, actions: QueueActions, *, play_next: bool) ->
     row.set_use_markup(False)
     row.set_title(item.title)
     row.set_subtitle(item.subtitle)
+    mark_explicit(row, item)
     if play_next:
         button = _icon_button("media-playlist-consecutive-symbolic", _("Tocar em seguida"))
         button.connect("clicked", _later(actions.promote, item, True))

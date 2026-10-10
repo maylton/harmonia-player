@@ -295,6 +295,7 @@ class HarmoniaWindow(
             return
         self.player_bar.add_css_class("player-bar-empty")
         self.now_title.set_label(_("Nenhuma música reproduzindo"))
+        self.now_explicit.set_visible(False)
         self.now_subtitle.show_item(None, _("Escolha uma faixa para começar"))
         self.now_cover.set_paintable(None)
         self.ambient_background.set_paintable(None)

@@ -700,6 +700,10 @@ class HarmoniaQtBackend(QObject):
             else _("Nenhuma música reproduzindo")
         )
 
+    @Property(bool, notify=nowPlayingChanged)
+    def currentExplicit(self) -> bool:
+        return bool(self.playback.current_item and self.playback.current_item.explicit)
+
     @Property(str, notify=nowPlayingChanged)
     def currentArtist(self) -> str:
         return (
