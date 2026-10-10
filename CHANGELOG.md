@@ -2,8 +2,12 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
-## Não publicado
+## 0.1.0-beta.4 — 2026-10-09
 
+- músicas com restrição de idade tocam: quando o YouTube bloqueia a faixa, o Harmonia toca outra publicação da mesma gravação (mesmo título, artistas e duração; nunca ao vivo, cover ou remix) e avisa; sem nenhuma, diz que a faixa tem restrição de idade em vez de "o stream falhou";
+- selo "E" de conteúdo explícito, como no YouTube Music: nas faixas dos álbuns e playlists, na busca, nas listas de músicas, no histórico, nos downloads, na fila, nos cards, no cabeçalho do álbum, na barra do player e no player expandido, nos frontends GTK e KDE;
+- o vídeo deixa de consumir processamento quando não está aberto;
+- reorganização interna: a janela GTK, o cliente do YouTube Music e as integrações do KDE divididos em módulos menores;
 - normalização de volume por faixa com a medição do YouTube Music, também nos downloads offline; antes ela só baixava todas as faixas 6 dB por igual;
 - seletor "Nível do volume" (Suave, Padrão, Alto) para a normalização;
 - transição entre faixas (crossfade) de 3 a 12 segundos, em Preferências > Áudio;
@@ -12,7 +16,6 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - sincronização da biblioteca mais segura: uma resposta vazia ou incompleta do YouTube não apaga mais itens, e curtidas, inscrições e playlists salvas não somem enquanto o YouTube demora a listá-las;
 - colar um link do YouTube ou do YouTube Music na busca toca a música ou abre a playlist, o álbum ou o artista;
 - opção "Velocidade muda o tom", para ouvir como um disco tocado mais rápido ou mais devagar;
-- selo "E" nas faixas com conteúdo explícito;
 - erros de reprodução com o botão "Copiar relatório", para anexar a um relato de problema;
 - Preferências > Biblioteca: escolha se a música salva numa playlist entra no fim ou no início;
 - Mica no Linux mais robusto: tenta também a variante clara do papel de parede, abre formatos que o GdkPixbuf não conhece pelo decodificador do GTK, usa o papel de parede padrão do Plasma quando nenhum foi escolhido, e as Preferências dizem por que o Mica não aparece quando não há como mostrá-lo. Os pacotes recomendam o suporte a JPEG XL, WebP e AVIF;
