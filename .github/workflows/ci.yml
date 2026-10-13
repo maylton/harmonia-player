@@ -155,7 +155,19 @@ jobs:
         run: bash packaging/linux/build-packages.sh
 
       # Docker's official images through the AWS public mirror: Docker Hub
-      # rate-limits the shared runners' anonymous pulls.
+      # rate-limits the shared runners' anonymous pulls. The mirror itself
+      # sometimes fails a pull, which made `docker run` exit 125 before the
+      # check even started: pull first, with retries.
+      - name: Baixar as imagens do Ubuntu e do Fedora
+        run: |
+          for image in ubuntu fedora; do
+            for attempt in 1 2 3 4 5; do
+              docker pull -q "public.ecr.aws/docker/library/$image:latest" && break
+              if [ "$attempt" = 5 ]; then exit 1; fi
+              sleep $((attempt * 15))
+            done
+          done
+
       - name: Instalar o .deb no Ubuntu atual
         run: |
           version=$(sed -n "s/^project('harmonia', version: '\([^']*\)'.*/\1/p" meson.build)
