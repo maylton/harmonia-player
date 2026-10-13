@@ -2,9 +2,10 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
-## Não publicado
+## 0.1.0-beta.5 — 2026-10-13
 
-- músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, como no Metrolist e no yt-dlp: o Harmonia decifra o player do YouTube com o JavaScriptCore no Linux e com o QuickJS incluído no Windows e no Flatpak do KDE (no áudio e no vídeo); a beta.4 tocava outra publicação da mesma música no lugar, o que podia ser uma versão sem o conteúdo explícito.
+- músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, como no Metrolist e no yt-dlp: o Harmonia decifra o player do YouTube com o JavaScriptCore no Linux e com o QuickJS incluído no Windows e no Flatpak do KDE (no áudio e no vídeo); a beta.4 tocava outra publicação da mesma música no lugar, o que podia ser uma versão sem o conteúdo explícito;
+- Mica no Linux com a cor certa: o papel de parede que muda ao longo do dia (GNOME) mostra a imagem do horário e acompanha a troca; a variante clara ou escura é a que o sistema está mostrando, mesmo com o Harmonia em outro tema, e muda junto quando o sistema alterna; no Plasma vale o plugin de papel de parede ativo; as Preferências dizem de qual papel de parede o Mica foi feito.
 
 ## 0.1.0-beta.4 — 2026-10-09
 

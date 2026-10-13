@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="0.1.0-beta.5" date="2026-10-13" type="development">
+      <description>
+        <p>Músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, e o Mica no Linux acompanha o papel de parede que muda ao longo do dia e o tema claro ou escuro do sistema.</p>
+        <p xml:lang="en">Age-restricted songs play their original, explicit recording with your account, and Mica on Linux follows wallpapers that change through the day and the system's light or dark style.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.4" date="2026-10-09" type="development">
       <description>
         <p>Normalização de volume por faixa, transição entre faixas, letras palavra por palavra, perfis do AutoEQ, selo de conteúdo explícito, escolha do canal da conta e músicas com restrição de idade tocando por outra publicação da mesma gravação.</p>
