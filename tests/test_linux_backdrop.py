@@ -70,21 +70,22 @@ def test_mica_reports_why_it_is_not_shown(monkeypatch, tmp_path):
     def configured(*paths):
         monkeypatch.setattr(desktop_wallpaper, "configured_wallpapers", lambda *, dark: list(paths))
 
+    backdrops = linux_backdrop.LinuxWindowBackdrops.__new__(linux_backdrop.LinuxWindowBackdrops)
     configured()
     monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: False)
-    assert "não encontrado" in linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    assert "não encontrado" in backdrops._mica(True)[1]
     # Named by the settings but out of the sandbox's reach: say how to allow it.
     configured(tmp_path / "Imagens" / "praia.jpg")
     monkeypatch.setattr(desktop_wallpaper, "in_flatpak", lambda: True)
-    reason = linux_backdrop.LinuxWindowBackdrops._mica(True)[1]
+    reason = backdrops._mica(True)[1]
     assert f"--filesystem={tmp_path / 'Imagens'}:ro io.github.harmonia.Harmonia" in reason
 
     broken = tmp_path / "adwaita-d.jxl"
     broken.write_bytes(b"not an image")
     configured(broken)
     monkeypatch.setattr(linux_backdrop.host, "cache_dir", lambda: tmp_path / "cache")
-    image, reason = linux_backdrop.LinuxWindowBackdrops._mica(True)
-    assert image is None and "JPEG XL" in reason
+    image, reason = backdrops._mica(True)
+    assert image is None and "JPEG XL" in reason and backdrops.wallpaper is None
 
 
 def test_the_flatpak_reads_system_wallpapers_and_defaults_under_run_host(monkeypatch, tmp_path):
@@ -140,7 +141,7 @@ def test_gtk_decodes_what_gdkpixbuf_cannot(monkeypatch, tmp_path):
     assert (scaled.get_width(), scaled.get_height()) == (320, 160)
 
 
-def test_gnome_slideshows_resolve_to_their_first_image(tmp_path):
+def test_gnome_slideshows_resolve_to_their_only_image(tmp_path):
     from harmonia.desktop_wallpaper import resolve_image
 
     image = tmp_path / "morning.jpg"
@@ -152,6 +153,127 @@ def test_gnome_slideshows_resolve_to_their_first_image(tmp_path):
     )
     assert resolve_image(slideshow, dark=False) == image
     assert resolve_image(tmp_path / "notes.txt", dark=False) is None
+
+
+def timed_wallpaper(folder):
+    """Day from 07:00 for 12 h, a 1 h fade to night, night for 10 h, a 1 h fade back."""
+    for name in ("day", "night", "night-small"):
+        (folder / f"{name}.jpg").write_bytes(b"jpg")
+    slideshow = folder / "dynamic.xml"
+    slideshow.write_text(
+        "<background>"
+        "<starttime><year>2020</year><month>1</month><day>1</day>"
+        "<hour>7</hour><minute>0</minute><second>0</second></starttime>"
+        f"<static><duration>43200</duration><file>{folder}/day.jpg</file></static>"
+        "<transition type='overlay'><duration>3600</duration>"
+        f"<from>{folder}/day.jpg</from><to>{folder}/night.jpg</to></transition>"
+        "<static><duration>36000</duration><file>"
+        f"<size width='1280' height='720'>{folder}/night-small.jpg</size>"
+        f"<size width='3840' height='2160'>{folder}/night.jpg</size>"
+        "</file></static>"
+        "<transition type='overlay'><duration>3600</duration>"
+        f"<from>{folder}/night.jpg</from><to>{folder}/day.jpg</to></transition>"
+        "</background>",
+        encoding="utf-8",
+    )
+    return slideshow
+
+
+@pytest.mark.parametrize(
+    ("clock", "image", "changes_in"),
+    [
+        ("2026-10-13 07:00", "day", 12 * 3600),
+        ("2026-10-13 18:59", "day", 60),
+        ("2026-10-13 19:20", "day", 10 * 60),  # first half of the fade
+        ("2026-10-13 19:40", "night", 20 * 60),  # second half
+        ("2026-10-13 23:00", "night", 7 * 3600),  # the largest <size>
+        ("2026-10-14 06:45", "day", 15 * 60),
+    ],
+)
+def test_gnome_timed_wallpapers_follow_the_clock(tmp_path, clock, image, changes_in):
+    from datetime import datetime
+
+    from harmonia import gnome_slideshow
+
+    slideshow = timed_wallpaper(tmp_path)
+    now = datetime.strptime(clock, "%Y-%m-%d %H:%M")
+    shown, seconds = gnome_slideshow.current_image(slideshow, now)
+    assert (shown.stem, round(seconds)) == (image, changes_in)
+
+
+def test_resolving_a_timed_wallpaper_records_when_it_changes(tmp_path):
+    from harmonia import desktop_wallpaper
+
+    slideshow = timed_wallpaper(tmp_path)
+    desktop_wallpaper._next_change = None
+    assert desktop_wallpaper.resolve_image(slideshow, dark=False).stem in {"day", "night"}
+    assert 0 < desktop_wallpaper.seconds_until_change() <= 12 * 3600
+    desktop_wallpaper._next_change = None
+
+
+def test_plasma_uses_the_active_wallpaper_plugin(monkeypatch, tmp_path):
+    from harmonia import desktop_wallpaper
+
+    old, dynamic = tmp_path / "old.png", tmp_path / "dynamic.avif"
+    old.write_bytes(b"png")
+    dynamic.write_bytes(b"avif")
+    slides = tmp_path / "slides" / "a"
+    slides.mkdir(parents=True)
+    (slides / "b.jpg").write_bytes(b"jpg")
+    config = tmp_path / "config"
+    config.mkdir()
+    applets = config / "plasma-org.kde.plasma.desktop-appletsrc"
+
+    def write(plugin):
+        applets.write_text(
+            "[Containments][7]\nplugin=org.kde.panel\n\n"
+            f"[Containments][2]\nplugin=org.kde.plasma.folder\nwallpaperplugin={plugin}\n\n"
+            # Left behind by the image plugin used before.
+            f"[Containments][2][Wallpaper][org.kde.image][General]\nImage={old.as_uri()}\n\n"
+            "[Containments][2][Wallpaper][com.github.zzag.dynamic][General]\n"
+            f"Image={dynamic.as_uri()}\n\n"
+            "[Containments][2][Wallpaper][org.kde.slideshow][General]\n"
+            f"SlidePaths={tmp_path / 'slides'}\n",
+            encoding="utf-8",
+        )
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
+    write("com.github.zzag.dynamic")
+    assert desktop_wallpaper.kde_wallpapers(dark=False) == [dynamic]
+    write("org.kde.slideshow")
+    assert desktop_wallpaper.kde_wallpapers(dark=False) == [slides / "b.jpg"]
+    write("org.kde.image")
+    assert desktop_wallpaper.kde_wallpapers(dark=False) == [old]
+
+
+def test_mica_takes_the_variant_the_desktop_shows(monkeypatch, tmp_path):
+    from harmonia import desktop_wallpaper, linux_backdrop
+
+    asked = []
+    monkeypatch.setattr(
+        desktop_wallpaper, "configured_wallpapers", lambda *, dark: asked.append(dark) or []
+    )
+    monkeypatch.setattr(desktop_wallpaper, "desktop_prefers_dark", lambda: False)
+    monkeypatch.setattr(linux_backdrop, "material_css", lambda *_args: "")
+
+    class Style:
+        def get_dark(self):
+            return True  # Harmonia dark, the desktop light
+
+    class Window:
+        def get_display(self):
+            return None
+
+    backdrops = linux_backdrop.LinuxWindowBackdrops.__new__(linux_backdrop.LinuxWindowBackdrops)
+    backdrops.kind, backdrops._window, backdrops._style = "mica", Window(), Style()
+    backdrops._provider = type("Provider", (), {"load_from_string": lambda *_: None})()
+    backdrops._provider_display, backdrops._timer, backdrops.wallpaper = None, 0, None
+    monkeypatch.setattr(backdrops, "_install_provider", lambda _window: None)
+    monkeypatch.setattr(backdrops, "_tint", lambda _dark: "rgba(0,0,0,0.5)")
+    monkeypatch.setattr(linux_backdrop, "set_css_class", lambda *_args: None)
+
+    backdrops._refresh()
+    assert asked == [False]
 
 
 def test_mica_blurs_the_wallpaper_once(tmp_path):

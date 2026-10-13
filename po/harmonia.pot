@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 22:32-0300\n"
+"POT-Creation-Date: 2026-10-13 15:54-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -320,19 +320,19 @@ msgstr ""
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:209
+#: src/harmonia/linux_backdrop.py:262
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:213
+#: src/harmonia/linux_backdrop.py:266
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:216
+#: src/harmonia/linux_backdrop.py:269
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr ""
 
@@ -1163,37 +1163,42 @@ msgstr ""
 msgid "Estilo dos ícones"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:103
+#: src/harmonia/settings_page/appearance.py:106
+#, python-brace-format
+msgid "Mica feito do papel de parede {name}"
+msgstr ""
+
+#: src/harmonia/settings_page/appearance.py:108
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:105
+#: src/harmonia/settings_page/appearance.py:110
 msgid ""
 "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
 "está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:115
+#: src/harmonia/settings_page/appearance.py:120
 msgid "Efeito de fundo"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:117
+#: src/harmonia/settings_page/appearance.py:122
 msgid "Mica"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:118
+#: src/harmonia/settings_page/appearance.py:123
 msgid "Acrílico (fosco)"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:119
+#: src/harmonia/settings_page/appearance.py:124
 msgid "Nenhum"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:128
+#: src/harmonia/settings_page/appearance.py:133
 msgid "Capa desfocada no player expandido"
 msgstr ""
 
-#: src/harmonia/settings_page/appearance.py:129
+#: src/harmonia/settings_page/appearance.py:134
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-09 22:32-0300\n"
+"POT-Creation-Date: 2026-10-13 15:54-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -329,7 +329,7 @@ msgstr ""
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr "Não foi possível abrir o papel de parede {name}"
 
-#: src/harmonia/linux_backdrop.py:209
+#: src/harmonia/linux_backdrop.py:262
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
@@ -338,12 +338,12 @@ msgstr ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 
-#: src/harmonia/linux_backdrop.py:213
+#: src/harmonia/linux_backdrop.py:266
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr "O papel de parede {name} não foi encontrado"
 
-#: src/harmonia/linux_backdrop.py:216
+#: src/harmonia/linux_backdrop.py:269
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr "Papel de parede do GNOME ou do Plasma não encontrado"
 
@@ -1176,11 +1176,16 @@ msgstr "Fluent — ícones do Windows 11"
 msgid "Estilo dos ícones"
 msgstr "Estilo dos ícones"
 
-#: src/harmonia/settings_page/appearance.py:103
+#: src/harmonia/settings_page/appearance.py:106
+#, python-brace-format
+msgid "Mica feito do papel de parede {name}"
+msgstr "Mica feito do papel de parede {name}"
+
+#: src/harmonia/settings_page/appearance.py:108
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 
-#: src/harmonia/settings_page/appearance.py:105
+#: src/harmonia/settings_page/appearance.py:110
 msgid ""
 "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
 "está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
@@ -1188,27 +1193,27 @@ msgstr ""
 "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
 "está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
 
-#: src/harmonia/settings_page/appearance.py:115
+#: src/harmonia/settings_page/appearance.py:120
 msgid "Efeito de fundo"
 msgstr "Efeito de fundo"
 
-#: src/harmonia/settings_page/appearance.py:117
+#: src/harmonia/settings_page/appearance.py:122
 msgid "Mica"
 msgstr "Mica"
 
-#: src/harmonia/settings_page/appearance.py:118
+#: src/harmonia/settings_page/appearance.py:123
 msgid "Acrílico (fosco)"
 msgstr "Acrílico (fosco)"
 
-#: src/harmonia/settings_page/appearance.py:119
+#: src/harmonia/settings_page/appearance.py:124
 msgid "Nenhum"
 msgstr "Nenhum"
 
-#: src/harmonia/settings_page/appearance.py:128
+#: src/harmonia/settings_page/appearance.py:133
 msgid "Capa desfocada no player expandido"
 msgstr "Capa desfocada no player expandido"
 
-#: src/harmonia/settings_page/appearance.py:129
+#: src/harmonia/settings_page/appearance.py:134
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr "Desligada, o player expandido mostra o efeito de fundo"
 
