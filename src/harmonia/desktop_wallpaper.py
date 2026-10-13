@@ -11,11 +11,17 @@ from __future__ import annotations
 import configparser
 import logging
 import os
-import xml.etree.ElementTree as ET
+import re
+import time
 from pathlib import Path
+
+from . import gnome_slideshow
 
 LOGGER = logging.getLogger(__name__)
 GNOME_SCHEMA = "org.gnome.desktop.background"
+PORTAL_NAME = "org.freedesktop.portal.Desktop"
+PORTAL_PATH = "/org/freedesktop/portal/desktop"
+PORTAL_SETTINGS = "org.freedesktop.portal.Settings"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".jxl", ".avif", ".bmp"}
 # Plasma's own wallpaper when the look-and-feel package names none.
 PLASMA_DEFAULT_WALLPAPER = "Next"
@@ -32,6 +38,8 @@ def configured_wallpapers(*, dark: bool) -> list[Path]:
     The light variant follows the dark one: if the image loaders cannot open
     one (GNOME's are JPEG XL), the other may still do.
     """
+    global _next_change
+    _next_change = None
     found: list[Path] = []
     for finder in (gnome_wallpapers, kde_wallpapers):
         try:
@@ -74,8 +82,9 @@ def local_path(uri: str) -> Path | None:
 def resolve_image(path: Path, *, dark: bool) -> Path | None:
     """The image a wallpaper setting points to.
 
-    GNOME slideshows are XML files listing images; KDE wallpaper packages are
-    directories with contents/images (and contents/images_dark).
+    GNOME slideshows are XML files whose image depends on the time of day
+    (gnome_slideshow.py); KDE wallpaper packages are directories with
+    contents/images (and contents/images_dark).
     """
     if path.is_dir():
         folders = ["images_dark", "images"] if dark else ["images"]
@@ -89,12 +98,71 @@ def resolve_image(path: Path, *, dark: bool) -> Path | None:
                 return max(images, key=lambda image: image.stat().st_size)
         return None
     if path.suffix.lower() == ".xml":
-        for element in ET.parse(path).iter("file"):
-            candidate = host_path(Path((element.text or "").strip()))
-            if candidate.is_file():
-                return candidate
-        return None
+        image, changes_in = gnome_slideshow.current_image(path, locate=host_path)
+        _note_change(changes_in)
+        if image is not None and image.is_file():
+            return image
+        # The image of this hour is missing: any other of the slideshow.
+        _start, sequence = gnome_slideshow.slides(path, host_path)
+        return next((slide.image for slide in sequence if slide.image.is_file()), None)
     return path if path.suffix.lower() in IMAGE_SUFFIXES else None
+
+
+# When the wallpaper last resolved changes by itself (a timed slideshow), as a
+# time.monotonic() deadline; None when it does not.
+_next_change: float | None = None
+
+
+def _note_change(seconds: float | None) -> None:
+    global _next_change
+    if seconds is None:
+        return
+    deadline = time.monotonic() + seconds
+    _next_change = deadline if _next_change is None else min(_next_change, deadline)
+
+
+def seconds_until_change() -> float | None:
+    """Seconds until the wallpaper found last changes by itself, or None."""
+    return None if _next_change is None else max(0.0, _next_change - time.monotonic())
+
+
+def desktop_prefers_dark() -> bool | None:
+    """The desktop's own light or dark style, which picks its wallpaper variant.
+
+    Asked through the XDG settings portal (GNOME and Plasma, in the Flatpak or
+    not); None when the desktop does not say.
+    """
+    import gi
+
+    gi.require_version("Gio", "2.0")
+    from gi.repository import Gio, GLib
+
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+    except GLib.Error:
+        return None
+    # ReadOne since portal version 2; Read before it, with the value wrapped twice.
+    for method in ("ReadOne", "Read"):
+        try:
+            reply = bus.call_sync(
+                PORTAL_NAME,
+                PORTAL_PATH,
+                PORTAL_SETTINGS,
+                method,
+                GLib.Variant("(ss)", ("org.freedesktop.appearance", "color-scheme")),
+                GLib.VariantType("(v)"),
+                Gio.DBusCallFlags.NONE,
+                1000,
+                None,
+            )
+        except GLib.Error:
+            continue
+        value = reply.unpack()[0]
+        if isinstance(value, GLib.Variant):
+            value = value.unpack()
+        # 1: prefers dark, 2: prefers light, 0: no preference (light wallpaper).
+        return value == 1 if isinstance(value, int) else None
+    return None
 
 
 def gnome_wallpapers(*, dark: bool) -> list[Path]:
@@ -155,25 +223,74 @@ def host_schema_default(schema: str, key: str) -> str | None:
     return value.strip().strip("'\"") if value else None
 
 
+# configparser drops the outer brackets of "[Containments][1]".
+_CONTAINMENT = re.compile(r"^Containments\]\[(\d+)$")
+_DESKTOP_PLUGINS = {"org.kde.plasma.folder", "org.kde.desktopcontainment"}
+
+
 def kde_wallpapers(*, dark: bool) -> list[Path]:
-    """Plasma's first image wallpaper, or the look-and-feel's default one."""
+    """The wallpaper of Plasma's desktop, or the look-and-feel's default one.
+
+    Each desktop containment names its wallpaper plugin; the settings of
+    plugins used before stay in the file, so only the active one counts.
+    """
     config = config_home() / "plasma-org.kde.plasma.desktop-appletsrc"
     if config.is_file():
         parser = configparser.ConfigParser(interpolation=None, strict=False)
         parser.read(config, encoding="utf-8")
-        for section in parser.sections():
-            # configparser drops the outer brackets of "[Containments][1][...]".
-            if f"[{section}]".endswith("[Wallpaper][org.kde.image][General]"):
-                path = local_path(parser.get(section, "Image", fallback=""))
-                image = _image_or_path(path, dark=dark) if path is not None else None
-                if image is not None:
-                    return [image]
+        for number, plugin in _desktop_wallpaper_plugins(parser):
+            general = f"Containments][{number}][Wallpaper][{plugin}][General"
+            image = _plugin_image(parser, general, plugin, dark=dark)
+            if image is not None:
+                return [image]
     if config.is_file() or "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
         # A wallpaper never changed is not written to the config at all.
         default = plasma_default_wallpaper(config_home())
         image = resolve_image(default, dark=dark) if default is not None else None
         return [image] if image is not None else []
     return []
+
+
+def _desktop_wallpaper_plugins(parser: configparser.ConfigParser) -> list[tuple[str, str]]:
+    """(containment, wallpaper plugin) of the desktops, desktop containments first."""
+    found = []
+    for section in parser.sections():
+        match = _CONTAINMENT.match(section)
+        if not match or parser.get(section, "plugin", fallback="") == "org.kde.panel":
+            continue
+        plugin = parser.get(section, "wallpaperplugin", fallback="org.kde.image")
+        desktop = parser.get(section, "plugin", fallback="") in _DESKTOP_PLUGINS
+        found.append((not desktop, int(match.group(1)), match.group(1), plugin))
+    return [(number, plugin) for _rank, _order, number, plugin in sorted(found)]
+
+
+def _plugin_image(
+    parser: configparser.ConfigParser, general: str, plugin: str, *, dark: bool
+) -> Path | None:
+    """The image a wallpaper plugin's settings point to.
+
+    The image plugin and most others (dynamic wallpapers among them) keep an
+    Image key; the slideshow does not say which image it shows, so its first
+    folder's first image stands for it.
+    """
+    path = (
+        local_path(parser.get(general, "Image", fallback=""))
+        if parser.has_section(general)
+        else None
+    )
+    if path is not None:
+        return _image_or_path(path, dark=dark)
+    if plugin == "org.kde.slideshow" and parser.has_section(general):
+        for folder in parser.get(general, "SlidePaths", fallback="").split(","):
+            folder_path = local_path(folder.strip())
+            if folder_path is None or not folder_path.is_dir():
+                continue
+            images = sorted(
+                image for image in folder_path.rglob("*") if image.suffix.lower() in IMAGE_SUFFIXES
+            )
+            if images:
+                return images[0]
+    return None
 
 
 def _data_dirs() -> list[Path]:

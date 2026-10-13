@@ -96,9 +96,14 @@ def appearance_group(window) -> Adw.PreferencesGroup:
 
 def backdrop_subtitle(window) -> str:
     """What the material needs, or why the chosen one is not shown."""
-    reason = getattr(getattr(window, "_window_backdrops", None), "reason", "")
+    backdrops = getattr(window, "_window_backdrops", None)
+    reason = getattr(backdrops, "reason", "")
     if reason:
         return reason
+    wallpaper = getattr(backdrops, "wallpaper", None)
+    if wallpaper is not None and getattr(backdrops, "kind", "") == "mica":
+        # Which image it took, to tell at a glance whether it is the desktop's.
+        return _("Mica feito do papel de parede {name}").format(name=wallpaper.name)
     if host.IS_WINDOWS:
         return _("Transparência do Windows 11 por trás da janela, no tema Windows 11")
     return _(

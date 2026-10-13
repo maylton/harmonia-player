@@ -143,12 +143,16 @@ class LinuxWindowBackdrops:
         self.active = False
         # Why the chosen material is not shown, for Preferences; "" when it is.
         self.reason = ""
+        # The wallpaper Mica is made of, for Preferences.
+        self.wallpaper: Path | None = None
         self._window: Gtk.Window | None = None
         self._provider = Gtk.CssProvider()
         self._provider_display = None
+        self._timer = 0
         self._style = Adw.StyleManager.get_default()
         self._style.connect("notify::dark", lambda *_: self._refresh())
         self._wallpaper_settings = self._watch_gnome_wallpaper()
+        self._color_scheme_signal = self._watch_desktop_color_scheme()
 
     def set_kind(self, kind: str, main_window: Gtk.Window) -> bool:
         """Use ``kind`` ("mica", "acrylic" or "none"); True if the window shows it."""
@@ -168,6 +172,46 @@ class LinuxWindowBackdrops:
         settings.connect("changed", lambda *_: self.kind == "mica" and self._refresh())
         return settings
 
+    def _watch_desktop_color_scheme(self) -> int:
+        """The desktop switching light and dark switches its wallpaper too."""
+        try:
+            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        except GLib.Error:
+            return 0
+
+        def changed(_bus, _sender, _path, _interface, _signal, parameters):
+            namespace, key, _value = parameters.unpack()
+            scheme = (namespace, key) == ("org.freedesktop.appearance", "color-scheme")
+            if scheme and self.kind == "mica":
+                self._refresh()
+
+        return bus.signal_subscribe(
+            desktop_wallpaper.PORTAL_NAME,
+            desktop_wallpaper.PORTAL_SETTINGS,
+            "SettingChanged",
+            desktop_wallpaper.PORTAL_PATH,
+            None,
+            Gio.DBusSignalFlags.NONE,
+            changed,
+        )
+
+    def _schedule_slideshow_refresh(self) -> None:
+        """A timed wallpaper changes by itself: refresh when its image does."""
+        if self._timer:
+            GLib.source_remove(self._timer)
+            self._timer = 0
+        seconds = desktop_wallpaper.seconds_until_change()
+        if self.kind != "mica" or seconds is None:
+            return
+
+        def tick() -> bool:
+            self._timer = 0
+            self._refresh()
+            return GLib.SOURCE_REMOVE
+
+        # A second after the change, and at least every hour in case the clock jumps.
+        self._timer = GLib.timeout_add_seconds(int(min(seconds, 3600)) + 1, tick)
+
     def _tint(self, dark: bool) -> str:
         theme = get_theme(getattr(self._window.preferences, "theme", ""))
         variant = "dark" if dark else "light"
@@ -180,7 +224,13 @@ class LinuxWindowBackdrops:
             return False
         self._install_provider(window)
         dark = self._style.get_dark()
-        image, self.reason = self._mica(dark) if self.kind == "mica" else (None, "")
+        if self.kind == "mica":
+            # The variant the desktop shows, whatever Harmonia's own style is.
+            desktop_dark = desktop_wallpaper.desktop_prefers_dark()
+            image, self.reason = self._mica(dark if desktop_dark is None else desktop_dark)
+        else:
+            image, self.reason = None, ""
+        self._schedule_slideshow_refresh()
         css = material_css(self.kind, self._tint(dark), image) if self.kind != "none" else ""
         self._provider.load_from_string(css)
         applied = bool(css)
@@ -189,18 +239,21 @@ class LinuxWindowBackdrops:
         self.active = applied
         return applied
 
-    @staticmethod
-    def _mica(dark: bool) -> tuple[Path | None, str]:
+    def _mica(self, dark: bool) -> tuple[Path | None, str]:
         """The blurred wallpaper, or None and why there is none."""
+        self.wallpaper = None
         configured = desktop_wallpaper.configured_wallpapers(dark=dark)
         candidates = [path for path in configured if path.is_file()]
         for wallpaper in candidates:
             try:
-                return mica_image(wallpaper, host.cache_dir() / "mica"), ""
+                image = mica_image(wallpaper, host.cache_dir() / "mica")
             except (GLib.Error, OSError):
                 LOGGER.warning(
                     "Não foi possível abrir o papel de parede %s", wallpaper, exc_info=True
                 )
+                continue
+            self.wallpaper = wallpaper
+            return image, ""
         if candidates:
             return None, unreadable_reason(candidates[0])
         if configured and desktop_wallpaper.in_flatpak():
