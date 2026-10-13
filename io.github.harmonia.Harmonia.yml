@@ -28,6 +28,9 @@ finish-args:
   - --filesystem=xdg-data/wallpapers:ro
   - --filesystem=xdg-config/plasma-org.kde.plasma.desktop-appletsrc:ro
   - --filesystem=xdg-config/kdeglobals:ro
+  # Blur behind the window on GNOME is Blur my Shell's (gnome_blur.py): ask
+  # GNOME Shell whether the extension is on; its settings are in dconf.
+  - --talk-name=org.gnome.Shell.Extensions
 modules:
   - name: harmonia
     buildsystem: meson

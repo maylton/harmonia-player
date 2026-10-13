@@ -1,16 +1,15 @@
 """Mica and Acrylic for the GTK frontend on Linux.
 
-No Linux compositor offers Windows' materials to applications, so:
+Both blur what is behind the window, as on Windows, when the compositor can:
+the window turns translucent under a tint of the theme's window colour
+(stronger for Mica) and the compositor blurs behind it. KWin does it on
+request (kwin_blur.py); on GNOME only the Blur my Shell extension can, for
+the applications in its list (gnome_blur.py).
 
-- Mica, the desktop wallpaper blurred and tinted behind the window, is drawn
-  by Harmonia: the wallpaper is blurred once into a small image, which becomes
-  the window's CSS background under a tint of the theme's window colour. Unlike
-  Windows it does not shift as the window moves, since Wayland does not tell
-  applications where their windows are.
-- Acrylic shows what is behind the window, blurred, which only the compositor
-  can do: the window turns translucent under a tint that keeps it readable,
-  and the compositor's blur does the rest where there is one (KWin's blur with
-  the Force Blur script, GNOME Shell with the Blur my Shell extension).
+Without a compositor blur, Mica is drawn by Harmonia from the desktop
+wallpaper, blurred once into a small image that becomes the window's
+background (it cannot follow the window, which Wayland does not place), and
+Acrylic is the translucent window alone.
 
 Out of focus, windows11.css turns the window opaque as on Windows.
 """
@@ -19,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 from pathlib import Path
 
 import gi
@@ -29,7 +29,7 @@ gi.require_version("GdkPixbuf", "2.0")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
 
-from . import desktop_wallpaper, host  # noqa: E402
+from . import desktop_wallpaper, gnome_blur, host, kwin_blur  # noqa: E402
 from .i18n import _  # noqa: E402
 from .theming import get_theme  # noqa: E402
 from .ui import set_css_class  # noqa: E402
@@ -43,6 +43,7 @@ TINT = {
     "mica": {"dark": 0.78, "light": 0.68},
     "acrylic": {"dark": 0.72, "light": 0.65},
 }
+CORNER_RADIUS = 8  # windows11.css's window.csd corners, outside the blur
 MICA_SHRINK = 14  # pixels of the longest side the wallpaper is reduced to
 MICA_SIZE = 640  # size of the smoothed image the window scales to cover
 
@@ -113,9 +114,14 @@ def rgba(color: str, alpha: float) -> str:
     return f"rgba({red}, {green}, {blue}, {alpha})"
 
 
-def material_css(kind: str, tint: str, image: Path | None) -> str:
-    """The window background of ``kind``; ``image`` is Mica's blurred wallpaper."""
+def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = False) -> str:
+    """The window background of ``kind``; ``image`` is Mica's blurred wallpaper.
+
+    With the compositor blurring behind the window, both are the tint alone.
+    """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
+    if blurred and kind in ("mica", "acrylic"):
+        return f"{selector} {{ background-color: {tint}; background-image: none; }}\n"
     if kind == "mica" and image is not None:
         uri = Gio.File.new_for_path(str(image)).get_uri()
         return (
@@ -145,6 +151,14 @@ class LinuxWindowBackdrops:
         self.reason = ""
         # The wallpaper Mica is made of, for Preferences.
         self.wallpaper: Path | None = None
+        # Who blurs behind the window: "kwin", "blur-my-shell" or "" (nobody).
+        self.blur = ""
+        # Blur my Shell is on but does not blur Harmonia: Preferences offer it.
+        self.blur_my_shell_offer = False
+        self._kwin = None
+        self._kwin_display = None
+        self._kwin_surfaces: dict[int, int] = {}
+        self._waiting_realize = False
         self._window: Gtk.Window | None = None
         self._provider = Gtk.CssProvider()
         self._provider_display = None
@@ -224,14 +238,22 @@ class LinuxWindowBackdrops:
             return False
         self._install_provider(window)
         dark = self._style.get_dark()
-        if self.kind == "mica":
+        self.blur = self._compositor_blur(window) if self.kind != "none" else ""
+        if self.blur != "kwin":
+            self._release_kwin_blur()
+        if self.kind == "mica" and not self.blur:
             # The variant the desktop shows, whatever Harmonia's own style is.
             desktop_dark = desktop_wallpaper.desktop_prefers_dark()
             image, self.reason = self._mica(dark if desktop_dark is None else desktop_dark)
         else:
-            image, self.reason = None, ""
+            self.wallpaper = None
+            image, self.reason = None, self._no_blur_reason() if self.kind == "acrylic" else ""
         self._schedule_slideshow_refresh()
-        css = material_css(self.kind, self._tint(dark), image) if self.kind != "none" else ""
+        css = (
+            material_css(self.kind, self._tint(dark), image, blurred=bool(self.blur))
+            if self.kind != "none"
+            else ""
+        )
         self._provider.load_from_string(css)
         applied = bool(css)
         set_css_class(window, CSS_CLASS, applied)
@@ -267,6 +289,99 @@ class LinuxWindowBackdrops:
                 name=configured[0].name
             )
         return None, _("Papel de parede do GNOME ou do Plasma não encontrado")
+
+    # --- Compositor blur ----------------------------------------------------
+
+    def _compositor_blur(self, window: Gtk.Window) -> str:
+        """Who blurs behind the window now; asks KWin for it on the way."""
+        self.blur_my_shell_offer = False
+        if "GNOME" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
+            app = window.get_application()
+            state = gnome_blur.state(app.get_application_id() if app else FLATPAK_ID)
+            self.blur_my_shell_offer = state.enabled and not state.blurs_app
+            return "blur-my-shell" if state.blurs_app else ""
+        kwin = self._kwin_for(window)
+        if kwin is None:
+            return ""
+        self._request_kwin_blur(window)
+        return "kwin"
+
+    def _no_blur_reason(self) -> str:
+        if "GNOME" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
+            if self.blur_my_shell_offer:
+                return _("O Blur my Shell está ativo, mas não borra o Harmonia")
+            return _("No GNOME, o borrado por trás da janela precisa da extensão Blur my Shell")
+        return _("Ative o efeito Desfoque do KWin para borrar o que está atrás da janela")
+
+    def include_in_blur_my_shell(self) -> bool:
+        """Add Harmonia to Blur my Shell's application blur, then use it."""
+        window = self._window
+        app = window.get_application() if window is not None else None
+        done = gnome_blur.include(app.get_application_id() if app else FLATPAK_ID)
+        if done:
+            self._refresh()
+        return done
+
+    def _kwin_for(self, window: Gtk.Window):
+        display = window.get_display()
+        if display is not self._kwin_display:
+            self._kwin_display = display
+            self._kwin = kwin_blur.connect(display) if display is not None else None
+        return self._kwin
+
+    def _request_kwin_blur(self, window: Gtk.Window) -> None:
+        """Blur behind the window's visible area, kept in step with its size."""
+        surface = window.get_surface()
+        if surface is None:
+            if not self._waiting_realize:
+                self._waiting_realize = True
+                window.connect("realize", lambda *_: self.kind != "none" and self._refresh())
+            return
+        handle = kwin_blur.surface_handle(surface)
+        if handle is None:
+            return
+        if handle not in self._kwin_surfaces:
+            self._kwin_surfaces[handle] = surface.connect(
+                "layout", lambda *_: self.blur == "kwin" and self._update_kwin_region()
+            )
+            window.connect(
+                "notify::maximized", lambda *_: self.blur == "kwin" and self._update_kwin_region()
+            )
+            window.connect("unrealize", lambda *_: self._forget_kwin_surface(handle))
+        self._update_kwin_region()
+
+    def _update_kwin_region(self) -> bool:
+        window = self._window
+        surface = window.get_surface() if window is not None else None
+        handle = kwin_blur.surface_handle(surface) if surface is not None else None
+        if handle is None or self._kwin is None:
+            return False
+        x, y = window.get_surface_transform()
+        flat = window.is_maximized() or window.is_fullscreen()
+        rects = kwin_blur.rounded_rect_region(
+            round(x),
+            round(y),
+            window.get_width(),
+            window.get_height(),
+            0 if flat else CORNER_RADIUS,
+        )
+        if isinstance(self._kwin, kwin_blur.X11Blur):
+            # X11 counts device pixels.
+            scale = surface.get_scale_factor()
+            rects = [tuple(value * scale for value in rect) for rect in rects]
+        self._kwin.set_region(handle, rects)
+        window.queue_draw()  # the request takes effect on the surface's next commit
+        return False
+
+    def _forget_kwin_surface(self, handle: int) -> None:
+        self._kwin_surfaces.pop(handle, None)
+        if self._kwin is not None:
+            self._kwin.unset(handle)
+
+    def _release_kwin_blur(self) -> None:
+        if self._kwin is not None:
+            for handle in list(self._kwin_surfaces):
+                self._kwin.unset(handle)
 
     def _install_provider(self, window: Gtk.Window) -> None:
         display = window.get_display() or Gdk.Display.get_default()

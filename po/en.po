@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-13 18:16-0300\n"
+"POT-Creation-Date: 2026-10-13 18:28-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -311,7 +311,7 @@ msgstr "Nov"
 msgid "Dez"
 msgstr "Dec"
 
-#: src/harmonia/linux_backdrop.py:105
+#: src/harmonia/linux_backdrop.py:106
 #, python-brace-format
 msgid ""
 "O papel de parede é {format} e falta o suporte a esse formato (pacote do gdk-"
@@ -320,12 +320,12 @@ msgstr ""
 "The wallpaper is {format} and support for that format is missing (gdk-pixbuf "
 "package for {format})"
 
-#: src/harmonia/linux_backdrop.py:108
+#: src/harmonia/linux_backdrop.py:109
 #, python-brace-format
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr "Could not open the wallpaper {name}"
 
-#: src/harmonia/linux_backdrop.py:262
+#: src/harmonia/linux_backdrop.py:284
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
@@ -334,14 +334,27 @@ msgstr ""
 "The Flatpak cannot read the wallpaper. Allow its folder with: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 
-#: src/harmonia/linux_backdrop.py:266
+#: src/harmonia/linux_backdrop.py:288
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr "The wallpaper {name} was not found"
 
-#: src/harmonia/linux_backdrop.py:269
+#: src/harmonia/linux_backdrop.py:291
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr "GNOME or Plasma wallpaper not found"
+
+#: src/harmonia/linux_backdrop.py:312
+msgid "O Blur my Shell está ativo, mas não borra o Harmonia"
+msgstr "Blur my Shell is on, but it does not blur Harmonia"
+
+#: src/harmonia/linux_backdrop.py:313
+msgid ""
+"No GNOME, o borrado por trás da janela precisa da extensão Blur my Shell"
+msgstr "On GNOME, blurring behind the window needs the Blur my Shell extension"
+
+#: src/harmonia/linux_backdrop.py:314
+msgid "Ative o efeito Desfoque do KWin para borrar o que está atrás da janela"
+msgstr "Turn on KWin's Blur effect to blur what is behind the window"
 
 #: src/harmonia/player.py:34
 msgid "O elemento GStreamer playbin não está disponível"
@@ -1065,149 +1078,173 @@ msgstr "Disconnect"
 msgid "Conectar"
 msgstr "Connect"
 
-#: src/harmonia/settings_page/appearance.py:20
+#: src/harmonia/settings_page/appearance.py:21
 msgid "Aparência"
 msgstr "Appearance"
 
-#: src/harmonia/settings_page/appearance.py:21
+#: src/harmonia/settings_page/appearance.py:22
 msgid "Personalize o ambiente visual sem alterar o conteúdo."
 msgstr "Customize the app appearance without changing its content."
 
-#: src/harmonia/settings_page/appearance.py:25
+#: src/harmonia/settings_page/appearance.py:26
 msgid "Tema"
 msgstr "Theme"
 
-#: src/harmonia/settings_page/appearance.py:33
+#: src/harmonia/settings_page/appearance.py:34
 msgid "Modo de cor"
 msgstr "Color mode"
 
-#: src/harmonia/settings_page/appearance.py:35
-#: src/harmonia/settings_page/appearance.py:48
+#: src/harmonia/settings_page/appearance.py:36
+#: src/harmonia/settings_page/appearance.py:49
 msgid "Padrão do tema"
 msgstr "Theme default"
 
-#: src/harmonia/settings_page/appearance.py:36
+#: src/harmonia/settings_page/appearance.py:37
 msgid "Seguir o sistema"
 msgstr "Follow system"
 
-#: src/harmonia/settings_page/appearance.py:37
+#: src/harmonia/settings_page/appearance.py:38
 msgid "Claro"
 msgstr "Light"
 
-#: src/harmonia/settings_page/appearance.py:38
+#: src/harmonia/settings_page/appearance.py:39
 msgid "Escuro"
 msgstr "Dark"
 
-#: src/harmonia/settings_page/appearance.py:46
+#: src/harmonia/settings_page/appearance.py:47
 msgid "Cor de destaque"
 msgstr "Accent color"
 
-#: src/harmonia/settings_page/appearance.py:49
+#: src/harmonia/settings_page/appearance.py:50
 msgid "Vermelho"
 msgstr "Red"
 
-#: src/harmonia/settings_page/appearance.py:50
+#: src/harmonia/settings_page/appearance.py:51
 msgid "Laranja"
 msgstr "Orange"
 
-#: src/harmonia/settings_page/appearance.py:51
+#: src/harmonia/settings_page/appearance.py:52
 msgid "Amarelo"
 msgstr "Yellow"
 
-#: src/harmonia/settings_page/appearance.py:52
+#: src/harmonia/settings_page/appearance.py:53
 msgid "Verde"
 msgstr "Green"
 
-#: src/harmonia/settings_page/appearance.py:53
+#: src/harmonia/settings_page/appearance.py:54
 msgid "Menta"
 msgstr "Mint"
 
-#: src/harmonia/settings_page/appearance.py:54
+#: src/harmonia/settings_page/appearance.py:55
 msgid "Azul"
 msgstr "Blue"
 
-#: src/harmonia/settings_page/appearance.py:55
+#: src/harmonia/settings_page/appearance.py:56
 msgid "Roxo"
 msgstr "Purple"
 
-#: src/harmonia/settings_page/appearance.py:56
+#: src/harmonia/settings_page/appearance.py:57
 msgid "Rosa"
 msgstr "Pink"
 
-#: src/harmonia/settings_page/appearance.py:57
+#: src/harmonia/settings_page/appearance.py:58
 msgid "Marrom"
 msgstr "Brown"
 
-#: src/harmonia/settings_page/appearance.py:58
+#: src/harmonia/settings_page/appearance.py:59
 msgid "Ardósia"
 msgstr "Slate"
 
-#: src/harmonia/settings_page/appearance.py:66
+#: src/harmonia/settings_page/appearance.py:67
 msgid "Fundo ambiente desfocado"
 msgstr "Blurred ambient background"
 
-#: src/harmonia/settings_page/appearance.py:67
+#: src/harmonia/settings_page/appearance.py:68
 msgid "Usa as cores da capa atual atrás da interface"
 msgstr "Uses colors from the current cover behind the interface"
 
-#: src/harmonia/settings_page/appearance.py:76
+#: src/harmonia/settings_page/appearance.py:77
 msgid "Windows — ícones Fluent"
 msgstr "Windows — Fluent icons"
 
-#: src/harmonia/settings_page/appearance.py:78
+#: src/harmonia/settings_page/appearance.py:79
 msgid "GTK — padrão do sistema"
 msgstr "GTK — system default"
 
-#: src/harmonia/settings_page/appearance.py:81
+#: src/harmonia/settings_page/appearance.py:82
 msgid "Material Expressive"
 msgstr "Material Expressive"
 
-#: src/harmonia/settings_page/appearance.py:85
+#: src/harmonia/settings_page/appearance.py:86
 msgid "Fluent — ícones do Windows 11"
 msgstr "Fluent — Windows 11 icons"
 
-#: src/harmonia/settings_page/appearance.py:88
+#: src/harmonia/settings_page/appearance.py:89
 msgid "Estilo dos ícones"
 msgstr "Icon style"
 
 #: src/harmonia/settings_page/appearance.py:106
+msgid "O KWin borra o que está atrás da janela"
+msgstr "KWin blurs what is behind the window"
+
+#: src/harmonia/settings_page/appearance.py:108
+msgid "O Blur my Shell borra o que está atrás da janela"
+msgstr "Blur my Shell blurs what is behind the window"
+
+#: src/harmonia/settings_page/appearance.py:112
 #, python-brace-format
 msgid "Mica feito do papel de parede {name}"
 msgstr "Mica made from the wallpaper {name}"
 
-#: src/harmonia/settings_page/appearance.py:108
+#: src/harmonia/settings_page/appearance.py:114
 msgid "Transparência do Windows 11 por trás da janela, no tema Windows 11"
 msgstr "Windows 11 transparency behind the window, in the Windows 11 theme"
 
-#: src/harmonia/settings_page/appearance.py:110
+#: src/harmonia/settings_page/appearance.py:116
 msgid ""
-"No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que "
-"está atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
+"No tema Windows 11. Borra o que está atrás da janela com o KWin ou com o "
+"Blur my Shell (GNOME); sem eles, o Mica usa o papel de parede"
 msgstr ""
-"With the Windows 11 theme. Mica uses the wallpaper; Acrylic blurs what is "
-"behind the window with Blur my Shell (GNOME) or Force Blur (KDE)"
+"In the Windows 11 theme. Blurs what is behind the window with KWin or Blur "
+"my Shell (GNOME); without them, Mica uses the wallpaper"
 
-#: src/harmonia/settings_page/appearance.py:120
+#: src/harmonia/settings_page/appearance.py:124
+msgid "Borrar com o Blur my Shell"
+msgstr "Blur with Blur my Shell"
+
+#: src/harmonia/settings_page/appearance.py:125
+msgid "Inclui o Harmonia no borrado de aplicativos da extensão"
+msgstr "Adds Harmonia to the extension's application blur"
+
+#: src/harmonia/settings_page/appearance.py:127
+msgid "Ativar"
+msgstr "Turn on"
+
+#: src/harmonia/settings_page/appearance.py:136
+msgid "Não foi possível alterar as configurações do Blur my Shell"
+msgstr "Could not change Blur my Shell's settings"
+
+#: src/harmonia/settings_page/appearance.py:148
 msgid "Efeito de fundo"
 msgstr "Background effect"
 
-#: src/harmonia/settings_page/appearance.py:122
+#: src/harmonia/settings_page/appearance.py:150
 msgid "Mica"
 msgstr "Mica"
 
-#: src/harmonia/settings_page/appearance.py:123
+#: src/harmonia/settings_page/appearance.py:151
 msgid "Acrílico (fosco)"
 msgstr "Acrylic (frosted)"
 
-#: src/harmonia/settings_page/appearance.py:124
+#: src/harmonia/settings_page/appearance.py:152
 msgid "Nenhum"
 msgstr "None"
 
-#: src/harmonia/settings_page/appearance.py:133
+#: src/harmonia/settings_page/appearance.py:163
 msgid "Capa desfocada no player expandido"
 msgstr "Blurred cover in the expanded player"
 
-#: src/harmonia/settings_page/appearance.py:134
+#: src/harmonia/settings_page/appearance.py:164
 msgid "Desligada, o player expandido mostra o efeito de fundo"
 msgstr "When off, the expanded player shows the background effect"
 

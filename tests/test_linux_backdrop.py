@@ -254,7 +254,7 @@ def test_mica_takes_the_variant_the_desktop_shows(monkeypatch, tmp_path):
         desktop_wallpaper, "configured_wallpapers", lambda *, dark: asked.append(dark) or []
     )
     monkeypatch.setattr(desktop_wallpaper, "desktop_prefers_dark", lambda: False)
-    monkeypatch.setattr(linux_backdrop, "material_css", lambda *_args: "")
+    monkeypatch.setattr(linux_backdrop, "material_css", lambda *_args, **_kwargs: "")
 
     class Style:
         def get_dark(self):
@@ -268,6 +268,9 @@ def test_mica_takes_the_variant_the_desktop_shows(monkeypatch, tmp_path):
     backdrops.kind, backdrops._window, backdrops._style = "mica", Window(), Style()
     backdrops._provider = type("Provider", (), {"load_from_string": lambda *_: None})()
     backdrops._provider_display, backdrops._timer, backdrops.wallpaper = None, 0, None
+    backdrops._kwin, backdrops._kwin_surfaces = None, {}
+    # No compositor blur: Mica comes from the wallpaper.
+    monkeypatch.setattr(backdrops, "_compositor_blur", lambda _window: "")
     monkeypatch.setattr(backdrops, "_install_provider", lambda _window: None)
     monkeypatch.setattr(backdrops, "_tint", lambda _dark: "rgba(0,0,0,0.5)")
     monkeypatch.setattr(linux_backdrop, "set_css_class", lambda *_args: None)
