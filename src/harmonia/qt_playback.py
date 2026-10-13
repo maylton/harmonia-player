@@ -18,6 +18,7 @@ from .playback_state import (
     radio_seed_for_autoplay,
     remove_queue_item,
     shuffled_queue_keep_current,
+    stream_recovery,
 )
 from .services import YouTubeMusicService
 from .storage import Storage
@@ -566,14 +567,28 @@ class QtPlaybackController(QObject):
         return False
 
     def _player_error(self, error_string: str) -> bool:
+        position_ms = self.player.position_us // 1000
         self._stream_ready = False
         item = self.current_item
-        if (
-            item is not None
-            and not item.id.startswith("local:")
-            and self._stream_recovery_attempts < 1
-        ):
+        recovery = (
+            stream_recovery(
+                error_string,
+                self._stream_recovery_attempts,
+                position_ms,
+                renewable=not item.id.startswith("local:"),
+            )
+            if item is not None
+            else None
+        )
+        if recovery is not None and recovery.action == "next":
+            # It ended early again: the stream really ends there.
+            LOGGER.warning("Stream ended early twice; going to the next track: %s", error_string)
+            self.next()
+            return False
+        if item is not None and recovery is not None and recovery.action == "renew":
             self._stream_recovery_attempts += 1
+            # Resume where the sound stopped, not from the start (_start_uri seeks).
+            self._restored_position_ms = recovery.resume_ms
             request_id = self._stream_request
             self.set_status(_("O stream falhou; renovando a conexão…"))
 

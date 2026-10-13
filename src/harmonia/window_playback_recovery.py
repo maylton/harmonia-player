@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 
 import gi
@@ -12,6 +13,9 @@ from gi.repository import Adw, Gdk, GLib
 
 from .i18n import _
 from .playback_report import playback_report
+from .playback_state import stream_recovery
+
+LOGGER = logging.getLogger(__name__)
 
 
 class WindowPlaybackRecoveryMixin:
@@ -24,13 +28,33 @@ class WindowPlaybackRecoveryMixin:
             self._stream_ready = False
             self._show_play_failure(error)
             return False
-        return self._player_error(error)
+        # The track never started: nothing to resume.
+        return self._recover_stream(error, 0)
 
     def _player_error(self, error: str):
+        return self._recover_stream(error, self._playback_position_us() // 1000)
+
+    def _recover_stream(self, error: str, position_ms: int):
         self._stream_ready = False
         item = getattr(self, "current_item", None)
-        if item is not None and self._stream_recovery_attempts < 1:
+        if item is None:
+            self._show_play_failure(_("Não foi possível reproduzir: {error}").format(error=error))
+            return False
+        recovery = stream_recovery(
+            error,
+            self._stream_recovery_attempts,
+            position_ms,
+            renewable=not item.id.startswith("local:"),
+        )
+        if recovery.action == "next":
+            # It ended early again: the stream really ends there.
+            LOGGER.warning("Stream ended early twice; going to the next track: %s", error)
+            self._play_next()
+            return False
+        if recovery.action == "renew":
             self._stream_recovery_attempts += 1
+            # Resume where the sound stopped, not from the start.
+            self._pending_seek_ms = recovery.resume_ms
             request_id = self._play_request
             self.play_button.set_sensitive(False)
             self.expanded_play_button.set_sensitive(False)
