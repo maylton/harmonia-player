@@ -5,7 +5,8 @@ from __future__ import annotations
 import gi
 
 gi.require_version("Adw", "1")
-from gi.repository import Adw  # noqa: E402
+gi.require_version("Gtk", "4.0")
+from gi.repository import Adw, Gtk  # noqa: E402
 
 from .. import host  # noqa: E402
 from ..i18n import _  # noqa: E402
@@ -100,6 +101,11 @@ def backdrop_subtitle(window) -> str:
     reason = getattr(backdrops, "reason", "")
     if reason:
         return reason
+    blur = getattr(backdrops, "blur", "")
+    if blur == "kwin":
+        return _("O KWin borra o que está atrás da janela")
+    if blur == "blur-my-shell":
+        return _("O Blur my Shell borra o que está atrás da janela")
     wallpaper = getattr(backdrops, "wallpaper", None)
     if wallpaper is not None and getattr(backdrops, "kind", "") == "mica":
         # Which image it took, to tell at a glance whether it is the desktop's.
@@ -107,9 +113,31 @@ def backdrop_subtitle(window) -> str:
     if host.IS_WINDOWS:
         return _("Transparência do Windows 11 por trás da janela, no tema Windows 11")
     return _(
-        "No tema Windows 11. O Mica usa o papel de parede; o Acrílico desfoca o que está "
-        "atrás da janela com Blur my Shell (GNOME) ou Force Blur (KDE)"
+        "No tema Windows 11. Borra o que está atrás da janela com o KWin ou com o "
+        "Blur my Shell (GNOME); sem eles, o Mica usa o papel de parede"
     )
+
+
+def _blur_my_shell_row(window) -> Adw.ActionRow:
+    """Blur my Shell is on but leaves Harmonia out: offer to add it."""
+    row = Adw.ActionRow(
+        title=_("Borrar com o Blur my Shell"),
+        subtitle=_("Inclui o Harmonia no borrado de aplicativos da extensão"),
+    )
+    button = Gtk.Button(label=_("Ativar"), valign=Gtk.Align.CENTER)
+    button.add_css_class("pill")
+    button.add_css_class("suggested-action")
+
+    def include(*_args) -> None:
+        if window._window_backdrops.include_in_blur_my_shell():
+            row.set_visible(False)
+            window._backdrop_row.set_subtitle(backdrop_subtitle(window))
+        else:
+            row.set_subtitle(_("Não foi possível alterar as configurações do Blur my Shell"))
+
+    button.connect("clicked", include)
+    row.add_suffix(button)
+    return row
 
 
 def _add_window_material_rows(window, group: Adw.PreferencesGroup) -> None:
@@ -129,6 +157,8 @@ def _add_window_material_rows(window, group: Adw.PreferencesGroup) -> None:
     window._backdrop_row.set_subtitle(backdrop_subtitle(window))
     window._backdrop_row.set_sensitive(supported)
     group.add(window._backdrop_row)
+    if getattr(getattr(window, "_window_backdrops", None), "blur_my_shell_offer", False):
+        group.add(_blur_my_shell_row(window))
     window._expanded_cover_row = switch_row(
         _("Capa desfocada no player expandido"),
         _("Desligada, o player expandido mostra o efeito de fundo"),

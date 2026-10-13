@@ -139,6 +139,34 @@ jobs:
           meson setup build --buildtype=release
           meson compile -C build
 
+  # kwin_blur.py talks Wayland through ctypes, which no other job runs: a
+  # headless KWin checks the requests on GTK's own connection.
+  linux-blur:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar o KWin e o GTK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            dbus dbus-x11 gir1.2-gtk-4.0 kwin-wayland libwayland-client0 python3-gi python3-pytest
+
+      - name: Pedir o borrado a um KWin sem tela
+        run: |
+          export XDG_RUNTIME_DIR="$(mktemp -d)"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          dbus-run-session -- sh -ec '
+            kwin_wayland --virtual --no-lockscreen --socket harmonia-kwin \
+              --width 1280 --height 800 > kwin.log 2>&1 &
+            for attempt in $(seq 1 30); do
+              [ -S "$XDG_RUNTIME_DIR/harmonia-kwin" ] && break
+              sleep 1
+            done
+            WAYLAND_DISPLAY=harmonia-kwin GDK_BACKEND=wayland HARMONIA_LIVE_KWIN=1 \
+              python3 -m pytest -q -p no:cacheprovider -rs tests/test_kwin_blur_live.py
+          ' || { cat kwin.log; exit 1; }
+
   # The .deb and .rpm, built from the Meson install and installed into the
   # current Ubuntu and Fedora, where libadwaita is new enough for them.
   linux-packages:
