@@ -114,3 +114,46 @@ def playback_state_snapshot(
         repeat,
         autoplay,
     )
+
+
+class StreamEndedEarly(str):
+    """A player error for a stream that stopped before its known duration.
+
+    It reads as its message; ``position_us`` says where the sound stopped,
+    so playback can resume there instead of starting the track over.
+    """
+
+    position_us: int
+    duration_us: int
+
+    def __new__(cls, message: str, position_us: int, duration_us: int) -> StreamEndedEarly:
+        error = super().__new__(cls, message)
+        error.position_us = max(0, int(position_us))
+        error.duration_us = max(0, int(duration_us))
+        return error
+
+
+@dataclass(frozen=True, slots=True)
+class StreamRecovery:
+    """What to do after a playback error: "renew" the stream and resume at
+    ``resume_ms``, go to the "next" track, or "fail" and say why."""
+
+    action: str
+    resume_ms: int = 0
+
+
+def stream_recovery(
+    error: str, attempts: int, position_ms: int, *, renewable: bool = True
+) -> StreamRecovery:
+    """The same rule for both frontends.
+
+    The first failure renews the stream and resumes where the sound stopped:
+    starting over made the track play twice. A stream that ends early again
+    has really ended (YouTube can announce more than it serves), so the queue
+    moves on instead of stopping.
+    """
+    early = isinstance(error, StreamEndedEarly)
+    if renewable and attempts < 1:
+        resume_ms = error.position_us // 1000 if early else max(0, position_ms)
+        return StreamRecovery("renew", resume_ms)
+    return StreamRecovery("next" if early else "fail")

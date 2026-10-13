@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-13 15:54-0300\n"
+"POT-Creation-Date: 2026-10-13 18:16-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -343,11 +343,11 @@ msgstr "The wallpaper {name} was not found"
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr "GNOME or Plasma wallpaper not found"
 
-#: src/harmonia/player.py:33
+#: src/harmonia/player.py:34
 msgid "O elemento GStreamer playbin não está disponível"
 msgstr "GStreamer playbin element is not available"
 
-#: src/harmonia/player.py:272
+#: src/harmonia/player.py:271
 #, python-brace-format
 msgid ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
@@ -742,29 +742,29 @@ msgstr "Added to {title}"
 msgid "Faixa removida da playlist"
 msgstr "Track removed from playlist"
 
-#: src/harmonia/qt_playback.py:277
+#: src/harmonia/qt_playback.py:278
 msgid "O arquivo local não está mais disponível."
 msgstr "The local file is no longer available."
 
-#: src/harmonia/qt_playback.py:340
+#: src/harmonia/qt_playback.py:341
 #, python-brace-format
 msgid "Não foi possível reproduzir a faixa: {error}"
 msgstr "Couldn't play the track: {error}"
 
-#: src/harmonia/qt_playback.py:480 src/harmonia/window_autoplay.py:73
+#: src/harmonia/qt_playback.py:481 src/harmonia/window_autoplay.py:73
 #, python-brace-format
 msgid "Não foi possível continuar a rádio: {error}"
 msgstr "Couldn't continue radio: {error}"
 
-#: src/harmonia/qt_playback.py:492
+#: src/harmonia/qt_playback.py:493
 msgid "A rádio não encontrou novas músicas."
 msgstr "The radio found no new songs."
 
-#: src/harmonia/qt_playback.py:578 src/harmonia/window_playback_recovery.py:39
+#: src/harmonia/qt_playback.py:593 src/harmonia/window_playback_recovery.py:63
 msgid "O stream falhou; renovando a conexão…"
 msgstr "The stream failed; renewing the connection…"
 
-#: src/harmonia/qt_playback.py:592
+#: src/harmonia/qt_playback.py:607
 #, python-brace-format
 msgid "Erro de reprodução: {error}"
 msgstr "Playback error: {error}"
@@ -2730,21 +2730,22 @@ msgstr[1] "{count} tracks added to the queue"
 msgid "O arquivo local não está mais disponível"
 msgstr "Local file is no longer available"
 
-#: src/harmonia/window_playback_recovery.py:54
+#: src/harmonia/window_playback_recovery.py:41
+#: src/harmonia/window_playback_recovery.py:78
 #, python-brace-format
 msgid "Não foi possível reproduzir: {error}"
 msgstr "Couldn't play: {error}"
 
-#: src/harmonia/window_playback_recovery.py:60
+#: src/harmonia/window_playback_recovery.py:84
 #, python-brace-format
 msgid "Não foi possível reproduzir mesmo após renovar o stream: {error}"
 msgstr "Couldn't play even after renewing the stream: {error}"
 
-#: src/harmonia/window_playback_recovery.py:70
+#: src/harmonia/window_playback_recovery.py:94
 msgid "Copiar relatório"
 msgstr "Copy report"
 
-#: src/harmonia/window_playback_recovery.py:79
+#: src/harmonia/window_playback_recovery.py:103
 msgid "Relatório copiado"
 msgstr "Report copied"
 

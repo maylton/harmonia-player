@@ -16,6 +16,7 @@ from . import loudness
 from .equalizer import PRESETS, equalizer_gains
 from .i18n import _
 from .playback_speed import pitch_properties
+from .playback_state import StreamEndedEarly
 from .stream_relay import StreamRelay
 
 LOGGER = logging.getLogger(__name__)
@@ -266,16 +267,10 @@ class NativePlayer:
             self.stop()
             if duration > 0 and position + 2_000_000 < duration:
                 if self.on_error:
-                    GLib.idle_add(
-                        self.on_error,
-                        _(
-                            "O fluxo de áudio terminou antes do esperado "
-                            "({position}s de {duration}s)"
-                        ).format(
-                            position=position // 1_000_000,
-                            duration=duration // 1_000_000,
-                        ),
-                    )
+                    message_text = _(
+                        "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
+                    ).format(position=position // 1_000_000, duration=duration // 1_000_000)
+                    GLib.idle_add(self.on_error, StreamEndedEarly(message_text, position, duration))
             elif self.on_eos:
                 GLib.idle_add(self.on_eos)
         elif message.type == Gst.MessageType.STATE_CHANGED and message.src == self._playbin:
