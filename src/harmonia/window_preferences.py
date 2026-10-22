@@ -19,6 +19,7 @@ from .preferences import Preferences
 from .settings_page import build_settings_page
 from .theming import get_theme
 from .ui import set_css_class
+from .window_chrome.player_bar import apply_player_style
 
 LOGGER = logging.getLogger(__name__)
 BUNDLED_ICON_THEME = "HarmoniaMaterial"
@@ -146,6 +147,8 @@ class WindowPreferencesMixin:
         set_css_class(self.root, "appearance-blur", blurred)
         self.ambient_background.set_opacity(0.30 if blurred else 0)
         self._apply_expanded_material(translucent)
+        if getattr(self, "wavy_progress", None) is not None:
+            apply_player_style(self, bool(get_theme(self.preferences.theme).material))
 
         for style in Preferences.ICON_STYLES:
             self.root.remove_css_class(f"icons-{style}")
@@ -154,7 +157,7 @@ class WindowPreferencesMixin:
         self._apply_icon_theme()
 
     def _apply_window_backdrop(self) -> bool:
-        """Put the chosen material behind the windows; True if the theme may go translucent."""
+        """Put the theme's Mica behind the windows; True if the theme may go translucent."""
         if not host.WINDOW_BACKDROPS:
             return False
         if getattr(self, "_window_backdrops", None) is None:
@@ -168,11 +171,9 @@ class WindowPreferencesMixin:
                 if popover is not None:
                     self._window_backdrops.attach_popover(popover)
         supported = get_theme(self.preferences.theme).backdrop
-        kind = self.preferences.backdrop if supported else "none"
+        kind = "mica" if supported else "none"
         if getattr(self, "_backdrop_row", None) is not None:
             self._backdrop_row.set_sensitive(supported)
-        if getattr(self, "_expanded_cover_row", None) is not None:
-            self._expanded_cover_row.set_sensitive(kind != "none")
         if kind != "none" and not self.get_realized():
             # The window first applies its preferences before it has a native
             # window, so the material (and the translucent palette that goes
@@ -192,16 +193,16 @@ class WindowPreferencesMixin:
     def _apply_expanded_material(self, translucent: bool) -> None:
         """Show the window material behind the expanded player instead of the cover.
 
-        Only with a material on and Preferences > "Capa desfocada no player
-        expandido" off. The expanded player covers the window, so it slides in
-        opaque and turns transparent once revealed, when the pages underneath
-        are hidden and only the material shows through.
+        Whenever the theme's material is on. The expanded player covers the
+        window, so it slides in opaque and turns transparent once revealed,
+        when the pages underneath are hidden and only the material shows
+        through.
         """
         surface = getattr(self, "expanded_surface", None)
         if not host.WINDOW_BACKDROPS or surface is None:
             return
         self._expanded_translucent = translucent
-        material = translucent and not self.preferences.expanded_cover
+        material = translucent
         for widget in (
             self.expanded_backdrop_base,
             self.expanded_backdrop,
@@ -450,11 +451,8 @@ class WindowPreferencesMixin:
         self.main_view = "settings"
         self.back.set_visible(False)
         self._set_active_nav("settings")
-        old = self.stack.get_child_by_name("settings")
-        if old:
-            self.stack.remove(old)
 
         page = build_settings_page(self)
 
-        self.stack.add_named(page, "settings")
+        self.stack.replace("settings", page)
         self.stack.set_visible_child_name("settings")

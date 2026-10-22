@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from harmonia import material_scheme
 from harmonia.preferences import Preferences
 from harmonia.theming import (
     ACCENT_PRESETS,
@@ -25,18 +26,6 @@ from harmonia.theming import (
 
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "harmonia"
 BASE_CSS = (SOURCE / "style.css").read_text(encoding="utf-8")
-
-# The values style.css used before it was tokenized. The default theme must keep
-# them so the original look is preserved pixel for pixel.
-LEGACY_DARK = {
-    "bg": "#242424", "sidebar_bg": "#1e1e1e", "headerbar_bg": "#303030", "border": "#1a1a1a",
-    "hover_bg": "#3a3a3a", "selected_bg": "#4a4a4a", "chip_bg": "#333333",
-    "chip_hover_bg": "#414141", "fg": "#ffffff", "fg_secondary": "#deddda",
-    "fg_tertiary": "#d0cfcc", "fg_muted": "#b5b3b0", "fg_subtle": "#aaa8a5", "fg_dim": "#9a9996",
-    "overlay": "#ffffff", "shadow": "#000000", "inverse_bg": "#ffffff", "inverse_fg": "#111111",
-    "inverse_hover_bg": "#eeeeec", "destructive_fg": "#ffb4ab", "destructive_bg": "#c01c28",
-    "destructive_border": "#f66151", "warning_bg": "#e5a50a", "warning_fg": "#f8e45c",
-}  # fmt: skip
 
 # (foreground, background, minimum WCAG contrast ratio)
 CONTRAST = [
@@ -74,19 +63,21 @@ def test_builtin_themes_load_with_the_default_first():
     assert get_theme("does-not-exist").id == DEFAULT_THEME
 
 
-def test_windows_11_theme_is_offered_on_linux_and_windows(monkeypatch):
+def test_harmonia_theme_is_offered_on_linux_and_windows(monkeypatch):
     from harmonia import host
 
     for platform in ("linux", "windows"):
         monkeypatch.setattr(host, "PLATFORM", platform)
-        assert "windows11" in builtin_themes()
-        assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "windows11"
+        assert "harmonia" in builtin_themes()
+        assert "windows11" not in builtin_themes()
+        # The Windows 11 theme became Harmonia.
+        assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "harmonia"
 
 
 def test_platform_specific_themes_are_only_offered_on_their_platform(monkeypatch):
     from harmonia import host
 
-    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    data = json.loads((SOURCE / "themes" / "harmonia.json").read_text(encoding="utf-8"))
     theme = Theme.from_dict({**data, "platforms": ["windows"]})
     monkeypatch.setattr(host, "PLATFORM", "linux")
     assert not theme.available
@@ -136,7 +127,7 @@ def test_fluent_icons_are_an_icon_style_everywhere():
 
 
 def test_platform_names_are_validated():
-    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    data = json.loads((SOURCE / "themes" / "harmonia.json").read_text(encoding="utf-8"))
     with pytest.raises(ThemeError):
         Theme.from_dict({**data, "platforms": ["macos"]})
 
@@ -158,7 +149,7 @@ def test_fluent_accent_follows_the_windows_palette():
 
 
 def test_windows_material_turns_only_the_window_surfaces_translucent():
-    windows = theme_catalog()["windows11"]
+    windows = theme_catalog()["harmonia"]
     assert windows.backdrop
     solid = windows.palette(dark=True)
     see_through = windows.palette(dark=True, translucent=True)
@@ -187,7 +178,7 @@ def test_windows_material_turns_only_the_window_surfaces_translucent():
 
 
 def test_windows_material_reaches_cards_and_controls_but_not_floating_surfaces():
-    css = (THEMES_DIR / "windows11.css").read_text(encoding="utf-8")
+    css = (THEMES_DIR / "harmonia.css").read_text(encoding="utf-8")
     rules = {
         selectors.strip(): body.strip()
         for selectors, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
@@ -205,7 +196,7 @@ def test_windows_material_reaches_cards_and_controls_but_not_floating_surfaces()
     )
     assert "tooltip.background" in floating and "toast" in floating
     assert rules[floating] == "background-color: @harmonia_opaque_chip_bg;"
-    windows = theme_catalog()["windows11"]
+    windows = theme_catalog()["harmonia"]
     rendered = render_gtk_css(
         windows, dark=True, base_css="", css_variables=False, translucent=True
     )
@@ -215,7 +206,7 @@ def test_windows_material_reaches_cards_and_controls_but_not_floating_surfaces()
 
 
 def test_translucent_colours_require_a_backdrop_and_known_tokens():
-    data = json.loads((SOURCE / "themes" / "windows11.json").read_text(encoding="utf-8"))
+    data = json.loads((SOURCE / "themes" / "harmonia.json").read_text(encoding="utf-8"))
     with pytest.raises(ThemeError):
         Theme.from_dict({**data, "backdrop": False})
     with pytest.raises(ThemeError):
@@ -224,19 +215,19 @@ def test_translucent_colours_require_a_backdrop_and_known_tokens():
         Theme.from_dict({**data, "translucent": {"dark": {"bg": "url(evil)"}}})
 
 
-def test_backdrop_preference_round_trips_and_validates():
+def test_compositor_blur_preference_round_trips():
     storage = MemoryStorage()
-    assert Preferences.load(storage).backdrop == "mica"
+    assert Preferences.load(storage).compositor_blur is True
     preferences = Preferences.load(storage)
-    preferences.backdrop = "acrylic"
+    preferences.compositor_blur = False
     preferences.save(storage)
-    assert Preferences.load(storage).backdrop == "acrylic"
-    assert Preferences.load(MemoryStorage({"backdrop": "glass"})).backdrop == "mica"
+    assert Preferences.load(storage).compositor_blur is False
+    assert "backdrop" not in storage.values and "expanded_cover" not in storage.values
 
 
 def test_system_accent_applies_only_to_themes_that_follow_it():
     system = {"accent_bg": "#4cc2ff", "accent_fg": "#000000", "accent": "#99ebff"}
-    windows = theme_catalog()["windows11"]
+    windows = theme_catalog()["harmonia"]
     css = render_gtk_css(windows, dark=True, base_css="", css_variables=False, system_accent=system)
     assert "@define-color accent_bg_color #4cc2ff;" in css
     # An explicit accent choice still wins, and without the palette the theme's own is used.
@@ -252,8 +243,10 @@ def test_system_accent_applies_only_to_themes_that_follow_it():
     assert "#4cc2ff" not in breeze
 
 
-def test_default_theme_keeps_the_original_palette():
-    assert get_theme(DEFAULT_THEME).palette(dark=True) == LEGACY_DARK
+def test_default_theme_is_harmonia_with_its_window_material():
+    default = get_theme(DEFAULT_THEME)
+    assert default.id == "harmonia" and default.name == "Harmonia"
+    assert default.backdrop and default.system_accent
 
 
 def test_stylesheet_only_uses_known_tokens():
@@ -306,8 +299,10 @@ def test_libadwaita_overrides_follow_the_gtk_version():
     assert "@define-color accent_bg_color #1d99f3;" in modern
     assert "@define-color accent_bg_color #1d99f3;" in legacy
     assert "@define-color window_bg_color @harmonia_bg;" in legacy
-    harmonia = render_gtk_css(get_theme("harmonia"), dark=True, base_css="", css_variables=True)
-    assert ":root" not in harmonia and "accent_bg_color" not in harmonia
+    # A theme without overrides leaves libadwaita's colours alone.
+    adwaita = render_gtk_css(get_theme("adwaita"), dark=True, base_css="", css_variables=True)
+    overrides = adwaita.split("\n\n")[0]
+    assert ":root" not in overrides and "accent_bg_color" not in overrides
 
 
 def test_corner_scale_keeps_pills_round():
@@ -320,7 +315,13 @@ def test_corner_scale_keeps_pills_round():
 
 
 def test_variant_preference_resolves_against_the_theme_default():
-    harmonia, elementary = get_theme("harmonia"), get_theme("elementary")
+    harmonia = Theme.from_dict(
+        {
+            **json.loads((SOURCE / "themes" / "harmonia.json").read_text(encoding="utf-8")),
+            "default_variant": "dark",
+        }
+    )
+    elementary = get_theme("elementary")
     assert harmonia.color_scheme("theme") == "dark"
     assert elementary.color_scheme("theme") == "system"
     assert elementary.color_scheme("light") == "light"
@@ -374,6 +375,7 @@ def test_gtk_controller_applies_themes_live():
     from harmonia.gtk_theme import GtkThemeController
 
     controller = GtkThemeController(display)
+    controller.desktop_scheme = None  # the run must not depend on Caelestia being installed
     controller.apply("breeze", "light")
     assert controller.style_manager.get_dark() is False
     assert controller._rendered == ("breeze", False, "theme")
@@ -397,8 +399,8 @@ def test_accent_preference_overrides_the_theme_accent():
     css = render_gtk_css(breeze, dark=True, base_css="", css_variables=False, accent="purple")
     assert "@define-color accent_bg_color #a56de2;" in css
     assert "#1d99f3" not in css
-    default = render_gtk_css(get_theme("harmonia"), dark=False, base_css="", css_variables=False)
-    assert "accent_bg_color" not in default
+    default = render_gtk_css(get_theme("adwaita"), dark=False, base_css="", css_variables=False)
+    assert "accent_bg_color" not in default.split("\n\n")[0]
 
 
 def test_structural_layers_exist_and_only_use_known_colors():
@@ -407,7 +409,14 @@ def test_structural_layers_exist_and_only_use_known_colors():
         "sidebar_bg_color", "accent_bg_color", "accent_fg_color", "accent_color",
     }  # fmt: skip
     layered = [theme for theme in theme_catalog().values() if theme.stylesheet]
-    assert {theme.id for theme in layered} == {"adwaita", "elementary", "breeze", "windows11"}
+    assert {theme.id for theme in layered} == {
+        "adwaita",
+        "elementary",
+        "breeze",
+        "harmonia",
+        "material",
+    }
+    material_names = {material_scheme.css_name(role) for role in material_scheme.ROLES}
     for theme in layered:
         css = (THEMES_DIR / theme.stylesheet).read_text(encoding="utf-8")
         assert css.count("{") == css.count("}"), theme.id
@@ -415,20 +424,21 @@ def test_structural_layers_exist_and_only_use_known_colors():
         # Themes with a window material also get the opaque colours of their
         # translucent tokens, for the out-of-focus fallback.
         opaque = set(re.findall(r"@define-color harmonia_(opaque_[a-z_]+) ", rendered))
+        known = named | opaque | (material_names if theme.material else set())
         for name in re.findall(r"@([a-z_]+)", css):
-            assert name.removeprefix("harmonia_") in named | opaque, (theme.id, name)
+            assert name.removeprefix("harmonia_") in known, (theme.id, name)
         assert rendered.index("structural layer") > rendered.index("window { background:")
 
 
 def test_window_material_falls_back_to_opaque_colours_out_of_focus():
-    windows = theme_catalog()["windows11"]
+    windows = theme_catalog()["harmonia"]
     solid = windows.palette(dark=True)
     rendered = render_gtk_css(
         windows, dark=True, base_css="", css_variables=False, translucent=True
     )
     for token in ("bg", "sidebar_bg", "headerbar_bg"):
         assert f"@define-color harmonia_opaque_{token} {solid[token]};" in rendered
-    css = (THEMES_DIR / "windows11.css").read_text(encoding="utf-8")
+    css = (THEMES_DIR / "harmonia.css").read_text(encoding="utf-8")
     assert "window.harmonia-backdrop:backdrop .sidebar" in css
     assert "transition: background-color 250ms" in css
     # Themes without a material define no fallback colours.

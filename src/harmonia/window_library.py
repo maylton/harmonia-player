@@ -40,10 +40,7 @@ class WindowLibraryMixin:
         if self.library_origin == "local":
             content.append(self._local_library_actions())
         content.append(self._library_body())
-        old = self.stack.get_child_by_name("library")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(page, "library")
+        self.stack.replace("library", page)
         self.stack.set_visible_child_name("library")
 
     def _library_header(self) -> Gtk.Widget:
@@ -316,10 +313,7 @@ class WindowLibraryMixin:
             title=_("Carregando…"),
             description=_("Buscando {title}").format(title=escape(item.title)),
         )
-        old = self.stack.get_child_by_name("detail")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(status, "detail")
+        self.stack.replace("detail", status)
         self.stack.set_visible_child_name("detail")
 
         def worker():

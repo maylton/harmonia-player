@@ -32,7 +32,7 @@ def test_material_waits_for_the_native_window_then_reapplies(monkeypatch):
         realized = False
 
         def __init__(self):
-            self.preferences = Preferences(theme="windows11", backdrop="mica")
+            self.preferences = Preferences(theme="harmonia")
             self.handlers = []
             self.reapplied = 0
 
@@ -280,7 +280,7 @@ def test_windows_material_replaces_the_cover_on_detail_pages():
     from pathlib import Path
 
     css = (
-        Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "windows11.css"
+        Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "harmonia.css"
     ).read_text(encoding="utf-8")
     for name in (".detail-backdrop", ".artist-backdrop", ".detail-backdrop-shade"):
         assert f"window.harmonia-backdrop {name}" in css
@@ -329,7 +329,7 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
 
     class WindowStub(WindowPreferencesMixin):
         def __init__(self):
-            self.preferences = Preferences(theme="windows11")
+            self.preferences = Preferences(theme="harmonia")
             self.expanded_surface = Widget()
             self.expanded_backdrop_base = Widget()
             self.expanded_backdrop = Widget()
@@ -358,17 +358,16 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
     window._update_expanded_reveal()
     assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
 
-    window.preferences.expanded_cover = True
-    window._apply_expanded_material(True)
+    # Without the material (other themes) the expanded player shows the cover.
+    window._apply_expanded_material(False)
     assert window.expanded_backdrop.visible
     assert "expanded-material" not in window.expanded_surface.classes
 
 
-def test_material_names_match_the_preference_values():
-    from harmonia.preferences import Preferences
-    from harmonia.windows_backdrop import BACKDROPS
+def test_windows_keeps_mica_for_windows_and_acrylic_for_flyouts():
+    from harmonia.windows_backdrop import BACKDROPS, TRANSIENT
 
-    assert set(BACKDROPS) | {"none"} == set(Preferences.BACKDROPS)
+    assert set(BACKDROPS) == {"mica", TRANSIENT}
 
 
 @windows_only

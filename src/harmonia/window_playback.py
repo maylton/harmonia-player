@@ -26,6 +26,7 @@ from .playback_state import (
 from .ui import (
     set_icon_selected,
 )
+from .window_chrome.player_bar import footer_playing_changed
 
 LOGGER = logging.getLogger(__name__)
 
@@ -454,6 +455,8 @@ class WindowPlaybackMixin:
         icon = "media-playback-pause-symbolic" if playing else "media-playback-start-symbolic"
         self.play_button.set_icon_name(icon)
         self.expanded_play_button.set_icon_name(icon)
+        if getattr(self, "wavy_progress", None) is not None:
+            footer_playing_changed(self, playing)
         self._refresh_detail_track_states()
         self._refresh_home_song_rows()
         self.mpris.update()

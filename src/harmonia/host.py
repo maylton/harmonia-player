@@ -25,7 +25,7 @@ MPRIS = IS_LINUX
 # Windows has no GTK icon theme of its own; its icons are Microsoft's Fluent
 # System Icons, which Harmonia bundles. Elsewhere the desktop's theme is used.
 SYSTEM_ICON_THEME = "HarmoniaFluent" if IS_WINDOWS else ""
-# Mica and Acrylic window materials: DWM's on Windows 11, simulated on Linux
+# The Mica window material of the Harmonia theme: DWM's on Windows 11, simulated on Linux
 # (see linux_backdrop.py).
 WINDOW_BACKDROPS = IS_WINDOWS or IS_LINUX
 

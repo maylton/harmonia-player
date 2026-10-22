@@ -20,7 +20,7 @@ from .ui import (
     action_button,
     deliver_to_main,
     icon_button,
-    mark_explicit,
+    media_row,
     page_header,
     page_shell,
 )
@@ -30,9 +30,6 @@ LOGGER = logging.getLogger(__name__)
 
 class WindowHistoryMixin:
     def _render_downloads(self) -> None:
-        old = self.stack.get_child_by_name("downloads")
-        if old:
-            self.stack.remove(old)
         records = self.storage.load_downloads()
         shell = page_shell("reading", spacing=20)
         scroll, content = shell.scroll, shell.content
@@ -86,13 +83,12 @@ class WindowHistoryMixin:
                     subtitle += f" · {progress}"
                 if record.error:
                     subtitle += f" · {record.error}"
-                row = Adw.ActionRow()
-                row.add_css_class("media-row")
-                row.set_use_markup(False)
-                row.set_title(record.item.title)
-                row.set_subtitle(subtitle)
-                row.add_prefix(self._square_cover(record.item, size=48, fixed=True))
-                mark_explicit(row, record.item)
+                row = media_row(
+                    record.item,
+                    cover=self._square_cover(record.item, size=48, fixed=True),
+                    subtitle=subtitle,
+                    activatable=False,
+                )
                 controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
                 if record.status == "downloading":
                     pause = icon_button("media-playback-pause-symbolic", _("Pausar"), size="sm")
@@ -125,7 +121,7 @@ class WindowHistoryMixin:
                 row.add_suffix(controls)
                 group.add(row)
             content.append(group)
-        self.stack.add_named(scroll, "downloads")
+        self.stack.replace("downloads", scroll)
         self.stack.set_visible_child_name("downloads")
 
     def _download_updated(self, _record: DownloadRecord | None) -> bool:
@@ -153,9 +149,6 @@ class WindowHistoryMixin:
         return False
 
     def _render_history(self, entries: list[HistoryEntry], loading: bool = False) -> None:
-        old = self.stack.get_child_by_name("history")
-        if old:
-            self.stack.remove(old)
         shell = page_shell("reading", spacing=20)
         scroll, content = shell.scroll, shell.content
         clear = action_button(_("Limpar local"), "user-trash-symbolic", role="secondary")
@@ -203,17 +196,12 @@ class WindowHistoryMixin:
         for group_name, group_entries in grouped.items():
             group = Adw.PreferencesGroup(title=group_name)
             for entry in group_entries:
-                row = Adw.ActionRow()
-                row.add_css_class("media-row")
-                row.set_use_markup(False)
-                row.set_title(entry.item.title)
-                row.set_subtitle(
-                    entry.item.subtitle
-                    or (_("YouTube Music") if entry.source == "remote" else _("Neste dispositivo"))
+                row = media_row(
+                    entry.item,
+                    cover=self._square_cover(entry.item, size=48, fixed=True),
+                    subtitle=entry.item.subtitle
+                    or (_("YouTube Music") if entry.source == "remote" else _("Neste dispositivo")),
                 )
-                row.set_activatable(True)
-                row.add_prefix(self._square_cover(entry.item, size=48, fixed=True))
-                mark_explicit(row, entry.item)
                 remove = icon_button(
                     "user-trash-symbolic", _("Remover do histórico"), size="sm", destructive=True
                 )
@@ -230,7 +218,7 @@ class WindowHistoryMixin:
                 )
                 group.add(row)
             content.append(group)
-        self.stack.add_named(scroll, "history")
+        self.stack.replace("history", scroll)
         self.stack.set_visible_child_name("history")
 
     def _history_privacy_changed(self, switch: Gtk.Switch, _pspec) -> None:

@@ -131,7 +131,7 @@ class App:
 
 
 class Window:
-    preferences = type("P", (), {"theme": "windows11"})()
+    preferences = type("P", (), {"theme": "harmonia"})()
 
     def __init__(self):
         self.surface, self.css = Surface(), set()
@@ -211,10 +211,22 @@ def test_gnome_uses_blur_my_shell_or_offers_it(monkeypatch):
     assert instance.blur == "blur-my-shell" and not instance.blur_my_shell_offer
 
     monkeypatch.setattr(gnome_blur, "state", lambda _app: gnome_blur.BlurMyShell(True, False))
-    instance.kind = "acrylic"
     instance._refresh()
+    # Mica falls back to the wallpaper, and Preferences offer to add Harmonia.
     assert instance.blur == "" and instance.blur_my_shell_offer
-    assert "não borra o Harmonia" in instance.reason
+    assert "não encontrado" in instance.reason
+
+
+def test_compositor_blur_can_be_turned_off(monkeypatch):
+    kwin = FakeKWin()
+    instance = backdrops(monkeypatch, "KDE", kwin=kwin)
+    preferences = type("P", (), {"theme": "harmonia", "compositor_blur": False})()
+    instance._window.preferences = preferences
+    instance._refresh()
+    assert instance.blur == "" and not kwin.regions
+    preferences.compositor_blur = True
+    instance._refresh()
+    assert instance.blur == "kwin"
 
 
 def test_mica_falls_back_to_the_wallpaper_without_a_compositor_blur(monkeypatch, tmp_path):
@@ -233,3 +245,13 @@ def test_mica_falls_back_to_the_wallpaper_without_a_compositor_blur(monkeypatch,
     instance._refresh()
     assert instance.blur == "" and instance.wallpaper == wallpaper
     assert "url(" in instance.css
+
+
+def test_switching_to_a_theme_without_mica_clears_it_before_set_kind(monkeypatch):
+    # A theme change can switch the colour scheme, which refreshes the material
+    # before set_kind() hears of the new theme, whose palette may hold named
+    # colours (Adwaita's) that cannot tint it.
+    instance = backdrops(monkeypatch, "KDE", kwin=FakeKWin())
+    instance._window.preferences = type("P", (), {"theme": "adwaita"})()
+    assert instance._refresh() is False
+    assert instance.kind == "none" and instance.css == ""

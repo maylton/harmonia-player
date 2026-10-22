@@ -9,9 +9,14 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk
 
+from .gtk_expressive import cubic_bezier
 from .gtk_lyric_words import LyricWordHighlighter
 from .lyrics_state import active_lyric_index
 from .ui import set_css_class
+
+# Metrolist moves its lines with a 750 ms FastOutSlowIn tween.
+FAST_OUT_SLOW_IN = cubic_bezier(0.4, 0.0, 0.2, 1.0)
+LYRIC_NEAR_DISTANCES = (1, 2, 3)
 
 
 class WindowLyricsFollowMixin:
@@ -53,6 +58,10 @@ class WindowLyricsFollowMixin:
         for view in self._lyric_views:
             for index, row in enumerate(view["rows"]):
                 set_css_class(row, "lyrics-line-active", index == active)
+                # Lines fade with their distance from the sung one (Metrolist).
+                distance = abs(index - active) if active >= 0 else 0
+                for near in LYRIC_NEAR_DISTANCES:
+                    set_css_class(row, f"lyrics-line-near-{near}", distance == near)
             if active >= 0 and self._lyric_view_visible(view):
                 self._queue_lyric_follow(view, active)
 
@@ -131,7 +140,7 @@ class WindowLyricsFollowMixin:
         view: dict,
         adjustment: Gtk.Adjustment,
         destination: float,
-        duration_ms: int = 420,
+        duration_ms: int = 750,
     ) -> None:
         """Animate the adjustment without stealing keyboard focus from the player."""
         view["generation"] += 1
@@ -146,7 +155,7 @@ class WindowLyricsFollowMixin:
             if generation != view["generation"]:
                 return GLib.SOURCE_REMOVE
             progress = min(1.0, (time.monotonic() - started) * 1000 / duration_ms)
-            eased = 1 - (1 - progress) ** 3
+            eased = FAST_OUT_SLOW_IN(progress)
             adjustment.set_value(start + distance * eased)
             return GLib.SOURCE_CONTINUE if progress < 1 else GLib.SOURCE_REMOVE
 

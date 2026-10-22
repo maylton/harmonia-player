@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from functools import cache, lru_cache
 from pathlib import Path
 
-from . import host
+from . import host, material_scheme
 
 THEMES_DIR = Path(__file__).with_name("themes")
 DEFAULT_THEME = "harmonia"
@@ -202,6 +202,9 @@ class Theme:
     # holds the tokens that turn see-through while it does, per variant.
     backdrop: bool = False
     translucent: dict[str, dict[str, str]] = field(default_factory=dict)
+    # Material Design 3 roles per variant (material_scheme.ROLES); the theme's
+    # palette and accent derive from them, or from the desktop's scheme.
+    material: dict[str, dict[str, str]] = field(default_factory=dict)
 
     @property
     def available(self) -> bool:
@@ -210,12 +213,16 @@ class Theme:
     @classmethod
     def from_dict(cls, data: dict) -> Theme:
         try:
+            material = {k: dict(v) for k, v in data.get("material", {}).items()}
+            palettes = data.get("palettes") or {
+                variant: material_scheme.palette(roles) for variant, roles in material.items()
+            }
             theme = cls(
                 id=str(data["id"]),
                 name=str(data["name"]),
                 description=str(data.get("description", "")),
                 default_variant=str(data.get("default_variant", "system")),
-                palettes={k: dict(v) for k, v in data["palettes"].items()},
+                palettes={k: dict(v) for k, v in palettes.items()},
                 accent={k: dict(v) for k, v in data.get("accent", {}).items()},
                 restyle_adwaita=bool(data.get("restyle_adwaita", False)),
                 corner_scale=float(data.get("corner_scale", 1.0)),
@@ -225,6 +232,7 @@ class Theme:
                 system_accent=bool(data.get("system_accent", False)),
                 backdrop=bool(data.get("backdrop", False)),
                 translucent={k: dict(v) for k, v in data.get("translucent", {}).items()},
+                material=material,
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ThemeError(f"tema inválido: {exc}") from exc
@@ -261,6 +269,16 @@ class Theme:
                 raise ThemeError(f"{self.id}/{variant}: tokens translúcidos inválidos")
             if not all(TRANSLUCENT_VALUE.fullmatch(value) for value in colors.values()):
                 raise ThemeError(f"{self.id}/{variant}: cor translúcida inválida")
+        self._validate_material()
+
+    def _validate_material(self) -> None:
+        if self.material and set(self.material) != {"light", "dark"}:
+            raise ThemeError(f"{self.id}: os papéis Material precisam de light e dark")
+        for variant, roles in self.material.items():
+            if set(roles) != set(material_scheme.ROLES):
+                raise ThemeError(f"{self.id}/{variant}: papéis Material incompletos")
+            if not all(re.fullmatch(r"#[0-9a-f]{6}", value) for value in roles.values()):
+                raise ThemeError(f"{self.id}/{variant}: cor Material inválida")
 
     def palette(self, dark: bool, *, translucent: bool = False) -> dict[str, str]:
         variant = "dark" if dark else "light"
@@ -324,6 +342,32 @@ def scale_corners(css: str, scale: float) -> str:
     return _RADIUS.sub(radius, css)
 
 
+def material_roles(
+    theme: Theme,
+    *,
+    dark: bool,
+    accent: str = "theme",
+    system_accent: dict[str, str] | None = None,
+    desktop_roles: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """The Material roles a Material theme shows.
+
+    An accent chosen in Preferences retints them; otherwise the desktop's own
+    Material scheme (Caelestia Shell) wins, then the desktop accent, then the
+    theme's baseline scheme.
+    """
+    roles = theme.material["dark" if dark else "light"]
+    preset = accent_preset(accent, dark=dark)
+    if preset:
+        tone = preset["accent"] if dark else preset["accent_bg"]
+        return material_scheme.with_accent(roles, tone, dark=dark)
+    if desktop_roles:
+        return dict(desktop_roles)
+    if system_accent and theme.system_accent:
+        return material_scheme.with_accent(roles, system_accent["accent_bg"], dark=dark)
+    return dict(roles)
+
+
 def render_gtk_css(
     theme: Theme,
     *,
@@ -333,6 +377,7 @@ def render_gtk_css(
     accent: str = "theme",
     system_accent: dict[str, str] | None = None,
     translucent: bool = False,
+    desktop_roles: dict[str, str] | None = None,
 ) -> str:
     """Return the full stylesheet for ``theme``.
 
@@ -341,14 +386,30 @@ def render_gtk_css(
     @define-color named colours. ``system_accent`` replaces the theme's own
     accent when the theme follows the desktop accent and none was chosen.
     ``translucent`` is set while a window material sits behind the window.
+    ``desktop_roles`` is the desktop's Material scheme, for Material themes.
     """
     solid = theme.palette(dark)
     palette = theme.palette(dark, translucent=translucent)
+    roles = None
+    if theme.material:
+        roles = material_roles(
+            theme,
+            dark=dark,
+            accent=accent,
+            system_accent=system_accent,
+            desktop_roles=desktop_roles,
+        )
+        solid = palette = material_scheme.palette(roles)
     lines = [f"/* Harmonia theme: {theme.id} ({'dark' if dark else 'light'}) */"]
     lines += [f"@define-color harmonia_{token} {palette[token]};" for token in TOKENS]
+    if roles:
+        lines += [
+            f"@define-color {material_scheme.css_name(role)} {value};"
+            for role, value in roles.items()
+        ]
     if theme.backdrop:
         # The opaque colours a window falls back to while it is out of focus,
-        # as Fluent's acrylic and Mica brushes do (see windows11.css).
+        # as Fluent's acrylic and Mica brushes do (see themes/harmonia.css).
         see_through = sorted({token for colors in theme.translucent.values() for token in colors})
         lines += [f"@define-color harmonia_opaque_{token} {solid[token]};" for token in see_through]
 
@@ -358,7 +419,9 @@ def render_gtk_css(
         if palette != solid:
             overrides |= {name: solid[ADWAITA_SURFACES[name]] for name in OPAQUE_SURFACES}
     accent_colors = (
-        accent_preset(accent, dark=dark)
+        material_scheme.accent(roles)
+        if roles
+        else accent_preset(accent, dark=dark)
         or (system_accent if theme.system_accent else None)
         or theme.accent.get("dark" if dark else "light")
     )

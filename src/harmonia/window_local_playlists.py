@@ -17,7 +17,7 @@ from .models import (
 from .ui import (
     action_button,
     icon_button,
-    link_row_subtitle,
+    media_row,
     page_header,
     page_shell,
 )
@@ -31,9 +31,6 @@ class WindowLocalPlaylistsMixin:
     def _show_local_playlist(self, playlist: LocalPlaylist) -> None:
         self.main_view = "local-playlist"
         self.back.set_visible(True)
-        old = self.stack.get_child_by_name("local-playlist")
-        if old:
-            self.stack.remove(old)
         shell = page_shell("reading", spacing=22)
         scroll, content = shell.scroll, shell.content
         play = action_button(_("Reproduzir"), "media-playback-start-symbolic", role="primary")
@@ -61,13 +58,7 @@ class WindowLocalPlaylistsMixin:
         )
         group = Adw.PreferencesGroup(title=track_count)
         for position, item in enumerate(playlist.items):
-            row = Adw.ActionRow()
-            row.add_css_class("media-row")
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            link_row_subtitle(row, item, self.navigate_credit)
-            row.set_activatable(True)
+            row = media_row(item, self.navigate_credit)
             row.connect(
                 "activated",
                 lambda _row, selected=position: self.set_queue(playlist.items, selected),
@@ -101,7 +92,7 @@ class WindowLocalPlaylistsMixin:
             row.add_suffix(controls)
             group.add(row)
         content.append(group)
-        self.stack.add_named(scroll, "local-playlist")
+        self.stack.replace("local-playlist", scroll)
         self.stack.set_visible_child_name("local-playlist")
 
     def _move_local_playlist_item(

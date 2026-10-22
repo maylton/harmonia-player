@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import GLib, Gtk
 
 from .i18n import _
 from .models import (
@@ -17,8 +17,7 @@ from .models import (
 from .ui import (
     CreditsLabel,
     icon_button,
-    link_row_subtitle,
-    mark_explicit,
+    media_row,
     section_link,
     style_icon_button,
     title_with_badge,
@@ -67,28 +66,26 @@ def _cover_with_action_hint(
     return overlay, hint
 
 
-def _card_labels(item: LibraryItem, size: int, navigate) -> tuple[Gtk.Widget, Gtk.Widget | None]:
+def _card_labels(item: LibraryItem, navigate) -> tuple[Gtk.Widget, Gtk.Widget | None]:
     """The card's title (with the explicit badge), and its credits with links
     (None without a subtitle)."""
-    width_chars = 20 if size >= 160 else 17
+    # The labels take the artwork's width and ellipsize within it.  A width
+    # in characters depends on the font: Adwaita Sans at 15px turns 20
+    # characters into 200px, which widened 168px cards and left the artwork
+    # off-centre on Linux while Segoe UI kept it in place on Windows.
     title = Gtk.Label(
         label=item.title,
         xalign=0,
         ellipsize=3,
-        width_chars=width_chars,
-        max_width_chars=width_chars,
+        hexpand=True,
+        width_chars=1,
+        max_width_chars=1,
     )
     title.add_css_class("card-title")
-    if item.explicit:
-        # Room for the badge within the card's width.
-        title.set_width_chars(width_chars - 3)
-        title.set_max_width_chars(width_chars - 3)
     title = title_with_badge(title, item)
     if not item.subtitle:
         return title, None
-    subtitle = CreditsLabel(
-        navigate, xalign=0, ellipsize=3, width_chars=width_chars, max_width_chars=width_chars
-    )
+    subtitle = CreditsLabel(navigate, xalign=0, ellipsize=3, width_chars=1, max_width_chars=1)
     subtitle.show_item(item)
     subtitle.add_css_class("card-subtitle")
     return title, subtitle
@@ -145,7 +142,7 @@ class WindowShelvesMixin:
         cover.add_css_class("media-card-cover")
         cover_overlay, hint = _cover_with_action_hint(cover, item, size)
         card.append(cover_overlay)
-        title, subtitle = _card_labels(item, size, self.navigate_credit)
+        title, subtitle = _card_labels(item, self.navigate_credit)
         card.append(title)
         button.set_child(card)
         button.connect("clicked", lambda *_: activate())
@@ -204,14 +201,6 @@ class WindowShelvesMixin:
         listing = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
         listing.add_css_class("boxed-list")
         for item in items:
-            row = Adw.ActionRow()
-            row.add_css_class("media-row")
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            link_row_subtitle(row, item, self.navigate_credit)
-            row.add_css_class("song-row")
-            row.set_activatable(True)
             thumb = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
             thumb.set_size_request(52, 52)
             thumb.set_can_shrink(True)
@@ -219,8 +208,8 @@ class WindowShelvesMixin:
             thumb.add_css_class("row-cover")
             if item.thumbnail:
                 self._load_artwork(item.thumbnail, thumb, size=128)
-            row.add_prefix(thumb)
-            mark_explicit(row, item)
+            row = media_row(item, self.navigate_credit, cover=thumb)
+            row.add_css_class("song-row")
             if self.library_origin == "local":
                 remove = icon_button(
                     "user-trash-symbolic",

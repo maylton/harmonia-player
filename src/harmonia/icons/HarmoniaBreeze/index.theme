@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Harmonia Breeze
+Comment=KDE Breeze icons for Harmonia
+Inherits=Adwaita,hicolor
+Directories=scalable/actions
+
+[scalable/actions]
+Size=16
+Type=Scalable
+MinSize=8
+MaxSize=128
+Context=Actions

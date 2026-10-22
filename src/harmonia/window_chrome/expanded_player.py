@@ -8,8 +8,10 @@ gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk
 
+from ..gtk_expressive import ButtonRow, CookieCover
 from ..i18n import _
 from ..ui import CreditsLabel, explicit_badge, icon_button
+from .player_bar import expressive_progress
 
 
 def build_expanded_player(window) -> None:
@@ -110,39 +112,38 @@ def _header(window) -> Gtk.Widget:
     return top
 
 
+# The artwork sits above the track and its controls, which keep its width so
+# the timeline does not stretch across the window.
+EXPANDED_COVER_SIZE = 360
+EXPANDED_INFO_WIDTH = 420
+
+
 def _music_page(window) -> Gtk.Widget:
     scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-    wrap = Adw.WrapBox(
-        orientation=Gtk.Orientation.HORIZONTAL,
-        child_spacing=76,
-        line_spacing=40,
-        natural_line_length=900,
-        wrap_policy=Adw.WrapPolicy.NATURAL,
-        align=0.5,
+    column = Gtk.Box(
+        orientation=Gtk.Orientation.VERTICAL,
+        spacing=32,
+        halign=Gtk.Align.CENTER,
         valign=Gtk.Align.CENTER,
-        hexpand=True,
         vexpand=True,
     )
-    wrap.add_css_class("expanded-music-content")
-    wrap.set_child_spacing_unit(Adw.LengthUnit.PX)
-    wrap.set_line_spacing_unit(Adw.LengthUnit.PX)
-    wrap.set_natural_line_length_unit(Adw.LengthUnit.PX)
-    wrap.append(_cover(window))
+    column.add_css_class("expanded-music-content")
+    column.append(_cover(window))
 
-    info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=22, valign=Gtk.Align.CENTER)
-    info.set_size_request(420, -1)
+    info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=22, halign=Gtk.Align.CENTER)
+    info.set_size_request(EXPANDED_INFO_WIDTH, -1)
     info.add_css_class("expanded-info")
     info.append(_heading(window))
     info.append(_timeline(window))
     info.append(_transport(window))
-    wrap.append(info)
-    scroll.set_child(wrap)
+    column.append(info)
+    scroll.set_child(column)
     return scroll
 
 
 def _cover(window) -> Gtk.Widget:
     cover = Gtk.AspectFrame(ratio=1.0, obey_child=False)
-    cover.set_size_request(384, 384)
+    cover.set_size_request(EXPANDED_COVER_SIZE, EXPANDED_COVER_SIZE)
     cover.set_halign(Gtk.Align.CENTER)
     cover.set_valign(Gtk.Align.CENTER)
     cover.set_overflow(Gtk.Overflow.HIDDEN)
@@ -159,7 +160,8 @@ def _cover(window) -> Gtk.Widget:
         vexpand=True,
     )
     cover_overlay.add_overlay(window.expanded_cover)
-    cover.set_child(cover_overlay)
+    window.expanded_cover_shape = CookieCover(cover_overlay)
+    cover.set_child(window.expanded_cover_shape)
     return cover
 
 
@@ -199,6 +201,10 @@ def _timeline(window) -> Gtk.Widget:
     window.expanded_progress.set_sensitive(False)
     window.expanded_progress.connect("change-value", window._seek_requested)
     timeline.append(window.expanded_progress)
+    window.expanded_wavy_progress = expressive_progress(
+        window, window.expanded_progress, window.expanded_elapsed_label
+    )
+    timeline.append(window.expanded_wavy_progress)
     window.expanded_duration_label = Gtk.Label(label=_("0:00"), width_chars=5, xalign=0)
     window.expanded_duration_label.add_css_class("expanded-time")
     timeline.append(window.expanded_duration_label)
@@ -213,7 +219,8 @@ def _control(icon: str, tooltip: str, *css_classes: str) -> Gtk.Button:
 
 
 def _transport(window) -> Gtk.Widget:
-    controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=21, halign=Gtk.Align.CENTER)
+    controls = ButtonRow(spacing=21, width=EXPANDED_INFO_WIDTH)
+    window.expanded_button_row = controls
     shuffle = _control(
         "media-playlist-shuffle-symbolic",
         _("Ordem aleatória"),
@@ -243,7 +250,11 @@ def _transport(window) -> Gtk.Widget:
     repeat.connect("clicked", lambda button: window._toggle_repeat(button))
     window.repeat_buttons.append(repeat)
     for control in (shuffle, previous, window.expanded_play_button, next_button, repeat):
-        controls.append(control)
+        controls.append(
+            control,
+            fill=control is window.expanded_play_button,
+            narrow=control in (shuffle, repeat),
+        )
     return controls
 
 

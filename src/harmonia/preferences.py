@@ -30,11 +30,12 @@ class Preferences:
     theme: str = DEFAULT_THEME
     theme_variant: str = "theme"
     accent: str = "theme"
-    # Window material for themes that support one (Windows 11 only).
-    backdrop: str = "mica"
-    # Blurred cover behind the expanded player while a material is on;
-    # off, the expanded player shows the material too.
-    expanded_cover: bool = False
+    # On Linux, the Harmonia theme's Mica asks the compositor (KWin, Blur my
+    # Shell) to blur behind the window; off, or without one, Mica is made of
+    # the wallpaper.
+    compositor_blur: bool = True
+    # Japanese lyrics get a rōmaji line under each line (romaji.py).
+    romanize_lyrics: bool = True
     lastfm_enabled: bool = False
     lastfm_api_key: str = ""
     discord_enabled: bool = False
@@ -42,13 +43,17 @@ class Preferences:
     recognition_provider: str = "audd"
     recognition_endpoint: str = "https://api.audd.io/"
 
-    BACKDROPS: ClassVar[tuple[str, ...]] = ("mica", "acrylic", "none")
+    # Themes that were merged into another one.
+    RENAMED_THEMES: ClassVar[dict[str, str]] = {"windows11": "harmonia"}
     # "gtk" follows the desktop (on Windows, the bundled Fluent icons); the
     # others are icon themes bundled with Harmonia.
     ICON_STYLES: ClassVar[dict[str, str]] = {
         "gtk": "",
         "material": "HarmoniaMaterial",
         "fluent": "HarmoniaFluent",
+        "framework7": "HarmoniaFramework7",
+        "breeze": "HarmoniaBreeze",
+        "papirus": "HarmoniaPapirus",
     }
     QUALITY_BITRATES: ClassVar[dict[str, int]] = {
         "low": 70_000,
@@ -71,9 +76,9 @@ class Preferences:
         equalizer = storage.get_setting("equalizer", "flat")
         icon_style = storage.get_setting("icon_style", "gtk")
         theme = storage.get_setting("theme", DEFAULT_THEME)
+        theme = cls.RENAMED_THEMES.get(theme, theme)
         theme_variant = storage.get_setting("theme_variant", "theme")
         accent = storage.get_setting("accent", "theme")
-        backdrop = storage.get_setting("backdrop", "mica")
         normalization_level = storage.get_setting("normalization_level", DEFAULT_LEVEL)
         position = storage.get_setting("playlist_add_position", DEFAULT_POSITION)
         return cls(
@@ -97,8 +102,8 @@ class Preferences:
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
             accent=accent if accent in ACCENTS else "theme",
-            backdrop=backdrop if backdrop in cls.BACKDROPS else "mica",
-            expanded_cover=boolean("expanded_cover", False),
+            compositor_blur=boolean("compositor_blur", True),
+            romanize_lyrics=boolean("romanize_lyrics", True),
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
@@ -133,8 +138,8 @@ class Preferences:
             "theme": self.theme,
             "theme_variant": self.theme_variant,
             "accent": self.accent,
-            "backdrop": self.backdrop,
-            "expanded_cover": "1" if self.expanded_cover else "0",
+            "compositor_blur": "1" if self.compositor_blur else "0",
+            "romanize_lyrics": "1" if self.romanize_lyrics else "0",
             "lastfm_enabled": "1" if self.lastfm_enabled else "0",
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",

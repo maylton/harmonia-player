@@ -16,9 +16,6 @@ class WindowInsightsMixin:
         self.main_view = "insights"
         self.back.set_visible(False)
         self._set_active_nav("insights")
-        old = self.stack.get_child_by_name("insights")
-        if old:
-            self.stack.remove(old)
         insights = self.storage.playback_insights()
         shell = page_shell("reading", spacing=24)
         scroll, content = shell.scroll, shell.content
@@ -103,5 +100,5 @@ class WindowInsightsMixin:
                 months.add(row)
             content.append(months)
 
-        self.stack.add_named(scroll, "insights")
+        self.stack.replace("insights", scroll)
         self.stack.set_visible_child_name("insights")

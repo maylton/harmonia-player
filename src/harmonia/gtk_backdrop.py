@@ -1,4 +1,4 @@
-"""Keep a Windows window material (Mica, Acrylic) behind every Harmonia window."""
+"""Keep the Harmonia theme's Windows material (Mica) behind every Harmonia window."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from . import host  # noqa: E402
 from .ui import set_css_class  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
-# Windows with a material drop GTK's client-side shadow (see windows11.css):
+# Windows with a material drop GTK's client-side shadow (see themes/harmonia.css):
 # DWM draws the native shadow and rounded corners instead, and a GTK shadow
 # would show as a band of material around the window.
 CSS_CLASS = "harmonia-backdrop"
@@ -50,7 +50,7 @@ class GtkWindowBackdrops:
         self._style.connect("notify::dark", lambda *_: self._update_dark())
 
     def set_kind(self, kind: str, main_window: Gtk.Window) -> bool:
-        """Use ``kind`` ("mica", "acrylic" or "none"); True if the main window shows it."""
+        """Use ``kind`` ("mica" or "none"); True if the main window shows it."""
         if not host.WINDOW_BACKDROPS:
             return False
         self.kind = kind

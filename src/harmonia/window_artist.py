@@ -27,10 +27,7 @@ class WindowArtistMixin:
             title=_("Carregando {title}…").format(title=item.title),
             description=_("Buscando a página completa do artista"),
         )
-        old = self.stack.get_child_by_name("artist")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(status, "artist")
+        self.stack.replace("artist", status)
         self.stack.set_visible_child_name("artist")
 
         def worker() -> None:
@@ -52,9 +49,6 @@ class WindowArtistMixin:
         show = self._loaded_page_visible("artist", placeholder)
         if show is None:
             return False
-        old = self.stack.get_child_by_name("artist")
-        if old:
-            self.stack.remove(old)
         if error or artist is None:
             page: Gtk.Widget = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
@@ -63,7 +57,7 @@ class WindowArtistMixin:
             )
         else:
             page = self._artist_page(item, artist)
-        self.stack.add_named(page, "artist")
+        self.stack.replace("artist", page)
         if show:
             self.stack.set_visible_child_name("artist")
         return False
@@ -201,10 +195,7 @@ class WindowArtistMixin:
             icon_name="view-refresh-symbolic",
             title=_("Carregando {title}…").format(title=section.title),
         )
-        old = self.stack.get_child_by_name("artist-section")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(status, "artist-section")
+        self.stack.replace("artist-section", status)
         self.stack.set_visible_child_name("artist-section")
 
         def worker() -> None:
@@ -226,9 +217,6 @@ class WindowArtistMixin:
         show = self._loaded_page_visible("artist-section", placeholder)
         if show is None:
             return False
-        old = self.stack.get_child_by_name("artist-section")
-        if old:
-            self.stack.remove(old)
         if error:
             page: Gtk.Widget = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
@@ -243,7 +231,7 @@ class WindowArtistMixin:
                 self._home_section(section.title, items or [], limit=max(24, len(items or [])))
             )
             page = scroll
-        self.stack.add_named(page, "artist-section")
+        self.stack.replace("artist-section", page)
         if show:
             self.stack.set_visible_child_name("artist-section")
         return False

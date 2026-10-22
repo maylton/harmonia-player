@@ -64,13 +64,13 @@ def test_icon_refresh_no_longer_tracks_every_image():
         assert "_refresh_custom_icons" not in text
 
 
-def test_gtk_frontend_starts_with_the_dark_default_theme():
+def test_gtk_frontend_starts_with_the_harmonia_theme():
     from harmonia.theming import DEFAULT_THEME, get_theme
 
     startup = inspect.getsource(app.HarmoniaApplication.do_startup)
     assert "GtkThemeController(" in startup
     assert "apply(DEFAULT_THEME)" in startup
-    assert get_theme(DEFAULT_THEME).default_variant == "dark"
+    assert get_theme(DEFAULT_THEME).default_variant == "system"
 
 
 def test_gtk_theming_changes_stay_out_of_the_qt_frontend():

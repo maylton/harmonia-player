@@ -2,7 +2,7 @@ import json
 
 from harmonia.lrc import parse_lrc
 from harmonia.lyrics_providers import LyricsPlusClient
-from harmonia.lyrics_words import sung_word_count, word_markup
+from harmonia.lyrics_words import word_glow, word_progress, word_spans, word_wobble
 from harmonia.models import LibraryItem
 
 
@@ -35,13 +35,24 @@ def test_enhanced_lrc_times_each_word_and_hides_the_tags():
     assert plain.text == "Plain line" and plain.words == ()
 
 
-def test_the_sung_words_are_lit_and_the_rest_dimmed():
+def test_each_word_has_its_span_without_the_spacing():
     (line,) = parse_lrc("[00:01.00]<00:01.00>Tom <00:01.50>& <00:02.00>Jerry")
-    assert sung_word_count(line, 900) == 0
-    assert sung_word_count(line, 1600) == 2
-    assert word_markup(line, 0) == '<span alpha="45%">Tom &amp; Jerry</span>'
-    assert word_markup(line, 2) == 'Tom &amp; <span alpha="45%">Jerry</span>'
-    assert word_markup(line, 3) == "Tom &amp; Jerry"
+    text, spans = word_spans(line)
+    assert text == "Tom & Jerry"
+    assert [text[start:end] for start, end, _word in spans] == ["Tom", "&", "Jerry"]
+
+
+def test_words_fill_as_they_are_sung_like_metrolist():
+    (line,) = parse_lrc("[00:01.00]<00:01.00>Tom <00:01.50>& <00:02.00>Jerry")
+    tom, _and, jerry = line.words
+    assert word_progress(tom, 900) == 0 and word_progress(tom, 1250) == 0.5
+    assert word_progress(tom, 1600) == 1
+    # The last word has no end of its own: it still fills over a moment.
+    assert 0 < word_progress(jerry, 2100) < 1
+    # The pulse peaks 125 ms into the word and is gone by 750 ms.
+    assert word_wobble(tom, 1125) == 1 and word_wobble(tom, 1000) == 0
+    assert word_wobble(tom, 1800) == 0
+    assert word_glow(tom, 0) == word_glow(tom, 1) == 0
 
 
 LYRICSPLUS_WORD = {

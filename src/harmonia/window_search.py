@@ -18,8 +18,7 @@ from .models import (
 )
 from .ui import (
     action_button,
-    link_row_subtitle,
-    mark_explicit,
+    media_row,
     page_header,
     page_shell,
 )
@@ -118,10 +117,7 @@ class WindowSearchMixin:
         status = Adw.StatusPage(
             icon_name="system-search-symbolic", title=_("Buscando…"), description=escape(query)
         )
-        old = self.stack.get_child_by_name("search")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(status, "search")
+        self.stack.replace("search", status)
         self.stack.set_visible_child_name("search")
         self.back.set_visible(True)
 
@@ -224,15 +220,9 @@ class WindowSearchMixin:
         group = Adw.PreferencesGroup(title=search_group.title)
         playable = [item for item in search_group.items if item.kind in ("songs", "videos")]
         for item in search_group.items:
-            row = Adw.ActionRow()
-            row.add_css_class("media-row")
-            row.set_use_markup(False)
-            row.set_title(item.title)
-            row.set_subtitle(item.subtitle)
-            link_row_subtitle(row, item, self.navigate_credit)
-            row.set_activatable(True)
-            row.add_prefix(self._square_cover(item, size=48, fixed=True))
-            mark_explicit(row, item)
+            row = media_row(
+                item, self.navigate_credit, cover=self._square_cover(item, size=48, fixed=True)
+            )
             icon = (
                 "media-playback-start-symbolic"
                 if item.kind in ("songs", "videos")
