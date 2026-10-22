@@ -297,7 +297,7 @@ def test_mica_blurs_the_wallpaper_once(tmp_path):
     assert len(list(cache.glob("mica-*.png"))) == 1
 
 
-def test_material_css_tints_mica_and_acrylic(tmp_path):
+def test_material_css_tints_mica(tmp_path):
     from harmonia.linux_backdrop import material_css, rgba
 
     tint = rgba("#202020", 0.78)
@@ -305,8 +305,10 @@ def test_material_css_tints_mica_and_acrylic(tmp_path):
     mica = material_css("mica", tint, tmp_path / "mica.png")
     assert "linear-gradient(rgba(32, 32, 32, 0.78)" in mica and 'url("file://' in mica
     assert "background-size: cover" in mica
-    acrylic = material_css("acrylic", tint, None)
-    assert "background-color: rgba(32, 32, 32, 0.78)" in acrylic
+    # The compositor blurring behind the window leaves the tint alone.
+    blurred = material_css("mica", tint, None, blurred=True)
+    assert "background-color: rgba(32, 32, 32, 0.78)" in blurred
+    assert material_css("none", tint, None, blurred=True) == ""
     # Mica without a wallpaper is not shown at all: the theme stays opaque.
     assert material_css("mica", tint, None) == ""
 
@@ -324,7 +326,7 @@ def test_dwm_only_rules_need_the_dwm_class():
     from pathlib import Path
 
     css = (
-        Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "windows11.css"
+        Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "harmonia.css"
     ).read_text(encoding="utf-8")
     # GTK's shadow and resize band are dropped only where DWM draws its own.
     assert "window.harmonia-backdrop.csd" not in css

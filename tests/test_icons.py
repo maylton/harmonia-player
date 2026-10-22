@@ -5,7 +5,9 @@ from pathlib import Path
 
 from tools.sync_icons import (
     FALLBACK_THEME,
+    FREEDESKTOP_THEMES,
     ICONS,
+    LICENSES,
     THEME_EXTRAS,
     THEMES,
     UNTHEMED_FALLBACKS,
@@ -33,17 +35,31 @@ def test_icons_recent_adwaita_dropped_have_unthemed_fallbacks():
 
 
 def test_bundled_icon_packs_are_valid_and_record_provenance():
-    assert set(THEMES) == {"HarmoniaMaterial", "HarmoniaFluent"}
-    for theme, (prefix, _mapping_index, _upstream, _license) in THEMES.items():
+    assert set(THEMES) == {"HarmoniaMaterial", "HarmoniaFluent", "HarmoniaFramework7"}
+    assert set(FREEDESKTOP_THEMES) == {"HarmoniaBreeze", "HarmoniaPapirus"}
+    for theme in (*THEMES, *FREEDESKTOP_THEMES):
         folder = ROOT / "src" / "harmonia" / "icons" / theme
         assert (folder / "index.theme").is_file()
+        assert (ROOT / "licenses" / LICENSES[theme][0]).is_file()
         directory = folder / "scalable" / "actions"
         icons = theme_icons(theme)
         assert {path.stem for path in directory.glob("*.svg")} == set(icons)
         for semantic_name, upstream_name in icons.items():
             path = directory / f"{semantic_name}.svg"
             ET.parse(path)
-            assert f"Source: Iconify {prefix}:{upstream_name}" in path.read_text(encoding="utf-8")
+            text = path.read_text(encoding="utf-8")
+            if theme in THEMES:
+                assert f"Source: Iconify {THEMES[theme][0]}:{upstream_name}" in text
+            else:
+                assert f"Source: {FREEDESKTOP_THEMES[theme][2]} " in text
+                # KDE's colour stylesheet gives way to a fill GTK recolours.
+                assert "currentColor" not in text
+
+
+def test_every_bundled_icon_pack_is_an_icon_style():
+    from harmonia.preferences import Preferences
+
+    assert set(Preferences.ICON_STYLES.values()) - {""} == {*THEMES, *FREEDESKTOP_THEMES}
 
 
 def test_fluent_icons_also_replace_the_windows_caption_buttons():
@@ -55,7 +71,7 @@ def test_fluent_icons_also_replace_the_windows_caption_buttons():
     }
     # Material keeps GTK's caption buttons, so nothing changes for it.
     assert "HarmoniaMaterial" not in THEME_EXTRAS
-    assert all(len(names) == 3 for names in ICONS.values())
+    assert all(len(names) == 4 for names in ICONS.values())
 
 
 def test_windows_uses_the_bundled_fluent_icons_as_its_system_theme():
@@ -99,3 +115,22 @@ def test_elementary_shadow_detects_hidden_guide_layers():
     cleaned = without_hidden(guide)
     assert "rect" not in cleaned and "M 2 2" in cleaned
     assert not misdrawn_by_gtk(cleaned)
+
+
+def test_freedesktop_icon_packs_paint_only_in_the_text_colour():
+    # A coloured icon (an app icon, a file type, an emblem) loses its shape
+    # when GTK recolours it as symbolic: the System Settings app icon became
+    # a flat square in the Breeze pack.
+    inkscape = "{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}"
+    colour = re.compile(r"(?:fill|stroke)\s*:\s*(#[0-9a-fA-F]{3,6})")
+    for theme in FREEDESKTOP_THEMES:
+        directory = ROOT / "src" / "harmonia" / "icons" / theme / "scalable" / "actions"
+        for path in directory.glob("*.svg"):
+            for element in ET.parse(path).iter():
+                if element.tag.startswith(inkscape) or element.tag.endswith("metadata"):
+                    continue
+                values = [element.get("fill", ""), element.get("stroke", "")]
+                values += colour.findall(element.get("style", ""))
+                for value in values:
+                    if value.startswith("#"):
+                        assert value.lower() == "#2e3436", (path.name, value)

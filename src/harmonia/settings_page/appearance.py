@@ -1,4 +1,4 @@
-"""Preferences > Aparência: theme, colours, window material and icons."""
+"""Preferences > Aparência: theme, colours, compositor blur and icons."""
 
 from __future__ import annotations
 
@@ -70,20 +70,20 @@ def appearance_group(window) -> Adw.PreferencesGroup:
             lambda active: changed("background_blur", active),
         )
     )
-    if host.WINDOW_BACKDROPS:
-        _add_window_material_rows(window, group)
+    if host.IS_LINUX:
+        _add_compositor_blur_rows(window, group)
+    # Named after the icon pack alone; on Windows the system style is Fluent.
     icon_styles = [
-        (
-            _("Windows — ícones Fluent")
-            if host.SYSTEM_ICON_THEME
-            else _("GTK — padrão do sistema"),
-            "gtk",
-        ),
+        (_("Fluent") if host.SYSTEM_ICON_THEME else _("Padrão do sistema"), "gtk"),
         (_("Material Expressive"), "material"),
     ]
     if not host.SYSTEM_ICON_THEME:
-        # On Windows the system style already is Fluent.
-        icon_styles.append((_("Fluent — ícones do Windows 11"), "fluent"))
+        icon_styles.append((_("Fluent"), "fluent"))
+    icon_styles += [
+        (_("Framework7"), "framework7"),
+        (_("Breeze"), "breeze"),
+        (_("Papirus"), "papirus"),
+    ]
     group.add(
         combo_row(
             _("Estilo dos ícones"),
@@ -96,7 +96,7 @@ def appearance_group(window) -> Adw.PreferencesGroup:
 
 
 def backdrop_subtitle(window) -> str:
-    """What the material needs, or why the chosen one is not shown."""
+    """Who makes the Harmonia theme's Mica, or why it is not shown."""
     backdrops = getattr(window, "_window_backdrops", None)
     reason = getattr(backdrops, "reason", "")
     if reason:
@@ -110,11 +110,9 @@ def backdrop_subtitle(window) -> str:
     if wallpaper is not None and getattr(backdrops, "kind", "") == "mica":
         # Which image it took, to tell at a glance whether it is the desktop's.
         return _("Mica feito do papel de parede {name}").format(name=wallpaper.name)
-    if host.IS_WINDOWS:
-        return _("Transparência do Windows 11 por trás da janela, no tema Windows 11")
     return _(
-        "No tema Windows 11. Borra o que está atrás da janela com o KWin ou com o "
-        "Blur my Shell (GNOME); sem eles, o Mica usa o papel de parede"
+        "No tema Harmonia. Borra o que está atrás da janela com o KWin ou com o "
+        "Blur my Shell (GNOME); desligado ou sem eles, o Mica usa o papel de parede"
     )
 
 
@@ -140,30 +138,16 @@ def _blur_my_shell_row(window) -> Adw.ActionRow:
     return row
 
 
-def _add_window_material_rows(window, group: Adw.PreferencesGroup) -> None:
-    """Mica or Acrylic behind the window, and whether the expanded player shows it."""
+def _add_compositor_blur_rows(window, group: Adw.PreferencesGroup) -> None:
+    """The Harmonia theme's Mica is automatic; only the compositor blur behind it is a choice."""
     preferences = window.preferences
-    supported = get_theme(preferences.theme).backdrop
-    window._backdrop_row = combo_row(
-        _("Efeito de fundo"),
-        [
-            (_("Mica"), "mica"),
-            (_("Acrílico (fosco)"), "acrylic"),
-            (_("Nenhum"), "none"),
-        ],
-        preferences.backdrop,
-        lambda value: window._appearance_changed("backdrop", value),
+    window._backdrop_row = switch_row(
+        _("Desfoque do compositor"),
+        backdrop_subtitle(window),
+        preferences.compositor_blur,
+        lambda active: window._appearance_changed("compositor_blur", active),
     )
-    window._backdrop_row.set_subtitle(backdrop_subtitle(window))
-    window._backdrop_row.set_sensitive(supported)
+    window._backdrop_row.set_sensitive(get_theme(preferences.theme).backdrop)
     group.add(window._backdrop_row)
     if getattr(getattr(window, "_window_backdrops", None), "blur_my_shell_offer", False):
         group.add(_blur_my_shell_row(window))
-    window._expanded_cover_row = switch_row(
-        _("Capa desfocada no player expandido"),
-        _("Desligada, o player expandido mostra o efeito de fundo"),
-        preferences.expanded_cover,
-        lambda active: window._appearance_changed("expanded_cover", active),
-    )
-    window._expanded_cover_row.set_sensitive(supported and preferences.backdrop != "none")
-    group.add(window._expanded_cover_row)

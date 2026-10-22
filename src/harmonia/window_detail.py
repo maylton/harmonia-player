@@ -58,9 +58,6 @@ class WindowDetailMixin:
         show = self._loaded_page_visible("detail", placeholder)
         if show is None:
             return False
-        old = self.stack.get_child_by_name("detail")
-        if old:
-            self.stack.remove(old)
         self.detail_track_rows = []
         if error:
             page = Adw.StatusPage(
@@ -70,7 +67,7 @@ class WindowDetailMixin:
             )
         else:
             page = self._detail_page(item, tracks or [])
-        self.stack.add_named(page, "detail")
+        self.stack.replace("detail", page)
         if show:
             self.stack.set_visible_child_name("detail")
         self._refresh_detail_track_states()

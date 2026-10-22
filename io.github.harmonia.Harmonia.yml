@@ -15,7 +15,7 @@ finish-args:
   - --own-name=org.mpris.MediaPlayer2.Harmonia
   - --filesystem=xdg-run/discord-ipc-0
   - --filesystem=xdg-run/app/com.discordapp.Discord:ro
-  # The desktop wallpaper, which the Windows 11 theme's Mica is made of
+  # The desktop wallpaper, which the Harmonia theme's Mica is made of
   # (desktop_wallpaper.py), all read-only: GNOME keeps the choice in dconf,
   # Plasma in its config; the images are the system's (/run/host/usr) or
   # the ones the desktops copy to the user's data folder.
@@ -31,7 +31,30 @@ finish-args:
   # Blur behind the window on GNOME is Blur my Shell's (gnome_blur.py): ask
   # GNOME Shell whether the extension is on; its settings are in dconf.
   - --talk-name=org.gnome.Shell.Extensions
+  # Caelestia Shell's Material scheme, which the Material Design 3 theme follows
+  # (material_scheme.py), read-only.
+  - --filesystem=~/.local/state/caelestia:ro
 modules:
+  # Rōmaji for Japanese lyrics (romaji.py): MeCab through fugashi, whose
+  # wheel carries MeCab itself, and the UniDic Lite dictionary.
+  - name: python3-fugashi
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-index --no-deps --find-links="file://${PWD}" --prefix=${FLATPAK_DEST}
+        fugashi
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/c8/b4/07c38f81d69e02d3edce0fa1de545e12aed3f518e0d9304a7a061dc0b79f/fugashi-1.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+        sha256: 0e79d3f09d847d07eddf8e62ad9840b11331102bc31ecd66455c62581af11638
+  - name: python3-unidic-lite
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-index --no-deps --no-build-isolation --find-links="file://${PWD}"
+        --prefix=${FLATPAK_DEST} unidic-lite
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/55/2b/8cf7514cb57d028abcef625afa847d60ff1ffbf0049c36b78faa7c35046f/unidic-lite-1.0.8.tar.gz
+        sha256: db9d4572d9fdd4d00a97949d4b0741ec480ee05a7e7e2e32f547500dae27b245
   - name: harmonia
     buildsystem: meson
     sources:

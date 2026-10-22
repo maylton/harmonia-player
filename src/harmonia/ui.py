@@ -11,7 +11,9 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+gi.require_version("Graphene", "1.0")
+gi.require_version("Gsk", "4.0")
+from gi.repository import Adw, GLib, Graphene, Gsk, Gtk
 
 from .i18n import _
 from .models import LibraryItem
@@ -127,6 +129,44 @@ def media_play_button(
     button = icon_button("media-playback-start-symbolic", tooltip, size=size)
     button.add_css_class("app-media-play")
     return button
+
+
+class PageStack(Gtk.Stack):
+    """The window's pages: one per name, optionally clipped to rounded corners.
+
+    GTK's overflow clip is a plain rectangle, so pages with their own
+    background (album and artist headers) covered a theme's rounded content
+    corners; ``set_corner_radius`` clips them to the curve instead.
+    """
+
+    __gtype_name__ = "HarmoniaPageStack"
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.corner_radius = 0.0
+
+    def replace(self, name: str, page: Gtk.Widget) -> None:
+        """Put ``page`` under ``name``, dropping the page that had it."""
+        old = self.get_child_by_name(name)
+        if old is not None:
+            self.remove(old)
+        self.add_named(page, name)
+
+    def set_corner_radius(self, radius: float) -> None:
+        if radius != self.corner_radius:
+            self.corner_radius = radius
+            self.queue_draw()
+
+    def do_snapshot(self, snapshot: Gtk.Snapshot) -> None:
+        if not self.corner_radius:
+            Gtk.Stack.do_snapshot(self, snapshot)
+            return
+        bounds = Graphene.Rect().init(0, 0, self.get_width(), self.get_height())
+        corners = Gsk.RoundedRect()
+        corners.init_from_rect(bounds, self.corner_radius)
+        snapshot.push_rounded_clip(corners)
+        Gtk.Stack.do_snapshot(self, snapshot)
+        snapshot.pop()
 
 
 def set_css_class(widget: Gtk.Widget, name: str, enabled: bool) -> None:
@@ -354,12 +394,69 @@ def title_with_badge(title: Gtk.Widget, item: LibraryItem) -> Gtk.Widget:
 
 
 def mark_explicit(row: Adw.ActionRow, item: LibraryItem) -> None:
-    """Put the explicit badge just before an AdwActionRow's title.
+    """Put the explicit badge right after an AdwActionRow's title.
 
-    Call it after adding the row's cover, so the badge sits between the two.
+    A prefix would not do: libadwaita puts each new prefix before the
+    previous ones, so the badge landed left of the cover and pushed it
+    aside. The title label is internal to libadwaita; it moves into a line
+    with the badge, and the row keeps updating it. Without it, the badge
+    falls back to the end of the prefixes.
     """
-    if item.explicit:
+    if not item.explicit:
+        return
+    title = row_label(row, "title")
+    parent = title.get_parent() if title is not None else None
+    if not isinstance(parent, Gtk.Box):
         row.add_prefix(explicit_badge())
+        return
+    previous = title.get_prev_sibling()
+    line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    line.add_css_class("explicit-title-line")
+    title.set_hexpand(False)
+    parent.remove(title)
+    line.append(title)
+    line.append(explicit_badge())
+    parent.insert_child_after(line, previous)
+
+
+def row_label(row: Adw.ActionRow, css_class: str) -> Gtk.Label | None:
+    """An AdwActionRow's internal "title" or "subtitle" label, if it has one."""
+    pending = [row]
+    while pending:
+        widget = pending.pop()
+        if isinstance(widget, Gtk.Label) and widget.has_css_class(css_class):
+            return widget
+        child = widget.get_first_child()
+        while child:
+            pending.append(child)
+            child = child.get_next_sibling()
+    return None
+
+
+def media_row(
+    item: LibraryItem,
+    navigate: Callable[[str, str, str], None] | None = None,
+    *,
+    cover: Gtk.Widget | None = None,
+    subtitle: str | None = None,
+    activatable: bool = True,
+) -> Adw.ActionRow:
+    """An activatable list row for ``item``: title, credits, cover, explicit badge.
+
+    With ``navigate`` the credits link to their pages; ``subtitle`` replaces
+    them with plain text (a download's status, a history entry's source).
+    """
+    row = Adw.ActionRow(activatable=activatable)
+    row.add_css_class("media-row")
+    row.set_use_markup(False)
+    row.set_title(item.title)
+    row.set_subtitle(item.subtitle if subtitle is None else subtitle)
+    if navigate is not None and subtitle is None:
+        link_row_subtitle(row, item, navigate)
+    if cover is not None:
+        row.add_prefix(cover)
+    mark_explicit(row, item)
+    return row
 
 
 def link_row_subtitle(
@@ -381,14 +478,7 @@ def link_row_subtitle(
     row.set_title(escape(item.title))
     row.set_subtitle(markup)
     row.set_use_markup(True)
-    pending = [row]
-    while pending:
-        widget = pending.pop()
-        if isinstance(widget, Gtk.Label) and widget.has_css_class("subtitle"):
-            widget.add_css_class("credits")
-            connect_credit_links(widget, linked, navigate)
-            return
-        child = widget.get_first_child()
-        while child:
-            pending.append(child)
-            child = child.get_next_sibling()
+    subtitle = row_label(row, "subtitle")
+    if subtitle is not None:
+        subtitle.add_css_class("credits")
+        connect_credit_links(subtitle, linked, navigate)

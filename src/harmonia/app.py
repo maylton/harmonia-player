@@ -31,6 +31,7 @@ from .preferences import Preferences
 from .services import YouTubeMusicService
 from .theming import DEFAULT_THEME
 from .track_rows import DetailTrackRow, HomeSongRow
+from .ui import PageStack
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
 from .window_artist import WindowArtistMixin
@@ -143,6 +144,7 @@ class HarmoniaWindow(
         self.current_lyrics_document: LyricsDocument | None = None
         self._lyrics_item_id: str | None = None
         self._lyric_views: list[dict] = []
+        self._plain_lyric_labels: list[Gtk.Label] = []
         self._active_lyric_index = -1
 
     def _initialize_state(self) -> None:
@@ -215,9 +217,10 @@ class HarmoniaWindow(
         self.main_shell = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.main_shell.set_vexpand(True)
         build_sidebar(self)
-        self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        self.stack = PageStack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
+        self.stack.add_css_class("content-stack")
         # Pages paint their own backgrounds; clipping keeps a theme's rounded
         # content corner (Windows 11) visible over them.
         self.stack.set_overflow(Gtk.Overflow.HIDDEN)

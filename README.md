@@ -30,12 +30,12 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 - responsive desktop layout with a sidebar, persistent search, and a three-section player bar;
 - square music artwork with centered cropping and circular treatment for artists;
 - segmented library filters, volume, shuffle, and repeat controls;
-- native YouTube Music lyrics with synchronized scrolling and SQLite caching;
+- native YouTube Music lyrics with synchronized scrolling and SQLite caching, lit word by word in the style of Apple Music, with rōmaji under Japanese lines;
 - native Explore page with releases, charts, trends, videos, moods, and genres;
 - credentials protected by the desktop Secret Service, including safe migration from legacy storage;
 - preferences for quality, language, region, proxy, cache, and audio processing;
 - equalizer, normalization, speed, pitch, silence removal, and sleep timer;
-- optional ambient background and GTK or Material Expressive icon themes in the GTK frontend, while KDE follows the Plasma theme;
+- the Harmonia theme with Mica behind the window by default, and a Material Design 3 theme after Caelestia Shell's media player that follows Caelestia's colours; optional ambient background and the Material Expressive, Fluent, Framework7, Breeze and Papirus icon packs in the GTK frontend, while KDE follows the Plasma theme;
 - Brazilian Portuguese and English interface translations;
 - private annual listening statistics and on-device recap;
 - portable backup and validated restore without account credentials or audio files;

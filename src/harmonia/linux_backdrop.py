@@ -1,17 +1,17 @@
-"""Mica and Acrylic for the GTK frontend on Linux.
+"""The Harmonia theme's Mica for the GTK frontend on Linux.
 
-Both blur what is behind the window, as on Windows, when the compositor can:
-the window turns translucent under a tint of the theme's window colour
-(stronger for Mica) and the compositor blurs behind it. KWin does it on
-request (kwin_blur.py); on GNOME only the Blur my Shell extension can, for
-the applications in its list (gnome_blur.py).
+Mica blurs what is behind the window, as on Windows, when the compositor can
+and Preferences > "Desfoque do compositor" is on: the window turns
+translucent under a tint of the theme's window colour and the compositor
+blurs behind it. KWin does it on request (kwin_blur.py); on GNOME only the
+Blur my Shell extension can, for the applications in its list
+(gnome_blur.py).
 
-Without a compositor blur, Mica is drawn by Harmonia from the desktop
-wallpaper, blurred once into a small image that becomes the window's
-background (it cannot follow the window, which Wayland does not place), and
-Acrylic is the translucent window alone.
+Otherwise Mica is drawn by Harmonia from the desktop wallpaper, blurred once
+into a small image that becomes the window's background (it cannot follow
+the window, which Wayland does not place).
 
-Out of focus, windows11.css turns the window opaque as on Windows.
+Out of focus, themes/harmonia.css turns the window opaque as on Windows.
 """
 
 from __future__ import annotations
@@ -35,15 +35,12 @@ from .theming import get_theme  # noqa: E402
 from .ui import set_css_class  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
-CSS_CLASS = "harmonia-backdrop"  # the translucent rules of windows11.css
+CSS_CLASS = "harmonia-backdrop"  # the translucent rules of themes/harmonia.css
 LINUX_CSS_CLASS = "harmonia-backdrop-linux"
-# Opacity of the window colour over the material, per colour scheme: Mica
-# keeps the wallpaper a soft hint, Acrylic stays readable without a blur.
-TINT = {
-    "mica": {"dark": 0.78, "light": 0.68},
-    "acrylic": {"dark": 0.72, "light": 0.65},
-}
-CORNER_RADIUS = 8  # windows11.css's window.csd corners, outside the blur
+# Opacity of the window colour over the material, per colour scheme: the
+# wallpaper or what is behind the window stays a soft hint.
+TINT = {"dark": 0.78, "light": 0.68}
+CORNER_RADIUS = 8  # themes/harmonia.css's window.csd corners, outside the blur
 MICA_SHRINK = 14  # pixels of the longest side the wallpaper is reduced to
 MICA_SIZE = 640  # size of the smoothed image the window scales to cover
 
@@ -117,12 +114,14 @@ def rgba(color: str, alpha: float) -> str:
 def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = False) -> str:
     """The window background of ``kind``; ``image`` is Mica's blurred wallpaper.
 
-    With the compositor blurring behind the window, both are the tint alone.
+    With the compositor blurring behind the window, it is the tint alone.
     """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
-    if blurred and kind in ("mica", "acrylic"):
+    if kind != "mica":
+        return ""
+    if blurred:
         return f"{selector} {{ background-color: {tint}; background-image: none; }}\n"
-    if kind == "mica" and image is not None:
+    if image is not None:
         uri = Gio.File.new_for_path(str(image)).get_uri()
         return (
             f"{selector} {{\n"
@@ -132,8 +131,6 @@ def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = Fa
             "  background-repeat: no-repeat;\n"
             "}\n"
         )
-    if kind == "acrylic":
-        return f"{selector} {{ background-color: {tint}; background-image: none; }}\n"
     return ""
 
 
@@ -169,7 +166,7 @@ class LinuxWindowBackdrops:
         self._color_scheme_signal = self._watch_desktop_color_scheme()
 
     def set_kind(self, kind: str, main_window: Gtk.Window) -> bool:
-        """Use ``kind`` ("mica", "acrylic" or "none"); True if the window shows it."""
+        """Use ``kind`` ("mica" or "none"); True if the window shows it."""
         self.kind = kind
         self._window = main_window
         self.active = self._refresh()
@@ -230,15 +227,21 @@ class LinuxWindowBackdrops:
         theme = get_theme(getattr(self._window.preferences, "theme", ""))
         variant = "dark" if dark else "light"
         color = theme.palettes.get(variant, {}).get("sidebar_bg", "#202020" if dark else "#f3f3f3")
-        return rgba(color, TINT.get(self.kind, TINT["mica"])[variant])
+        return rgba(color, TINT[variant])
 
     def _refresh(self) -> bool:
         window = self._window
         if window is None:
             return False
         self._install_provider(window)
+        preferences = getattr(window, "preferences", None)
+        if not get_theme(getattr(preferences, "theme", "")).backdrop:
+            # Switching themes can change the colour scheme, which refreshes
+            # here before set_kind() hears of the new theme.
+            self.kind = "none"
         dark = self._style.get_dark()
-        self.blur = self._compositor_blur(window) if self.kind != "none" else ""
+        wanted = getattr(preferences, "compositor_blur", True)
+        self.blur = self._compositor_blur(window) if self.kind != "none" and wanted else ""
         if self.blur != "kwin":
             self._release_kwin_blur()
         if self.kind == "mica" and not self.blur:
@@ -247,7 +250,7 @@ class LinuxWindowBackdrops:
             image, self.reason = self._mica(dark if desktop_dark is None else desktop_dark)
         else:
             self.wallpaper = None
-            image, self.reason = None, self._no_blur_reason() if self.kind == "acrylic" else ""
+            image, self.reason = None, ""
         self._schedule_slideshow_refresh()
         css = (
             material_css(self.kind, self._tint(dark), image, blurred=bool(self.blur))
@@ -305,13 +308,6 @@ class LinuxWindowBackdrops:
             return ""
         self._request_kwin_blur(window)
         return "kwin"
-
-    def _no_blur_reason(self) -> str:
-        if "GNOME" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
-            if self.blur_my_shell_offer:
-                return _("O Blur my Shell está ativo, mas não borra o Harmonia")
-            return _("No GNOME, o borrado por trás da janela precisa da extensão Blur my Shell")
-        return _("Ative o efeito Desfoque do KWin para borrar o que está atrás da janela")
 
     def include_in_blur_my_shell(self) -> bool:
         """Add Harmonia to Blur my Shell's application blur, then use it."""

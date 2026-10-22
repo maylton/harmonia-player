@@ -9,9 +9,9 @@ import gi
 
 gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
-from gi.repository import Adw, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
-from . import host  # noqa: E402
+from . import host, material_scheme  # noqa: E402
 from .theming import (  # noqa: E402
     DEFAULT_THEME,
     Theme,
@@ -52,6 +52,10 @@ class GtkThemeController:
         self.accent = "theme"
         self.translucent = False
         self._rendered: tuple | None = None
+        # Caelestia Shell's Material scheme (roles, dark), followed live.
+        self.desktop_scheme = material_scheme.load_caelestia_scheme()
+        self._scheme_monitor = self._watch_desktop_scheme()
+        self._scheme_reload = 0
         self.style_manager.connect("notify::dark", lambda *_: self._render())
         # Fires when the desktop accent changes (Windows reports it to libadwaita).
         self.style_manager.connect("notify::accent-color", lambda *_: self._render())
@@ -70,8 +74,44 @@ class GtkThemeController:
         self.accent = accent
         self.translucent = translucent and self.theme.backdrop
         scheme = self.theme.color_scheme(variant)
+        if self.theme.material and self.desktop_scheme and variant == "theme":
+            # The desktop's Material scheme is made for one mode: take it.
+            scheme = "dark" if self.desktop_scheme[1] else "light"
         self.style_manager.set_color_scheme(COLOR_SCHEMES[scheme])
         self._render()
+
+    def _watch_desktop_scheme(self):
+        """Caelestia rewrites its scheme when the wallpaper or scheme changes."""
+        monitor = Gio.File.new_for_path(str(material_scheme.caelestia_scheme_path()))
+        try:
+            watcher = monitor.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, None)
+        except GLib.Error:
+            return None
+        watcher.connect("changed", lambda *_: self._schedule_scheme_reload())
+        return watcher
+
+    def _schedule_scheme_reload(self) -> None:
+        # A rewrite arrives as several events; read the file once they settle.
+        if self._scheme_reload:
+            GLib.source_remove(self._scheme_reload)
+        self._scheme_reload = GLib.timeout_add(150, self._reload_desktop_scheme)
+
+    def _reload_desktop_scheme(self) -> bool:
+        self._scheme_reload = 0
+        scheme = material_scheme.load_caelestia_scheme()
+        if scheme != self.desktop_scheme:
+            self.desktop_scheme = scheme
+            if self.theme.material:
+                self.apply(self.theme.id, self.variant, self.accent, translucent=self.translucent)
+            elif self.theme.system_accent:
+                self._render()
+        return GLib.SOURCE_REMOVE
+
+    def _desktop_roles(self, dark: bool) -> dict[str, str] | None:
+        """The desktop's Material roles, when made for the mode on screen."""
+        if self.desktop_scheme and self.desktop_scheme[1] == dark:
+            return self.desktop_scheme[0]
+        return None
 
     def _render(self) -> None:
         dark = self.style_manager.get_dark()
@@ -80,9 +120,12 @@ class GtkThemeController:
             if self.theme.system_accent
             else None
         )
+        desktop_roles = self._desktop_roles(dark) if self.theme.material else None
         key = (self.theme.id, dark, self.accent)
         if system_accent:
             key += (system_accent["accent_bg"],)
+        if desktop_roles:
+            key += (tuple(desktop_roles.values()),)
         if self.translucent:
             key += ("translucent",)
         if key == self._rendered:
@@ -95,6 +138,7 @@ class GtkThemeController:
             accent=self.accent,
             system_accent=system_accent,
             translucent=self.translucent,
+            desktop_roles=desktop_roles,
         )
         if hasattr(self.provider, "load_from_string"):
             self.provider.load_from_string(css)
@@ -107,16 +151,18 @@ class GtkThemeController:
         """The desktop's accent shades, or None to keep the theme's own accent.
 
         Windows reports the exact shades. Other desktops report one accent
-        colour through libadwaita (GNOME's Appearance settings); without one
-        (older libadwaita, desktops with no accent setting) the theme keeps its
-        own.
+        colour through libadwaita (GNOME's Appearance settings), or Caelestia
+        Shell through its Material scheme; without one (older libadwaita,
+        desktops with no accent setting) the theme keeps its own.
         """
         if host.IS_WINDOWS:
             return host.windows_accent_palette()
         manager = self.style_manager
-        if not hasattr(manager, "get_system_supports_accent_colors"):
-            return None
-        if not manager.get_system_supports_accent_colors():
+        supported = getattr(manager, "get_system_supports_accent_colors", None)
+        if supported is None or not supported():
+            desktop_scheme = getattr(self, "desktop_scheme", None)
+            if desktop_scheme:
+                return accent_shades(desktop_scheme[0]["primaryContainer"])
             return None
         rgba = manager.get_accent_color_rgba()
         channels = (round(value * 255) for value in (rgba.red, rgba.green, rgba.blue))

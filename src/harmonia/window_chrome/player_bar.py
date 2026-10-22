@@ -8,20 +8,31 @@ gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk
 
+from ..gtk_expressive import ButtonRow, CookieCover, ExpressiveSlider
 from ..i18n import _
 from ..ui import (
     CreditsLabel,
     explicit_badge,
     icon_button,
+    set_css_class,
     set_icon_selected,
     style_icon_button,
 )
+
+FOOTER_HEIGHT = 72
+# Caelestia's controls: 48 px buttons over a slider with a 36 px handle.
+EXPRESSIVE_FOOTER_HEIGHT = 108
+COVER_SIZE = 56
+# The cookie leaves the corners out, so it gets more room than a square.
+EXPRESSIVE_COVER_SIZE = 72
+# Caelestia's border.rounding, around the pages (themes/material.css).
+EXPRESSIVE_CONTENT_RADIUS = 25
 
 
 def build_player_bar(window) -> None:
     window.player_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
     window.player_bar.add_css_class("player-bar")
-    window.player_bar.set_size_request(-1, 72)
+    window.player_bar.set_size_request(-1, FOOTER_HEIGHT)
     window.player_bar.set_vexpand(False)
     window.player_bar.set_valign(Gtk.Align.END)
     window.player_bar.set_visible(True)
@@ -40,6 +51,70 @@ def build_player_bar(window) -> None:
     compact_footer.add_setter(window.footer_secondary, "visible", False)
     window.add_breakpoint(compact_footer)
     window._set_footer_item_state(False)
+
+
+def apply_player_style(window, expressive: bool) -> None:
+    """Caelestia's media player (Material Design 3 theme) or the plain controls,
+    in the player bar and in the expanded player."""
+    for surface in (window.player_bar, window.expanded_surface):
+        set_css_class(surface, "md-expressive", expressive)
+    window.player_bar.set_size_request(
+        -1, EXPRESSIVE_FOOTER_HEIGHT if expressive else FOOTER_HEIGHT
+    )
+    for row in (window.footer_button_row, window.expanded_button_row):
+        row.set_expressive(expressive)
+    for cover_shape in (window.now_cover_shape, window.expanded_cover_shape):
+        cover_shape.set_shaped(expressive)
+    cover = EXPRESSIVE_COVER_SIZE if expressive else COVER_SIZE
+    window.footer_cover_button.set_size_request(cover, cover)
+    window.footer_cover_frame.set_size_request(cover, cover)
+    for plain, expressive_widget in (
+        (window.progress, window.wavy_progress),
+        (window.expanded_progress, window.expanded_wavy_progress),
+        (window.volume_scale, window.expressive_volume),
+    ):
+        plain.set_visible(not expressive)
+        expressive_widget.set_visible(expressive)
+    window.stack.set_corner_radius(EXPRESSIVE_CONTENT_RADIUS if expressive else 0)
+
+
+def footer_playing_changed(window, playing: bool) -> None:
+    """The waves flow, the covers turn and play morphs only while music plays."""
+    for play in (window.play_button, window.expanded_play_button):
+        set_css_class(play, "md-checked", playing)
+    for wavy in (window.wavy_progress, window.expanded_wavy_progress):
+        wavy.set_animate_wave(playing)
+    for cover_shape in (window.now_cover_shape, window.expanded_cover_shape):
+        cover_shape.set_spinning(playing)
+
+
+def expressive_progress(window, scale: Gtk.Scale, elapsed: Gtk.Label) -> ExpressiveSlider:
+    """The wavy slider over ``scale``, for the Material Design 3 theme.
+
+    It seeks on release; while the handle is dragged, ``elapsed`` follows it,
+    as in Caelestia.
+    """
+
+    def seek(fraction: float) -> None:
+        window._seek_requested(scale, Gtk.ScrollType.JUMP, fraction * 100)
+        scale.set_value(fraction * 100)
+
+    def follow(fraction: float) -> None:
+        duration = getattr(window, "current_duration_ms", 0)
+        if duration > 0:
+            elapsed.set_label(window._format_time(int(duration * fraction)))
+
+    wavy = ExpressiveSlider(
+        scale.get_adjustment(),
+        wavy=True,
+        interaction_on_move=False,
+        on_interaction=seek,
+        on_drag=follow,
+    )
+    wavy.set_sensitive(scale.get_sensitive())
+    wavy.set_visible(False)
+    scale.connect("notify::sensitive", lambda *_: wavy.set_sensitive(scale.get_sensitive()))
+    return wavy
 
 
 def footer_cover_hover(window, hovered: bool) -> None:
@@ -91,7 +166,7 @@ def _cover_button(window) -> Gtk.Button:
     cover_button = Gtk.Button(tooltip_text=_("Expandir player"))
     cover_button.add_css_class("flat")
     cover_button.add_css_class("player-cover-button")
-    cover_button.set_size_request(56, 56)
+    cover_button.set_size_request(COVER_SIZE, COVER_SIZE)
     cover_button.set_hexpand(False)
     cover_button.set_halign(Gtk.Align.START)
     cover_button.set_valign(Gtk.Align.CENTER)
@@ -100,7 +175,8 @@ def _cover_button(window) -> Gtk.Button:
     cover_button.connect("clicked", lambda *_: window._show_expanded_player())
     window.footer_cover_button = cover_button
     cover_frame = Gtk.AspectFrame(ratio=1.0, obey_child=False)
-    cover_frame.set_size_request(56, 56)
+    cover_frame.set_size_request(COVER_SIZE, COVER_SIZE)
+    window.footer_cover_frame = cover_frame
     cover_frame.set_hexpand(False)
     cover_frame.set_vexpand(False)
     cover_frame.set_halign(Gtk.Align.CENTER)
@@ -131,7 +207,8 @@ def _cover_button(window) -> Gtk.Button:
     window.cover_expand_hint.set_opacity(0)
     window.cover_expand_hint.set_can_target(False)
     cover_overlay.add_overlay(window.cover_expand_hint)
-    cover_frame.set_child(cover_overlay)
+    window.now_cover_shape = CookieCover(cover_overlay)
+    cover_frame.set_child(window.now_cover_shape)
     cover_button.set_child(cover_frame)
     hover = Gtk.EventControllerMotion()
     hover.connect("enter", lambda *_: footer_cover_hover(window, True))
@@ -146,7 +223,8 @@ def _transport_section(window) -> Gtk.Widget:
     center.add_css_class("player-center")
     center.set_vexpand(False)
     center.set_valign(Gtk.Align.CENTER)
-    controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, halign=Gtk.Align.CENTER)
+    controls = ButtonRow(spacing=10)
+    window.footer_button_row = controls
     shuffle = icon_button("media-playlist-shuffle-symbolic", _("Ordem aleatória"))
     shuffle.connect("clicked", lambda button: window._toggle_shuffle(button))
     window.shuffle_buttons.append(shuffle)
@@ -174,7 +252,11 @@ def _transport_section(window) -> Gtk.Widget:
         window.autoplay_button,
     ]
     for control in window.footer_transport_controls:
-        controls.append(control)
+        controls.append(
+            control,
+            fill=control is window.play_button,
+            narrow=control in (shuffle, repeat, window.autoplay_button),
+        )
     center.append(controls)
 
     timeline = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -188,6 +270,8 @@ def _transport_section(window) -> Gtk.Widget:
     window.progress.set_sensitive(False)
     window.progress.connect("change-value", window._seek_requested)
     timeline.append(window.progress)
+    window.wavy_progress = expressive_progress(window, window.progress, window.elapsed_label)
+    timeline.append(window.wavy_progress)
     window.duration_label = Gtk.Label(label=_("0:00"), width_chars=5)
     window.duration_label.add_css_class("time-label")
     timeline.append(window.duration_label)
@@ -233,6 +317,16 @@ def _secondary_section(window) -> Gtk.Widget:
         "value-changed", lambda slider: setattr(window.player, "volume", slider.get_value() / 100)
     )
     secondary.append(volume)
+    window.volume_scale = volume
+    window.expressive_volume = ExpressiveSlider(
+        volume.get_adjustment(),
+        wavy=False,
+        on_interaction=lambda fraction: volume.set_value(fraction * 100),
+    )
+    window.expressive_volume.set_hexpand(False)
+    window.expressive_volume.set_size_request(100, -1)
+    window.expressive_volume.set_visible(False)
+    secondary.append(window.expressive_volume)
     window.footer_close_button = icon_button("window-close-symbolic", _("Parar"))
     window.footer_close_button.connect("clicked", lambda *_: window._stop_player())
     secondary.append(window.footer_close_button)

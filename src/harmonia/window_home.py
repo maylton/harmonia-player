@@ -35,10 +35,7 @@ class WindowHomeMixin:
             _("Lançamentos, paradas e sons para cada momento."),
             self.explore_data,
         )
-        old = self.stack.get_child_by_name("explore")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(page, "explore")
+        self.stack.replace("explore", page)
         self.stack.set_visible_child_name("explore")
         self._set_active_nav("explore")
 
@@ -111,10 +108,7 @@ class WindowHomeMixin:
             title=_("Carregando {title}…").format(title=destination.title),
             description=_("Consultando o YouTube Music"),
         )
-        old = self.stack.get_child_by_name("discovery")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(status, "discovery")
+        self.stack.replace("discovery", status)
         self.stack.set_visible_child_name("discovery")
 
         def worker():
@@ -136,9 +130,6 @@ class WindowHomeMixin:
         show = self._loaded_page_visible("discovery", placeholder)
         if show is None:
             return False
-        old = self.stack.get_child_by_name("discovery")
-        if old:
-            self.stack.remove(old)
         if error:
             page = Adw.StatusPage(
                 icon_name="dialog-error-symbolic",
@@ -152,7 +143,7 @@ class WindowHomeMixin:
                 data or ExploreData([], [], []),
                 full_sections=True,
             )
-        self.stack.add_named(page, "discovery")
+        self.stack.replace("discovery", page)
         if show:
             self.stack.set_visible_child_name("discovery")
         return False
@@ -173,10 +164,7 @@ class WindowHomeMixin:
         for section in self.home_sections:
             if section.items:
                 content.append(self._home_section(section.title, section.items))
-        old = self.stack.get_child_by_name("home")
-        if old:
-            self.stack.remove(old)
-        self.stack.add_named(page, "home")
+        self.stack.replace("home", page)
 
     def _home_section(self, title: str, items: list[LibraryItem], limit: int = 12) -> Gtk.Widget:
         unique_items = list({item.id: item for item in items}.values())

@@ -497,7 +497,6 @@ popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }
   padding: 11px 14px;
   color: #ffffff;
   border-radius: 14px;
-  opacity: .46;
 }
 .expanded-player .lyrics-line-text { font-size: 25px; font-weight: 700; }
 .expanded-player .lyrics-line-active {
@@ -505,7 +504,16 @@ popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }
   opacity: 1;
   background: transparent;
 }
-.expanded-player .lyrics-line-active + .lyrics-line { opacity: .72; }
+/* The lines fade with their distance from the sung one, as in Metrolist. */
+.expanded-player .lyrics-line { opacity: .26; }
+.expanded-player .lyrics-line.lyrics-line-near-1 { opacity: .58; }
+.expanded-player .lyrics-line.lyrics-line-near-2 { opacity: .44; }
+.expanded-player .lyrics-line.lyrics-line-near-3 { opacity: .34; }
+.expanded-player .lyrics-line:hover { opacity: .8; }
+.expanded-player .lyrics-line.lyrics-line-active { opacity: 1; }
+/* Rōmaji under each Japanese line, before the translation (as Metrolist). */
+.lyrics-line-romaji { color: alpha(currentColor, .72); font-size: 15px; font-weight: 550; }
+.expanded-player .lyrics-line-romaji { font-size: 19px; }
 .lyrics-line-translation,
 .lyrics-plain-translation {
   color: alpha(currentColor, .66);

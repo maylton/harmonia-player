@@ -16,6 +16,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
+from . import romaji
+from .gtk_lyric_words import KaraokeLine
 from .i18n import _
 from .models import (
     LibraryItem,
@@ -124,6 +126,7 @@ class WindowLyricsMixin:
             view["generation"] += 1
             view["follow_generation"] += 1
         self._lyric_views.clear()
+        self._plain_lyric_labels = []
         self._active_lyric_index = -1
         content = self._lyrics_surface(item, document, expanded=False)
         content.add_css_class("lyrics-popover")
@@ -142,6 +145,56 @@ class WindowLyricsMixin:
         self.lyrics_popover.set_child(content)
         self._render_expanded_lyrics(item, document)
         self._update_synced_lyrics(self._playback_position_us() // 1000)
+        self._start_lyrics_romaji(document)
+
+    def _romanize_lyrics_changed(self, active: bool) -> None:
+        self._preference_changed("romanize_lyrics", active)
+        item = getattr(self, "current_item", None)
+        if item is not None and self.current_lyrics_document is not None:
+            self._render_lyrics(item, self.current_lyrics_document)
+
+    def _start_lyrics_romaji(self, document: LyricsDocument) -> None:
+        """Read Japanese lyrics in rōmaji off the main thread, then show it."""
+        if not (self.preferences.romanize_lyrics and romaji.available()):
+            return
+        lines = (
+            [line.text for line in document.synced]
+            if document.synced
+            else document.display_text.splitlines()
+        )
+        if not romaji.is_japanese("\n".join(lines)):
+            return
+
+        def worker():
+            readings = [romaji.romanize(line) if line.strip() else "" for line in lines]
+            GLib.idle_add(self._show_lyrics_romaji, document, lines, readings)
+
+        threading.Thread(target=worker, daemon=True, name="lyrics-romaji").start()
+
+    def _show_lyrics_romaji(
+        self, document: LyricsDocument, lines: list[str], readings: list[str]
+    ) -> bool:
+        if document is not self.current_lyrics_document:
+            return GLib.SOURCE_REMOVE
+        if document.synced:
+            for view in self._lyric_views:
+                for label, line, reading in zip(view["romaji"], lines, readings, strict=False):
+                    label.set_label(reading)
+                    label.set_visible(bool(reading) and reading != line)
+            return GLib.SOURCE_REMOVE
+        # Unsynced lyrics are one label: each reading goes under its line.
+        markup = "\n".join(
+            escape(line, quote=False)
+            + (
+                f'\n<span alpha="62%">{escape(reading, quote=False)}</span>'
+                if reading and reading != line
+                else ""
+            )
+            for line, reading in zip(lines, readings, strict=False)
+        )
+        for label in self._plain_lyric_labels:
+            label.set_markup(markup)
+        return GLib.SOURCE_REMOVE
 
     def _lyrics_surface(
         self, item: LibraryItem, document: LyricsDocument, expanded: bool
@@ -174,6 +227,7 @@ class WindowLyricsMixin:
             original.set_max_width_chars(54)
             original.add_css_class("expanded-lyrics-text" if expanded else "lyrics-text")
             body.append(original)
+            self._plain_lyric_labels.append(original)
             if document.translation:
                 translated = Gtk.Label(
                     label=document.translation, xalign=0, yalign=0, wrap=True, selectable=True
@@ -190,7 +244,8 @@ class WindowLyricsMixin:
             lead.add_css_class("lyrics-breathing-space")
             body.append(lead)
         rows: list[Gtk.Button] = []
-        texts: list[Gtk.Label] = []
+        texts: list[KaraokeLine] = []
+        readings: list[Gtk.Label] = []
         for line in document.synced:
             row = Gtk.Button()
             row.add_css_class("flat")
@@ -198,10 +253,14 @@ class WindowLyricsMixin:
             row.set_tooltip_text(_("Ir para {time}").format(time=self._format_time(line.start_ms)))
             row.connect("clicked", lambda _button, value=line.start_ms: self._seek_lyric(value))
             labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            original = Gtk.Label(label=line.text, xalign=0, wrap=True)
-            original.add_css_class("lyrics-line-text")
+            original = KaraokeLine(line)
             labels.append(original)
             texts.append(original)
+            # Filled with rōmaji once read (_show_lyrics_romaji).
+            reading = Gtk.Label(xalign=0, wrap=True, visible=False)
+            reading.add_css_class("lyrics-line-romaji")
+            labels.append(reading)
+            readings.append(reading)
             if line.translation:
                 translated = Gtk.Label(label=line.translation, xalign=0, wrap=True)
                 translated.add_css_class("lyrics-line-translation")
@@ -217,6 +276,7 @@ class WindowLyricsMixin:
             {
                 "rows": rows,
                 "texts": texts,
+                "romaji": readings,
                 "expanded": expanded,
                 "body": body,
                 "scroll": None,

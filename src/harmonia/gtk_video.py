@@ -43,12 +43,14 @@ class GtkVideoMixin:
         self._gtk_video_last_sync_seek = 0.0
         self._gtk_video_initial_warmup = False
 
-        artwork_overlay = self.expanded_cover.get_parent()
-        frame = artwork_overlay.get_parent() if artwork_overlay is not None else None
+        # The artwork, as its theme shapes it (the Material theme's cookie);
+        # the video and the Música/Vídeo switch stay outside that shape.
+        artwork = getattr(self, "expanded_cover_shape", None) or self.expanded_cover.get_parent()
+        frame = artwork.get_parent() if artwork is not None else None
         if not isinstance(frame, Gtk.AspectFrame):
             return
 
-        video_picture = self._build_media_switch(frame, artwork_overlay)
+        video_picture = self._build_media_switch(frame, artwork)
         self._prepare_gtk_video_sink(video_picture)
         for button, mode in (
             (self._media_audio_button, "audio"),
@@ -96,6 +98,7 @@ class GtkVideoMixin:
         )
         selector.set_margin_top(12)
         selector.add_css_class("linked")
+        selector.add_css_class("expanded-media-switch")
         audio_button = Gtk.ToggleButton(label=_("Música"))
         video_button = Gtk.ToggleButton(label=_("Vídeo"))
         video_button.set_group(audio_button)

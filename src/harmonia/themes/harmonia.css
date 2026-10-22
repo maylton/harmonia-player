@@ -1,4 +1,4 @@
-/* Windows 11, after the Fluent 2 (WinUI 3) control styles: the title bar and
+/* Harmonia, after the Windows 11 Fluent 2 (WinUI 3) control styles: the title bar and
    navigation pane share the Mica base colour, content sits on a lighter layer
    with a rounded top-left corner, controls have 4px corners and a subtle
    stroke, cards and flyouts 8px, the selected navigation item carries a short
@@ -319,7 +319,7 @@ progressbar progress { min-height: 3px; border-radius: 2px; background-color: @a
 /* Player bar on Mica, separated from the content by a hairline. */
 .player-bar { background: @harmonia_sidebar_bg; border-top: 1px solid alpha(@harmonia_shadow, .1); }
 
-/* With Mica or Acrylic behind the window (Preferences > Efeito de fundo):
+/* With Mica behind the window (automatic in this theme):
    the translucent palette lets the title bar, navigation pane and player bar
    show the material and tints the content layer. On Windows (harmonia-dwm)
    GTK's own shadow and corner rounding give way to DWM's native ones, which
@@ -373,10 +373,10 @@ window.harmonia-backdrop .detail-backdrop-shade,
 window.harmonia-backdrop .artist-backdrop,
 window.harmonia-backdrop .artist-backdrop-shade { opacity: 0; }
 
-/* Expanded player with the material instead of the blurred cover
-   (Preferences > Capa desfocada no player expandido): it slides in opaque
-   over the pages and fades to the material once they are hidden. It keeps
-   its dark design, so light mode lays a dark veil over the material. */
+/* Expanded player with the material instead of the blurred cover: it
+   slides in opaque over the pages and fades to the material once they are
+   hidden. It keeps its dark design, so light mode lays a dark veil over the
+   material. */
 window.harmonia-backdrop .expanded-player.expanded-material { background-color: @harmonia_opaque_sidebar_bg; }
 window.harmonia-backdrop .expanded-player.expanded-material-light { background-color: #202020; }
 window.harmonia-backdrop .expanded-player.expanded-material.expanded-revealed {

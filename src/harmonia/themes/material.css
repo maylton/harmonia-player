@@ -1,0 +1,218 @@
+/* Material Design 3 Expressive, after Caelestia Shell: Google Sans Flex,
+   surfaces from the surface container roles, pill navigation and the
+   dashboard's media player in the player bar (gtk_expressive.py). Colours
+   are Material roles (md_ colours), from Caelestia's scheme when it has one. */
+window { font-family: "Google Sans Flex", "Google Sans", "Rubik", sans-serif; }
+
+/* Caelestia's border: the title bar, the navigation pane and the player bar
+   are one surface, and the pages sit inside it with the border's 25 px
+   curves and its 10 px thickness at the sides. */
+window, .app-root { background: @md_surface_container; }
+headerbar { border-bottom: none; box-shadow: none; }
+.sidebar { border: none; }
+.sidebar ~ separator.vertical { min-width: 0; margin: 0; opacity: 0; }
+/* By class: CSS skips hidden siblings, so ".sidebar ~ stack" would stop
+   matching once a narrow window hides the navigation pane. */
+.content-stack {
+  background: @md_surface;
+  border-radius: 25px;
+  margin: 0 10px;
+}
+.sidebar-item { border-radius: 9999px; }
+/* Hovered items and checked buttons take the tonal buttons' secondary
+   container, solid, as the player bar does, instead of the translucent
+   overlays the other themes use. */
+.sidebar-item:hover,
+.segmented-control button:hover,
+.media-row:hover,
+.song-row:hover,
+.home-song-row:hover,
+.detail-track-row:hover,
+.section-link:hover,
+.home-play-all:hover,
+.genre-chip:hover,
+button.app-icon-button:hover,
+button.app-icon-button:checked,
+menubutton.app-icon-button > button:hover,
+menubutton.app-icon-button > button:checked,
+.icons-material button.app-icon-button:hover,
+.icons-material button.app-icon-button:checked,
+.icons-material menubutton.app-icon-button > button:hover,
+.icons-material menubutton.app-icon-button > button:checked,
+.app-action-secondary:hover,
+.app-action-secondary:active {
+  background: @md_secondary_container;
+  color: @md_on_secondary_container;
+  border-color: transparent;
+}
+/* The current page, filter and tab: Caelestia's active workspace, primary
+   with on-primary content, as the play button. */
+.sidebar-active,
+.sidebar-active:hover,
+.segmented-control button:checked,
+.segmented-control button:checked:hover,
+.md-expressive .expanded-switcher button:checked {
+  background: @md_primary;
+  color: @md_on_primary;
+  box-shadow: none;
+}
+.segmented-control button,
+.sidebar-item,
+.media-row,
+.song-row,
+.home-song-row,
+.detail-track-row {
+  transition: background-color 200ms cubic-bezier(0.34, 0.8, 0.34, 1);
+}
+/* Secondary actions are Material's tonal buttons. */
+.app-action-secondary {
+  background: @md_secondary_container;
+  color: @md_on_secondary_container;
+  border: none;
+}
+.app-action-secondary:hover { background-image: image(alpha(currentColor, .08)); }
+.square-cover, .row-cover { border-radius: 16px; }
+.media-card { border-radius: 16px; }
+.app-icon-selected,
+.app-icon-selected:hover,
+.app-icon-selected:active {
+  color: @md_on_secondary_container;
+  background: @md_secondary_container;
+  border-color: transparent;
+}
+.app-media-play,
+.app-media-play:hover,
+.app-media-play:active { box-shadow: none; }
+scale trough { background-color: @md_secondary_container; }
+scale highlight { background-color: @md_primary; }
+
+/* Player bar: Caelestia's dashboard media player. */
+.player-bar { border-top: none; background: @md_surface_container; }
+.player-bar.md-expressive { padding: 12px 20px; }
+.player-bar.md-expressive .player-center { border-spacing: 10px; }
+.player-bar.md-expressive .card-title { font-size: 16px; font-weight: 500; }
+.player-bar.md-expressive .card-subtitle { font-size: 14px; color: @md_on_surface_variant; }
+.player-bar.md-expressive .time-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: @md_on_surface_variant;
+}
+
+/* IconButton: tonal round buttons, a filled play button that takes the rest
+   of the row, checked toggles in secondary. Round, a checked button is a
+   12 px rounded square and a pressed one 8 px (ButtonBase radii), morphing
+   with DefaultEffects. */
+.md-expressive .md-button-row > button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 24px;
+  color: @md_on_secondary_container;
+  background-color: @md_secondary_container;
+  background-image: none;
+  box-shadow: none;
+  opacity: 1;
+  -gtk-icon-size: 24px;
+  transition: border-radius 200ms cubic-bezier(0.34, 0.8, 0.34, 1),
+    background-color 200ms cubic-bezier(0.34, 0.8, 0.34, 1),
+    color 200ms cubic-bezier(0.34, 0.8, 0.34, 1);
+}
+.md-expressive .md-button-row > button.md-narrow { -gtk-icon-size: 20px; }
+.md-expressive .md-button-row > button.app-icon-selected {
+  color: @md_on_secondary;
+  background-color: @md_secondary;
+  border-radius: 12px;
+}
+.md-expressive .md-button-row > button.md-fill {
+  color: @md_on_primary;
+  background-color: @md_primary;
+}
+.md-expressive .md-button-row > button.md-fill.md-checked { border-radius: 12px; }
+/* State layers: the content colour at 8% on hover and 10% while pressed. */
+.md-expressive .md-button-row > button:hover {
+  background-image: image(alpha(currentColor, .08));
+}
+.md-expressive .md-button-row > button:active,
+.md-expressive .md-button-row > button.md-fill.md-checked:active {
+  border-radius: 8px;
+  background-image: image(alpha(currentColor, .1));
+}
+.md-expressive .md-button-row > button:disabled {
+  color: alpha(@md_on_surface, .38);
+  background-color: alpha(@md_on_surface, .1);
+}
+
+/* StyledSlider: primary fill, handle and stop dot; secondary container track. */
+.md-slider {
+  color: @md_primary;
+  transition: color 200ms cubic-bezier(0.34, 0.8, 0.34, 1);
+}
+.md-slider:disabled { color: alpha(@md_on_surface, .38); }
+.md-slider-handle,
+.md-slider-stop { background-color: currentColor; border-radius: 9999px; }
+.md-slider-fill { background-color: currentColor; border-radius: 12px 2px 2px 12px; }
+.md-slider-track {
+  background-color: @md_secondary_container;
+  border-radius: 2px 12px 12px 2px;
+}
+.md-slider:disabled .md-slider-track { background-color: alpha(@md_on_surface, .1); }
+
+/* CoverArt: the cookie takes the artwork; behind it, the fallback colour and
+   a faint outline to separate it from the bar. */
+.player-bar.md-expressive .player-cover,
+.player-bar.md-expressive .player-cover-button {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.md-cover { color: alpha(@md_outline, .3); }
+.player-bar.md-expressive .md-cover > overlay { background-color: @md_surface_container_highest; }
+.player-bar.md-expressive .player-cover-placeholder { color: @md_on_surface_variant; }
+
+/* Expanded player: Caelestia's dashboard media tab, on the scheme's surface
+   instead of the fixed dark design; the blurred artwork stays as a hint. */
+.expanded-player.md-expressive { background: @md_surface; }
+.md-expressive .expanded-backdrop-base { background: @md_surface; }
+.md-expressive .expanded-backdrop { opacity: .35; }
+.md-expressive .expanded-backdrop-shade {
+  background: linear-gradient(to bottom, alpha(@md_surface, .55), alpha(@md_surface, .9));
+}
+.md-expressive .expanded-header {
+  border-bottom: none;
+  background: alpha(@md_surface_container, .7);
+}
+.md-expressive .expanded-header > button { color: @md_on_surface_variant; }
+.md-expressive .expanded-header > button:hover {
+  color: @md_on_secondary_container;
+  background: @md_secondary_container;
+}
+.md-expressive .expanded-switcher { background: @md_surface_container_high; }
+.md-expressive .expanded-switcher button { color: @md_on_surface_variant; }
+.md-expressive .expanded-cover { border-radius: 0; background: none; box-shadow: none; }
+.md-expressive .expanded-cover .md-cover > overlay { background-color: @md_surface_container_highest; }
+.md-expressive .expanded-cover-placeholder { color: @md_on_surface_variant; }
+/* Title, artist and album as in Details.qml: title large, on-surface
+   variant for the artist. */
+.md-expressive .expanded-title { color: @md_on_surface; font-weight: 500; letter-spacing: 0; }
+.md-expressive .expanded-subtitle { color: @md_on_surface_variant; font-weight: 500; }
+.md-expressive .expanded-time { color: @md_on_surface_variant; font-weight: 500; }
+.md-expressive .expanded-like { color: @md_primary; }
+.md-expressive .lyrics-line { color: @md_on_surface; }
+.md-expressive .expanded-lyrics-title,
+.md-expressive .expanded-related-title,
+.md-expressive .expanded-lyrics-text { color: @md_on_surface; }
+.md-expressive .expanded-lyrics-provider { color: @md_on_surface_variant; }
+
+.md-expressive .lyrics-line-active { color: @md_primary; }
+/* The Música/Vídeo switch over the artwork, as the other selectors. */
+.md-expressive .expanded-media-switch button {
+  color: @md_on_surface_variant;
+  background: @md_surface_container_high;
+  border: none;
+  box-shadow: none;
+}
+.md-expressive .expanded-media-switch button:checked {
+  color: @md_on_primary;
+  background: @md_primary;
+}

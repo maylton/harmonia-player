@@ -27,6 +27,53 @@ https://www.apache.org/licenses/LICENSE-2.0
 
 Copyright (c) 2020 Microsoft Corporation.
 
+## Framework7 Icons
+
+- Project: Framework7 Icons by Vladimir Kharlampidi, drawn after iOS
+- Source: https://github.com/framework7io/framework7-icons
+- Retrieved through: https://api.iconify.design
+- License: MIT (`licenses/Framework7-Icons-MIT.txt`)
+- Used by: Harmonia Framework7 icon theme (`src/harmonia/icons/HarmoniaFramework7`)
+
+Apple's SF Symbols may not be redistributed, so the iOS-style icon pack uses
+these instead.
+
+## Breeze Icons
+
+- Project: Breeze Icons by KDE
+- Source: https://invent.kde.org/frameworks/breeze-icons
+- License: GNU Lesser General Public License, version 3 or later
+  (`licenses/Breeze-Icons-LGPL-3.0.txt`)
+- Used by: Harmonia Breeze icon theme (`src/harmonia/icons/HarmoniaBreeze`)
+
+The 16 px icons are copied as they are, with KDE's colour stylesheet replaced
+by a plain fill so that GTK can recolour them.
+
+## Papirus Icon Theme
+
+- Project: Papirus Icon Theme by the Papirus Development Team
+- Source: https://github.com/PapirusDevelopmentTeam/papirus-icon-theme
+- License: GNU General Public License, version 3 (`licenses/Papirus-Icon-Theme-GPL-3.0.txt`)
+- Used by: Harmonia Papirus icon theme (`src/harmonia/icons/HarmoniaPapirus`)
+
+## m3shapes
+
+- Project: m3shapes by soramanew, a port of AndroidX graphics-shapes
+- Source: https://github.com/soramanew/m3shapes
+- License: Apache License 2.0
+- Used by: the Material Design 3 theme's cookie-shaped artwork
+  (`COOKIE_9` in `src/harmonia/gtk_expressive.py`), the Béziers m3shapes
+  computes for MaterialShape.Cookie9Sided
+
+## fugashi and UniDic Lite
+
+- Projects: fugashi by Paul O'Leary McCann, with MeCab; UniDic Lite
+- Sources: https://github.com/polm/fugashi, https://github.com/polm/unidic-lite
+- Licenses: fugashi MIT and MeCab BSD-3-Clause; UniDic Lite MIT, and the UniDic
+  dictionary it carries BSD-3-Clause (also offered under the GPL and LGPL)
+- Used by: rōmaji for Japanese lyrics (`src/harmonia/romaji.py`), bundled in
+  the Flatpak
+
 ## elementary icons
 
 - Project: elementary icons
