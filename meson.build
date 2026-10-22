@@ -51,6 +51,10 @@ install_data(
   'LICENSE',
   'THIRD_PARTY_NOTICES.md',
   'licenses/Material-Symbols-Apache-2.0.txt',
+  'licenses/Fluent-UI-System-Icons-MIT.txt',
+  'licenses/Framework7-Icons-MIT.txt',
+  'licenses/Breeze-Icons-LGPL-3.0.txt',
+  'licenses/Papirus-Icon-Theme-GPL-3.0.txt',
   install_dir: get_option('datadir') / 'doc/harmonia',
 )
 subdir('po')
