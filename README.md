@@ -4,6 +4,19 @@ A native Linux client for accessing your YouTube Music library. Harmonia uses GT
 
 > **Beta 0.1:** This is a testing release. InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Home in the Harmonia theme, with Mica made of the desktop wallpaper](docs/screenshots/harmonia-theme.png) | ![Home in the Material Design 3 theme, with Caelestia Shell's colours and media player](docs/screenshots/material-design-3.png) |
+| **Harmonia theme** — Mica behind the window | **Material Design 3** — after Caelestia Shell |
+| ![The expanded player with the cookie-shaped artwork and the wavy progress bar](docs/screenshots/expanded-player.png) | ![Japanese lyrics lit word by word, with rōmaji under each line](docs/screenshots/lyrics-romaji.png) |
+| **Expanded player** | **Lyrics word by word, with rōmaji** |
+
+![An album page in the Harmonia theme](docs/screenshots/album.png)
+
+The screenshots use sample data with generated artwork.
+
 ## Features
 
 - adaptive GTK 4/libadwaita interface plus a native Qt 6/Kirigami frontend for KDE Plasma;

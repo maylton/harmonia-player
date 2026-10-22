@@ -63,6 +63,9 @@ datas = harmonia_data()
 datas += [
     (str(MSYS_PREFIX / "share/licenses/webview2-loader/LICENSE"), "licenses/webview2-loader"),
     (str(ROOT / "licenses/Fluent-UI-System-Icons-MIT.txt"), "licenses"),
+    (str(ROOT / "licenses/Framework7-Icons-MIT.txt"), "licenses"),
+    (str(ROOT / "licenses/Breeze-Icons-LGPL-3.0.txt"), "licenses"),
+    (str(ROOT / "licenses/Papirus-Icon-Theme-GPL-3.0.txt"), "licenses"),
 ]
 binaries = [(str(MSYS_PREFIX / "bin/WebView2Loader.dll"), ".")]
 # QuickJS runs YouTube's player code for age-restricted tracks (js_runtime.py
