@@ -379,9 +379,11 @@ def test_gtk_controller_applies_themes_live():
     controller.apply("breeze", "light")
     assert controller.style_manager.get_dark() is False
     assert controller._rendered == ("breeze", False, "theme")
-    controller.apply("harmonia", accent="purple")
+    # The Harmonia theme follows the system scheme, so ask for dark; the key
+    # also carries the desktop accent where there is one (Windows, GNOME).
+    controller.apply("harmonia", "dark", accent="purple")
     assert controller.style_manager.get_dark() is True
-    assert controller._rendered == ("harmonia", True, "purple")
+    assert controller._rendered[:3] == ("harmonia", True, "purple")
 
 
 def test_accent_presets_are_readable_on_every_literal_palette():
