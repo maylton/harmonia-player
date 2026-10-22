@@ -25,7 +25,6 @@ class Preferences:
     skip_silence: bool = False
     crossfade: int = 0  # seconds; 0 is off
     playlist_add_position: str = DEFAULT_POSITION  # "end" or "start"
-    background_blur: bool = False
     icon_style: str = "gtk"
     theme: str = DEFAULT_THEME
     theme_variant: str = "theme"
@@ -97,7 +96,6 @@ class Preferences:
             skip_silence=boolean("skip_silence", False),
             crossfade=clamp_seconds(storage.get_setting("crossfade", "0")),
             playlist_add_position=position if position in POSITIONS else DEFAULT_POSITION,
-            background_blur=boolean("background_blur", False),
             icon_style=icon_style if icon_style in cls.ICON_STYLES else "gtk",
             theme=theme if theme in builtin_themes() else DEFAULT_THEME,
             theme_variant=theme_variant if theme_variant in VARIANTS else "theme",
@@ -133,7 +131,6 @@ class Preferences:
             "skip_silence": "1" if self.skip_silence else "0",
             "crossfade": str(self.crossfade),
             "playlist_add_position": self.playlist_add_position,
-            "background_blur": "1" if self.background_blur else "0",
             "icon_style": self.icon_style,
             "theme": self.theme,
             "theme_variant": self.theme_variant,

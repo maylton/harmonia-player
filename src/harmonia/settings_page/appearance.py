@@ -62,14 +62,6 @@ def appearance_group(window) -> Adw.PreferencesGroup:
             lambda value: changed("accent", value),
         )
     )
-    group.add(
-        switch_row(
-            _("Fundo ambiente desfocado"),
-            _("Usa as cores da capa atual atrás da interface"),
-            preferences.background_blur,
-            lambda active: changed("background_blur", active),
-        )
-    )
     if host.IS_LINUX:
         _add_compositor_blur_rows(window, group)
     # Named after the icon pack alone; on Windows the system style is Fluent.

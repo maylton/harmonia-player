@@ -5,7 +5,6 @@
    accent bar, and the caption buttons are flat 46x32 rectangles. */
 window.csd { border-radius: 8px; }
 window, .app-root { background: @harmonia_sidebar_bg; }
-.appearance-blur { background: alpha(@harmonia_sidebar_bg, .80); }
 
 /* Title bar on Mica: no separator, Display face for the window title. */
 headerbar {
@@ -14,7 +13,6 @@ headerbar {
   box-shadow: none;
   min-height: 48px;
 }
-.appearance-blur headerbar { background: transparent; }
 
 /* Caption buttons: flat rectangles at the top edge; close turns red. */
 /* The controls sit centred in the title bar; a bottom margin lifts them to
@@ -363,17 +361,11 @@ window.harmonia-backdrop popover.background.harmonia-backdrop-popover > contents
   border-radius: 0;
 }
 
-/* Album, playlist and artist headers: the material replaces the blurred
-   cover, as the other pages show it. */
+/* Album, playlist and artist pages show the material, as the others. */
 window.harmonia-backdrop .detail-surface,
-window.harmonia-backdrop .detail-background,
 window.harmonia-backdrop .artist-surface { background: transparent; }
-window.harmonia-backdrop .detail-backdrop,
-window.harmonia-backdrop .detail-backdrop-shade,
-window.harmonia-backdrop .artist-backdrop,
-window.harmonia-backdrop .artist-backdrop-shade { opacity: 0; }
 
-/* Expanded player with the material instead of the blurred cover: it
+/* Expanded player with the material behind it: it
    slides in opaque over the pages and fades to the material once they are
    hidden. It keeps its dark design, so light mode lays a dark veil over the
    material. */

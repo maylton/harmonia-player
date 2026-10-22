@@ -21,10 +21,6 @@ def test_qt_app_resolves_installed_application_icon() -> None:
 def test_qt_app_exposes_shared_preferences_controller() -> None:
     source = (ROOT / "src" / "harmonia" / "qt_app.py").read_text(encoding="utf-8")
     assert 'setContextProperty("preferences", backend.settings)' in source
-    preferences = (ROOT / "src" / "harmonia" / "qt_preferences.py").read_text(encoding="utf-8")
-    assert "def backgroundBlur" in preferences
-    assert "self.values.background_blur" in preferences
-    assert "def setBackgroundBlur" in preferences
 
 
 def test_main_qml_keeps_major_regions_componentized() -> None:
@@ -116,25 +112,13 @@ def test_home_cover_hover_is_explicitly_above_layered_artwork() -> None:
     assert "z: 2" in songs
 
 
-def test_ambient_backdrops_share_one_component_and_setting() -> None:
-    backdrop = (QML / "AmbientBackdrop.qml").read_text(encoding="utf-8")
-    assert "MultiEffect {" in backdrop
-    assert 'import "Artwork.js" as Artwork' in backdrop
-    assert "blurEnabled: true" in backdrop
-
-    main = (QML / "Main.qml").read_text(encoding="utf-8")
-    detail = (QML / "DetailPage.qml").read_text(encoding="utf-8")
-    expanded = (QML / "ExpandedPlayer.qml").read_text(encoding="utf-8")
-    settings = (QML / "SettingsPage.qml").read_text(encoding="utf-8")
-
-    assert "AmbientBackdrop {" in main
-    assert "active: preferences.backgroundBlur" in main
-    assert "AmbientBackdrop {" in detail
-    assert "preferences.backgroundBlur" in detail
-    assert "AmbientBackdrop {" in expanded
-    assert "preferences.backgroundBlur" in expanded
-    assert "checked: preferences.backgroundBlur" in settings
-    assert "preferences.setBackgroundBlur(checked)" in settings
+def test_no_artwork_is_blurred_behind_the_interface() -> None:
+    # The blurred-artwork backdrops are gone from both frontends: the window
+    # shows the theme, and on Linux the compositor's blur through Mica.
+    assert not (QML / "AmbientBackdrop.qml").exists()
+    for page in ("Main.qml", "DetailPage.qml", "ExpandedPlayer.qml", "SettingsPage.qml"):
+        source = (QML / page).read_text(encoding="utf-8")
+        assert "AmbientBackdrop" not in source and "backgroundBlur" not in source, page
 
 
 def test_sidebar_uses_one_theme_aware_icon_component() -> None:

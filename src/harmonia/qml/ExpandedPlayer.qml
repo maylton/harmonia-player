@@ -34,18 +34,6 @@ Controls.Dialog {
     }
 
     contentItem: Item {
-        AmbientBackdrop {
-            anchors.fill: parent
-            source: backend.currentArtwork
-            active: backend.currentId.length > 0
-            artworkOpacity: preferences.backgroundBlur ? 0.56 : 0.48
-            shadeOpacity: preferences.backgroundBlur ? 0.54 : 0.66
-            saturation: -0.12
-            blurMax: 64
-            blurMultiplier: 1.0
-            requestedSize: 1600
-        }
-
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: Kirigami.Units.gridUnit * 1.4

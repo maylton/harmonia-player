@@ -143,9 +143,6 @@ class WindowPreferencesMixin:
             controller.apply(*theme_args)
             translucent = self._apply_window_backdrop()
             controller.apply(*theme_args, translucent=translucent)
-        blurred = self.preferences.background_blur
-        set_css_class(self.root, "appearance-blur", blurred)
-        self.ambient_background.set_opacity(0.30 if blurred else 0)
         self._apply_expanded_material(translucent)
         if getattr(self, "wavy_progress", None) is not None:
             apply_player_style(self, bool(get_theme(self.preferences.theme).material))
@@ -191,7 +188,7 @@ class WindowPreferencesMixin:
         return shown
 
     def _apply_expanded_material(self, translucent: bool) -> None:
-        """Show the window material behind the expanded player instead of the cover.
+        """Show the window material behind the expanded player.
 
         Whenever the theme's material is on. The expanded player covers the
         window, so it slides in opaque and turns transparent once revealed,
@@ -203,12 +200,6 @@ class WindowPreferencesMixin:
             return
         self._expanded_translucent = translucent
         material = translucent
-        for widget in (
-            self.expanded_backdrop_base,
-            self.expanded_backdrop,
-            self.expanded_backdrop_shade,
-        ):
-            widget.set_visible(not material)
         set_css_class(surface, "expanded-material", material)
         # The expanded player keeps its dark design: in light mode a dark veil
         # over the material keeps its white text readable.
@@ -237,8 +228,6 @@ class WindowPreferencesMixin:
             # Back to opaque at once, before the player slides away.
             surface.remove_css_class("expanded-revealed")
         self.root.set_opacity(0 if revealed else 1)
-        blurred = self.preferences.background_blur
-        self.ambient_background.set_opacity(0 if revealed or not blurred else 0.30)
 
     def _reapply_appearance(self) -> bool:
         self._apply_appearance_preferences()

@@ -63,7 +63,6 @@ class WindowArtistMixin:
         return False
 
     def _artist_page(self, item: LibraryItem, artist: ArtistPage) -> Gtk.Widget:
-        surface = self._artist_backdrop(artist)
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=30)
         content.add_css_class("artist-page")
         content.add_css_class("app-page")
@@ -73,30 +72,10 @@ class WindowArtistMixin:
             content.append(self._artist_section_widget(section))
         clamp = Adw.Clamp(maximum_size=1280, tightening_threshold=1050)
         clamp.set_child(content)
-        surface.add_overlay(clamp)
-        surface.set_measure_overlay(clamp, True)
+        clamp.add_css_class("artist-surface")
         scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        scroll.set_child(surface)
+        scroll.set_child(clamp)
         return scroll
-
-    def _artist_backdrop(self, artist: ArtistPage) -> Gtk.Overlay:
-        """The artist's photo, faded behind the top of the page."""
-        surface = Gtk.Overlay()
-        surface.add_css_class("artist-surface")
-        surface.set_child(Gtk.Box(vexpand=True))
-        if artist.thumbnail:
-            backdrop = Gtk.Picture(content_fit=Gtk.ContentFit.COVER, can_shrink=True)
-            backdrop.set_size_request(-1, 430)
-            backdrop.set_valign(Gtk.Align.START)
-            backdrop.set_opacity(0.18)
-            backdrop.add_css_class("artist-backdrop")
-            self._load_artwork(artist.thumbnail, backdrop, size=1280)
-            surface.add_overlay(backdrop)
-        shade = Gtk.Box(height_request=430, valign=Gtk.Align.START, hexpand=True)
-        shade.add_css_class("artist-backdrop-shade")
-        shade.set_can_target(False)
-        surface.add_overlay(shade)
-        return surface
 
     def _artist_hero(self, item: LibraryItem, artist: ArtistPage) -> Gtk.Widget:
         hero = Adw.WrapBox(

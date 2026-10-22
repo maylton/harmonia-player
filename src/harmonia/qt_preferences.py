@@ -5,7 +5,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QTimer, Signal
 
 from .backup import BackupManager
 from .downloads import DownloadManager
@@ -51,14 +51,6 @@ class QtPreferencesController(QObject):
         self._sleep_timer.timeout.connect(self._sleep_elapsed)
         self._operationReady.connect(self._operation_finished)
         self.apply_audio()
-
-    @Property(bool, notify=changed)
-    def backgroundBlur(self) -> bool:
-        return self.values.background_blur
-
-    @Slot(bool)
-    def setBackgroundBlur(self, enabled: bool) -> None:
-        self.set_background_blur(enabled)
 
     def reload(self) -> None:
         self.values = Preferences.load(self.storage)
@@ -106,18 +98,6 @@ class QtPreferencesController(QObject):
         self.values.proxy = value
         self.save()
         self.set_status(_("Proxy salvo. A próxima conexão usará esta configuração."))
-
-    def set_background_blur(self, enabled: bool) -> None:
-        enabled = bool(enabled)
-        if enabled == self.values.background_blur:
-            return
-        self.values.background_blur = enabled
-        self.save()
-        self.set_status(
-            _("Fundo ambiente desfocado ativado.")
-            if enabled
-            else _("Fundo ambiente desfocado desativado.")
-        )
 
     def set_audio_value(self, name: str, value) -> None:
         if name == "normalization":

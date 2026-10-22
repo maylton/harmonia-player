@@ -77,7 +77,6 @@ class WindowDetailMixin:
         for track in tracks:
             if not track.thumbnail and item.thumbnail:
                 track.thumbnail = item.thumbnail
-        surface = self._detail_backdrop(item)
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=28, hexpand=True)
         content.add_css_class("detail-page")
         content.add_css_class("app-page")
@@ -88,33 +87,10 @@ class WindowDetailMixin:
         clamp = Adw.Clamp(maximum_size=1120, tightening_threshold=900)
         clamp.set_hexpand(True)
         clamp.set_child(content)
-        surface.add_overlay(clamp)
-        surface.set_measure_overlay(clamp, True)
+        clamp.add_css_class("detail-surface")
         scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        scroll.set_child(surface)
+        scroll.set_child(clamp)
         return scroll
-
-    def _detail_backdrop(self, item: LibraryItem) -> Gtk.Overlay:
-        """The collection's cover, faded behind the whole page."""
-        surface = Gtk.Overlay(hexpand=True)
-        surface.add_css_class("detail-surface")
-        background = Gtk.Box(hexpand=True, vexpand=True)
-        background.add_css_class("detail-background")
-        surface.set_child(background)
-        if item.thumbnail:
-            backdrop = Gtk.Picture(content_fit=Gtk.ContentFit.COVER, can_shrink=True)
-            backdrop.set_hexpand(True)
-            backdrop.set_vexpand(True)
-            backdrop.set_opacity(0.13)
-            backdrop.set_can_target(False)
-            backdrop.add_css_class("detail-backdrop")
-            self._load_artwork(item.thumbnail, backdrop, size=1280)
-            surface.add_overlay(backdrop)
-        shade = Gtk.Box(hexpand=True, vexpand=True)
-        shade.set_can_target(False)
-        shade.add_css_class("detail-backdrop-shade")
-        surface.add_overlay(shade)
-        return surface
 
     def _detail_tracklist(self, item: LibraryItem, tracks: list[LibraryItem]) -> Gtk.Widget:
         tracklist = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True)

@@ -23,7 +23,6 @@ def test_preferences_roundtrip_and_bounds():
     preferences.quality = "medium"
     preferences.normalization = True
     preferences.normalization_level = "loud"
-    preferences.background_blur = True
     preferences.icon_style = "material"
     preferences.lastfm_enabled = True
     preferences.lastfm_api_key = "lastfm-key"
@@ -39,7 +38,6 @@ def test_preferences_roundtrip_and_bounds():
     assert Preferences.load(SettingsMemory({"normalization_level": "x"})).normalization_level == (
         "standard"
     )
-    assert restored.background_blur is True
     assert restored.icon_style == "material"
     assert restored.lastfm_enabled is True
     assert restored.lastfm_api_key == "lastfm-key"

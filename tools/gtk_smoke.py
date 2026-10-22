@@ -285,7 +285,6 @@ def _drive(window, themes, log, quick: bool = False):
         window.preferences.theme = theme
         window.preferences.theme_variant = variant
         window.preferences.icon_style = style
-        window.preferences.background_blur = index % 2 == 1
         window._apply_appearance_preferences()
         if style == "gtk":
             # As if the desktop switched icon theme while Harmonia is open.

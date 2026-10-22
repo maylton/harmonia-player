@@ -63,18 +63,6 @@ Kirigami.ApplicationWindow {
             color: Kirigami.Theme.backgroundColor
         }
 
-        AmbientBackdrop {
-            anchors.fill: parent
-            source: backend.currentArtwork
-            active: preferences.backgroundBlur
-            artworkOpacity: 0.30
-            shadeOpacity: 0.68
-            saturation: -0.12
-            blurMax: 64
-            blurMultiplier: 0.75
-            requestedSize: 1280
-        }
-
         ColumnLayout {
             anchors.fill: parent
             spacing: 0
@@ -88,7 +76,6 @@ Kirigami.ApplicationWindow {
                     Layout.preferredWidth: implicitWidth
                     Layout.fillHeight: true
                     visible: root.wideLayout
-                    ambientMode: preferences.backgroundBlur
                     currentView: root.currentView
                     currentCategory: backend.currentLibraryCategory
                     onViewRequested: function(view) { root.currentView = view }
@@ -105,7 +92,6 @@ Kirigami.ApplicationWindow {
                         Layout.fillWidth: true
                         wideLayout: root.wideLayout
                         currentView: root.currentView
-                        ambientMode: preferences.backgroundBlur
                         onNavigationRequested: compactNavigationDrawer.open()
                         onBackRequested: root.goBack()
                         onConnectRequested: loginDialog.openLogin()
@@ -175,7 +161,6 @@ Kirigami.ApplicationWindow {
 
             PlayerBar {
                 Layout.fillWidth: true
-                ambientMode: preferences.backgroundBlur
                 onLyricsRequested: lyricsPanel.open()
                 onQueueRequested: queuePanel.open()
                 onExpandedRequested: expandedPlayer.open()
@@ -197,7 +182,6 @@ Kirigami.ApplicationWindow {
         contentItem: NavigationSidebar {
             width: compactNavigationDrawer.availableWidth
             height: compactNavigationDrawer.availableHeight
-            ambientMode: preferences.backgroundBlur
             currentView: root.currentView
             currentCategory: backend.currentLibraryCategory
 

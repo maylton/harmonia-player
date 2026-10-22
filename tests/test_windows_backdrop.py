@@ -276,15 +276,14 @@ def test_popover_attachment_is_a_no_op_without_windows_materials(monkeypatch):
     assert connected == []
 
 
-def test_windows_material_replaces_the_cover_on_detail_pages():
+def test_windows_material_shows_through_album_and_artist_pages():
     from pathlib import Path
 
     css = (
         Path(__file__).resolve().parents[1] / "src" / "harmonia" / "themes" / "harmonia.css"
     ).read_text(encoding="utf-8")
-    for name in (".detail-backdrop", ".artist-backdrop", ".detail-backdrop-shade"):
-        assert f"window.harmonia-backdrop {name}" in css
     assert "window.harmonia-backdrop .detail-surface" in css
+    assert "window.harmonia-backdrop .artist-surface" in css
     assert "popover.background.harmonia-backdrop-popover" in css
 
 
@@ -331,18 +330,13 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
         def __init__(self):
             self.preferences = Preferences(theme="harmonia")
             self.expanded_surface = Widget()
-            self.expanded_backdrop_base = Widget()
-            self.expanded_backdrop = Widget()
-            self.expanded_backdrop_shade = Widget()
             self.expanded_revealer = Revealer()
             self.root = Widget()
-            self.ambient_background = Widget()
 
     monkeypatch.setattr(host, "WINDOW_BACKDROPS", True)
     monkeypatch.setattr("harmonia.window_preferences.Adw.StyleManager.get_default", Style)
     window = WindowStub()
     window._apply_expanded_material(True)
-    assert not window.expanded_backdrop.visible
     assert "expanded-material" in window.expanded_surface.classes
 
     # Sliding in: still opaque over the pages.
@@ -358,9 +352,8 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
     window._update_expanded_reveal()
     assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
 
-    # Without the material (other themes) the expanded player shows the cover.
+    # Without the material (other themes) the expanded player keeps its colour.
     window._apply_expanded_material(False)
-    assert window.expanded_backdrop.visible
     assert "expanded-material" not in window.expanded_surface.classes
 
 

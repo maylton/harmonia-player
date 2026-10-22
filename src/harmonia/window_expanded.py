@@ -49,22 +49,12 @@ class WindowExpandedPlayerMixin:
         self.expanded_explicit.set_visible(item.explicit)
         subtitle = re.sub(r"\s*[·•]\s*(?:(?:\d+):)?\d{1,2}:\d{2}\s*$", "", item.subtitle or "")
         self.expanded_subtitle.show_item(item, subtitle or "YouTube Music")
+        self.expanded_cover.set_paintable(None)
         if item.thumbnail:
-            self.expanded_cover.set_paintable(None)
-            self.expanded_backdrop_base.set_paintable(None)
-            self.expanded_backdrop.set_paintable(None)
             # Reuse an already-cached thumbnail immediately, then replace it
             # with the dedicated high-resolution variant when available.
             self._load_artwork(item.thumbnail, self.expanded_cover)
             self._load_artwork(item.thumbnail, self.expanded_cover, size=1024)
-            self._load_artwork(item.thumbnail, self.expanded_backdrop_base, size=1280)
-            self._load_artwork(item.thumbnail, self.expanded_backdrop, size=1280)
-            self._load_artwork(item.thumbnail, self.ambient_background, size=1280)
-        else:
-            self.expanded_cover.set_paintable(None)
-            self.expanded_backdrop_base.set_paintable(None)
-            self.expanded_backdrop.set_paintable(None)
-            self.ambient_background.set_paintable(None)
         self._refresh_current_like_from_library()
         self._render_expanded_up_next()
 
