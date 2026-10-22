@@ -171,13 +171,8 @@ scale highlight { background-color: @md_primary; }
 .player-bar.md-expressive .player-cover-placeholder { color: @md_on_surface_variant; }
 
 /* Expanded player: Caelestia's dashboard media tab, on the scheme's surface
-   instead of the fixed dark design; the blurred artwork stays as a hint. */
+   instead of the fixed dark design. */
 .expanded-player.md-expressive { background: @md_surface; }
-.md-expressive .expanded-backdrop-base { background: @md_surface; }
-.md-expressive .expanded-backdrop { opacity: .35; }
-.md-expressive .expanded-backdrop-shade {
-  background: linear-gradient(to bottom, alpha(@md_surface, .55), alpha(@md_surface, .9));
-}
 .md-expressive .expanded-header {
   border-bottom: none;
   background: alpha(@md_surface_container, .7);

@@ -14,7 +14,6 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import GLib, Gtk
 
-from . import blur_textures
 from .models import (
     LibraryItem,
 )
@@ -85,13 +84,8 @@ class WindowArtworkMixin:
         request_key: str,
     ) -> bool:
         if self._artwork_requests.get(id(picture)) == request_key and target.exists():
-            self._show_artwork_file(picture, target)
-        return GLib.SOURCE_REMOVE
-
-    @staticmethod
-    def _show_artwork_file(picture: Gtk.Picture, target: Path) -> None:
-        if not blur_textures.show(picture, str(target)):
             picture.set_filename(str(target))
+        return GLib.SOURCE_REMOVE
 
     def _load_artwork(
         self,
@@ -105,7 +99,7 @@ class WindowArtworkMixin:
         request_key = str(target)
         self._artwork_requests[id(picture)] = request_key
         if target.exists():
-            self._show_artwork_file(picture, target)
+            picture.set_filename(str(target))
             return
 
         def worker():

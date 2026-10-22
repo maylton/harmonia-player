@@ -8,21 +8,13 @@ Controls.ToolBar {
 
     property bool wideLayout: true
     property int currentView: 0
-    property bool ambientMode: false
     signal navigationRequested()
     signal backRequested()
     signal searchRequested(string query)
     signal connectRequested()
 
     background: Rectangle {
-        color: root.ambientMode
-               ? Qt.rgba(
-                     Kirigami.Theme.backgroundColor.r,
-                     Kirigami.Theme.backgroundColor.g,
-                     Kirigami.Theme.backgroundColor.b,
-                     0.84
-                 )
-               : Kirigami.Theme.backgroundColor
+        color: Kirigami.Theme.backgroundColor
 
         Rectangle {
             anchors.left: parent.left

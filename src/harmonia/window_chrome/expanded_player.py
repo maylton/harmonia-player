@@ -1,4 +1,4 @@
-"""The expanded player: artwork backdrop, the Música and Letras tabs, and "A seguir"."""
+"""The expanded player: the Música and Letras tabs, and "A seguir"."""
 
 from __future__ import annotations
 
@@ -32,7 +32,6 @@ def build_expanded_player(window) -> None:
     surface = Gtk.Overlay(hexpand=True, vexpand=True)
     surface.add_css_class("expanded-player")
     surface.set_child(Gtk.Box(hexpand=True, vexpand=True))
-    _add_backdrop(window, surface)
     window.expanded_surface = surface
 
     shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
@@ -58,36 +57,6 @@ def build_expanded_player(window) -> None:
     key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
     key.connect("key-pressed", window._expanded_key_pressed)
     window.add_controller(key)
-
-
-def _backdrop_picture(css_class: str, opacity: float) -> Gtk.Picture:
-    picture = Gtk.Picture(
-        content_fit=Gtk.ContentFit.COVER,
-        can_shrink=True,
-        hexpand=True,
-        vexpand=True,
-        halign=Gtk.Align.FILL,
-        valign=Gtk.Align.FILL,
-    )
-    picture.set_opacity(opacity)
-    picture.set_can_target(False)
-    picture.add_css_class(css_class)
-    return picture
-
-
-def _add_backdrop(window, surface: Gtk.Overlay) -> None:
-    """The blurred artwork behind the expanded player, under a shade."""
-    # A very faint base prevents transparent-looking blur edges without
-    # making the original artwork composition readable in the backdrop.
-    window.expanded_backdrop_base = _backdrop_picture("expanded-backdrop-base", 0.05)
-    surface.add_overlay(window.expanded_backdrop_base)
-    window.expanded_backdrop = _backdrop_picture("expanded-backdrop", 0.68)
-    surface.add_overlay(window.expanded_backdrop)
-    shade = Gtk.Box(hexpand=True, vexpand=True)
-    shade.set_can_target(False)
-    shade.add_css_class("expanded-backdrop-shade")
-    surface.add_overlay(shade)
-    window.expanded_backdrop_shade = shade
 
 
 def _header(window) -> Gtk.Widget:

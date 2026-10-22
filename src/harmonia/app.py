@@ -190,25 +190,15 @@ class HarmoniaWindow(
         self.current_liked = False
 
     def _build_layout(self) -> None:
-        """Toasts over the ambient background, header, navigation pane and pages."""
+        """Toasts over the header, navigation pane and pages."""
         self.set_size_request(720, 520)
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
         self.app_overlay = Gtk.Overlay()
         self.toast_overlay.set_child(self.app_overlay)
-        self.ambient_background = Gtk.Picture(
-            content_fit=Gtk.ContentFit.COVER,
-            can_shrink=True,
-            hexpand=True,
-            vexpand=True,
-        )
-        self.ambient_background.add_css_class("ambient-background")
-        self.ambient_background.set_opacity(0)
-        self.app_overlay.set_child(self.ambient_background)
         self.root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.root.add_css_class("app-root")
-        self.app_overlay.add_overlay(self.root)
-        self.app_overlay.set_measure_overlay(self.root, True)
+        self.app_overlay.set_child(self.root)
         build_header(self)
         self._load_account_avatar(
             self.storage.get_setting("account_avatar_url", "") if self.storage.load_cookie() else ""
@@ -300,7 +290,6 @@ class HarmoniaWindow(
         self.now_explicit.set_visible(False)
         self.now_subtitle.show_item(None, _("Escolha uma faixa para começar"))
         self.now_cover.set_paintable(None)
-        self.ambient_background.set_paintable(None)
         self.now_cover.set_opacity(1.0)
         self.cover_expand_hint.set_opacity(0.0)
         self.play_button.set_icon_name("media-playback-start-symbolic")

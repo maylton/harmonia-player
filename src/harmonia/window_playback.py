@@ -304,7 +304,6 @@ class WindowPlaybackMixin:
             self._load_artwork(item.thumbnail, self.now_cover, size=128)
         else:
             self.now_cover.set_paintable(None)
-            self.ambient_background.set_paintable(None)
         self._refresh_expanded_player()
         self.player_bar.set_visible(not self.expanded_revealer.get_reveal_child())
         self.play_button.set_sensitive(False)

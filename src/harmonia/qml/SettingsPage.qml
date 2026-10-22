@@ -109,36 +109,8 @@ Item {
             SettingsSection {
                 width: parent.width
                 title: i18n.tr("Aparência")
-                subtitle: i18n.tr("Integração visual com o Plasma e o fundo ambiente do player.")
+                subtitle: i18n.tr("Integração visual com o Plasma.")
                 iconName: "preferences-desktop-theme"
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.largeSpacing
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        Controls.Label {
-                            Layout.fillWidth: true
-                            text: i18n.tr("Fundo ambiente desfocado")
-                            font.weight: Font.DemiBold
-                        }
-
-                        Controls.Label {
-                            Layout.fillWidth: true
-                            text: i18n.tr("Usa a capa atual para colorir o fundo e tornar as superfícies mais translúcidas.")
-                            opacity: 0.62
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-
-                    Controls.Switch {
-                        checked: preferences.backgroundBlur
-                        onToggled: preferences.setBackgroundBlur(checked)
-                    }
-                }
 
                 Kirigami.InlineMessage {
                     Layout.fillWidth: true

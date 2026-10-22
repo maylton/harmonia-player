@@ -8,20 +8,12 @@ Rectangle {
 
     property int currentView: 0
     property string currentCategory: "songs"
-    property bool ambientMode: false
     signal viewRequested(int view)
     signal categoryRequested(string category)
     signal createPlaylistRequested()
 
     implicitWidth: Kirigami.Units.gridUnit * 12.8
-    color: ambientMode
-           ? Qt.rgba(
-                 Kirigami.Theme.backgroundColor.r,
-                 Kirigami.Theme.backgroundColor.g,
-                 Kirigami.Theme.backgroundColor.b,
-                 0.86
-             )
-           : Kirigami.Theme.backgroundColor
+    color: Kirigami.Theme.backgroundColor
     border.width: 0
 
     ColumnLayout {

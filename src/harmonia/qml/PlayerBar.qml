@@ -5,8 +5,6 @@ import org.kde.kirigami as Kirigami
 
 Rectangle {
     id: root
-
-    property bool ambientMode: false
     signal lyricsRequested()
     signal queueRequested()
     signal expandedRequested()
@@ -23,14 +21,7 @@ Rectangle {
     readonly property real volumeMaxWidth: Kirigami.Units.gridUnit * 6.5
 
     implicitHeight: Kirigami.Units.gridUnit * 4
-    color: ambientMode
-           ? Qt.rgba(
-                 Kirigami.Theme.backgroundColor.r,
-                 Kirigami.Theme.backgroundColor.g,
-                 Kirigami.Theme.backgroundColor.b,
-                 0.88
-             )
-           : Kirigami.Theme.backgroundColor
+    color: Kirigami.Theme.backgroundColor
     border.width: 0
 
     Rectangle {

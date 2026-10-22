@@ -1,15 +1,5 @@
 window { background: @harmonia_bg; color: @harmonia_fg; }
-.ambient-background {
-  filter: blur(64px);
-}
 .app-root { background: alpha(@harmonia_bg, .98); }
-.appearance-blur { background: alpha(@harmonia_bg, .76); }
-.appearance-blur headerbar { background: alpha(@harmonia_headerbar_bg, .84); }
-.appearance-blur .sidebar { background: alpha(@harmonia_sidebar_bg, .86); }
-.appearance-blur .player-bar { background: alpha(@harmonia_sidebar_bg, .88); }
-.appearance-blur .detail-surface,
-.appearance-blur .detail-background,
-.appearance-blur .artist-surface { background: alpha(@harmonia_bg, .76); }
 .icons-material button.app-icon-button,
 .icons-material .expanded-secondary-control,
 .icons-material .expanded-skip-control {
@@ -60,8 +50,6 @@ window { background: @harmonia_bg; color: @harmonia_fg; }
 }
 .artist-surface { background: @harmonia_bg; }
 .artist-page { padding: 48px 38px 80px; }
-.artist-backdrop { filter: blur(18px); }
-.artist-backdrop-shade { background: linear-gradient(to bottom, alpha(@harmonia_bg, .12), @harmonia_bg 96%); }
 .artist-portrait { border-radius: 999px; box-shadow: 0 16px 38px alpha(@harmonia_shadow, .42); }
 .artist-title { font-size: 46px; font-weight: 900; letter-spacing: -1.4px; }
 .artist-listeners { color: @harmonia_fg_secondary; font-weight: 650; }
@@ -192,25 +180,8 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 }
 .account-avatar-frame,
 .account-avatar-picture { border-radius: 9999px; }
-.detail-surface, .detail-background { background: @harmonia_bg; }
+.detail-surface { background: @harmonia_bg; }
 .detail-page { padding: 52px 32px 48px; }
-.detail-backdrop { filter: blur(28px); }
-.detail-backdrop-shade {
-  background-image: linear-gradient(
-    to bottom,
-    alpha(@harmonia_bg, .12) 0,
-    alpha(@harmonia_bg, .92) 390px,
-    alpha(@harmonia_bg, .92) 100%
-  );
-}
-.appearance-blur .detail-backdrop-shade {
-  background-image: linear-gradient(
-    to bottom,
-    alpha(@harmonia_bg, .08) 0,
-    alpha(@harmonia_bg, .66) 390px,
-    alpha(@harmonia_bg, .66) 100%
-  );
-}
 .detail-hero {
   min-height: 326px;
   margin-bottom: 4px;
@@ -335,19 +306,6 @@ popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }
 }
 .time-label { font-size: 12px; color: alpha(@window_fg_color, .65); font-variant-numeric: tabular-nums; }
 .expanded-player { background: #1d1d1d; }
-.expanded-backdrop-base {
-  background: #1d1d1d;
-  filter: blur(48px);
-}
-.expanded-backdrop { filter: blur(128px); }
-.expanded-backdrop-shade {
-  background: linear-gradient(
-    to bottom,
-    alpha(#111111, .34),
-    alpha(#181818, .48) 54%,
-    alpha(#111111, .70)
-  );
-}
 .expanded-shell { background: transparent; }
 .expanded-header {
   min-height: 52px;
@@ -750,6 +708,3 @@ menubutton.app-icon-button > button:checked {
 /* Clickable artist and album names keep the subtitle colour; GTK shows the
    pointer cursor and a "Ir para…" tooltip over them. */
 .credits link, .credits link:visited { color: inherit; text-decoration-line: none; }
-/* Backdrops whose artwork was blurred ahead of time (blur_textures.py, used
-   when GTK renders in software) must not be blurred again on every frame. */
-picture.prerendered-blur { filter: none; }
