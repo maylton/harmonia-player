@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="0.1.0-beta.6" date="2026-10-22" type="development">
+      <description>
+        <p>O tema Harmonia com Mica automático passa a ser o padrão, chega o tema Material Design 3 no estilo do Caelestia Shell, as letras se acendem palavra por palavra como no Apple Music, com romaji nas letras em japonês, e há novos pacotes de ícones: Framework7, Breeze e Papirus.</p>
+        <p xml:lang="en">The Harmonia theme with automatic Mica becomes the default, a Material Design 3 theme after Caelestia Shell arrives, lyrics light up word by word as in Apple Music, with rōmaji for Japanese lyrics, and there are new icon packs: Framework7, Breeze and Papirus.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.5" date="2026-10-13" type="development">
       <description>
         <p>Músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, e o Mica no Linux acompanha o papel de parede que muda ao longo do dia e o tema claro ou escuro do sistema.</p>
