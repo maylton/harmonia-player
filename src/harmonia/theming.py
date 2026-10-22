@@ -198,7 +198,7 @@ class Theme:
     stylesheet: str = ""  # optional structural layer in themes/, applied after style.css
     platforms: tuple[str, ...] = ()  # empty: offered everywhere
     system_accent: bool = False  # follow the desktop's exact accent palette when known
-    # A window material (Mica, Acrylic) may sit behind the window; "translucent"
+    # A window material (Mica) may sit behind the window; "translucent"
     # holds the tokens that turn see-through while it does, per variant.
     backdrop: bool = False
     translucent: dict[str, dict[str, str]] = field(default_factory=dict)

@@ -14,6 +14,7 @@ from gi.repository import Adw, GLib, Gst, Gtk  # noqa: E402
 
 from . import video_sync  # noqa: E402
 from .i18n import _  # noqa: E402
+from .player import error_source  # noqa: E402
 from .ui import deliver_to_main  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
@@ -41,12 +42,11 @@ class GtkVideoMixin:
         self._gtk_video_bus = None
         self._gtk_video_sink_available = False
         self._gtk_video_last_sync_seek = 0.0
-        self._gtk_video_initial_warmup = False
 
         # The artwork, as its theme shapes it (the Material theme's cookie);
         # the video and the Música/Vídeo switch stay outside that shape.
-        artwork = getattr(self, "expanded_cover_shape", None) or self.expanded_cover.get_parent()
-        frame = artwork.get_parent() if artwork is not None else None
+        artwork = self.expanded_cover_shape
+        frame = artwork.get_parent()
         if not isinstance(frame, Gtk.AspectFrame):
             return
 
@@ -116,7 +116,6 @@ class GtkVideoMixin:
         self._media_audio_button = audio_button
         self._media_video_button = video_button
         self._media_spinner = spinner
-        self._expanded_video_picture = video_picture
         return video_picture
 
     def _prepare_gtk_video_sink(self, video_picture: Gtk.Picture) -> None:
@@ -305,7 +304,6 @@ class GtkVideoMixin:
         self._gtk_video_generation += 1
         generation = self._gtk_video_generation
         self._gtk_video_last_sync_seek = 0.0
-        self._gtk_video_initial_warmup = False
         try:
             video_player.set_state(Gst.State.READY)
             source_uri = self.player._source_uri(stream.url, stream.request_headers)
@@ -358,7 +356,6 @@ class GtkVideoMixin:
         # demux/source seeking becomes available. The video is muted, so this is
         # invisible and inaudible to the user.
         LOGGER.info("GTK video initial seek was not accepted in PAUSED; warming hidden pipeline")
-        self._gtk_video_initial_warmup = True
         result = video_player.set_state(Gst.State.PLAYING)
         if result == Gst.StateChangeReturn.FAILURE:
             self._gtk_video_failed(_("O fluxo de vídeo não conseguiu preparar a sincronização."))
@@ -383,7 +380,6 @@ class GtkVideoMixin:
             target_us,
             accurate=True,
         ):
-            self._gtk_video_initial_warmup = False
             if not self._playback_is_playing():
                 video_player.set_state(Gst.State.PAUSED)
             LOGGER.info(
@@ -403,7 +399,6 @@ class GtkVideoMixin:
             )
             return GLib.SOURCE_REMOVE
 
-        self._gtk_video_initial_warmup = False
         self._gtk_video_failed(_("O fluxo de vídeo não ficou disponível para sincronização."))
         return GLib.SOURCE_REMOVE
 
@@ -495,7 +490,6 @@ class GtkVideoMixin:
         if video_player is None:
             return
 
-        self._gtk_video_initial_warmup = False
         video_player.set_state(
             Gst.State.PLAYING if self._playback_is_playing() else Gst.State.PAUSED
         )
@@ -551,7 +545,6 @@ class GtkVideoMixin:
     def _stop_gtk_video_layer(self) -> None:
         self._gtk_video_generation += 1
         self._gtk_video_last_sync_seek = 0.0
-        self._gtk_video_initial_warmup = False
         if self._gtk_video_player is not None:
             with suppress(Exception):
                 self._gtk_video_player.set_state(Gst.State.READY)
@@ -559,7 +552,6 @@ class GtkVideoMixin:
     def _gtk_video_failed(self, detail: str) -> None:
         LOGGER.error("GTK video layer failed: %s", detail)
         self._gtk_video_generation += 1
-        self._gtk_video_initial_warmup = False
         if self._gtk_video_player is not None:
             with suppress(Exception):
                 self._gtk_video_player.set_state(Gst.State.READY)
@@ -573,10 +565,7 @@ class GtkVideoMixin:
     def _on_gtk_video_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
-            try:
-                source = message.src.get_path_string() if message.src is not None else "unknown"
-            except Exception:
-                source = "unknown"
+            source = error_source(message)
             LOGGER.error(
                 "GTK video GStreamer error from %s: %s (%s)",
                 source,

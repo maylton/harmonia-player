@@ -295,11 +295,7 @@ class WindowLibraryMixin:
                 self.set_queue([item], 0)
             return
         if item.kind == "local-playlists":
-            try:
-                playlist_id = int(item.id.split(":", 1)[1])
-            except (IndexError, ValueError):
-                return
-            playlist = self.storage.get_local_playlist(playlist_id)
+            playlist = self.storage.local_playlist_for(item)
             if playlist:
                 self._show_local_playlist(playlist)
             return

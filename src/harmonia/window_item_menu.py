@@ -147,7 +147,7 @@ class WindowItemMenuMixin:
     def with_collection_tracks(self, item: LibraryItem, callback) -> None:
         """Run callback(tracks) with an album's or playlist's tracks."""
         if item.kind == "local-playlists":
-            playlist = self.storage.get_local_playlist(int(item.id.split(":", 1)[1]))
+            playlist = self.storage.local_playlist_for(item)
             callback(list(playlist.items) if playlist else [])
             return
 

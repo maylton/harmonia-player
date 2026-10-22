@@ -168,11 +168,7 @@ class QtLibraryController(QObject):
             return
         item = items[index]
         if item.kind == "local-playlists":
-            try:
-                playlist_id = int(item.id.split(":", 1)[1])
-            except (IndexError, ValueError):
-                return
-            playlist = self.storage.get_local_playlist(playlist_id)
+            playlist = self.storage.local_playlist_for(item)
             if playlist:
                 self.catalog.show_local_playlist(playlist)
                 self.detailChanged.emit()
@@ -218,13 +214,7 @@ class QtLibraryController(QObject):
 
     def current_local_playlist(self) -> LocalPlaylist | None:
         item = self.catalog.detail_item
-        if item is None or item.kind != "local-playlists":
-            return None
-        try:
-            playlist_id = int(item.id.split(":", 1)[1])
-        except (IndexError, ValueError):
-            return None
-        return self.storage.get_local_playlist(playlist_id)
+        return self.storage.local_playlist_for(item) if item is not None else None
 
     def rename_current_playlist(self, title: str) -> None:
         playlist = self.current_local_playlist()

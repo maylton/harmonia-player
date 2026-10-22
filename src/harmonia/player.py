@@ -5,7 +5,6 @@ import urllib.parse
 import urllib.request
 from collections.abc import Sequence
 from itertools import pairwise
-from typing import ClassVar
 
 import gi
 
@@ -13,7 +12,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
 from . import loudness
-from .equalizer import PRESETS, equalizer_gains
+from .equalizer import equalizer_gains
 from .i18n import _
 from .playback_speed import pitch_properties
 from .playback_state import StreamEndedEarly
@@ -22,10 +21,16 @@ from .stream_relay import StreamRelay
 LOGGER = logging.getLogger(__name__)
 
 
+def error_source(message: Gst.Message) -> str:
+    """The path of the element that posted a GStreamer error, for the log."""
+    try:
+        return message.src.get_path_string() if message.src is not None else "unknown"
+    except Exception:
+        return "unknown"
+
+
 class NativePlayer:
     """Thin GStreamer playbin wrapper kept independent from the GTK widgets."""
-
-    EQ_PRESETS: ClassVar[dict[str, tuple[float, ...]]] = PRESETS
 
     def __init__(self, on_state=None, on_error=None, on_eos=None):
         Gst.init(None)
@@ -250,10 +255,7 @@ class NativePlayer:
     def _on_message(self, _bus, message) -> None:
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
-            try:
-                source = message.src.get_path_string() if message.src is not None else "unknown"
-            except Exception:
-                source = "unknown"
+            source = error_source(message)
             LOGGER.error(
                 "GStreamer playback error from %s: %s (%s)",
                 source,
