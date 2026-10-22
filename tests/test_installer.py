@@ -80,6 +80,33 @@ def test_dnf_systems_get_the_rpm_only_with_a_new_enough_libadwaita(tmp_path, ver
     assert output.splitlines()[-1] == f"={method}"
 
 
+def test_arch_systems_build_with_meson_instead_of_the_flatpak(tmp_path):
+    # Arch's rolling packages always carry a recent libadwaita.
+    path = fake_tools(tmp_path, {"pacman": "true"})
+    assert run(path + 'choose_method; echo "=$method"').splitlines()[-1] == "=source"
+
+
+def test_arch_dependencies_come_from_pacman_and_romaji_from_pip(tmp_path):
+    calls = tmp_path / "calls"
+    path = fake_tools(
+        tmp_path,
+        {
+            "pacman": f'echo "pacman $*" >> "{shell_path(calls)}"',
+            "python3": f'echo "python3 $*" >> "{shell_path(calls)}"',
+        },
+    )
+    run(
+        path
+        + 'run_privileged() { "$@"; }\nscope="--user"\n'
+        + "install_arch_packages\ninstall_romaji_support /home/me/.local\n"
+    )
+    pacman, pip = calls.read_text(encoding="utf-8").splitlines()
+    for package in ("libadwaita", "webkitgtk-6.0", "gst-plugin-gtk4", "meson", "python-pip"):
+        assert f" {package}" in pacman
+    assert "--needed" in pacman
+    assert "--target /home/me/.local/share/harmonia/python fugashi unidic-lite" in pip
+
+
 def test_other_systems_get_the_flatpak(tmp_path):
     path = fake_tools(tmp_path, {})
     assert run(path + 'choose_method; echo "=$method"').splitlines()[-1] == "=flatpak"
