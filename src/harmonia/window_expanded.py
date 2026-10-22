@@ -40,8 +40,6 @@ class WindowExpandedPlayerMixin:
         page = stack.get_visible_child_name()
         if page == "lyrics":
             self._load_current_lyrics()
-        elif page == "related":
-            self._render_expanded_related()
 
     def _refresh_expanded_player(self) -> None:
         item = getattr(self, "current_item", None)
@@ -68,7 +66,7 @@ class WindowExpandedPlayerMixin:
             self.expanded_backdrop.set_paintable(None)
             self.ambient_background.set_paintable(None)
         self._refresh_current_like_from_library()
-        self._render_expanded_related()
+        self._render_expanded_up_next()
 
     def _set_expanded_lyrics_message(self, icon: str, title: str, description: str) -> None:
         if not hasattr(self, "expanded_lyrics_container"):
@@ -91,17 +89,18 @@ class WindowExpandedPlayerMixin:
         clamp.set_child(box)
         self.expanded_lyrics_container.append(clamp)
 
-    def _render_expanded_related(self) -> None:
-        if not hasattr(self, "expanded_related_container"):
+    def _render_expanded_up_next(self) -> None:
+        if not hasattr(self, "expanded_up_next"):
             return
-        while child := self.expanded_related_container.get_first_child():
-            self.expanded_related_container.remove(child)
-        self.expanded_related_container.append(
-            queue_view.expanded_content(
+        while child := self.expanded_up_next.get_first_child():
+            self.expanded_up_next.remove(child)
+        self.expanded_up_next.append(
+            queue_view.up_next_content(
                 self.queue,
                 self.queue_index,
                 self.related_items,
                 self._queue_actions(select=self._select_expanded_queue_item),
+                lambda item: self._square_cover(item, size=44, fixed=True),
             )
         )
 

@@ -426,6 +426,26 @@ popover.item-menu > contents { padding: 8px 0; border-radius: 12px; }
 }
 .expanded-play-control:hover { background: #f0f0f0; }
 .expanded-tab-page { padding: 42px 56px 64px; }
+/* "A seguir": the queue and autoplay beside the player, as YouTube Music. */
+.expanded-up-next {
+  margin: 24px 28px 32px 0;
+  padding: 18px 16px;
+  border-radius: 16px;
+  background: alpha(#000000, .22);
+}
+.expanded-up-next-title { color: #ffffff; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.expanded-up-next-subtitle {
+  margin-top: 14px;
+  color: #aaa8a5;
+  font-size: 13px;
+  font-weight: 700;
+}
+.expanded-up-next list.boxed-list { background: transparent; box-shadow: none; }
+.expanded-up-next row { background: transparent; color: #ffffff; border-radius: 10px; }
+.expanded-up-next row:hover { background: alpha(#ffffff, .08); }
+.expanded-up-next row.up-next-current { background: alpha(#ffffff, .14); }
+.expanded-up-next row .subtitle { color: #aaa8a5; }
+.expanded-up-next .dim-label { color: #aaa8a5; }
 .expanded-lyrics-title, .expanded-related-title {
   color: #ffffff;
   font-size: 28px;

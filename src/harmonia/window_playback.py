@@ -158,6 +158,7 @@ class WindowPlaybackMixin:
             move=self._move_queue_item,
             remove=self._remove_queue_item,
             promote=self._promote_related,
+            play=self._play_related_now,
         )
 
     def _render_queue(self) -> None:
@@ -166,7 +167,7 @@ class WindowPlaybackMixin:
                 self.queue, self.queue_index, self.related_items, self._queue_actions()
             )
         )
-        self._render_expanded_related()
+        self._render_expanded_up_next()
 
     def _move_queue_item(self, position: int, direction: int) -> None:
         self.queue_index, changed = move_queue_item(
@@ -192,6 +193,11 @@ class WindowPlaybackMixin:
         self._save_playback_state()
         if result.removed_current:
             self.play_item(self.queue[self.queue_index])
+
+    def _play_related_now(self, item: LibraryItem) -> None:
+        """Play an autoplay track at once, as the next one of the queue."""
+        self._promote_related(item, play_next=True)
+        self._play_next()
 
     def _promote_related(self, item: LibraryItem, play_next: bool) -> None:
         self.related_items = [

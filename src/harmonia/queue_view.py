@@ -1,5 +1,5 @@
 """The play queue and the related tracks, as the player bar's popover and the
-expanded player show them.
+expanded player's "A seguir" column show them.
 
 Plain widget builders: they get the queue and what to do on each action, and
 read nothing from the window.
@@ -18,9 +18,13 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from .i18n import _  # noqa: E402
 from .models import LibraryItem  # noqa: E402
-from .ui import mark_explicit  # noqa: E402
+from .ui import mark_explicit, media_row  # noqa: E402
 
 RELATED_IN_POPOVER = 12
+# YouTube Music's Up next shows 25 tracks at a time (numItemsToShow of its
+# radio panel) out of a batch of 50, and the radio is fetched again when the
+# queue runs out instead of being paged without end.
+UP_NEXT_LIMIT = 25
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +33,7 @@ class QueueActions:
     move: Callable[[int, int], None]  # position, -1 up or 1 down
     remove: Callable[[int], None]
     promote: Callable[[LibraryItem, bool], None]  # related track, play next
+    play: Callable[[LibraryItem], None] | None = None  # a related track, now
 
 
 def _later(callback, *args) -> Callable:
@@ -142,31 +147,58 @@ def popover_content(
     return box
 
 
-def expanded_content(
-    queue: list[LibraryItem], current: int, related: list[LibraryItem], actions: QueueActions
+def _single_line(row: Adw.ActionRow) -> Adw.ActionRow:
+    """A narrow column ellipsizes titles instead of wrapping them."""
+    row.set_title_lines(1)
+    row.set_subtitle_lines(1)
+    return row
+
+
+def up_next(
+    queue: list[LibraryItem], current: int, related: list[LibraryItem], limit: int = UP_NEXT_LIMIT
+) -> tuple[list[tuple[int, LibraryItem]], list[LibraryItem]]:
+    """What "A seguir" lists: the current track and the rest of the queue, by
+    position, then autoplay's tracks, at most ``limit`` in all."""
+    start = max(0, current)
+    upcoming = list(enumerate(queue))[start : start + limit]
+    return upcoming, related[: max(0, limit - len(upcoming))]
+
+
+def up_next_content(
+    queue: list[LibraryItem],
+    current: int,
+    related: list[LibraryItem],
+    actions: QueueActions,
+    cover: Callable[[LibraryItem], Gtk.Widget],
 ) -> Gtk.Widget:
-    """The expanded player's "Relacionadas" page: the queue, then related tracks."""
-    clamp = Adw.Clamp(maximum_size=760, tightening_threshold=620)
-    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-    box.append(_heading(_("Fila"), "expanded-related-title"))
-    if not queue:
-        box.append(
-            Adw.StatusPage(
-                icon_name="media-playlist-consecutive-symbolic",
-                title=_("Nada na fila"),
-                description=_("Escolha uma música para ver as próximas faixas."),
-            )
+    """The expanded player's "A seguir" column, as YouTube Music's Up next."""
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    box.append(_heading(_("A seguir"), "expanded-up-next-title"))
+    upcoming, autoplay = up_next(queue, current, related)
+    if not upcoming:
+        note = Gtk.Label(
+            label=_("Escolha uma música para ver as próximas faixas."), xalign=0, wrap=True
         )
-    else:
+        note.add_css_class("dim-label")
+        box.append(note)
+        return box
+    rows = []
+    for position, item in upcoming:
+        row = _single_line(media_row(item, cover=cover(item)))
+        if position == current:
+            row.add_css_class("up-next-current")
+        row.connect("activated", lambda *_args, selected=position: actions.select(selected))
+        rows.append(row)
+    box.append(_listing(rows))
+    if autoplay:
+        box.append(_heading(_("Reprodução automática"), "expanded-up-next-subtitle"))
         rows = []
-        for position, item in enumerate(queue):
-            row = queue_row(item, position == current)
-            row.add_css_class("media-row")
-            row.connect("activated", lambda *_args, selected=position: actions.select(selected))
+        for item in autoplay:
+            row = _single_line(related_row(item, actions, play_next=True))
+            row.add_prefix(cover(item))
+            row.set_activatable(actions.play is not None)
+            if actions.play is not None:
+                row.connect("activated", _later(actions.play, item))
             rows.append(row)
         box.append(_listing(rows))
-        box.append(_heading(_("Relacionadas"), "expanded-related-title"))
-        if related:
-            box.append(_listing(related_row(item, actions, play_next=False) for item in related))
-    clamp.set_child(box)
-    return clamp
+    return box
