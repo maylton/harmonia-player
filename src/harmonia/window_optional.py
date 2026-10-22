@@ -29,7 +29,6 @@ class WindowOptionalMixin:
         self._together_fetching = False
         self._together_revision = -1
         self._together_pending_state = None
-        self._together_applying = False
         self.cast_renderer = None
         self.cast_device = None
         self._cast_playing = False

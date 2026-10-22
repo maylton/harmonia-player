@@ -68,7 +68,7 @@ class GtkThemeController:
         *,
         translucent: bool = False,
     ) -> None:
-        """``translucent``: a window material (Mica, Acrylic) is behind the windows."""
+        """``translucent``: the Harmonia theme's Mica is behind the windows."""
         self.theme = get_theme(theme_id)
         self.variant = variant
         self.accent = accent

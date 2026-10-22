@@ -116,7 +116,7 @@ def windows_accent_palette() -> list[str] | None:
     """The user's Windows accent shades, lightest first, or None elsewhere.
 
     libadwaita reads the system accent too, but rounds it to its nine presets;
-    the Windows 11 theme wants the exact colour the rest of the desktop uses.
+    the Harmonia theme wants the exact colour the rest of the desktop uses.
     """
     if not IS_WINDOWS:
         return None

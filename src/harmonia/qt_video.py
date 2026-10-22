@@ -15,6 +15,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot  # noqa: E402
 
 from . import video_sync  # noqa: E402
 from .i18n import _  # noqa: E402
+from .player import error_source  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
@@ -630,10 +631,7 @@ class QtVideoController(QObject):
                 # State transitions may deliver an error from the previous URI.
                 LOGGER.debug("Ignoring inactive Qt video error: %s", error)
                 return
-            try:
-                source = message.src.get_path_string() if message.src is not None else "unknown"
-            except Exception:
-                source = "unknown"
+            source = error_source(message)
             LOGGER.error(
                 "Qt video GStreamer error from %s: %s (%s)",
                 source,

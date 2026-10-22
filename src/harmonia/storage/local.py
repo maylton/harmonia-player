@@ -124,6 +124,16 @@ class LocalMedia(Database):
             None,
         )
 
+    def local_playlist_for(self, item: LibraryItem) -> LocalPlaylist | None:
+        """The local playlist a "local-playlist:<id>" library item stands for."""
+        if item.kind != "local-playlists":
+            return None
+        try:
+            playlist_id = int(item.id.split(":", 1)[1])
+        except (IndexError, ValueError):
+            return None
+        return self.get_local_playlist(playlist_id)
+
     def delete_local_playlist(self, playlist_id: int) -> None:
         with self._connect() as db:
             db.execute("DELETE FROM local_playlist_items WHERE playlist_id = ?", (playlist_id,))

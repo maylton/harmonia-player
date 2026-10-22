@@ -170,7 +170,6 @@ class HarmoniaWindow(
         self._artwork_requests: dict[int, str] = {}
         self._icon_settings_handler = 0
         self._sleep_timer_source = 0
-        self._sleep_timer_deadline = 0.0
         self._artist_current_item: LibraryItem | None = None
         self.library_filter = "albums"
         self.library_origin = "youtube"

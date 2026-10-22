@@ -97,24 +97,20 @@ class WindowTogetherMixin:
         target = state.queue[state.index]
         position_ms = state.corrected_position_ms()
         current = getattr(self, "current_item", None)
-        self._together_applying = True
-        try:
-            if current is None or current.id != target.id:
-                self.queue = list(state.queue)
-                self.queue_index = state.index
-                self._restored_position_ms = position_ms
-                self._together_pending_state = state
-                self._render_queue()
-                self.play_item(target)
-                return
+        if current is None or current.id != target.id:
             self.queue = list(state.queue)
             self.queue_index = state.index
-            if abs(self._playback_position_us() // 1000 - position_ms) > 1_500:
-                self._seek_playback(position_ms * 1000)
-            if state.playing != self._playback_is_playing():
-                self._toggle_player()
-        finally:
-            self._together_applying = False
+            self._restored_position_ms = position_ms
+            self._together_pending_state = state
+            self._render_queue()
+            self.play_item(target)
+            return
+        self.queue = list(state.queue)
+        self.queue_index = state.index
+        if abs(self._playback_position_us() // 1000 - position_ms) > 1_500:
+            self._seek_playback(position_ms * 1000)
+        if state.playing != self._playback_is_playing():
+            self._toggle_player()
 
     def _optional_stream_started(self) -> None:
         state = self._together_pending_state

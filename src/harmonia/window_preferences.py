@@ -314,9 +314,7 @@ class WindowPreferencesMixin:
         if self._sleep_timer_source:
             GLib.source_remove(self._sleep_timer_source)
             self._sleep_timer_source = 0
-        self._sleep_timer_deadline = 0.0
         if minutes:
-            self._sleep_timer_deadline = time.time() + minutes * 60
             self._sleep_timer_source = GLib.timeout_add_seconds(
                 minutes * 60, self._sleep_timer_elapsed
             )
@@ -332,7 +330,6 @@ class WindowPreferencesMixin:
 
     def _sleep_timer_elapsed(self) -> bool:
         self._sleep_timer_source = 0
-        self._sleep_timer_deadline = 0.0
         self._pause()
         self.toast_overlay.add_toast(Adw.Toast(title=_("Reprodução pausada pelo temporizador")))
         return GLib.SOURCE_REMOVE

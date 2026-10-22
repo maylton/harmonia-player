@@ -61,9 +61,6 @@ class KaraokeLine(Gtk.Widget):
         self._position_ms: Callable[[], float] | None = None
         self._redraw = FrameLoop(self, lambda _elapsed: None)
 
-    def get_label(self) -> str:
-        return self._layout.get_text()
-
     # --- Activity ---------------------------------------------------------
 
     def activate(self, position_ms: Callable[[], float]) -> None:
