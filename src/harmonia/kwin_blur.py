@@ -143,11 +143,12 @@ class WaylandBlur:
         self._keep = (blur_methods, manager_methods, keep_blur, keep_manager)
 
     def _call(self, proxy, opcode: int, interface: int | None, *args, flags: int = 0):
+        proxy = _address(proxy)
         version = self._lib.wl_proxy_get_version(proxy)
-        return self._marshal(
+        return _address(self._marshal(
             c_void_p(proxy), c_uint32(opcode), c_void_p(interface), c_uint32(version),
             c_uint32(flags), *args,
-        )  # fmt: skip
+        ))  # fmt: skip
 
     def _bind(self) -> None:
         lib = self._lib
@@ -173,10 +174,10 @@ class WaylandBlur:
     def _bind_global(self, name: bytes, interface: int, highest: int) -> int:
         number, version = self._globals[name]
         version = min(version, highest)
-        return self._marshal(
+        return _address(self._marshal(
             c_void_p(self._registry), c_uint32(0), c_void_p(interface), c_uint32(version),
             c_uint32(0), c_uint32(number), c_char_p(name), c_uint32(version), c_void_p(None),
-        )  # fmt: skip
+        ))  # fmt: skip
 
     @property
     def available(self) -> bool:
@@ -237,6 +238,11 @@ class X11Blur:
         self._lib.XFlush(self._display)
 
 
+def _address(value) -> int | None:
+    """The variadic wl_proxy_marshal_flags hands proxies back as c_void_p, not int."""
+    return value.value if isinstance(value, c_void_p) else value
+
+
 def _pointer(value) -> int:
     """A gpointer from introspection: an int, or a PyCapsule on some versions."""
     if isinstance(value, int):
@@ -244,6 +250,28 @@ def _pointer(value) -> int:
     getter = ctypes.pythonapi.PyCapsule_GetPointer
     getter.restype, getter.argtypes = c_void_p, (ctypes.py_object, c_char_p)
     return getter(value, None)
+
+
+def _gdk_handle(gobject, function: str) -> int | None:
+    """A Wayland or X11 handle that GDK keeps out of introspection.
+
+    gdk_wayland_display_get_wl_display() and gdk_wayland_surface_get_wl_surface()
+    return raw C pointers, which PyGObject does not bind, so libgtk is called
+    for them directly.
+    """
+    try:
+        function = getattr(ctypes.CDLL("libgtk-4.so.1"), function)
+    except (OSError, AttributeError):
+        return None
+    function.restype, function.argtypes = c_void_p, (c_void_p,)
+    return function(_pointer(gobject.__gpointer__))
+
+
+def wayland_display(display) -> int | None:
+    """The wl_display of a GdkWaylandDisplay."""
+    if hasattr(display, "get_wl_display"):  # older PyGObject bound it
+        return _pointer(display.get_wl_display())
+    return _gdk_handle(display, "gdk_wayland_display_get_wl_display")
 
 
 def connect(display) -> WaylandBlur | X11Blur | None:
@@ -256,7 +284,10 @@ def connect(display) -> WaylandBlur | X11Blur | None:
             gi.require_version("GdkWayland", "4.0")
             from gi.repository import GdkWayland  # noqa: F401
 
-            backend = WaylandBlur(_pointer(display.get_wl_display()))
+            handle = wayland_display(display)
+            if not handle:
+                return None
+            backend = WaylandBlur(handle)
         elif "X11" in name and "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper():
             gi.require_version("GdkX11", "4.0")
             from gi.repository import GdkX11  # noqa: F401
@@ -274,6 +305,8 @@ def surface_handle(surface) -> int | None:
     """The wl_surface or X11 window of a GdkSurface."""
     if hasattr(surface, "get_wl_surface"):
         return _pointer(surface.get_wl_surface())
+    if "Wayland" in type(surface).__name__:
+        return _gdk_handle(surface, "gdk_wayland_surface_get_wl_surface")
     if hasattr(surface, "get_xid"):
         return int(surface.get_xid())
     return None

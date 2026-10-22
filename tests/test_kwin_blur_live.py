@@ -20,8 +20,10 @@ def gtk_on_wayland():
     import gi
 
     gi.require_version("Gdk", "4.0")
+    gi.require_version("GdkWayland", "4.0")
     gi.require_version("Gtk", "4.0")
-    from gi.repository import Gdk, GLib, Gtk
+    # GdkWayland brings get_wl_display() to the display, as kwin_blur.connect does.
+    from gi.repository import Gdk, GdkWayland, GLib, Gtk  # noqa: F401
 
     Gtk.init()
     display = Gdk.Display.get_default()
@@ -33,7 +35,7 @@ def test_globals_are_bound_on_a_queue_of_our_own():
     from harmonia import kwin_blur
 
     display, _glib, _gtk = gtk_on_wayland()
-    blur = kwin_blur.WaylandBlur(kwin_blur._pointer(display.get_wl_display()))
+    blur = kwin_blur.WaylandBlur(kwin_blur.wayland_display(display))
 
     assert b"wl_compositor" in blur._globals, sorted(blur._globals)
     # The same calls the blur makes: a region, rectangles in it, its destruction.

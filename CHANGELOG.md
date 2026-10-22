@@ -11,6 +11,7 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - novos pacotes de ícones: Framework7 (estilo iOS), Breeze e Papirus;
 - player expandido com a capa acima dos controles, em todos os temas;
 - corrigido: o seletor Música/Vídeo do player expandido tinha sumido;
+- corrigido: o desfoque do KWin atrás da janela não funcionava, porque o GTK atual não entrega ao Python a conexão Wayland nem a superfície da janela; o Harmonia agora as pede direto à biblioteca do GTK;
 - corrigido: as capas da página inicial ficavam deslocadas no Linux, porque o título do card media a largura em letras da fonte;
 - corrigido: o selo "E" de conteúdo explícito ficava à esquerda da capa nos downloads, no histórico e na busca; agora fica ao lado do título, e aparece também nas playlists locais.
 
