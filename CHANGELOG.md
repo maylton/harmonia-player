@@ -2,6 +2,18 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## 0.1.0-beta.6 — 2026-10-22
+
+- tema Harmonia: o antigo tema Windows 11 virou o tema padrão do Harmonia, com o Mica automático atrás da janela; o Acrílico e o menu "Efeito de fundo" saíram, e no Linux fica só a opção "Desfoque do compositor" (KWin ou Blur my Shell; desligada ou sem eles, o Mica usa o papel de parede). O tema escuro antigo deu lugar a ele;
+- novo tema Material Design 3, inspirado no player do dashboard do Caelestia Shell: barra de progresso ondulada, capa em forma de biscoito que gira enquanto a música toca, botões que mudam de forma e empurram os vizinhos ao serem pressionados, e a janela emoldurada como a borda do Caelestia. Segue as cores do Caelestia Shell (o esquema muda junto com o papel de parede) ou a cor de destaque do sistema;
+- letras palavra por palavra no estilo do Apple Music, como no Metrolist: cada palavra se preenche aos poucos com uma borda suave, sobe um pouco, pulsa ao começar e as notas longas brilham; as linhas se apagam conforme se afastam da cantada;
+- romaji nas letras em japonês, lido no próprio aparelho (fugashi e UniDic Lite, incluídos no Flatpak), em Preferências > Biblioteca;
+- novos pacotes de ícones: Framework7 (estilo iOS), Breeze e Papirus;
+- player expandido com a capa acima dos controles, em todos os temas;
+- corrigido: o seletor Música/Vídeo do player expandido tinha sumido;
+- corrigido: as capas da página inicial ficavam deslocadas no Linux, porque o título do card media a largura em letras da fonte;
+- corrigido: o selo "E" de conteúdo explícito ficava à esquerda da capa nos downloads, no histórico e na busca; agora fica ao lado do título, e aparece também nas playlists locais.
+
 ## 0.1.0-beta.5 — 2026-10-13
 
 - músicas com restrição de idade tocam a gravação original, explícita, com a sua conta, como no Metrolist e no yt-dlp: o Harmonia decifra o player do YouTube com o JavaScriptCore no Linux e com o QuickJS incluído no Windows e no Flatpak do KDE (no áudio e no vídeo); a beta.4 tocava outra publicação da mesma música no lugar, o que podia ser uma versão sem o conteúdo explícito;
