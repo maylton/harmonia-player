@@ -8,6 +8,7 @@ the run fail.
 
     python3 tools/gtk_smoke.py            # run and report
     python3 tools/gtk_smoke.py --verbose  # also print each step
+    python3 tools/gtk_smoke.py --quick    # one theme and icon style, every page
 
 It needs libadwaita >= 1.7, so CI runs it inside the GNOME Flatpak runtime:
 
@@ -46,7 +47,7 @@ IGNORED = re.compile(
 
 def main(argv: list[str]) -> int:
     if CHILD_FLAG in argv:
-        return _child(verbose="--verbose" in argv)
+        return _child(verbose="--verbose" in argv, quick="--quick" in argv)
     with tempfile.TemporaryDirectory(prefix="harmonia-smoke-") as home:
         env = dict(os.environ, HARMONIA_SMOKE_HOME=home)
         started = time.monotonic()
@@ -103,7 +104,7 @@ def _isolate(home: str) -> None:
     os.environ.pop("GTK_THEME", None)
 
 
-def _child(verbose: bool) -> int:
+def _child(verbose: bool, quick: bool = False) -> int:
     home = os.environ.get("HARMONIA_SMOKE_HOME") or tempfile.mkdtemp(prefix="harmonia-smoke-")
     _isolate(home)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -152,7 +153,7 @@ def _child(verbose: bool) -> int:
             sink = Gst.ElementFactory.make("fakesink", "smoke-audio")
             window.player._playbin.set_property("audio-sink", sink)
             window.present()
-            driver = _drive(window, builtin_themes(), log)
+            driver = _drive(window, builtin_themes(), log, quick=quick)
 
             def advance() -> bool:
                 nonlocal steps
@@ -242,8 +243,13 @@ def _check_icons(window, seen: set[str], errors: list[str]) -> None:
             child = child.get_next_sibling()
 
 
-def _drive(window, themes, log):
-    """Yield the delay to wait after each step, so the main loop draws it."""
+def _drive(window, themes, log, quick: bool = False):
+    """Yield the delay to wait after each step, so the main loop draws it.
+
+    ``quick`` keeps to the default theme, dark, with the desktop's icons: every
+    page, the expanded player and the video still run, in a minute instead of
+    four, for checking a change while working on it.
+    """
     yield 400  # initial render and the fake initial sync
     from gi.repository import Gtk
 
@@ -273,6 +279,8 @@ def _drive(window, themes, log):
         for variant in ("dark", "light")
         for style, icon_theme in icon_styles
     ]
+    if quick:
+        combinations = combinations[:1]
     for index, (theme, variant, style, icon_theme) in enumerate(combinations):
         window.preferences.theme = theme
         window.preferences.theme_variant = variant
@@ -309,6 +317,33 @@ def _page_problem(window, name: str) -> str | None:
     ):
         return f"página {name!r} mostra {page.get_title()!r}: {page.get_description()!r}"
     return None
+
+
+def _check_video(window, samples, log):
+    """Música/Vídeo: the switch must play the sample video, then give back the music."""
+    if samples.video is None or not window._gtk_video_sink_available:
+        log("vídeo: sem gtk4paintablesink ou codificador, pulado")
+        return
+    log("vídeo")
+    window.expanded_stack.set_visible_child_name("music")
+    window._media_video_button.set_active(True)
+    picture = window._media_stack.get_child_by_name("video")
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        paintable = picture.get_paintable()
+        if window._media_mode == "video" and paintable and paintable.get_intrinsic_width() > 0:
+            break
+        yield 100
+    else:
+        print(
+            f"SMOKE-FAIL o vídeo não apareceu (modo {window._media_mode}, "
+            f"página {window._media_stack.get_visible_child_name()})",
+            flush=True,
+        )
+    window._media_audio_button.set_active(True)
+    yield 300
+    if window._media_mode != "audio":
+        print("SMOKE-FAIL a troca para Música não voltou ao áudio", flush=True)
 
 
 def _expect_page(window, name: str, timeout: float = 15.0):
@@ -399,9 +434,15 @@ def _visit_pages(window, log, full: bool):
     window.set_queue(samples.songs, 0)
     yield 400
     window._show_expanded_player()
-    for page in ("music", "lyrics", "related"):
+    for page in ("music", "lyrics"):
         window.expanded_stack.set_visible_child_name(page)
         yield 200
+    # "A seguir": play an autoplay track straight from the column.
+    window.expanded_stack.set_visible_child_name("music")
+    if window.related_items:
+        window._play_related_now(window.related_items[0])
+        yield 300
+    yield from _check_video(window, samples, log)
     window._hide_expanded_player()
     yield 100
     log("letras e fila no rodapé")
@@ -438,6 +479,7 @@ class _Samples:
         self.folder = folder
         covers = [self._cover(folder / f"cover-{index}.png", index) for index in range(6)]
         self.audio = self._silence(folder / "silence.wav")
+        self.video = self._test_video(folder / "video.webm")
 
         def cover(index: int) -> str:
             return covers[index % len(covers)].as_uri()
@@ -552,6 +594,28 @@ class _Samples:
             audio.setsampwidth(2)
             audio.setframerate(8000)
             audio.writeframes(b"\0\0" * 8000 * 3)
+        return path
+
+    @staticmethod
+    def _test_video(path: Path) -> Path | None:
+        """Three seconds of test pattern, as long as the audio; None without an encoder."""
+        from gi.repository import GLib, Gst
+
+        Gst.init(None)
+        try:
+            pipeline = Gst.parse_launch(
+                "videotestsrc num-buffers=75 ! video/x-raw,width=320,height=180,framerate=25/1"
+                f' ! vp8enc deadline=1 ! webmmux ! filesink location="{path}"'
+            )
+        except GLib.Error:
+            return None
+        pipeline.set_state(Gst.State.PLAYING)
+        message = pipeline.get_bus().timed_pop_filtered(
+            30 * Gst.SECOND, Gst.MessageType.EOS | Gst.MessageType.ERROR
+        )
+        pipeline.set_state(Gst.State.NULL)
+        if message is None or message.type != Gst.MessageType.EOS:
+            return None
         return path
 
 
@@ -683,8 +747,21 @@ class _FakeService:
 
         return StreamInfo(self.samples.audio.as_uri(), 3000, "smoke", "audio/wav")
 
-    def resolve_video(self, *_args, **_kwargs):
-        raise RuntimeError("vídeo indisponível no smoke")
+    def resolve_video(self, item, *_args, **_kwargs):
+        from harmonia.video import VideoStreamInfo
+
+        if self.samples.video is None:
+            raise RuntimeError("vídeo indisponível no smoke")
+        return VideoStreamInfo(
+            self.samples.video.as_uri(),
+            item.id,
+            3000,
+            "smoke",
+            "video/webm",
+            width=320,
+            height=180,
+            fps=25,
+        )
 
     def register_playback(self, *_args, **_kwargs):
         return None

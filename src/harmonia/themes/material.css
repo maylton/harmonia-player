@@ -216,3 +216,16 @@ scale highlight { background-color: @md_primary; }
   color: @md_on_primary;
   background: @md_primary;
 }
+/* "A seguir" as one of Caelestia's surfaces. */
+.md-expressive .expanded-up-next { background: @md_surface_container; border-radius: 25px; }
+.md-expressive .expanded-up-next-title,
+.md-expressive .expanded-up-next row { color: @md_on_surface; }
+.md-expressive .expanded-up-next-subtitle,
+.md-expressive .expanded-up-next row .subtitle { color: @md_on_surface_variant; }
+.md-expressive .expanded-up-next row:hover { background: @md_secondary_container; }
+.md-expressive .expanded-up-next row.up-next-current {
+  background: @md_primary;
+  color: @md_on_primary;
+}
+.md-expressive .expanded-up-next row.up-next-current .subtitle { color: @md_on_primary; }
+

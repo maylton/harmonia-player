@@ -1,4 +1,4 @@
-"""The expanded player: artwork backdrop and the Música, Letras and Relacionadas tabs."""
+"""The expanded player: artwork backdrop, the Música and Letras tabs, and "A seguir"."""
 
 from __future__ import annotations
 
@@ -45,12 +45,6 @@ def build_expanded_player(window) -> None:
     for page, name, title, icon in (
         (_music_page(window), "music", _("Música"), "audio-headphones-symbolic"),
         (_lyrics_page(window), "lyrics", _("Letras"), "audio-input-microphone-symbolic"),
-        (
-            _related_page(window),
-            "related",
-            _("Relacionadas"),
-            "media-playlist-consecutive-symbolic",
-        ),
     ):
         window.expanded_stack.add_titled(page, name, title).set_icon_name(icon)
     window.expanded_stack.connect("notify::visible-child-name", window._expanded_page_changed)
@@ -116,10 +110,34 @@ def _header(window) -> Gtk.Widget:
 # the timeline does not stretch across the window.
 EXPANDED_COVER_SIZE = 360
 EXPANDED_INFO_WIDTH = 420
+# "A seguir" beside the player, as YouTube Music's Up next; narrower windows
+# leave it to the player bar's queue.
+UP_NEXT_WIDTH = 380
+UP_NEXT_MIN_WINDOW = "max-width: 1000px"
 
 
 def _music_page(window) -> Gtk.Widget:
-    scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+    page = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, hexpand=True, vexpand=True)
+    page.append(_player_column(window))
+    page.append(_up_next_column(window))
+    narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(UP_NEXT_MIN_WINDOW))
+    narrow.add_setter(window.expanded_up_next_scroll, "visible", False)
+    window.add_breakpoint(narrow)
+    return page
+
+
+def _up_next_column(window) -> Gtk.Widget:
+    scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
+    scroll.set_size_request(UP_NEXT_WIDTH, -1)
+    scroll.add_css_class("expanded-up-next")
+    window.expanded_up_next = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+    scroll.set_child(window.expanded_up_next)
+    window.expanded_up_next_scroll = scroll
+    return scroll
+
+
+def _player_column(window) -> Gtk.Widget:
+    scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, hexpand=True)
     column = Gtk.Box(
         orientation=Gtk.Orientation.VERTICAL,
         spacing=32,
@@ -274,13 +292,4 @@ def _lyrics_page(window) -> Gtk.Widget:
         _("Letras"),
         _("Comece a reproduzir uma música para ver a letra."),
     )
-    return scroll
-
-
-def _related_page(window) -> Gtk.Widget:
-    scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-    window.expanded_related_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
-    window.expanded_related_container.add_css_class("expanded-tab-page")
-    scroll.set_child(window.expanded_related_container)
-    window._render_expanded_related()
     return scroll
