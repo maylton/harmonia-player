@@ -59,10 +59,12 @@ Options:
   --yes, -y        Accept installer prompts automatically
   --help, -h       Show this help
 
-"auto" installs the .deb on Debian/Ubuntu and the .rpm on Fedora when the
-distribution's libadwaita is $MIN_LIBADWAITA or newer, and the Flatpak otherwise
-(for example on Ubuntu 24.04). "source" builds with Meson into ~/.local
-(/usr/local with --system); it needs meson, ninja and gettext.
+"auto" builds from source with Meson on Arch Linux and its derivatives,
+installing what it needs with pacman; it installs the .deb on Debian/Ubuntu
+and the .rpm on Fedora when the distribution's libadwaita is $MIN_LIBADWAITA
+or newer, and the Flatpak otherwise (for example on Ubuntu 24.04). "source"
+builds with Meson into ~/.local (/usr/local with --system); elsewhere than on
+Arch it needs meson, ninja, gettext and the libraries below installed first.
 
 Downloads are checked against the release's SHA-256 checksums. Your
 library, settings and YouTube Music session are kept when switching formats.
@@ -174,9 +176,15 @@ libadwaita_from_dnf() {
         | tail -n 1
 }
 
-# Sets method for "auto": the system's own package format when its libadwaita
-# is new enough, the Flatpak otherwise.
+# Sets method for "auto": a Meson build on Arch and its derivatives, whose
+# rolling packages always carry a recent GTK and libadwaita; elsewhere the
+# system's own package format when its libadwaita is new enough, the Flatpak
+# otherwise.
 choose_method() {
+    if has pacman; then
+        method="source"
+        return
+    fi
     native=""
     available=""
     if has apt-get && has dpkg; then
@@ -326,7 +334,38 @@ install_flatpak_bundle() {
     fi
 }
 
+# Arch and derivatives: the build tools and every library Harmonia uses, from
+# the official repositories (gst-plugin-gtk4 draws the video, gst-plugins-bad
+# and gst-libav decode YouTube's VP9 and AV1, the pixbuf loaders read JPEG XL,
+# WebP and AVIF artwork).
+ARCH_PACKAGES="meson ninja gettext python python-gobject python-pip gtk4 libadwaita \
+gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav gst-plugin-gtk4 \
+libsecret webkitgtk-6.0 libjxl webp-pixbuf-loader libavif"
+
+install_arch_packages() {
+    say "Installing Harmonia's dependencies with pacman (administrator access required)..."
+    # shellcheck disable=SC2086
+    run_privileged pacman -S --needed --noconfirm $ARCH_PACKAGES
+}
+
+# Rōmaji for Japanese lyrics needs fugashi and the UniDic Lite dictionary,
+# which no distribution packages; they go next to Harmonia's own code.
+install_romaji_support() {
+    target="$1/share/harmonia/python"
+    runner=""
+    [ "$scope" = "--system" ] && runner="run_privileged"
+    if $runner python3 -m pip install --quiet --disable-pip-version-check --upgrade --no-deps \
+        --target "$target" fugashi unidic-lite; then
+        say "Installed rōmaji support (fugashi and UniDic Lite)."
+    else
+        say "Rōmaji support could not be installed; Japanese lyrics will show without it."
+    fi
+}
+
 install_source() {
+    if has pacman; then
+        install_arch_packages
+    fi
     for tool in meson ninja msgfmt; do
         has "$tool" || fail "Building from source needs $tool. Install meson, ninja and gettext first."
     done
@@ -347,6 +386,8 @@ install_source() {
     # Keep the list of installed files so --uninstall can remove them.
     mkdir -p "$SOURCE_STATE"
     cp "$temp_dir/build/meson-logs/install-log.txt" "$SOURCE_STATE/install-log${scope#-}.txt"
+    install_romaji_support "$prefix"
+    remove_flatpak_copies
     say "Harmonia was built and installed into $prefix."
     say "It needs GTK 4, libadwaita $MIN_LIBADWAITA+, PyGObject, GStreamer, libsecret and WebKitGTK 6 from your distribution."
 }

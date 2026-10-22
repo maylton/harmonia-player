@@ -116,6 +116,9 @@ chmod +x install.sh
 ./install.sh --run
 ```
 
+- **a Meson build** on Arch Linux and its derivatives (EndeavourOS, Manjaro,
+  CachyOS…): pacman installs the libraries and build tools, the release is
+  built into `~/.local`, and fugashi and UniDic Lite are added for rōmaji;
 - **.deb or .rpm** when the distribution's libadwaita is 1.7 or newer (Ubuntu
   25.04+, Debian 13, Fedora 42+): installed with apt or dnf, which pull in the
   dependencies;
@@ -124,7 +127,7 @@ chmod +x install.sh
 - `--method deb|rpm|flatpak|source` chooses one; `source` builds the release
   with Meson into `~/.local` (or `/usr/local` with `--system`).
 
-Switching from the Flatpak to a native package offers to remove the Flatpak
+Switching from the Flatpak to a native package or a Meson build offers to remove the Flatpak
 and carries over your settings and library cache; the YouTube Music session
 lives in the keyring and is kept either way. Inspecting a downloaded script
 before running it is recommended. `./install.sh --help` lists every option,
