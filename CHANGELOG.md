@@ -11,7 +11,8 @@ A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso 
 - no player expandido, a barra de progresso e os botões têm sempre a mesma largura: um título longo gira na mesma linha, como um carrossel, em vez de alargar os controles, e o subtítulo longo termina em reticências.
 - ao abrir o Harmonia, a barra de progresso e os tempos já mostram onde a música parou, antes de dar play;
 - vídeo em até 1080p, antes 720p, no codec que o sistema decodifica melhor: o da placa de vídeo quando há (o instalador do Arch agora instala o gst-plugin-va), e em software H.264, depois VP9; o AV1 só com um decodificador rápido. Com o vídeo separado do áudio, o formato de 360p com som não passa mais na frente dos de maior resolução;
-- o selo "E" de conteúdo explícito ficou menor e mais discreto, e no player expandido acompanha o título mesmo quando ele gira.
+- o selo "E" de conteúdo explícito ficou menor e mais discreto, e no player expandido acompanha o título mesmo quando ele gira;
+- a biblioteca usa os mesmos cartões da página inicial, em quantas colunas couberem, e o hover acende só o cartão, não a célula da grade ao redor dele, que ficava desalinhada da capa e do texto.
 
 ## 1.0.0-rc.1 — 2026-10-23
 

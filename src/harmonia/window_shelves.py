@@ -25,6 +25,10 @@ from .ui import (
 from .window_constants import LABELS, LIKED_ICON
 
 LOGGER = logging.getLogger(__name__)
+# One card for the home's shelves and the library's grids.
+HOME_CARD_SIZE = 168
+HOME_CARD_SPACING = 18
+GRID_MAX_COLUMNS = 12  # past any window's width: the width decides
 
 
 def _fixed_width(widget: Gtk.Widget, size: int) -> None:
@@ -104,19 +108,23 @@ class WindowShelvesMixin:
         return header
 
     def _section(self, key: str, items: list[LibraryItem], limit: int = 8) -> Gtk.Widget:
+        """A grid of the home's cards, as many to a line as the width holds."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         box.append(self._section_header(LABELS[key], lambda: self.show_category(key)))
         flow = Gtk.FlowBox(
             selection_mode=Gtk.SelectionMode.NONE,
-            column_spacing=16,
-            row_spacing=18,
+            column_spacing=HOME_CARD_SPACING,
+            row_spacing=24,
             min_children_per_line=2,
-            max_children_per_line=5,
-            homogeneous=False,
+            max_children_per_line=GRID_MAX_COLUMNS,
+            homogeneous=True,
         )
+        flow.add_css_class("plain-flow")
         for item in items[:limit]:
             flow.append(
-                self._media_card_button(item, 140, lambda selected=item: self.open_item(selected))
+                self._media_card_button(
+                    item, HOME_CARD_SIZE, lambda selected=item: self.open_item(selected)
+                )
             )
         box.append(flow)
         return box

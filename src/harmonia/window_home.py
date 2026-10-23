@@ -22,6 +22,7 @@ from .ui import (
     page_shell,
 )
 from .window_constants import EXPLORE_ICON
+from .window_shelves import HOME_CARD_SIZE, HOME_CARD_SPACING
 
 LOGGER = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ class WindowHomeMixin:
             max_children_per_line=4,
             homogeneous=True,
         )
+        flow.add_css_class("plain-flow")
         icons = {
             "FEmusic_new_releases": "media-optical-symbolic",
             "FEmusic_charts": "view-list-symbolic",
@@ -184,14 +186,14 @@ class WindowHomeMixin:
         scroll.set_kinetic_scrolling(True)
         scroll.set_vexpand(False)
         scroll.set_valign(Gtk.Align.START)
-        shelf = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
+        shelf = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=HOME_CARD_SPACING)
         shelf.add_css_class("home-shelf-row")
         shelf.set_vexpand(False)
         shelf.set_valign(Gtk.Align.START)
         for item in items[:limit]:
             button = self._media_card_button(
                 item,
-                168,
+                HOME_CARD_SIZE,
                 lambda selected=item, source=items: self._open_home_item(selected, source),
             )
             button.add_css_class("home-media-card-button")
