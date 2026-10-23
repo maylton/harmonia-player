@@ -227,6 +227,16 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 }
 .detail-creator { color: @harmonia_fg; font-size: 13px; font-weight: 650; }
 .detail-meta-muted { color: @harmonia_fg_subtle; font-size: 13px; font-weight: 550; }
+/* Windows, every theme: DWM draws the window's shadow and rounded corners
+   (gtk_backdrop.py), so GTK's own, in a transparent margin, would show as
+   a second frame inside it. */
+window.harmonia-dwm.csd,
+window.harmonia-dwm.csd:backdrop {
+  box-shadow: none;
+  margin: 0;
+  border-radius: 0;
+  outline: none;
+}
 .detail-actions { margin-top: 12px; }
 /* Grids whose buttons and cards show their own hover: the cell around them,
    wider than a card, would light up out of line with it. */

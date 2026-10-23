@@ -108,15 +108,16 @@ class GtkWindowBackdrops:
         hwnd = self._hwnd(window)
         if hwnd is None:
             return False
-        applied = False
-        if self.kind != "none":
-            try:
+        applied = native = False
+        try:
+            if self.kind != "none":
                 applied = windows_backdrop.apply(hwnd, self.kind, self._style.get_dark())
-            except OSError:
-                LOGGER.debug("O DWM recusou o material da janela", exc_info=True)
-        else:
-            windows_backdrop.remove(hwnd)
-        set_css_class(window, DWM_CSS_CLASS, applied)
+            # Without a material, DWM still draws the corners and the shadow.
+            native = applied or windows_backdrop.native_frame(hwnd, self._style.get_dark())
+        except OSError:
+            LOGGER.debug("O DWM recusou o material ou a moldura da janela", exc_info=True)
+        # DWM's frame stands in for GTK's shadow and corners (style.css).
+        set_css_class(window, DWM_CSS_CLASS, native)
         if applied:
             window.add_css_class(CSS_CLASS)
             windows_backdrop.watch(

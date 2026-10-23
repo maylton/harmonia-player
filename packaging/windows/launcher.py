@@ -11,6 +11,17 @@ local.mkdir(parents=True, exist_ok=True)
 # which is read-only under Program Files; a stale or unwritable registry makes
 # every start rescan the plugins.
 os.environ["GST_REGISTRY"] = str(local / "gstreamer-registry.bin")
+if "--prepare-plugins" in sys.argv:
+    # Run by the installer: building the registry scans every plugin DLL, as
+    # Windows Defender does on their first load, which took long enough on
+    # the first start that the window seemed not to open.
+    import gi
+
+    gi.require_version("Gst", "1.0")
+    from gi.repository import Gst
+
+    Gst.init(None)
+    sys.exit(0)
 os.environ.setdefault("HARMONIA_LOCALE_DIR", str(bundle / "share" / "locale"))
 # A windowed build has no console; HARMONIA_LOG=1 writes a debug log instead.
 if os.environ.get("HARMONIA_LOG") == "1":

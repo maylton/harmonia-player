@@ -80,8 +80,11 @@ def test_skipping_silence_ends_the_track_instead_of_resuming_it(tmp_path):
         on_error=lambda error: ended.append(error) or loop.quit(),
         on_eos=lambda: ended.append("eos") or loop.quit(),
     )
+    # Timed like a sound card, without needing one (Windows' CI has none).
+    sink = Gst.ElementFactory.make("fakesink")
+    sink.set_property("sync", True)
+    player._playbin.set_property("audio-sink", sink)
     player.apply_audio_settings(skip_silence=True)
-    player.volume = 0.0
     player.play(track.as_uri())
     GLib.timeout_add_seconds(15, loop.quit)
     start = time.monotonic()

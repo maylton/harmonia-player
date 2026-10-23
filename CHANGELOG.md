@@ -12,7 +12,9 @@ A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso 
 - ao abrir o Harmonia, a barra de progresso e os tempos já mostram onde a música parou, antes de dar play;
 - vídeo em até 1080p, antes 720p, no codec que o sistema decodifica melhor: o da placa de vídeo quando há (o instalador do Arch agora instala o gst-plugin-va), e em software H.264, depois VP9; o AV1 só com um decodificador rápido. Com o vídeo separado do áudio, o formato de 360p com som não passa mais na frente dos de maior resolução;
 - o selo "E" de conteúdo explícito ficou menor e mais discreto, e no player expandido acompanha o título mesmo quando ele gira;
-- a biblioteca usa os mesmos cartões da página inicial, em quantas colunas couberem, e o hover acende só o cartão, não a célula da grade ao redor dele, que ficava desalinhada da capa e do texto.
+- a biblioteca usa os mesmos cartões da página inicial, em quantas colunas couberem, e o hover acende só o cartão, não a célula da grade ao redor dele, que ficava desalinhada da capa e do texto;
+- Windows: com os temas que não são o Harmonia, a janela ganhava uma moldura por dentro, como uma janela dentro de outra; agora o Windows desenha a sombra e os cantos arredondados em todos os temas;
+- Windows: a primeira abertura depois de instalar demorava muito, porque o registro de plugins do GStreamer era montado do zero antes de a janela aparecer; o instalador agora prepara esse registro ao terminar.
 
 ## 1.0.0-rc.1 — 2026-10-23
 
