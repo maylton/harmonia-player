@@ -170,6 +170,9 @@ class PlaybackState:
     shuffle: bool = False
     repeat: bool = False
     autoplay: bool = True
+    # The current track's length, so a restored position shows on the
+    # progress bar before the stream is opened again.
+    duration_ms: int = 0
 
 
 @dataclass(slots=True)

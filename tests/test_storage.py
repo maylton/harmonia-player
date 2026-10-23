@@ -176,3 +176,28 @@ def test_volume_is_kept_between_sessions(monkeypatch, tmp_path):
     assert storage.load_volume() == 0.8
     storage.set_setting("volume", "3")
     assert storage.load_volume() == 1.0
+
+
+def test_the_track_length_is_kept_with_the_position(monkeypatch, tmp_path):
+    import sqlite3
+
+    from harmonia.models import PlaybackState
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    storage = Storage()
+    # A database from before the column: it gains it on opening.
+    with sqlite3.connect(storage.database_file) as db:
+        db.execute("DROP TABLE playback_state")
+        db.execute(
+            """CREATE TABLE playback_state (
+            id INTEGER PRIMARY KEY CHECK (id = 1), queue_index INTEGER NOT NULL,
+            position_ms INTEGER NOT NULL, shuffle INTEGER NOT NULL,
+            repeat_mode INTEGER NOT NULL, autoplay INTEGER NOT NULL, updated_at INTEGER NOT NULL)"""
+        )
+    storage = Storage()
+    track = LibraryItem("id", "Título", "Artista", None, "songs")
+    storage.save_playback_state(PlaybackState([track], [], 0, 61_000, duration_ms=232_000))
+
+    restored = storage.load_playback_state()
+    assert (restored.position_ms, restored.duration_ms) == (61_000, 232_000)

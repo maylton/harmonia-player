@@ -29,7 +29,7 @@ from .models import (
 )
 from .preferences import Preferences
 from .storage import Storage
-from .video import VideoStreamInfo, resolve_video_stream
+from .video import VIDEO_MAX_HEIGHT, VideoStreamInfo, resolve_video_stream
 
 SEARCH_ORDER = ("songs", "videos", "albums", "artists", "playlists")
 
@@ -260,7 +260,7 @@ class YouTubeMusicService:
         self,
         item: LibraryItem,
         *,
-        max_height: int = 720,
+        max_height: int = VIDEO_MAX_HEIGHT,
         force: bool = False,
         allow_video_only: bool = False,
     ) -> VideoStreamInfo:

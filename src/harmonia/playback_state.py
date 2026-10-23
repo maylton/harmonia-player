@@ -103,6 +103,7 @@ def playback_state_snapshot(
     shuffle: bool,
     repeat: bool,
     autoplay: bool,
+    duration_ms: int = 0,
 ) -> PlaybackState:
     """Build a normalized persistence snapshot without sharing mutable lists."""
     return PlaybackState(
@@ -113,6 +114,7 @@ def playback_state_snapshot(
         shuffle,
         repeat,
         autoplay,
+        max(0, duration_ms),
     )
 
 

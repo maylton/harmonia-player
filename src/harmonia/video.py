@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import threading
 import time
 import urllib.error
@@ -65,6 +66,22 @@ _VIDEO_CACHE_LOCK = threading.Lock()
 _ARTIST_CONNECTORS = ARTIST_CONNECTORS
 _NON_CANONICAL_VIDEO_MARKERS = NON_CANONICAL_MARKERS
 _OTF_STREAM_TYPE = "FORMAT_STREAM_TYPE_OTF"
+# The tallest video asked for: YouTube's music videos rarely go higher, and
+# above it software decoding costs too much.
+VIDEO_MAX_HEIGHT = 1080
+# A format's codec (the first part of its mimeType's codecs) as GStreamer caps.
+_CODEC_CAPS = {"avc1": "video/x-h264", "vp9": "video/x-vp9", "vp09": "video/x-vp9",
+               "av01": "video/x-av1"}  # fmt: skip
+# Decoders too slow for these videos in real time, as if absent: libaom.
+_SLOW_DECODERS = frozenset({"av1dec"})
+# Per codec, on a hardware decoder and in software: hardware decodes the newer
+# codecs, which look better at the same height; in software H.264 is the
+# lightest.
+_CODEC_PREFERENCE = {
+    "video/x-av1": (5, 0),
+    "video/x-vp9": (4, 1),
+    "video/x-h264": (3, 2),
+}
 # The age-restricted formats come from the TV client; a browser fetches them.
 _RESTRICTED_PROFILE = {
     "name": TV_CLIENT["name"],
@@ -231,14 +248,46 @@ def _probe_stream(url: str, headers: dict[str, str]) -> bool:
         return False
 
 
-def _video_compatibility(fmt: dict[str, Any]) -> int:
-    """Prefer H.264 MP4 when quality is otherwise equal."""
+@functools.cache
+def _video_decoders() -> dict[str, str]:
+    """The video codecs GStreamer decodes here: caps -> "hardware" or "software"."""
+    try:
+        import gi
+
+        gi.require_version("Gst", "1.0")
+        from gi.repository import Gst
+    except (ImportError, ValueError):
+        return {"video/x-h264": "software"}
+    Gst.init(None)
+    found: dict[str, str] = {}
+    kinds = Gst.ELEMENT_FACTORY_TYPE_DECODER | Gst.ELEMENT_FACTORY_TYPE_MEDIA_VIDEO
+    for factory in Gst.ElementFactory.list_get_elements(kinds, Gst.Rank.MARGINAL):
+        if factory.get_name() in _SLOW_DECODERS:
+            continue
+        hardware = "Hardware" in (factory.get_metadata("klass") or "")
+        for caps in set(_CODEC_CAPS.values()):
+            decodes = factory.can_sink_any_caps(Gst.Caps.from_string(caps))
+            if decodes and (hardware or caps not in found):
+                found[caps] = "hardware" if hardware else "software"
+    return found
+
+
+def _codec_caps(fmt: dict[str, Any]) -> str | None:
     mime = str(fmt.get("mimeType") or "").lower()
-    if "video/mp4" in mime and "avc1" in mime:
-        return 2
-    if "video/mp4" in mime:
-        return 1
-    return 0
+    codecs = mime.partition("codecs=")[2].strip('" ')
+    if not codecs and mime.startswith("video/mp4"):
+        return _CODEC_CAPS["avc1"]  # YouTube's MP4 without codecs is H.264
+    return _CODEC_CAPS.get(codecs.split(",")[0].split(".")[0].strip())
+
+
+def _video_compatibility(fmt: dict[str, Any]) -> int:
+    """How well this system plays the format's codec; -1 when it cannot."""
+    caps = _codec_caps(fmt)
+    decoder = _video_decoders().get(caps or "")
+    if decoder is None:
+        return -1
+    on_hardware, in_software = _CODEC_PREFERENCE[caps]
+    return on_hardware if decoder == "hardware" else in_software
 
 
 def _byte_range(fmt: dict[str, Any], key: str) -> tuple[int, int] | None:
@@ -277,7 +326,7 @@ def resolve_video_stream(
     client: InnerTubeClient,
     item: LibraryItem,
     *,
-    max_height: int = 720,
+    max_height: int = VIDEO_MAX_HEIGHT,
     force: bool = False,
     allow_video_only: bool = False,
 ) -> VideoStreamInfo:
@@ -287,7 +336,7 @@ def resolve_video_stream(
     (innertube/restricted.py), as the audio does.
     """
     video_id = find_video_variant(client, item, force=force)
-    max_height = max(144, int(max_height or 720))
+    max_height = max(144, int(max_height or VIDEO_MAX_HEIGHT))
     mode_key = "adaptive" if allow_video_only else "muxed"
     cache_key = f"{client.gl}:{max_height}:{mode_key}:{video_id}"
     if not force:
@@ -346,6 +395,8 @@ def resolve_video_stream(
             candidates = []
         if allow_video_only:
             candidates.extend((fmt, False) for fmt in adaptive)
+        # Only codecs this system can decode in real time.
+        candidates = [pair for pair in candidates if _video_compatibility(pair[0]) >= 0]
 
         if status.get("status") != "OK":
             failures.append(
@@ -363,12 +414,14 @@ def resolve_video_stream(
                 failures.append(f"{profile['name']}: {missing}")
             continue
 
-        best_access = max(_video_random_access_score(fmt, muxed) for fmt, muxed in candidates)
-        access_pool = [
-            pair
-            for pair in candidates
-            if _video_random_access_score(pair[0], pair[1]) == best_access
-        ]
+        def access(pair: tuple[dict[str, Any], bool]) -> int:
+            score = _video_random_access_score(*pair)
+            # Played beside the audio, a muxed format seeks no better than an
+            # indexed one; ranking it above them chose 360p over 1080p.
+            return min(score, 3) if allow_video_only else score
+
+        best_access = max(access(pair) for pair in candidates)
+        access_pool = [pair for pair in candidates if access(pair) == best_access]
         within_quality = [
             pair for pair in access_pool if int(pair[0].get("height", 0) or 0) <= max_height
         ]

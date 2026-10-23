@@ -93,7 +93,8 @@ class Database:
                 CREATE TABLE IF NOT EXISTS playback_state (
                     id INTEGER PRIMARY KEY CHECK (id = 1), queue_index INTEGER NOT NULL,
                     position_ms INTEGER NOT NULL, shuffle INTEGER NOT NULL,
-                    repeat_mode INTEGER NOT NULL, autoplay INTEGER NOT NULL, updated_at INTEGER NOT NULL
+                    repeat_mode INTEGER NOT NULL, autoplay INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+                    duration_ms INTEGER NOT NULL DEFAULT 0
                 );
                 CREATE TABLE IF NOT EXISTS play_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, item_id TEXT NOT NULL,
@@ -134,6 +135,11 @@ class Database:
             if "translated_lyrics" not in columns:
                 db.execute(
                     "ALTER TABLE lyrics_documents ADD COLUMN translated_lyrics TEXT NOT NULL DEFAULT ''"
+                )
+            columns = {row[1] for row in db.execute("PRAGMA table_info(playback_state)").fetchall()}
+            if "duration_ms" not in columns:
+                db.execute(
+                    "ALTER TABLE playback_state ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0"
                 )
             for table in ITEM_TABLES:
                 columns = {row[1] for row in db.execute(f"PRAGMA table_info({table})").fetchall()}

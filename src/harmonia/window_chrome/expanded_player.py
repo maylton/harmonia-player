@@ -8,7 +8,7 @@ gi.require_version("Adw", "1")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Adw, Gtk
 
-from ..gtk_expressive import ButtonRow, CookieCover
+from ..gtk_expressive import ButtonRow, CookieCover, MarqueeLabel
 from ..i18n import _
 from ..ui import CreditsLabel, explicit_badge, icon_button
 from .player_bar import expressive_progress
@@ -121,6 +121,10 @@ def _up_next_column(window) -> Gtk.Widget:
 
 def _player_column(window) -> Gtk.Widget:
     scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, hexpand=True)
+    # The artwork grows with the space the column has (window_expanded.py).
+    window.expanded_player_scroll = scroll
+    for adjustment in (scroll.get_hadjustment(), scroll.get_vadjustment()):
+        adjustment.connect("notify::page-size", window._expanded_space_changed)
     column = Gtk.Box(
         orientation=Gtk.Orientation.VERTICAL,
         spacing=32,
@@ -169,17 +173,18 @@ def _cover(window) -> Gtk.Widget:
 def _heading(window) -> Gtk.Widget:
     heading = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
     title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, hexpand=True)
-    window.expanded_title = Gtk.Label(xalign=0, wrap=True)
-    window.expanded_title.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
-    window.expanded_title.add_css_class("expanded-title")
-    window.expanded_subtitle = CreditsLabel(window.navigate_credit, xalign=0, ellipsize=3)
-    window.expanded_subtitle.add_css_class("expanded-subtitle")
+    # Neither widens the controls below: a long title goes round on its line
+    # and a long subtitle ellipsizes.
     window.expanded_explicit = explicit_badge()
     window.expanded_explicit.set_visible(False)
-    title_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-    title_line.append(window.expanded_title)
-    title_line.append(window.expanded_explicit)
-    title_box.append(title_line)
+    window.expanded_title = MarqueeLabel(suffix=window.expanded_explicit)
+    window.expanded_title.set_hexpand(True)
+    window.expanded_title.add_css_class("expanded-title")
+    window.expanded_subtitle = CreditsLabel(
+        window.navigate_credit, xalign=0, ellipsize=3, max_width_chars=1
+    )
+    window.expanded_subtitle.add_css_class("expanded-subtitle")
+    title_box.append(window.expanded_title)
     title_box.append(window.expanded_subtitle)
     heading.append(title_box)
     window.expanded_like_button = icon_button("non-starred-symbolic", _("Curtir música"), size="md")

@@ -95,6 +95,8 @@ class QtPlaybackController(QObject):
             self.repeat = restored.repeat
             self.autoplay = restored.autoplay
             self._restored_position_ms = restored.position_ms
+            # The bar shows where it stopped before the stream opens again.
+            self._duration_ms = restored.duration_ms
             self._play_generation = 1
 
         self.player = CrossfadingPlayer(self._on_player_state, self._player_error, self.next)
@@ -202,6 +204,7 @@ class QtPlaybackController(QObject):
                 shuffle=self.shuffle,
                 repeat=self.repeat,
                 autoplay=self.autoplay,
+                duration_ms=self.duration,
             )
         )
         self._last_state_save = time.monotonic()
