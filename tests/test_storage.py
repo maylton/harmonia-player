@@ -162,3 +162,17 @@ def test_local_media_and_playlist_roundtrip(monkeypatch, tmp_path):
     assert storage.get_local_playlist(playlist_id).items == list(reversed(items))
     storage.delete_local_playlist(playlist_id)
     assert storage.get_local_playlist(playlist_id) is None
+
+
+def test_volume_is_kept_between_sessions(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    storage = Storage()
+    assert storage.load_volume() == 0.8  # the first session's
+
+    storage.save_volume(0.35)
+    assert Storage().load_volume() == 0.35
+    storage.set_setting("volume", "loud")
+    assert storage.load_volume() == 0.8
+    storage.set_setting("volume", "3")
+    assert storage.load_volume() == 1.0

@@ -196,9 +196,14 @@ class HarmoniaWindow(
         self.set_content(self.toast_overlay)
         self.app_overlay = Gtk.Overlay()
         self.toast_overlay.set_child(self.app_overlay)
+        # An empty layer under everything, where linux_backdrop asks for the
+        # compositor's blur: nothing changes in it, so GTK keeps redrawing
+        # only what changes above it instead of the whole window.
+        self.app_overlay.set_child(Gtk.Box(css_classes=["window-blur"]))
         self.root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.root.add_css_class("app-root")
-        self.app_overlay.set_child(self.root)
+        self.app_overlay.add_overlay(self.root)
+        self.app_overlay.set_measure_overlay(self.root, True)
         build_header(self)
         self._load_account_avatar(
             self.storage.get_setting("account_avatar_url", "") if self.storage.load_cookie() else ""
@@ -219,6 +224,8 @@ class HarmoniaWindow(
     def _start_player(self, app: Adw.Application) -> None:
         """The GStreamer player and its desktop media controls (MPRIS)."""
         self.player = CrossfadingPlayer(self._player_state, self._player_error, self._play_next)
+        self.player.volume = self.storage.load_volume()
+        self._saved_volume = self.player.volume
         # No crossfade while a video plays in sync with the audio or a cast
         # device has the track.
         self.player.crossfade_allowed = lambda: (

@@ -42,6 +42,11 @@ class NativePlayer:
         self._track_loudness: float | None = None
         self._video_sink: Gst.Element | None = None
         self._replace_generation = 0
+        # Skipping silence retimes the sound earlier by what it removed; this
+        # is how much, to keep positions on the track's own timeline.
+        self._removed_us = 0
+        self._silence_probes: tuple[int, int] = ()
+        self._silence_input_pts = Gst.CLOCK_TIME_NONE
         self._install_audio_filter()
         self.on_state = on_state
         self.on_error = on_error
@@ -114,6 +119,40 @@ class NativePlayer:
             silence.set_property("remove", skip_silence)
             silence.set_property("squash", skip_silence)
             silence.set_property("minimum-silence-time", 1_500_000_000 if skip_silence else 0)
+            self._measure_removed_silence(silence, skip_silence)
+
+    def _measure_removed_silence(self, silence: Gst.Element, enabled: bool) -> None:
+        """Compare each buffer's time before and after removesilence.
+
+        Squashing moves every later buffer back by the silence removed, so the
+        sink's position falls behind the track's: a track whose silences add
+        up to more than two seconds seemed to end early, and was resumed there
+        to play its last seconds again.
+        """
+        sink, src = silence.get_static_pad("sink"), silence.get_static_pad("src")
+        if enabled == bool(self._silence_probes):
+            return
+        if not enabled:
+            sink.remove_probe(self._silence_probes[0])
+            src.remove_probe(self._silence_probes[1])
+            self._silence_probes = ()
+            self._removed_us = 0
+            return
+
+        def arriving(_pad, info):
+            self._silence_input_pts = info.get_buffer().pts
+            return Gst.PadProbeReturn.OK
+
+        def leaving(_pad, info):
+            pts, original = info.get_buffer().pts, self._silence_input_pts
+            if Gst.CLOCK_TIME_NONE not in (pts, original):
+                self._removed_us = max(0, (original - pts) // 1000)
+            return Gst.PadProbeReturn.OK
+
+        self._silence_probes = (
+            sink.add_probe(Gst.PadProbeType.BUFFER, arriving),
+            src.add_probe(Gst.PadProbeType.BUFFER, leaving),
+        )
 
     def set_track_loudness(self, loudness_db: float | None) -> None:
         """The loudness of the track about to play, None when unknown."""
@@ -140,6 +179,7 @@ class NativePlayer:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._removed_us = 0
         self._playbin.set_property("uri", self._source_uri(uri))
         self._playbin.set_state(Gst.State.PLAYING)
 
@@ -162,6 +202,7 @@ class NativePlayer:
         generation = self._replace_generation
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = target
+        self._removed_us = 0
         self._playbin.set_property("uri", self._source_uri(uri, request_headers))
         # Preroll paused first; seeking before preroll is unreliable for remote
         # MP4 streams and can briefly play from 0 before the requested position.
@@ -210,6 +251,7 @@ class NativePlayer:
         self._replace_generation += 1
         self._playbin.set_state(Gst.State.NULL)
         self._last_position_us = 0
+        self._removed_us = 0
 
     def close(self) -> None:
         self.stop()
@@ -233,7 +275,7 @@ class NativePlayer:
     def position_us(self) -> int:
         ok, value = self._playbin.query_position(Gst.Format.TIME)
         if ok:
-            self._last_position_us = int(value // 1000)
+            self._last_position_us = int(value // 1000) + self._removed_us
         return self._last_position_us
 
     @property

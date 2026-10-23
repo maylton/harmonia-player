@@ -100,7 +100,8 @@ class QtPlaybackController(QObject):
         self.player = CrossfadingPlayer(self._on_player_state, self._player_error, self.next)
         # The video controller narrows this further while a video plays.
         self.player.crossfade_allowed = lambda: not getattr(self, "remote_active", False)
-        self.player.volume = 0.85
+        self.player.volume = self.storage.load_volume()
+        self._last_volume = self.volume
 
         self._streamReady.connect(self._apply_stream)
         self._radioReady.connect(self._apply_radio)
@@ -176,6 +177,7 @@ class QtPlaybackController(QObject):
             self.durationChanged.emit()
         if volume != self._last_volume:
             self._last_volume = volume
+            self.storage.save_volume(self.player.volume)
             self.volumeChanged.emit()
         self._maybe_record_history(position)
         if self.queue and time.monotonic() - self._last_state_save >= 5:
