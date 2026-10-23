@@ -275,6 +275,27 @@ def unwatch(hwnd: int) -> None:
         comctl32.RemoveWindowSubclass(wintypes.HWND(hwnd), native, 1)
 
 
+def native_frame(hwnd: int, dark: bool) -> bool:
+    """DWM's rounded corners and shadow around an opaque window, without a material.
+
+    The themes other than Harmonia's draw opaque, so they need no material,
+    but left to GTK the window kept its client-side shadow and corners inside
+    a transparent margin, which showed as a frame around the window. With the
+    frame extended DWM draws them, as for Mica; False if it refuses.
+    """
+    set_dark(hwnd, dark)
+    _attribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND)
+    _blur_behind(hwnd, False)
+    _attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, DWMSBT_NONE)
+    margins = _Margins(-1, -1, -1, -1)
+    if not ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(
+        wintypes.HWND(hwnd), ctypes.byref(margins)
+    ):
+        return True
+    remove(hwnd)
+    return False
+
+
 def remove(hwnd: int) -> None:
     _attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, DWMSBT_NONE)
     margins = _Margins(0, 0, 0, 0)

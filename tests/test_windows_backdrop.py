@@ -219,6 +219,61 @@ def test_material_replaces_gdk_blur_behind_transparency(monkeypatch):
     assert ("blur", True) in calls and ("extend", 0) in calls
 
 
+def test_themes_without_mica_get_dwms_corners_and_shadow(monkeypatch):
+    from harmonia import windows_backdrop
+
+    calls = []
+    monkeypatch.setattr(
+        windows_backdrop, "_blur_behind", lambda hwnd, enable: calls.append(("blur", enable))
+    )
+    monkeypatch.setattr(
+        windows_backdrop,
+        "_attribute",
+        lambda hwnd, attribute, value: calls.append(("attribute", attribute, value)) or True,
+    )
+
+    class Dwm:
+        result = 0
+
+        def DwmExtendFrameIntoClientArea(self, hwnd, margins):
+            calls.append(("extend", margins._obj.left))
+            return self.result
+
+    dwm = Dwm()
+    monkeypatch.setattr(
+        windows_backdrop.ctypes, "windll", type("W", (), {"dwmapi": dwm})(), raising=False
+    )
+    assert windows_backdrop.native_frame(1, dark=False) is True
+    assert ("attribute", windows_backdrop.DWMWA_WINDOW_CORNER_PREFERENCE, 2) in calls
+    assert ("blur", False) in calls and ("extend", -1) in calls
+    # No material: the backdrop type stays "none".
+    assert ("attribute", windows_backdrop.DWMWA_SYSTEMBACKDROP_TYPE, 1) in calls
+
+    calls.clear()
+    dwm.result = 1  # DWM refuses: GTK keeps its own frame
+    assert windows_backdrop.native_frame(1, dark=False) is False
+    assert ("blur", True) in calls
+
+
+def test_every_windows_theme_drops_gtks_own_frame(monkeypatch):
+    from harmonia import gtk_backdrop, windows_backdrop
+
+    marked = []
+    monkeypatch.setattr(windows_backdrop, "native_frame", lambda hwnd, dark: True)
+    monkeypatch.setattr(windows_backdrop, "remove", lambda hwnd: None)
+    monkeypatch.setattr(
+        gtk_backdrop, "set_css_class", lambda _w, name, on: marked.append((name, on))
+    )
+    backdrops = gtk_backdrop.GtkWindowBackdrops.__new__(gtk_backdrop.GtkWindowBackdrops)
+    backdrops.kind = "none"  # a theme without Mica
+    backdrops._style = type("S", (), {"get_dark": lambda _self: True})()
+    monkeypatch.setattr(backdrops, "_hwnd", lambda _window: 7)
+    window = type("W", (), {"remove_css_class": lambda _self, _name: None})()
+
+    assert backdrops._apply(window) is False  # no material, so the theme stays opaque
+    assert marked == [(gtk_backdrop.DWM_CSS_CLASS, True)]
+
+
 def test_popovers_take_the_flyout_material_without_arrow(monkeypatch):
     from harmonia import windows_backdrop
     from harmonia.gtk_backdrop import POPOVER_CSS_CLASS, GtkWindowBackdrops

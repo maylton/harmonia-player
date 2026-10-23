@@ -319,16 +319,8 @@ progressbar progress { min-height: 3px; border-radius: 2px; background-color: @a
 
 /* With Mica behind the window (automatic in this theme):
    the translucent palette lets the title bar, navigation pane and player bar
-   show the material and tints the content layer. On Windows (harmonia-dwm)
-   GTK's own shadow and corner rounding give way to DWM's native ones, which
-   follow the window outline; on Linux the window keeps GTK's. */
-window.harmonia-backdrop.harmonia-dwm.csd,
-window.harmonia-backdrop.harmonia-dwm.csd:backdrop {
-  box-shadow: none;
-  margin: 0;
-  border-radius: 0;
-  outline: none;
-}
+   show the material and tints the content layer. On Windows DWM draws the
+   shadow and the rounded corners, in every theme (style.css). */
 /* Cards, text boxes and standard buttons take the translucent chip colours
    (Fluent's CardBackground and ControlFill: white at 6% in dark mode, 70% in
    light mode), which lighten the material and keep its tint. Menus,

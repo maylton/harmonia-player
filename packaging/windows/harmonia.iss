@@ -1,4 +1,5 @@
-; Inno Setup 6 script for the Windows installer. packaging/windows/build.sh
+﻿; Inno Setup 6 script for the Windows installer, in UTF-8 with a BOM (its
+; Portuguese messages have accents). packaging/windows/build.sh
 ; passes AppVersion, FileVersion, SourceDir (the PyInstaller bundle), IconFile
 ; and LicenseFile on the ISCC command line.
 
@@ -48,7 +49,14 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Name: "{autoprograms}\Harmonia"; Filename: "{app}\Harmonia.exe"; AppUserModelID: "io.github.harmonia.Harmonia"
 Name: "{autodesktop}\Harmonia"; Filename: "{app}\Harmonia.exe"; Tasks: desktopicon
 
+[CustomMessages]
+brazilianportuguese.PreparingPlugins=Preparando os plugins de áudio e vídeo...
+english.PreparingPlugins=Preparing the audio and video plugins...
+
 [Run]
+; The GStreamer plugin registry is built here, for the user who installs,
+; instead of on the first start, where it kept the window from showing.
+Filename: "{app}\Harmonia.exe"; Parameters: "--prepare-plugins"; StatusMsg: "{cm:PreparingPlugins}"; Flags: runhidden waituntilterminated runasoriginaluser
 Filename: "{app}\Harmonia.exe"; Description: "{cm:LaunchProgram,Harmonia}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
