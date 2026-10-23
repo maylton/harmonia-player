@@ -719,3 +719,11 @@ menubutton.app-icon-button > button:checked {
 /* Clickable artist and album names keep the subtitle colour; GTK shows the
    pointer cursor and a "Ir para…" tooltip over them. */
 .credits link, .credits link:visited { color: inherit; text-decoration-line: none; }
+
+/* Full screen: the header and the player's controls fade while the pointer rests. */
+.expanded-player .expanded-header,
+.expanded-player .expanded-info,
+.expanded-player .expanded-media-switch { transition: opacity 300ms ease-out; }
+.expanded-player.expanded-idle .expanded-header,
+.expanded-player.expanded-idle .expanded-info,
+.expanded-player.expanded-idle .expanded-media-switch { opacity: 0; }

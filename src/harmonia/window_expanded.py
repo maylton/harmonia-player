@@ -12,7 +12,15 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib
 
 from . import queue_view
+from .gtk_video import AUDIO_FRAME
+from .i18n import _
 from .models import LibraryItem, LyricsDocument
+
+# Full screen fades the header and the controls once the pointer rests this long.
+FULLSCREEN_IDLE_SECONDS = 3
+IDLE_CSS_CLASS = "expanded-idle"
+# Share of the screen's height the artwork takes in full screen.
+FULLSCREEN_COVER_SHARE = 0.55
 
 
 class WindowExpandedPlayerMixin:
@@ -32,14 +40,72 @@ class WindowExpandedPlayerMixin:
         return GLib.SOURCE_REMOVE
 
     def _hide_expanded_player(self) -> None:
+        if self.is_fullscreen():
+            self.unfullscreen()
         self.expanded_revealer.set_reveal_child(False)
         self.player_bar.set_visible(True)
 
-    def _expanded_key_pressed(self, _controller, keyval, _keycode, _state) -> bool:
-        if keyval == Gdk.KEY_Escape and self.expanded_revealer.get_reveal_child():
+    def _expanded_key_pressed(self, _controller, keyval, _keycode, state) -> bool:
+        revealed = self.expanded_revealer.get_reveal_child()
+        modifiers = Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK
+        if self.is_fullscreen():
+            self._wake_fullscreen_controls()
+        if keyval == Gdk.KEY_Escape and self.is_fullscreen():
+            self.unfullscreen()
+            return True
+        if keyval == Gdk.KEY_Escape and revealed:
             self._hide_expanded_player()
             return True
+        # "F" only over the expanded player, which has nothing to type in.
+        letter = keyval in (Gdk.KEY_f, Gdk.KEY_F) and revealed and not state & modifiers
+        if keyval == Gdk.KEY_F11 or letter:
+            self._toggle_fullscreen()
+            return True
         return False
+
+    def _toggle_fullscreen(self) -> None:
+        """The expanded player over the whole screen, as YouTube Music's."""
+        if self.is_fullscreen():
+            self.unfullscreen()
+            return
+        self._show_expanded_player()
+        if self.expanded_revealer.get_reveal_child():  # nothing plays otherwise
+            self.fullscreen()
+
+    def _fullscreen_changed(self) -> None:
+        full = self.is_fullscreen()
+        self.expanded_up_next_slot.set_visible(not full)
+        button = self.expanded_fullscreen_button
+        button.set_icon_name("view-restore-symbolic" if full else "view-fullscreen-symbolic")
+        button.set_tooltip_text(_("Sair da tela cheia (F)") if full else _("Tela cheia (F)"))
+        if hasattr(self, "_media_visual_frame"):
+            self._sync_media_mode_ui()
+        self._wake_fullscreen_controls()
+
+    def _expanded_media_scale(self) -> float:
+        """How much the artwork and the video grow in full screen."""
+        surface = self.get_surface()
+        monitor = self.get_display().get_monitor_at_surface(surface) if surface else None
+        if not self.is_fullscreen() or monitor is None:
+            return 1.0
+        return max(1.0, monitor.get_geometry().height * FULLSCREEN_COVER_SHARE / AUDIO_FRAME[1])
+
+    def _wake_fullscreen_controls(self) -> None:
+        if getattr(self, "_fullscreen_idle_source", 0):
+            GLib.source_remove(self._fullscreen_idle_source)
+        self._fullscreen_idle_source = 0
+        self.expanded_surface.remove_css_class(IDLE_CSS_CLASS)
+        self.expanded_surface.set_cursor(None)
+        if self.is_fullscreen():
+            self._fullscreen_idle_source = GLib.timeout_add_seconds(
+                FULLSCREEN_IDLE_SECONDS, self._rest_fullscreen_controls
+            )
+
+    def _rest_fullscreen_controls(self) -> bool:
+        self._fullscreen_idle_source = 0
+        self.expanded_surface.add_css_class(IDLE_CSS_CLASS)
+        self.expanded_surface.set_cursor_from_name("none")
+        return GLib.SOURCE_REMOVE
 
     def _expanded_page_changed(self, stack: Adw.ViewStack, _pspec) -> None:
         page = stack.get_visible_child_name()

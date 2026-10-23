@@ -235,19 +235,26 @@ class WindowHomeMixin:
         box.append(self._home_shelf_header(title, scroll, lambda: self.set_queue(items, 0)))
         box.append(scroll)
 
-        last_width = {"value": 0}
+        state = {"width": 0, "tick": 0}
 
-        def resize_columns(adjustment: Gtk.Adjustment, _pspec=None):
+        def resize_columns(_widget, _clock) -> bool:
             # The page is the viewport's width; the columns only change upper.
-            viewport = round(adjustment.get_page_size())
-            if viewport <= 1 or viewport == last_width["value"]:
-                return
-            last_width["value"] = viewport
-            width = self._home_song_column_width(viewport)
-            for column in columns:
-                column.set_size_request(width, -1)
+            state["tick"] = 0
+            viewport = round(scroll.get_hadjustment().get_page_size())
+            if viewport > 1 and viewport != state["width"]:
+                state["width"] = viewport
+                width = self._home_song_column_width(viewport)
+                for column in columns:
+                    column.set_size_request(width, -1)
+            return GLib.SOURCE_REMOVE
 
-        scroll.get_hadjustment().connect("notify::page-size", resize_columns)
+        def viewport_changed(*_args) -> None:
+            # The page changes while the window lays out: resize in the next
+            # frame, before its layout, as a one-off tick.
+            if not state["tick"]:
+                state["tick"] = scroll.add_tick_callback(resize_columns)
+
+        scroll.get_hadjustment().connect("notify::page-size", viewport_changed)
         return box
 
     @staticmethod

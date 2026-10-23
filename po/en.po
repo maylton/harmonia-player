@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-22 22:53-0300\n"
+"POT-Creation-Date: 2026-10-23 11:07-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: English\n"
@@ -27,8 +27,8 @@ msgid "Escolha uma faixa para começar"
 msgstr "Choose a track to start"
 
 #: src/harmonia/app.py:296 src/harmonia/app.py:297
-#: src/harmonia/window_chrome/expanded_player.py:181
 #: src/harmonia/window_chrome/expanded_player.py:195
+#: src/harmonia/window_chrome/expanded_player.py:209
 #: src/harmonia/window_chrome/player_bar.py:263
 #: src/harmonia/window_chrome/player_bar.py:275
 #: src/harmonia/window_playback.py:315 src/harmonia/window_playback.py:316
@@ -55,73 +55,73 @@ msgstr "Use cookie manually"
 msgid "Não foi possível preservar o áudio original da música."
 msgstr "Couldn't keep the song's original audio."
 
-#: src/harmonia/gtk_video.py:102
+#: src/harmonia/gtk_video.py:105
 #: src/harmonia/window_chrome/expanded_player.py:45
 msgid "Música"
 msgstr "Song"
 
-#: src/harmonia/gtk_video.py:103
+#: src/harmonia/gtk_video.py:106
 msgid "Vídeo"
 msgstr "Video"
 
-#: src/harmonia/gtk_video.py:189
+#: src/harmonia/gtk_video.py:192
 msgid "O plugin GStreamer gtk4paintablesink não está disponível."
 msgstr "The GStreamer gtk4paintablesink plugin is not available."
 
-#: src/harmonia/gtk_video.py:193
+#: src/harmonia/gtk_video.py:196
 msgid "Arquivos locais não possuem vídeo associado no YouTube Music."
 msgstr "Local files have no associated video on YouTube Music."
 
-#: src/harmonia/gtk_video.py:196
+#: src/harmonia/gtk_video.py:199
 msgid "Alternar para o vídeo desta música"
 msgstr "Switch to this song's video"
 
-#: src/harmonia/gtk_video.py:279 src/harmonia/qt_video.py:419
+#: src/harmonia/gtk_video.py:280 src/harmonia/qt_video.py:419
 #, python-brace-format
 msgid "Não foi possível abrir o vídeo: {error}"
 msgstr "Couldn't open the video: {error}"
 
-#: src/harmonia/gtk_video.py:301 src/harmonia/qt_video.py:437
+#: src/harmonia/gtk_video.py:302 src/harmonia/qt_video.py:437
 msgid "A camada de vídeo do GStreamer não está disponível."
 msgstr "The GStreamer video layer is not available."
 
-#: src/harmonia/gtk_video.py:313 src/harmonia/qt_video.py:453
+#: src/harmonia/gtk_video.py:314 src/harmonia/qt_video.py:453
 msgid "A camada de vídeo não conseguiu iniciar o preroll"
 msgstr "The video layer could not start prerolling"
 
-#: src/harmonia/gtk_video.py:330 src/harmonia/qt_video.py:468
+#: src/harmonia/gtk_video.py:331 src/harmonia/qt_video.py:468
 msgid "O GStreamer falhou ao preparar os frames do vídeo."
 msgstr "GStreamer failed to prepare the video frames."
 
-#: src/harmonia/gtk_video.py:341 src/harmonia/qt_video.py:474
+#: src/harmonia/gtk_video.py:342 src/harmonia/qt_video.py:474
 msgid "O vídeo demorou demais para iniciar."
 msgstr "The video took too long to start."
 
-#: src/harmonia/gtk_video.py:361
+#: src/harmonia/gtk_video.py:362
 msgid "O fluxo de vídeo não conseguiu preparar a sincronização."
 msgstr "The video stream could not prepare synchronization."
 
-#: src/harmonia/gtk_video.py:375
+#: src/harmonia/gtk_video.py:376
 msgid "O vídeo falhou enquanto preparava a sincronização."
 msgstr "The video failed while preparing synchronization."
 
-#: src/harmonia/gtk_video.py:402 src/harmonia/qt_video.py:483
+#: src/harmonia/gtk_video.py:403 src/harmonia/qt_video.py:483
 msgid "O fluxo de vídeo não ficou disponível para sincronização."
 msgstr "The video stream did not become available for synchronization."
 
-#: src/harmonia/gtk_video.py:441 src/harmonia/qt_video.py:513
+#: src/harmonia/gtk_video.py:442 src/harmonia/qt_video.py:513
 msgid "O GStreamer falhou durante a sincronização do vídeo."
 msgstr "GStreamer failed while synchronizing the video."
 
-#: src/harmonia/gtk_video.py:483 src/harmonia/qt_video.py:552
+#: src/harmonia/gtk_video.py:484 src/harmonia/qt_video.py:552
 msgid "Não foi possível sincronizar o vídeo com a música."
 msgstr "Couldn't synchronize the video with the song."
 
-#: src/harmonia/gtk_video.py:562
+#: src/harmonia/gtk_video.py:563
 msgid "O vídeo falhou; voltando para a música…"
 msgstr "The video failed; returning to the song…"
 
-#: src/harmonia/gtk_video.py:578 src/harmonia/qt_video.py:644
+#: src/harmonia/gtk_video.py:579 src/harmonia/qt_video.py:644
 msgid "O vídeo terminou antes da faixa de áudio."
 msgstr "The video ended before the audio track."
 
@@ -325,7 +325,7 @@ msgstr ""
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr "Could not open the wallpaper {name}"
 
-#: src/harmonia/linux_backdrop.py:331
+#: src/harmonia/linux_backdrop.py:339
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
@@ -334,12 +334,12 @@ msgstr ""
 "The Flatpak cannot read the wallpaper. Allow its folder with: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 
-#: src/harmonia/linux_backdrop.py:335
+#: src/harmonia/linux_backdrop.py:343
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr "The wallpaper {name} was not found"
 
-#: src/harmonia/linux_backdrop.py:338
+#: src/harmonia/linux_backdrop.py:346
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr "GNOME or Plasma wallpaper not found"
 
@@ -1750,7 +1750,7 @@ msgid "Remover das músicas curtidas"
 msgstr "Remove from liked songs"
 
 #: src/harmonia/track_rows.py:248 src/harmonia/window_actions.py:86
-#: src/harmonia/window_chrome/expanded_player.py:171
+#: src/harmonia/window_chrome/expanded_player.py:185
 #: src/harmonia/window_item_menu.py:97
 msgid "Curtir música"
 msgstr "Like song"
@@ -2058,43 +2058,48 @@ msgid "Reproduzindo em {device}"
 msgstr "Playing on {device}"
 
 #: src/harmonia/window_chrome/expanded_player.py:46
-#: src/harmonia/window_chrome/expanded_player.py:261
+#: src/harmonia/window_chrome/expanded_player.py:275
 #: src/harmonia/window_chrome/player_bar.py:291
 #: src/harmonia/window_chrome/player_bar.py:299
 #: src/harmonia/window_lyrics.py:56
 msgid "Letras"
 msgstr "Lyrics"
 
-#: src/harmonia/window_chrome/expanded_player.py:66
+#: src/harmonia/window_chrome/expanded_player.py:72
 msgid "Recolher player (Esc)"
 msgstr "Collapse player (Esc)"
 
-#: src/harmonia/window_chrome/expanded_player.py:213
+#: src/harmonia/window_chrome/expanded_player.py:81
+#: src/harmonia/window_expanded.py:80
+msgid "Tela cheia (F)"
+msgstr "Full screen (F)"
+
+#: src/harmonia/window_chrome/expanded_player.py:227
 #: src/harmonia/window_chrome/player_bar.py:228
 msgid "Ordem aleatória"
 msgstr "Shuffle"
 
-#: src/harmonia/window_chrome/expanded_player.py:220
+#: src/harmonia/window_chrome/expanded_player.py:234
 #: src/harmonia/window_chrome/player_bar.py:231
 msgid "Anterior"
 msgstr "Previous"
 
-#: src/harmonia/window_chrome/expanded_player.py:225
+#: src/harmonia/window_chrome/expanded_player.py:239
 #: src/harmonia/window_chrome/player_bar.py:233
 msgid "Pausar ou continuar"
 msgstr "Pause or resume"
 
-#: src/harmonia/window_chrome/expanded_player.py:231
+#: src/harmonia/window_chrome/expanded_player.py:245
 #: src/harmonia/window_chrome/player_bar.py:236
 msgid "Próxima"
 msgstr "Next"
 
-#: src/harmonia/window_chrome/expanded_player.py:235
+#: src/harmonia/window_chrome/expanded_player.py:249
 #: src/harmonia/window_chrome/player_bar.py:238
 msgid "Repetir"
 msgstr "Repeat"
 
-#: src/harmonia/window_chrome/expanded_player.py:262
+#: src/harmonia/window_chrome/expanded_player.py:276
 #: src/harmonia/window_chrome/player_bar.py:300
 #: src/harmonia/window_lyrics.py:57
 msgid "Comece a reproduzir uma música para ver a letra."
@@ -2270,6 +2275,10 @@ msgid_plural "{count} downloads adicionados à fila"
 msgstr[0] "{count} download started"
 msgstr[1] "{count} downloads added to queue"
 
+#: src/harmonia/window_expanded.py:80
+msgid "Sair da tela cheia (F)"
+msgstr "Exit full screen (F)"
+
 #: src/harmonia/window_history.py:36
 msgid "Validar conta"
 msgstr "Validate account"
@@ -2415,21 +2424,21 @@ msgstr "Preparing your music…"
 msgid "Carregando recomendações personalizadas"
 msgstr "Loading personalized recommendations"
 
-#: src/harmonia/window_home.py:298
+#: src/harmonia/window_home.py:295
 msgid "Tocar tudo"
 msgstr "Play all"
 
-#: src/harmonia/window_home.py:299
+#: src/harmonia/window_home.py:296
 #, python-brace-format
 msgid "Reproduzir tudo em {title}"
 msgstr "Play all in {title}"
 
-#: src/harmonia/window_home.py:308
+#: src/harmonia/window_home.py:305
 #, python-brace-format
 msgid "Voltar em {title}"
 msgstr "Back to {title}"
 
-#: src/harmonia/window_home.py:312
+#: src/harmonia/window_home.py:309
 #, python-brace-format
 msgid "Avançar em {title}"
 msgstr "Next in {title}"
