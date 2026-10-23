@@ -312,7 +312,7 @@ def _secondary_section(window) -> Gtk.Widget:
     volume.add_css_class("player-scale")
     volume.set_size_request(100, -1)
     volume.set_draw_value(False)
-    volume.set_value(80)
+    volume.set_value(window.player.volume * 100)
     volume.connect(
         "value-changed", lambda slider: setattr(window.player, "volume", slider.get_value() / 100)
     )

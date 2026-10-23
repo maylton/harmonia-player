@@ -125,17 +125,13 @@ def material_css(
     "blur" (the other themes) leaves the window clear, or shows the blurred
     wallpaper untinted: their translucent surfaces carry the colour.
     ``effect`` asks for the blur through backdrop-filter (kwin_blur.py), on
-    the pages and on the expanded player once it is revealed, which hides
-    the pages: on the window, or on the player while it slides, GTK 4.24
-    crashes rendering the slide as it closes.
+    the empty layer under the window's content (app.py). GTK redraws all of
+    a widget with backdrop-filter whenever anything in it changes, and 4.24
+    crashes rendering the expanded player's slide when it is inside one.
+    Below 10 pixels GTK does not hand the blur to the compositor.
     """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
-    request = (
-        f"{selector} .app-root,\n{selector} .expanded-player.expanded-revealed "
-        "{ backdrop-filter: blur(20px); }\n"
-        if effect
-        else ""
-    )
+    request = f"{selector} .window-blur {{ backdrop-filter: blur(20px); }}\n" if effect else ""
     if kind == "blur":
         if blurred:
             return f"{selector} {{ background: transparent; }}\n{request}"

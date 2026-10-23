@@ -419,6 +419,7 @@ class WindowPlaybackMixin:
         return f"{seconds // 60}:{seconds % 60:02d}"
 
     def _update_progress(self):
+        self._follow_volume()
         if self._stream_ready and self.current_duration_ms <= 0:
             discovered_duration = self.player.duration_us // 1000
             if discovered_duration > 0:
@@ -443,6 +444,17 @@ class WindowPlaybackMixin:
             if time.monotonic() - self._last_queue_save >= 5:
                 self._save_playback_state(position_ms)
         return GLib.SOURCE_CONTINUE
+
+    def _follow_volume(self) -> None:
+        """Keep the volume for the next session, and the slider in step with
+        changes made elsewhere (MPRIS)."""
+        volume = self.player.volume
+        if volume == self._saved_volume:
+            return
+        self._saved_volume = volume
+        self.storage.save_volume(volume)
+        if abs(self.volume_scale.get_value() - volume * 100) >= 0.5:
+            self.volume_scale.set_value(volume * 100)
 
     def _seek_requested(self, _scale, _scroll, value):
         if not self._updating_progress and self.current_duration_ms > 0:

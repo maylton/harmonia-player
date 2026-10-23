@@ -17,6 +17,8 @@ from .loudness import LoudnessRecords
 from .lyrics import LyricsCache
 from .playback import PlaybackRecords
 
+DEFAULT_VOLUME = 0.8  # the first session's
+
 
 class Storage(
     CatalogCache,
@@ -92,3 +94,13 @@ class Storage(
                 ON CONFLICT(key) DO UPDATE SET value=excluded.value""",
                 (key, value),
             )
+
+    def load_volume(self) -> float:
+        """The player's volume, from 0 to 1, as the last session left it."""
+        try:
+            return max(0.0, min(1.0, float(self.get_setting("volume"))))
+        except ValueError:
+            return DEFAULT_VOLUME
+
+    def save_volume(self, volume: float) -> None:
+        self.set_setting("volume", f"{volume:.2f}")
