@@ -37,6 +37,11 @@ from .ui import set_css_class  # noqa: E402
 LOGGER = logging.getLogger(__name__)
 CSS_CLASS = "harmonia-backdrop"  # the translucent rules of themes/harmonia.css
 LINUX_CSS_CLASS = "harmonia-backdrop-linux"
+# Every other theme: its surfaces turn translucent (style.css) over the
+# compositor's blur or, without one, over the wallpaper blurred as for Mica.
+BLUR_CSS_CLASS = "compositor-blur"
+# Wallpaper-backed kinds: they follow the desktop's wallpaper as it changes.
+WALLPAPER_KINDS = ("mica", "blur")
 # Opacity of the window colour over the material, per colour scheme: the
 # wallpaper or what is behind the window stays a soft hint.
 TINT = {"dark": 0.78, "light": 0.68}
@@ -114,9 +119,21 @@ def rgba(color: str, alpha: float) -> str:
 def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = False) -> str:
     """The window background of ``kind``; ``image`` is Mica's blurred wallpaper.
 
-    With the compositor blurring behind the window, it is the tint alone.
+    With the compositor blurring behind the window, Mica is the tint alone;
+    "blur" (the other themes) leaves the window clear, or shows the blurred
+    wallpaper untinted: their translucent surfaces carry the colour.
     """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
+    if kind == "blur":
+        if blurred:
+            return f"{selector} {{ background: transparent; }}\n"
+        if image is None:
+            return ""
+        uri = Gio.File.new_for_path(str(image)).get_uri()
+        return (
+            f'{selector} {{\n  background-image: url("{uri}");\n'
+            "  background-size: cover;\n  background-position: center;\n}\n"
+        )
     if kind != "mica":
         return ""
     if blurred:
@@ -137,8 +154,9 @@ def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = Fa
 class LinuxWindowBackdrops:
     """Puts the simulated material behind the main window; see the module docstring.
 
-    ``active`` tells whether the window shows it: Mica needs a wallpaper the
-    desktop reports (GNOME or Plasma, outside the Flatpak sandbox).
+    ``active`` tells whether the window shows it: without a compositor blur,
+    Mica and "blur" need a wallpaper the desktop reports (Caelestia Shell,
+    GNOME or Plasma; outside the Flatpak sandbox).
     """
 
     def __init__(self) -> None:
@@ -164,9 +182,10 @@ class LinuxWindowBackdrops:
         self._style.connect("notify::dark", lambda *_: self._refresh())
         self._wallpaper_settings = self._watch_gnome_wallpaper()
         self._color_scheme_signal = self._watch_desktop_color_scheme()
+        self._caelestia_wallpaper = self._watch_caelestia_wallpaper()
 
     def set_kind(self, kind: str, main_window: Gtk.Window) -> bool:
-        """Use ``kind`` ("mica" or "none"); True if the window shows it."""
+        """Use ``kind`` ("mica", "blur" or "none"); True if the window shows it."""
         self.kind = kind
         self._window = main_window
         self.active = self._refresh()
@@ -175,12 +194,22 @@ class LinuxWindowBackdrops:
     def attach_popover(self, popover: Gtk.Popover) -> None:
         """Popovers keep their opaque background on Linux."""
 
+    def _watch_caelestia_wallpaper(self):
+        """Caelestia rewrites its wallpaper's path when the wallpaper changes."""
+        path = Gio.File.new_for_path(str(desktop_wallpaper.caelestia_wallpaper_file()))
+        try:
+            monitor = path.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, None)
+        except GLib.Error:
+            return None
+        monitor.connect("changed", lambda *_: self.kind in WALLPAPER_KINDS and self._refresh())
+        return monitor
+
     def _watch_gnome_wallpaper(self):
         source = Gio.SettingsSchemaSource.get_default()
         if source is None or source.lookup(desktop_wallpaper.GNOME_SCHEMA, True) is None:
             return None
         settings = Gio.Settings.new(desktop_wallpaper.GNOME_SCHEMA)
-        settings.connect("changed", lambda *_: self.kind == "mica" and self._refresh())
+        settings.connect("changed", lambda *_: self.kind in WALLPAPER_KINDS and self._refresh())
         return settings
 
     def _watch_desktop_color_scheme(self) -> int:
@@ -193,7 +222,7 @@ class LinuxWindowBackdrops:
         def changed(_bus, _sender, _path, _interface, _signal, parameters):
             namespace, key, _value = parameters.unpack()
             scheme = (namespace, key) == ("org.freedesktop.appearance", "color-scheme")
-            if scheme and self.kind == "mica":
+            if scheme and self.kind in WALLPAPER_KINDS:
                 self._refresh()
 
         return bus.signal_subscribe(
@@ -212,7 +241,7 @@ class LinuxWindowBackdrops:
             GLib.source_remove(self._timer)
             self._timer = 0
         seconds = desktop_wallpaper.seconds_until_change()
-        if self.kind != "mica" or seconds is None:
+        if self.kind not in WALLPAPER_KINDS or seconds is None:
             return
 
         def tick() -> bool:
@@ -235,7 +264,7 @@ class LinuxWindowBackdrops:
             return False
         self._install_provider(window)
         preferences = getattr(window, "preferences", None)
-        if not get_theme(getattr(preferences, "theme", "")).backdrop:
+        if self.kind == "mica" and not get_theme(getattr(preferences, "theme", "")).backdrop:
             # Switching themes can change the colour scheme, which refreshes
             # here before set_kind() hears of the new theme.
             self.kind = "none"
@@ -244,7 +273,7 @@ class LinuxWindowBackdrops:
         self.blur = self._compositor_blur(window) if self.kind != "none" and wanted else ""
         if self.blur != "kwin":
             self._release_kwin_blur()
-        if self.kind == "mica" and not self.blur:
+        if self.kind in WALLPAPER_KINDS and not self.blur:
             # The variant the desktop shows, whatever Harmonia's own style is.
             desktop_dark = desktop_wallpaper.desktop_prefers_dark()
             image, self.reason = self._mica(dark if desktop_dark is None else desktop_dark)
@@ -252,8 +281,10 @@ class LinuxWindowBackdrops:
             self.wallpaper = None
             image, self.reason = None, ""
         self._schedule_slideshow_refresh()
+        # Only Mica is tinted; the other themes' surfaces carry their colour.
+        tint = self._tint(dark) if self.kind == "mica" else ""
         css = (
-            material_css(self.kind, self._tint(dark), image, blurred=bool(self.blur))
+            material_css(self.kind, tint, image, blurred=bool(self.blur))
             if self.kind != "none"
             else ""
         )
@@ -261,6 +292,7 @@ class LinuxWindowBackdrops:
         applied = bool(css)
         set_css_class(window, CSS_CLASS, applied)
         set_css_class(window, LINUX_CSS_CLASS, applied)
+        set_css_class(window, BLUR_CSS_CLASS, applied and self.kind == "blur")
         self.active = applied
         return applied
 

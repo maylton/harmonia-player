@@ -41,7 +41,7 @@ def configured_wallpapers(*, dark: bool) -> list[Path]:
     global _next_change
     _next_change = None
     found: list[Path] = []
-    for finder in (gnome_wallpapers, kde_wallpapers):
+    for finder in (caelestia_wallpapers, gnome_wallpapers, kde_wallpapers):
         try:
             paths = finder(dark=dark)
         except Exception:
@@ -51,6 +51,22 @@ def configured_wallpapers(*, dark: bool) -> list[Path]:
             continue
         found.extend(path for path in paths if path not in found)
     return found
+
+
+def caelestia_wallpaper_file() -> Path:
+    """Where Caelestia Shell writes the path of the wallpaper it shows."""
+    from .material_scheme import caelestia_scheme_path
+
+    return caelestia_scheme_path().parent / "wallpaper" / "path.txt"
+
+
+def caelestia_wallpapers(*, dark: bool) -> list[Path]:
+    """Caelestia Shell's wallpaper (Hyprland), which it keeps in its state folder."""
+    try:
+        text = caelestia_wallpaper_file().read_text(encoding="utf-8").strip()
+    except OSError:
+        return []
+    return [Path(text)] if text else []
 
 
 def host_path(path: Path) -> Path:

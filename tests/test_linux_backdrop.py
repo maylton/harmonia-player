@@ -331,3 +331,19 @@ def test_dwm_only_rules_need_the_dwm_class():
     # GTK's shadow and resize band are dropped only where DWM draws its own.
     assert "window.harmonia-backdrop.csd" not in css
     assert "window.harmonia-backdrop.harmonia-dwm.csd" in css
+
+
+def test_caelestia_shells_wallpaper_comes_first(monkeypatch, tmp_path):
+    from harmonia import desktop_wallpaper
+
+    state = tmp_path / "state" / "caelestia" / "wallpaper"
+    state.mkdir(parents=True)
+    image = tmp_path / "astronaut.jpg"
+    (state / "path.txt").write_text(f"{image}\n", encoding="utf-8")
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    monkeypatch.delenv("HOST_XDG_STATE_HOME", raising=False)
+    monkeypatch.setattr(desktop_wallpaper, "gnome_wallpapers", lambda *, dark: [tmp_path / "g.jpg"])
+    monkeypatch.setattr(desktop_wallpaper, "kde_wallpapers", lambda *, dark: [])
+    assert desktop_wallpaper.configured_wallpapers(dark=True) == [image, tmp_path / "g.jpg"]
+    (state / "path.txt").unlink()
+    assert desktop_wallpaper.caelestia_wallpapers(dark=True) == []

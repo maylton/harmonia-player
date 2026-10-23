@@ -154,7 +154,12 @@ class WindowPreferencesMixin:
         self._apply_icon_theme()
 
     def _apply_window_backdrop(self) -> bool:
-        """Put the theme's Mica behind the windows; True if the theme may go translucent."""
+        """Put the theme's Mica, or the compositor's blur, behind the windows.
+
+        True if the theme may go translucent. Themes without a material of
+        their own (all but Harmonia) get the compositor's blur alone, on Linux
+        and with Preferences > "Desfoque do compositor" on.
+        """
         if not host.WINDOW_BACKDROPS:
             return False
         if getattr(self, "_window_backdrops", None) is None:
@@ -167,10 +172,12 @@ class WindowPreferencesMixin:
                 popover = getattr(self, name, None)
                 if popover is not None:
                     self._window_backdrops.attach_popover(popover)
-        supported = get_theme(self.preferences.theme).backdrop
-        kind = "mica" if supported else "none"
-        if getattr(self, "_backdrop_row", None) is not None:
-            self._backdrop_row.set_sensitive(supported)
+        if get_theme(self.preferences.theme).backdrop:
+            kind = "mica"
+        elif host.IS_LINUX and self.preferences.compositor_blur:
+            kind = "blur"
+        else:
+            kind = "none"
         if kind != "none" and not self.get_realized():
             # The window first applies its preferences before it has a native
             # window, so the material (and the translucent palette that goes
