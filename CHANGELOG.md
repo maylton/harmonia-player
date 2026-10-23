@@ -2,6 +2,17 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## 1.0.0 — 2026-10-23
+
+A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso dela.
+
+- capas mais nítidas no player expandido e na tela cheia: as músicas que são vídeos pedem a miniatura de 1280×720 do YouTube, em vez da de 400×225 que o YouTube Music envia, e as capas das músicas acompanham a escala de telas HiDPI;
+- a capa do player expandido cresce com o espaço da janela, até cerca de 55% da altura disponível, e não só em tela cheia;
+- no player expandido, a barra de progresso e os botões têm sempre a mesma largura: um título longo gira na mesma linha, como um carrossel, em vez de alargar os controles, e o subtítulo longo termina em reticências.
+- ao abrir o Harmonia, a barra de progresso e os tempos já mostram onde a música parou, antes de dar play;
+- vídeo em até 1080p, antes 720p, no codec que o sistema decodifica melhor: o da placa de vídeo quando há (o instalador do Arch agora instala o gst-plugin-va), e em software H.264, depois VP9; o AV1 só com um decodificador rápido. Com o vídeo separado do áudio, o formato de 360p com som não passa mais na frente dos de maior resolução;
+- o selo "E" de conteúdo explícito ficou menor e mais discreto, e no player expandido acompanha o título mesmo quando ele gira.
+
 ## 1.0.0-rc.1 — 2026-10-23
 
 Candidata à 1.0: a versão final sai igual a esta se nada sério aparecer.

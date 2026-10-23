@@ -1,4 +1,4 @@
-project('harmonia', version: '1.0.0-rc.1', meson_version: '>= 0.62')
+project('harmonia', version: '1.0.0', meson_version: '>= 0.62')
 
 gnome = import('gnome')
 python = import('python').find_installation('python3')
