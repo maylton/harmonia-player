@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-22 19:16-0300\n"
+"POT-Creation-Date: 2026-10-22 22:31-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -308,31 +308,31 @@ msgstr ""
 msgid "Dez"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:103
+#: src/harmonia/linux_backdrop.py:108
 #, python-brace-format
 msgid ""
 "O papel de parede é {format} e falta o suporte a esse formato (pacote do gdk-"
 "pixbuf para {format})"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:106
+#: src/harmonia/linux_backdrop.py:111
 #, python-brace-format
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:287
+#: src/harmonia/linux_backdrop.py:319
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:291
+#: src/harmonia/linux_backdrop.py:323
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr ""
 
-#: src/harmonia/linux_backdrop.py:294
+#: src/harmonia/linux_backdrop.py:326
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr ""
 
@@ -409,7 +409,7 @@ msgid "Downloads da coleção iniciados."
 msgstr ""
 
 #: src/harmonia/qt_backend.py:1208 src/harmonia/qt_preferences.py:146
-#: src/harmonia/window_preferences.py:327
+#: src/harmonia/window_preferences.py:334
 msgid "Validando sessão…"
 msgstr ""
 
@@ -779,7 +779,7 @@ msgstr ""
 msgid "Cache limpo · {size} removidos."
 msgstr ""
 
-#: src/harmonia/qt_preferences.py:154 src/harmonia/window_preferences.py:340
+#: src/harmonia/qt_preferences.py:154 src/harmonia/window_preferences.py:347
 msgid "Sessão inválida ou expirada"
 msgstr ""
 
@@ -1165,13 +1165,13 @@ msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:104
 #, python-brace-format
-msgid "Mica feito do papel de parede {name}"
+msgid "Desfoque feito do papel de parede {name}"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:106
 msgid ""
-"No tema Harmonia. Borra o que está atrás da janela com o KWin ou com o Blur "
-"my Shell (GNOME); desligado ou sem eles, o Mica usa o papel de parede"
+"Borra o que está atrás da janela com o KWin ou com o Blur my Shell (GNOME); "
+"sem eles, o próprio Harmonia desfoca o papel de parede"
 msgstr ""
 
 #: src/harmonia/settings_page/appearance.py:114
@@ -1681,7 +1681,7 @@ msgid "Exportar"
 msgstr ""
 
 #: src/harmonia/settings_page/streaming.py:85
-#: src/harmonia/window_preferences.py:408
+#: src/harmonia/window_preferences.py:415
 msgid "Restaurar"
 msgstr ""
 
@@ -1820,7 +1820,7 @@ msgstr ""
 #: src/harmonia/window_actions.py:336 src/harmonia/window_actions.py:371
 #: src/harmonia/window_cast.py:33 src/harmonia/window_local_playlists.py:131
 #: src/harmonia/window_local_playlists.py:148
-#: src/harmonia/window_preferences.py:407
+#: src/harmonia/window_preferences.py:414
 msgid "Cancelar"
 msgstr ""
 
@@ -2729,75 +2729,75 @@ msgstr ""
 msgid "Relatório copiado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:295
+#: src/harmonia/window_preferences.py:302
 msgid "0 B armazenados"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:298
+#: src/harmonia/window_preferences.py:305
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:313
+#: src/harmonia/window_preferences.py:320
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_preferences.py:323
+#: src/harmonia/window_preferences.py:330
 msgid "Reprodução pausada pelo temporizador"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:340
+#: src/harmonia/window_preferences.py:347
 msgid "Conectada e válida"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:343
+#: src/harmonia/window_preferences.py:350
 msgid "Conta validada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:345
+#: src/harmonia/window_preferences.py:352
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:356
+#: src/harmonia/window_preferences.py:363
 msgid "Conta desconectada"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:361
+#: src/harmonia/window_preferences.py:368
 msgid "Exportar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:371
+#: src/harmonia/window_preferences.py:378
 msgid "Backup exportado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:376
+#: src/harmonia/window_preferences.py:383
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:386
+#: src/harmonia/window_preferences.py:393
 msgid "Restaurar backup"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:401
+#: src/harmonia/window_preferences.py:408
 msgid "Restaurar este backup?"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:403
+#: src/harmonia/window_preferences.py:410
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
 msgstr ""
 
-#: src/harmonia/window_preferences.py:423
+#: src/harmonia/window_preferences.py:430
 msgid "Backup restaurado"
 msgstr ""
 
-#: src/harmonia/window_preferences.py:428
+#: src/harmonia/window_preferences.py:435
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr ""

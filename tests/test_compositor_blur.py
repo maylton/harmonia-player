@@ -255,3 +255,42 @@ def test_switching_to_a_theme_without_mica_clears_it_before_set_kind(monkeypatch
     instance._window.preferences = type("P", (), {"theme": "adwaita"})()
     assert instance._refresh() is False
     assert instance.kind == "none" and instance.css == ""
+
+
+def test_other_themes_get_the_compositors_blur_alone(monkeypatch):
+    # Every theme but Harmonia: no Mica, the window clears for the blur.
+    kwin = FakeKWin()
+    instance = backdrops(monkeypatch, "KDE", kwin=kwin)
+    instance._window.preferences = type("P", (), {"theme": "breeze", "compositor_blur": True})()
+    instance.kind = "blur"
+    assert instance._refresh() is True
+    assert instance.blur == "kwin" and kwin.regions
+    assert "background: transparent" in instance.css and "url(" not in instance.css
+
+
+def test_other_themes_stay_opaque_without_a_blur_or_a_wallpaper(monkeypatch):
+    instance = backdrops(monkeypatch, "GNOME")
+    monkeypatch.setattr(gnome_blur, "state", lambda _app: gnome_blur.BlurMyShell(False, False))
+    instance._window.preferences = type("P", (), {"theme": "adwaita", "compositor_blur": True})()
+    instance.kind = "blur"
+    assert instance._refresh() is False and instance.css == ""
+
+
+def test_other_themes_fall_back_to_the_wallpaper_blurred_by_harmonia(monkeypatch, tmp_path):
+    from gi.repository import GdkPixbuf
+
+    from harmonia import linux_backdrop
+
+    wallpaper = tmp_path / "wall.png"
+    pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, 64, 32)
+    pixbuf.fill(0x336699FF)
+    pixbuf.savev(str(wallpaper), "png", [], [])
+    instance = backdrops(monkeypatch, "GNOME", wallpapers=[wallpaper])
+    monkeypatch.setattr(gnome_blur, "state", lambda _app: gnome_blur.BlurMyShell(False, False))
+    monkeypatch.setattr(linux_backdrop.host, "cache_dir", lambda: tmp_path / "cache")
+    instance._window.preferences = type("P", (), {"theme": "breeze", "compositor_blur": True})()
+    instance.kind = "blur"
+    assert instance._refresh() is True
+    assert instance.blur == "" and instance.wallpaper == wallpaper
+    # The wallpaper as it is blurred, with no Mica tint: the surfaces carry it.
+    assert "url(" in instance.css and "linear-gradient" not in instance.css

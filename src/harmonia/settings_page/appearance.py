@@ -10,7 +10,7 @@ from gi.repository import Adw, Gtk  # noqa: E402
 
 from .. import host  # noqa: E402
 from ..i18n import _  # noqa: E402
-from ..theming import builtin_themes, get_theme  # noqa: E402
+from ..theming import builtin_themes  # noqa: E402
 from .rows import combo_row, switch_row  # noqa: E402
 
 
@@ -99,12 +99,12 @@ def backdrop_subtitle(window) -> str:
     if blur == "blur-my-shell":
         return _("O Blur my Shell borra o que está atrás da janela")
     wallpaper = getattr(backdrops, "wallpaper", None)
-    if wallpaper is not None and getattr(backdrops, "kind", "") == "mica":
+    if wallpaper is not None and getattr(backdrops, "kind", "") in ("mica", "blur"):
         # Which image it took, to tell at a glance whether it is the desktop's.
-        return _("Mica feito do papel de parede {name}").format(name=wallpaper.name)
+        return _("Desfoque feito do papel de parede {name}").format(name=wallpaper.name)
     return _(
-        "No tema Harmonia. Borra o que está atrás da janela com o KWin ou com o "
-        "Blur my Shell (GNOME); desligado ou sem eles, o Mica usa o papel de parede"
+        "Borra o que está atrás da janela com o KWin ou com o Blur my Shell (GNOME); "
+        "sem eles, o próprio Harmonia desfoca o papel de parede"
     )
 
 
@@ -131,7 +131,7 @@ def _blur_my_shell_row(window) -> Adw.ActionRow:
 
 
 def _add_compositor_blur_rows(window, group: Adw.PreferencesGroup) -> None:
-    """The Harmonia theme's Mica is automatic; only the compositor blur behind it is a choice."""
+    """The Harmonia theme's Mica is automatic; the compositor's blur, in every theme, a choice."""
     preferences = window.preferences
     window._backdrop_row = switch_row(
         _("Desfoque do compositor"),
@@ -139,7 +139,6 @@ def _add_compositor_blur_rows(window, group: Adw.PreferencesGroup) -> None:
         preferences.compositor_blur,
         lambda active: window._appearance_changed("compositor_blur", active),
     )
-    window._backdrop_row.set_sensitive(get_theme(preferences.theme).backdrop)
     group.add(window._backdrop_row)
     if getattr(getattr(window, "_window_backdrops", None), "blur_my_shell_offer", False):
         group.add(_blur_my_shell_row(window))

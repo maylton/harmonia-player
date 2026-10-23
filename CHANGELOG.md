@@ -10,7 +10,7 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - romaji nas letras em japonês, lido no próprio aparelho (fugashi e UniDic Lite, incluídos no Flatpak), em Preferências > Biblioteca;
 - novos pacotes de ícones: Framework7 (estilo iOS), Breeze e Papirus;
 - player expandido com a capa acima dos controles, em todos os temas, e a coluna "A seguir" ao lado, como no YouTube Music: a faixa atual, as próximas da fila e as da reprodução automática, até 25 faixas; a aba "Relacionadas" deu lugar a ela;
-- os fundos de capa desfocada saíram (o fundo ambiente, o do player expandido e os dos cabeçalhos de álbum e artista), nos dois frontends: o tema Harmonia mostra o Mica com o desfoque do compositor, e os outros temas, as próprias cores;
+- os fundos de capa desfocada saíram (o fundo ambiente, o do player expandido e os dos cabeçalhos de álbum e artista), nos dois frontends; no lugar, "Desfoque do compositor" vale para todos os temas no Linux: as superfícies ficam translúcidas sobre o desfoque do KWin ou do Blur my Shell e, sem eles, sobre o papel de parede desfocado pelo próprio Harmonia, que agora também acha o papel de parede do Caelestia Shell;
 - instalador: no Arch Linux e derivados, o Harmonia é compilado com o Meson no lugar do Flatpak, com as dependências instaladas pelo pacman e o romaji incluído;
 - corrigido: o seletor Música/Vídeo do player expandido tinha sumido;
 - corrigido: o desfoque do KWin atrás da janela não funcionava, porque o GTK atual não entrega ao Python a conexão Wayland nem a superfície da janela; o Harmonia agora as pede direto à biblioteca do GTK;
