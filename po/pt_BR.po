@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-22 22:31-0300\n"
+"POT-Creation-Date: 2026-10-22 22:53-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -329,7 +329,7 @@ msgstr ""
 msgid "Não foi possível abrir o papel de parede {name}"
 msgstr "Não foi possível abrir o papel de parede {name}"
 
-#: src/harmonia/linux_backdrop.py:319
+#: src/harmonia/linux_backdrop.py:331
 #, python-brace-format
 msgid ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
@@ -338,12 +338,12 @@ msgstr ""
 "O Flatpak não pode ler o papel de parede. Libere a pasta dele com: flatpak "
 "override --user --filesystem={folder}:ro {app}"
 
-#: src/harmonia/linux_backdrop.py:323
+#: src/harmonia/linux_backdrop.py:335
 #, python-brace-format
 msgid "O papel de parede {name} não foi encontrado"
 msgstr "O papel de parede {name} não foi encontrado"
 
-#: src/harmonia/linux_backdrop.py:326
+#: src/harmonia/linux_backdrop.py:338
 msgid "Papel de parede do GNOME ou do Plasma não encontrado"
 msgstr "Papel de parede do GNOME ou do Plasma não encontrado"
 
@@ -1173,39 +1173,43 @@ msgid "O KWin borra o que está atrás da janela"
 msgstr "O KWin borra o que está atrás da janela"
 
 #: src/harmonia/settings_page/appearance.py:100
+msgid "O compositor borra o que está atrás da janela"
+msgstr "O compositor borra o que está atrás da janela"
+
+#: src/harmonia/settings_page/appearance.py:102
 msgid "O Blur my Shell borra o que está atrás da janela"
 msgstr "O Blur my Shell borra o que está atrás da janela"
 
-#: src/harmonia/settings_page/appearance.py:104
+#: src/harmonia/settings_page/appearance.py:106
 #, python-brace-format
 msgid "Desfoque feito do papel de parede {name}"
 msgstr "Desfoque feito do papel de parede {name}"
 
-#: src/harmonia/settings_page/appearance.py:106
+#: src/harmonia/settings_page/appearance.py:108
 msgid ""
-"Borra o que está atrás da janela com o KWin ou com o Blur my Shell (GNOME); "
-"sem eles, o próprio Harmonia desfoca o papel de parede"
+"Borra o que está atrás da janela com o KWin, o Hyprland ou o Blur my Shell "
+"(GNOME); sem eles, o próprio Harmonia desfoca o papel de parede"
 msgstr ""
-"Borra o que está atrás da janela com o KWin ou com o Blur my Shell (GNOME); "
-"sem eles, o próprio Harmonia desfoca o papel de parede"
+"Borra o que está atrás da janela com o KWin, o Hyprland ou o Blur my Shell "
+"(GNOME); sem eles, o próprio Harmonia desfoca o papel de parede"
 
-#: src/harmonia/settings_page/appearance.py:114
+#: src/harmonia/settings_page/appearance.py:116
 msgid "Borrar com o Blur my Shell"
 msgstr "Borrar com o Blur my Shell"
 
-#: src/harmonia/settings_page/appearance.py:115
+#: src/harmonia/settings_page/appearance.py:117
 msgid "Inclui o Harmonia no borrado de aplicativos da extensão"
 msgstr "Inclui o Harmonia no borrado de aplicativos da extensão"
 
-#: src/harmonia/settings_page/appearance.py:117
+#: src/harmonia/settings_page/appearance.py:119
 msgid "Ativar"
 msgstr "Ativar"
 
-#: src/harmonia/settings_page/appearance.py:126
+#: src/harmonia/settings_page/appearance.py:128
 msgid "Não foi possível alterar as configurações do Blur my Shell"
 msgstr "Não foi possível alterar as configurações do Blur my Shell"
 
-#: src/harmonia/settings_page/appearance.py:137
+#: src/harmonia/settings_page/appearance.py:139
 msgid "Desfoque do compositor"
 msgstr "Desfoque do compositor"
 

@@ -96,6 +96,8 @@ def backdrop_subtitle(window) -> str:
     blur = getattr(backdrops, "blur", "")
     if blur == "kwin":
         return _("O KWin borra o que está atrás da janela")
+    if blur == "background-effect":
+        return _("O compositor borra o que está atrás da janela")
     if blur == "blur-my-shell":
         return _("O Blur my Shell borra o que está atrás da janela")
     wallpaper = getattr(backdrops, "wallpaper", None)
@@ -103,7 +105,7 @@ def backdrop_subtitle(window) -> str:
         # Which image it took, to tell at a glance whether it is the desktop's.
         return _("Desfoque feito do papel de parede {name}").format(name=wallpaper.name)
     return _(
-        "Borra o que está atrás da janela com o KWin ou com o Blur my Shell (GNOME); "
+        "Borra o que está atrás da janela com o KWin, o Hyprland ou o Blur my Shell (GNOME); "
         "sem eles, o próprio Harmonia desfoca o papel de parede"
     )
 

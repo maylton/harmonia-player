@@ -177,6 +177,7 @@ def backdrops(monkeypatch, desktop, **fakes):
     instance.__dict__.update(
         kind="mica", active=False, reason="", wallpaper=None, blur="",
         blur_my_shell_offer=False, _kwin=fakes.get("kwin"), _kwin_display=None,
+        _background_effect=fakes.get("effect", False),
         _kwin_surfaces={}, _waiting_realize=False, _timer=0, _provider_display=None,
         _window=Window(),
     )  # fmt: skip
@@ -202,6 +203,26 @@ def test_kwin_blurs_behind_the_window_without_its_shadow(monkeypatch):
     assert min(x for x, *_ in rects) == 24 and min(y for _x, y, *_ in rects) == 22
     assert max(x + w for x, _y, w, _h in rects) == 24 + 900
     assert "url(" not in instance.css  # the tint over the real blur, no wallpaper
+
+
+def test_hyprland_blurs_through_backdrop_filter(monkeypatch):
+    # GTK 4.24 gives the window an ext-background-effect object whose region
+    # only backdrop-filter fills; without it Hyprland blurs nothing.
+    instance = backdrops(monkeypatch, "Hyprland", effect=True)
+    assert instance._refresh()
+    assert instance.blur == "background-effect" and instance.wallpaper is None
+    assert "backdrop-filter: blur(" in instance.css and "url(" not in instance.css
+
+    instance._window.preferences = type("P", (), {"theme": "breeze", "compositor_blur": True})()
+    instance.kind = "blur"
+    assert instance._refresh()
+    assert "background: transparent; backdrop-filter: blur(" in instance.css
+
+
+def test_kwin_keeps_its_own_protocol_over_backdrop_filter(monkeypatch):
+    instance = backdrops(monkeypatch, "KDE", kwin=FakeKWin(), effect=True)
+    instance._refresh()
+    assert instance.blur == "kwin" and "backdrop-filter" not in instance.css
 
 
 def test_gnome_uses_blur_my_shell_or_offers_it(monkeypatch):
