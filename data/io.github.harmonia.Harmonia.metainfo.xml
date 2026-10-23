@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="1.0.0-rc.1" date="2026-10-23" type="development">
+      <description>
+        <p>Candidata à versão 1.0: o player expandido ganha um modo tela cheia, o fim das músicas não se repete mais com “Pular silêncio”, o volume é guardado entre as sessões, e o Harmonia gasta muito menos CPU enquanto toca com o desfoque do compositor.</p>
+        <p xml:lang="en">Release candidate for 1.0: the expanded player gains a full-screen mode, tracks no longer replay their end with “Skip silence”, the volume is kept between sessions, and Harmonia uses far less CPU while playing over the compositor's blur.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.6" date="2026-10-22" type="development">
       <description>
         <p>O tema Harmonia com Mica automático passa a ser o padrão, chega o tema Material Design 3 no estilo do Caelestia Shell, as letras se acendem palavra por palavra como no Apple Music, com romaji nas letras em japonês, o player expandido ganha a coluna “A seguir” como no YouTube Music, e há novos pacotes de ícones: Framework7, Breeze e Papirus.</p>

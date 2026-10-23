@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
+from typing import ClassVar
 
 import gi
 
@@ -23,12 +24,15 @@ gi.require_version("Gdk", "4.0")
 gi.require_version("Graphene", "1.0")
 gi.require_version("Gsk", "4.0")
 gi.require_version("Gtk", "4.0")
-from gi.repository import Graphene, Gsk, Gtk  # noqa: E402
+from gi.repository import GLib, Graphene, Gsk, Gtk  # noqa: E402
 
 # Material 3 Expressive motion (Caelestia's Tokens.anim): duration in ms and
 # the cubic Bézier of each curve; the spatial ones overshoot.
 FAST_SPATIAL = (350, (0.42, 1.67, 0.21, 0.9))
 DEFAULT_SPATIAL = (500, (0.38, 1.21, 0.22, 1.0))
+# Continuous animations step this often, whatever the display's rate: a tick
+# callback at 160 Hz cost more than twice the CPU for motion no smoother.
+FRAME_INTERVAL_MS = 16
 
 # Caelestia's MaterialShape.Cookie9Sided (m3shapes, Apache-2.0): a 9-point star
 # with inner radius 0.8 and corners rounded by half, rotated -90° and fitted to
@@ -128,13 +132,20 @@ class Tween:
 
 
 class FrameLoop:
-    """``step(elapsed_us)`` and a redraw on every frame while running and on screen."""
+    """``step(elapsed_us)`` and a redraw about 60 times a second, while
+    running and on screen.
+
+    Every running loop shares one timer, so their redraws land in the same
+    frame instead of each asking for frames of its own.
+    """
+
+    _running: ClassVar[list[FrameLoop]] = []
+    _source: ClassVar[int] = 0
 
     def __init__(self, widget: Gtk.Widget, step: Callable[[int], None]) -> None:
         self.widget = widget
         self.step = step
         self.running = False
-        self._tick = 0
         self._last_frame = 0
         widget.connect("map", lambda *_: self._update())
         widget.connect("unmap", lambda *_: self._update())
@@ -144,20 +155,30 @@ class FrameLoop:
         self._update()
 
     def _update(self) -> None:
+        loops = FrameLoop._running
         active = self.running and self.widget.get_mapped()
-        if active and not self._tick:
+        if active and self not in loops:
             self._last_frame = 0
-            self._tick = self.widget.add_tick_callback(self._frame)
-        elif not active and self._tick:
-            self.widget.remove_tick_callback(self._tick)
-            self._tick = 0
+            loops.append(self)
+            if not FrameLoop._source:
+                FrameLoop._source = GLib.timeout_add(FRAME_INTERVAL_MS, FrameLoop._frame_all)
+        elif not active and self in loops:
+            loops.remove(self)
+            if not loops:
+                GLib.source_remove(FrameLoop._source)
+                FrameLoop._source = 0
 
-    def _frame(self, _widget, clock) -> bool:
-        now = clock.get_frame_time()
+    @staticmethod
+    def _frame_all() -> bool:
+        now = GLib.get_monotonic_time()
+        for loop in list(FrameLoop._running):
+            loop._frame(now)
+        return GLib.SOURCE_CONTINUE
+
+    def _frame(self, now: int) -> None:
         self.step(now - self._last_frame if self._last_frame else 0)
         self._last_frame = now
         self.widget.queue_draw()
-        return True
 
 
 def point(x: float, y: float) -> Graphene.Point:
@@ -192,6 +213,10 @@ class ExpressiveSlider(Gtk.Widget):
     GAP = 4  # Tokens.spacing.extraSmall
     WAVE_FREQUENCY = 5
     WAVE_DURATION_US = 2_000_000
+    # Playback advances the fill a pixel or two every half second; easing those
+    # kept a tween running on every frame. Only larger moves (a seek, a new
+    # track) ease.
+    EASED_MOVE_PX = 6
 
     def __init__(
         self,
@@ -251,8 +276,13 @@ class ExpressiveSlider(Gtk.Widget):
         return min(1.0, max(0.0, (self.adjustment.get_value() - lower) / (upper - lower)))
 
     def _value_changed(self) -> None:
-        if not self._dragging:
-            self.fill.animate_to(self._fraction())
+        if self._dragging:
+            return
+        target = self._fraction()
+        if abs(target - self.fill.value) * self.get_width() < self.EASED_MOVE_PX:
+            self.fill.jump_to(target)
+        else:
+            self.fill.animate_to(target)
 
     def set_animate_wave(self, animate: bool) -> None:
         """The wave flows while the music plays and holds still when it pauses."""
