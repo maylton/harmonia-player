@@ -1,13 +1,16 @@
 window { background: @harmonia_bg; color: @harmonia_fg; }
 .app-root { background: alpha(@harmonia_bg, .98); }
-/* The compositor blurs behind the window (linux_backdrop.py, every theme but
-   Harmonia, which has its Mica): the surfaces let it show through. */
-window.compositor-blur .app-root { background: alpha(@harmonia_bg, .76); }
-window.compositor-blur headerbar { background: alpha(@harmonia_headerbar_bg, .84); }
-window.compositor-blur .sidebar { background: alpha(@harmonia_sidebar_bg, .86); }
-window.compositor-blur .player-bar { background: alpha(@harmonia_sidebar_bg, .88); }
+/* The blur behind the window (linux_backdrop.py, every theme but Harmonia,
+   which has its Mica) shows through each surface at Caelestia Shell's base
+   transparency, close to the 80% tint of Windows 11's Mica. Each surface
+   carries it alone, so none stacks on another and turns opaque. */
+window.compositor-blur .app-root,
 window.compositor-blur .detail-surface,
 window.compositor-blur .artist-surface { background: transparent; }
+window.compositor-blur headerbar { background: alpha(@harmonia_headerbar_bg, .85); }
+window.compositor-blur .sidebar { background: alpha(@harmonia_sidebar_bg, .85); }
+window.compositor-blur .player-bar { background: alpha(@harmonia_sidebar_bg, .85); }
+window.compositor-blur .content-stack { background: alpha(@harmonia_bg, .85); }
 .icons-material button.app-icon-button,
 .icons-material .expanded-secondary-control,
 .icons-material .expanded-skip-control {

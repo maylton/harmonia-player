@@ -18,13 +18,13 @@ headerbar { border-bottom: none; box-shadow: none; }
   border-radius: 25px;
   margin: 0 10px;
 }
-/* Over the compositor's blur the frame and the pages turn translucent, the
-   frame as one surface again. */
-window.compositor-blur .app-root { background: alpha(@md_surface_container, .78); }
+/* Over the blur the frame is one surface at Caelestia's base transparency
+   (.85), and the pages a darker layer over it, as Caelestia's panels. */
+window.compositor-blur .app-root { background: alpha(@md_surface_container, .85); }
 window.compositor-blur headerbar,
 window.compositor-blur .sidebar,
 window.compositor-blur .player-bar { background: transparent; }
-window.compositor-blur .content-stack { background: alpha(@md_surface, .62); }
+window.compositor-blur .content-stack { background: alpha(@md_surface, .6); }
 .sidebar-item { border-radius: 9999px; }
 /* Hovered items and checked buttons take the tonal buttons' secondary
    container, solid, as the player bar does, instead of the translucent
