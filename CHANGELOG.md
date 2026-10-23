@@ -2,12 +2,15 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
-## Não lançado
+## 1.0.0-rc.1 — 2026-10-23
+
+Candidata à 1.0: a versão final sai igual a esta se nada sério aparecer.
 
 - modo tela cheia no player expandido, como no YouTube Music: botão no canto do cabeçalho, ou as teclas F e F11; a capa e o vídeo crescem com a tela, a coluna "A seguir" sai, e o cabeçalho, os controles e o cursor somem com o mouse parado e voltam quando ele se mexe. Esc sai da tela cheia;
 - corrigido: com "Pular silêncio" ligado, o fim das músicas tocava de novo por um ou dois segundos antes de avançar: o silêncio removido atrasava a posição, a faixa parecia terminar antes da hora e era retomada ali;
 - corrigido: o volume não era guardado entre as sessões; no GTK, ele também começava em 100% com a barra mostrando 80%;
 - corrigido: com o desfoque do compositor no Hyprland, o Harmonia gastava até um núcleo inteiro da CPU enquanto tocava, porque o GTK redesenhava a janela inteira a cada quadro das animações; agora o pedido de desfoque fica numa camada vazia atrás do conteúdo, e o consumo caiu para cerca de um quarto;
+- as animações contínuas do tema Material Design 3 (a onda da barra e a capa girando) desenham a 60 quadros por segundo, num só temporizador, em vez de acompanhar a taxa da tela; e a barra de progresso não refaz uma transição a cada meio segundo de música. Tocando, o Harmonia gasta perto de 6% de um núcleo, em vez de 44% a 93% antes destas correções;
 
 ## 0.1.0-beta.6 — 2026-10-22
 
