@@ -58,6 +58,12 @@ def build_expanded_player(window) -> None:
     key.connect("key-pressed", window._expanded_key_pressed)
     window.add_controller(key)
 
+    # In full screen the header and the controls fade out while the pointer rests.
+    motion = Gtk.EventControllerMotion()
+    motion.connect("motion", lambda *_: window._wake_fullscreen_controls())
+    surface.add_controller(motion)
+    window.connect("notify::fullscreened", lambda *_: window._fullscreen_changed())
+
 
 def _header(window) -> Gtk.Widget:
     top = Gtk.CenterBox()
@@ -71,7 +77,12 @@ def _header(window) -> Gtk.Widget:
     switcher = Adw.ViewSwitcher(stack=window.expanded_stack, policy=Adw.ViewSwitcherPolicy.WIDE)
     switcher.add_css_class("expanded-switcher")
     top.set_center_widget(switcher)
-    top.set_end_widget(Gtk.Box(width_request=40))
+    window.expanded_fullscreen_button = icon_button(
+        "view-fullscreen-symbolic", _("Tela cheia (F)"), size="md"
+    )
+    window.expanded_fullscreen_button.set_halign(Gtk.Align.END)
+    window.expanded_fullscreen_button.connect("clicked", lambda *_: window._toggle_fullscreen())
+    top.set_end_widget(window.expanded_fullscreen_button)
     return top
 
 
@@ -102,7 +113,10 @@ def _up_next_column(window) -> Gtk.Widget:
     window.expanded_up_next = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
     scroll.set_child(window.expanded_up_next)
     window.expanded_up_next_scroll = scroll
-    return scroll
+    # The breakpoint hides the column itself; full screen hides this slot.
+    window.expanded_up_next_slot = Gtk.Box()
+    window.expanded_up_next_slot.append(scroll)
+    return window.expanded_up_next_slot
 
 
 def _player_column(window) -> Gtk.Widget:

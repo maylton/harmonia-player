@@ -210,6 +210,12 @@ ICONS: dict[str, tuple[str, str, str, str]] = {
         "full-screen-maximize-20-regular",
         "arrow-up-left-arrow-down-right",
     ),
+    "view-restore-symbolic": (
+        "minimize",
+        "fullscreen-exit-rounded",
+        "full-screen-minimize-20-regular",
+        "arrow-down-right-arrow-up-left",
+    ),
     "view-list-symbolic": (
         "list",
         "format-list-bulleted-rounded",

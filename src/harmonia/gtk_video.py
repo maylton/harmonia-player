@@ -18,6 +18,9 @@ from .player import error_source  # noqa: E402
 from .ui import deliver_to_main  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
+# The expanded player's artwork and video, before full screen enlarges them.
+AUDIO_FRAME = (384, 384)
+VIDEO_FRAME = (512, 288)
 
 
 class GtkVideoMixin:
@@ -206,12 +209,10 @@ class GtkVideoMixin:
         # until they briefly enter PLAYING, so the warm-up also stays hidden.
         show_video = self._media_mode == "video" and not self._media_switch_loading
         self._media_stack.set_visible_child_name("video" if show_video else "audio")
-        if show_video:
-            self._media_visual_frame.set_ratio(16 / 9)
-            self._media_visual_frame.set_size_request(512, 288)
-        else:
-            self._media_visual_frame.set_ratio(1.0)
-            self._media_visual_frame.set_size_request(384, 384)
+        scale = self._expanded_media_scale()
+        width, height = VIDEO_FRAME if show_video else AUDIO_FRAME
+        self._media_visual_frame.set_ratio(width / height)
+        self._media_visual_frame.set_size_request(round(width * scale), round(height * scale))
 
     def _set_media_mode(self, mode: str, *, force: bool = False) -> None:
         mode = "video" if mode == "video" else "audio"

@@ -60,6 +60,7 @@ src/harmonia/window_chrome/sidebar.py
 src/harmonia/window_constants.py
 src/harmonia/window_detail.py
 src/harmonia/window_detail_header.py
+src/harmonia/window_expanded.py
 src/harmonia/window_history.py
 src/harmonia/window_home.py
 src/harmonia/window_insights.py

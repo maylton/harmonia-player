@@ -2,6 +2,10 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## Não lançado
+
+- modo tela cheia no player expandido, como no YouTube Music: botão no canto do cabeçalho, ou as teclas F e F11; a capa e o vídeo crescem com a tela, a coluna "A seguir" sai, e o cabeçalho, os controles e o cursor somem com o mouse parado e voltam quando ele se mexe. Esc sai da tela cheia;
+
 ## 0.1.0-beta.6 — 2026-10-22
 
 - tema Harmonia: o antigo tema Windows 11 virou o tema padrão do Harmonia, com o Mica automático atrás da janela; o Acrílico e o menu "Efeito de fundo" saíram, e no Linux fica só a opção "Desfoque do compositor" (KWin ou Blur my Shell; desligada ou sem eles, o Mica usa o papel de parede). O tema escuro antigo deu lugar a ele;
