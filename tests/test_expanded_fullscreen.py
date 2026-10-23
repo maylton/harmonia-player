@@ -120,5 +120,35 @@ def test_controls_rest_then_wake_and_stop_resting_out_of_full_screen():
     assert not window._fullscreen_idle_source
 
 
-def test_media_frame_keeps_its_size_out_of_full_screen():
-    assert Window()._expanded_media_scale() == 1.0
+class Scroll:
+    def __init__(self, width, height):
+        self.h, self.v = Adjustment(width), Adjustment(height)
+
+    def get_hadjustment(self):
+        return self.h
+
+    def get_vadjustment(self):
+        return self.v
+
+
+class Adjustment:
+    def __init__(self, page):
+        self.page = page
+
+    def get_page_size(self):
+        return self.page
+
+
+@pytest.mark.parametrize(
+    ("width", "height", "scale"),
+    [
+        (0, 0, 1.0),  # not laid out yet
+        (900, 600, 1.0),  # a small window keeps the artwork's own size
+        (1280, 1390, 1390 * 0.55 / 384),  # a tall window lets it grow
+        (700, 1390, (700 - 96) / 512),  # a narrow one keeps the video inside
+    ],
+)
+def test_the_artwork_grows_with_the_players_column(width, height, scale):
+    window = Window()
+    window.expanded_player_scroll = Scroll(width, height)
+    assert window._expanded_media_scale() == pytest.approx(scale)

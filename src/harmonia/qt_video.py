@@ -387,7 +387,6 @@ class QtVideoController(QObject):
             try:
                 stream = self.backend.youtube.resolve_video(
                     item,
-                    max_height=720,
                     force=force,
                     allow_video_only=True,
                 )

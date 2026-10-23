@@ -363,3 +363,71 @@ def test_video_failures_name_each_client_and_its_reason():
         resolve_video_stream(PlayerClient(), item, force=True)
     for profile in PLAYER_CLIENTS:
         assert f"{profile['name']}: HTTP 4{len(profile['name'])}" in str(error.value)
+
+
+def _adaptive(height, codec, itag, *, mime="video/mp4"):
+    return {
+        "url": f"https://example.test/{itag}",
+        "mimeType": f'{mime}; codecs="{codec}"',
+        "height": height,
+        "width": height * 16 // 9,
+        "fps": 30,
+        "bitrate": height * 1000,
+        "itag": itag,
+        "contentLength": "1000",
+        "initRange": {"start": "0", "end": "10"},
+        "indexRange": {"start": "11", "end": "20"},
+    }
+
+
+def _resolve_among(formats, progressive=()):
+    class PlayerClient:
+        gl = "BR"
+
+        def _bootstrap(self):
+            return None
+
+        def player_response(self, *_args, **_kwargs):
+            return {
+                "playabilityStatus": {"status": "OK"},
+                "streamingData": {"formats": list(progressive), "adaptiveFormats": formats},
+            }
+
+    item = LibraryItem(f"video-{len(formats)}", "Song", "Artist", kind="videos")
+    return resolve_video_stream(PlayerClient(), item, force=True, allow_video_only=True)
+
+
+FORMATS = [
+    _adaptive(720, "avc1.4D401F", 136),
+    _adaptive(1080, "vp9", 248, mime="video/webm"),
+    _adaptive(1080, "av01.0.08M.08", 399),
+]
+
+
+def test_video_reaches_1080p_with_a_codec_this_system_decodes(monkeypatch):
+    from harmonia import video
+
+    # Software only, without a fast AV1 decoder (libaom is left out).
+    monkeypatch.setattr(
+        video, "_video_decoders", lambda: {"video/x-h264": "software", "video/x-vp9": "software"}
+    )
+    assert _resolve_among(FORMATS).itag == 248
+    monkeypatch.setattr(video, "_video_decoders", lambda: {"video/x-h264": "software"})
+    assert _resolve_among(FORMATS).itag == 136  # VP9 and AV1 cannot play here
+    hardware = {"video/x-h264": "hardware", "video/x-vp9": "hardware", "video/x-av1": "hardware"}
+    monkeypatch.setattr(video, "_video_decoders", lambda: hardware)
+    assert _resolve_among(FORMATS).itag == 399  # the graphics card takes the newest codec
+
+
+def test_video_beside_the_audio_skips_the_360p_muxed_format(monkeypatch):
+    from harmonia import video
+
+    monkeypatch.setattr(video, "_video_decoders", lambda: {"video/x-h264": "software"})
+    muxed = {
+        "url": "https://example.test/18",
+        "mimeType": 'video/mp4; codecs="avc1.42001E, mp4a.40.2"',
+        "height": 360,
+        "itag": 18,
+    }
+    stream = _resolve_among([_adaptive(1080, "avc1.640028", 137)], progressive=[muxed])
+    assert stream.itag == 137 and stream.muxed is False

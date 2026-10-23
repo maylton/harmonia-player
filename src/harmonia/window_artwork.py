@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import threading
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -21,6 +22,13 @@ from .window_constants import ICONS
 
 LOGGER = logging.getLogger(__name__)
 ARTWORK_DOWNLOADS = threading.BoundedSemaphore(6)
+# Video thumbnails (i.ytimg.com), largest first: YouTube Music sends 400x225
+# ones, blurry in the expanded player. Not every video has the 1280x720 ones,
+# so each is tried in turn before the one sent; the 4:3 sizes in between are
+# letterboxed, and their bars would show in the square crop.
+YOUTUBE_THUMBNAILS = ("maxresdefault.jpg", "hq720.jpg")
+YOUTUBE_THUMBNAIL = re.compile(r"^https://i\d?\.ytimg\.com/vi(?:_webp)?/([\w-]{11})/")
+LARGE_ARTWORK = 512  # sizes from here on (the expanded player) look for them
 
 
 class WindowArtworkMixin:
@@ -71,11 +79,20 @@ class WindowArtworkMixin:
             )
         ):
             return url
-        size = max(64, min(1280, int(size)))
+        size = max(64, min(2048, int(size)))
         result = re.sub(r"([=-])w\d+(?=-|$)", rf"\1w{size}", url)
         result = re.sub(r"([=-])h\d+(?=-|$)", rf"\1h{size}", result)
         result = re.sub(r"=s\d+(?=-|$)", f"=s{size}", result)
         return result
+
+    @staticmethod
+    def _artwork_candidates(url: str, size: int | None = None) -> list[str]:
+        """The addresses to try for ``url`` at ``size``, sharpest first."""
+        video = YOUTUBE_THUMBNAIL.match(url)
+        if video and size and size >= LARGE_ARTWORK:
+            folder = f"https://i.ytimg.com/vi/{video[1]}/"
+            return [folder + name for name in YOUTUBE_THUMBNAILS] + [url]
+        return [WindowArtworkMixin._sized_artwork_url(url, size)]
 
     def _set_artwork_if_current(
         self,
@@ -94,8 +111,8 @@ class WindowArtworkMixin:
         *,
         size: int | None = None,
     ) -> None:
-        request_url = self._sized_artwork_url(url, size)
-        target = self.storage.artwork_path(request_url)
+        candidates = self._artwork_candidates(url, size)
+        target = self.storage.artwork_path(candidates[0])
         request_key = str(target)
         self._artwork_requests[id(picture)] = request_key
         if target.exists():
@@ -103,15 +120,29 @@ class WindowArtworkMixin:
             return
 
         def worker():
-            try:
-                request = urllib.request.Request(request_url, headers={"User-Agent": "Mozilla/5.0"})
-                # Long track lists request many covers at once; cap the
-                # parallel downloads instead of opening one connection each.
-                with ARTWORK_DOWNLOADS, urllib.request.urlopen(request, timeout=15) as response:
-                    data = response.read(12 * 1024 * 1024)
+            for request_url in candidates:
+                try:
+                    request = urllib.request.Request(
+                        request_url, headers={"User-Agent": "Mozilla/5.0"}
+                    )
+                    # Long track lists request many covers at once; cap the
+                    # parallel downloads instead of opening one connection each.
+                    with ARTWORK_DOWNLOADS, urllib.request.urlopen(request, timeout=15) as response:
+                        data = response.read(12 * 1024 * 1024)
+                except urllib.error.HTTPError as error:
+                    if error.code == 404:  # this video has no thumbnail that large
+                        continue
+                    LOGGER.debug(
+                        "Não foi possível carregar a arte de %s", request_url, exc_info=True
+                    )
+                    return
+                except Exception:
+                    LOGGER.debug(
+                        "Não foi possível carregar a arte de %s", request_url, exc_info=True
+                    )
+                    return
                 target.write_bytes(data)
                 GLib.idle_add(self._set_artwork_if_current, picture, target, request_key)
-            except Exception:
-                LOGGER.debug("Não foi possível carregar a arte de %s", request_url, exc_info=True)
+                return
 
         threading.Thread(target=worker, daemon=True).start()

@@ -160,6 +160,62 @@ def test_google_artwork_url_requests_context_specific_resolution():
     assert HarmoniaWindow._sized_artwork_url(external, 1024) == external
 
 
+def test_large_video_artwork_tries_youtubes_sharper_thumbnails_first():
+    sent = "https://i.ytimg.com/vi/Q04iqoRYMcQ/hqdefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCggA"
+    assert HarmoniaWindow._artwork_candidates(sent, 1024) == [
+        "https://i.ytimg.com/vi/Q04iqoRYMcQ/maxresdefault.jpg",
+        "https://i.ytimg.com/vi/Q04iqoRYMcQ/hq720.jpg",
+        sent,
+    ]
+    assert HarmoniaWindow._artwork_candidates(sent, 256) == [sent]  # list rows stay small
+    google = "https://lh3.googleusercontent.com/asset=w120-h120-l90-rj"
+    assert HarmoniaWindow._artwork_candidates(google, 2048) == [
+        "https://lh3.googleusercontent.com/asset=w2048-h2048-l90-rj"
+    ]
+
+
+def test_a_missing_large_thumbnail_falls_back_to_the_next(monkeypatch, tmp_path):
+    import io
+    import urllib.error
+
+    from harmonia import window_artwork
+
+    sent = "https://i.ytimg.com/vi/0t1zR7kbhnc/hqdefault.jpg?sqp=x"
+    tried = []
+
+    def urlopen(request, timeout):
+        tried.append(request.full_url)
+        if "hqdefault" not in request.full_url:
+            raise urllib.error.HTTPError(request.full_url, 404, "Not Found", {}, None)
+        return io.BytesIO(b"jpeg")
+
+    monkeypatch.setattr(window_artwork.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(window_artwork.threading, "Thread", ThreadNow)
+    monkeypatch.setattr(window_artwork.GLib, "idle_add", lambda *_args: None)
+    window = type("W", (window_artwork.WindowArtworkMixin,), {})()
+    window._artwork_requests = {}
+    window.storage = type(
+        "S", (), {"artwork_path": lambda _self, url: tmp_path / str(abs(hash(url)))}
+    )()
+
+    window._load_artwork(sent, object(), size=1024)
+    assert [url.rsplit("/", 1)[1] for url in tried] == [
+        "maxresdefault.jpg",
+        "hq720.jpg",
+        "hqdefault.jpg?sqp=x",
+    ]
+    # Kept under the sharpest address, so the next time it is not looked for again.
+    assert (tmp_path / str(abs(hash(tried[0])))).read_bytes() == b"jpeg"
+
+
+class ThreadNow:
+    def __init__(self, target, daemon):
+        self.target = target
+
+    def start(self):
+        self.target()
+
+
 def test_expanded_player_uses_a_supported_gtk_revealer_transition() -> None:
     root = Path(__file__).resolve().parents[1]
     source = (root / "src" / "harmonia" / "window_chrome" / "expanded_player.py").read_text(

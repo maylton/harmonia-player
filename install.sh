@@ -336,10 +336,11 @@ install_flatpak_bundle() {
 
 # Arch and derivatives: the build tools and every library Harmonia uses, from
 # the official repositories (gst-plugin-gtk4 draws the video, gst-plugins-bad
-# and gst-libav decode YouTube's VP9 and AV1, the pixbuf loaders read JPEG XL,
-# WebP and AVIF artwork).
+# and gst-libav decode YouTube's VP9 and AV1, gst-plugin-va decodes them on
+# the graphics card where it can, the pixbuf loaders read JPEG XL, WebP and
+# AVIF artwork).
 ARCH_PACKAGES="meson ninja gettext python python-gobject python-pip gtk4 libadwaita \
-gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav gst-plugin-gtk4 \
+gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav gst-plugin-gtk4 gst-plugin-va \
 libsecret webkitgtk-6.0 libjxl webp-pixbuf-loader libavif"
 
 install_arch_packages() {

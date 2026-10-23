@@ -250,7 +250,6 @@ class GtkVideoMixin:
             try:
                 stream = self.youtube.resolve_video(
                     item,
-                    max_height=720,
                     force=force,
                     allow_video_only=True,
                 )

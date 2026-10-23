@@ -12,15 +12,17 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib
 
 from . import queue_view
-from .gtk_video import AUDIO_FRAME
+from .gtk_video import AUDIO_FRAME, VIDEO_FRAME
 from .i18n import _
 from .models import LibraryItem, LyricsDocument
 
 # Full screen fades the header and the controls once the pointer rests this long.
 FULLSCREEN_IDLE_SECONDS = 3
 IDLE_CSS_CLASS = "expanded-idle"
-# Share of the screen's height the artwork takes in full screen.
-FULLSCREEN_COVER_SHARE = 0.55
+# Share of the player column's height the artwork takes, in a large window
+# as in full screen; it never shrinks below its own size (gtk_video.py).
+COVER_SHARE = 0.55
+COLUMN_MARGIN = 96  # the frame keeps this much of the column's width free
 
 
 class WindowExpandedPlayerMixin:
@@ -83,12 +85,25 @@ class WindowExpandedPlayerMixin:
         self._wake_fullscreen_controls()
 
     def _expanded_media_scale(self) -> float:
-        """How much the artwork and the video grow in full screen."""
-        surface = self.get_surface()
-        monitor = self.get_display().get_monitor_at_surface(surface) if surface else None
-        if not self.is_fullscreen() or monitor is None:
+        """How much the artwork and the video grow with the player's column."""
+        scroll = self.expanded_player_scroll
+        height = scroll.get_vadjustment().get_page_size()
+        width = scroll.get_hadjustment().get_page_size()
+        if height <= 1 or width <= 1:
             return 1.0
-        return max(1.0, monitor.get_geometry().height * FULLSCREEN_COVER_SHARE / AUDIO_FRAME[1])
+        scale = min(height * COVER_SHARE / AUDIO_FRAME[1], (width - COLUMN_MARGIN) / VIDEO_FRAME[0])
+        return max(1.0, scale)
+
+    def _expanded_space_changed(self, *_args) -> None:
+        # The column's size changes while the window lays out: resize the
+        # artwork in the next frame, before its layout, as a one-off tick.
+        if hasattr(self, "_media_visual_frame") and not getattr(self, "_media_resize_tick", 0):
+            self._media_resize_tick = self.add_tick_callback(self._resize_expanded_media)
+
+    def _resize_expanded_media(self, _widget, _clock) -> bool:
+        self._media_resize_tick = 0
+        self._sync_media_mode_ui()
+        return GLib.SOURCE_REMOVE
 
     def _wake_fullscreen_controls(self) -> None:
         if getattr(self, "_fullscreen_idle_source", 0):
@@ -125,7 +140,10 @@ class WindowExpandedPlayerMixin:
             # Reuse an already-cached thumbnail immediately, then replace it
             # with the dedicated high-resolution variant when available.
             self._load_artwork(item.thumbnail, self.expanded_cover)
-            self._load_artwork(item.thumbnail, self.expanded_cover, size=1024)
+            # Sharp in full screen, where the artwork takes over half the
+            # screen's height, on HiDPI displays too.
+            scale = max(1, self.get_scale_factor())
+            self._load_artwork(item.thumbnail, self.expanded_cover, size=1024 * scale)
         self._refresh_current_like_from_library()
         self._render_expanded_up_next()
 

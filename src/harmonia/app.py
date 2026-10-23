@@ -163,6 +163,7 @@ class HarmoniaWindow(
         self._waiting_for_autoplay = False
         self._last_queue_save = 0.0
         self._restored_position_ms = 0
+        self._restored_duration_ms = 0
         self._history_recorded_request = -1
         self._history_entries: list[HistoryEntry] = []
         self._history_tracking_request = -1

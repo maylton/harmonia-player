@@ -24,7 +24,7 @@ gi.require_version("Gdk", "4.0")
 gi.require_version("Graphene", "1.0")
 gi.require_version("Gsk", "4.0")
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Graphene, Gsk, Gtk  # noqa: E402
+from gi.repository import Gdk, GLib, Graphene, Gsk, Gtk  # noqa: E402
 
 # Material 3 Expressive motion (Caelestia's Tokens.anim): duration in ms and
 # the cubic Bézier of each curve; the spatial ones overshoot.
@@ -465,6 +465,132 @@ class CookieCover(Gtk.Widget):
         snapshot.append_stroke(path, Gsk.Stroke.new(2), self.get_color())
         snapshot.push_fill(path, Gsk.FillRule.WINDING)
         self.snapshot_child(self.child, snapshot)
+        snapshot.pop()
+
+
+def _stop(offset: float, alpha: float) -> Gsk.ColorStop:
+    stop = Gsk.ColorStop()
+    stop.offset = offset
+    stop.color = Gdk.RGBA(red=0, green=0, blue=0, alpha=alpha)
+    return stop
+
+
+class MarqueeLabel(Gtk.Widget):
+    """One line of text that goes round, as a carousel, when it does not fit.
+
+    It asks for no width of its own, so a long title never widens what holds
+    it. When the text overflows it rests for a moment, slides left until its
+    copy, a gap behind it, takes its place, and starts over; the edges it
+    slides under fade out. A ``suffix`` (the explicit badge) follows the text,
+    or stays at the end of the line while the text goes round.
+    """
+
+    __gtype_name__ = "HarmoniaMarqueeLabel"
+
+    SPEED = 40  # pixels a second
+    GAP = 48  # between the text and its copy
+    PAUSE_US = 2_000_000  # at rest before each turn
+    FADE = 24
+    SUFFIX_SPACING = 10
+
+    def __init__(self, suffix: Gtk.Widget | None = None) -> None:
+        super().__init__()
+        self._labels = [Gtk.Label(xalign=0) for _ in range(2)]
+        for label in self._labels:
+            label.set_parent(self)
+        self.suffix = suffix
+        if suffix is not None:
+            suffix.set_parent(self)
+        self._text_width = 0
+        self._room = 0  # the width the text has, beside the suffix
+        self._offset = 0.0
+        self._rest = self.PAUSE_US
+        self._loop = FrameLoop(self, self._advance)
+
+    def do_dispose(self) -> None:
+        for child in (*self._labels, self.suffix):
+            if child is not None:
+                child.unparent()
+        self._labels, self.suffix = [], None
+        Gtk.Widget.do_dispose(self)
+
+    def set_label(self, text: str) -> None:
+        for label in self._labels:
+            label.set_label(text)
+        self._offset, self._rest = 0.0, self.PAUSE_US
+        self.queue_resize()
+
+    def get_label(self) -> str:
+        return self._labels[0].get_label()
+
+    def _overflowing(self) -> bool:
+        return self._text_width > self._room
+
+    def _advance(self, elapsed_us: int) -> None:
+        if self._rest > 0:
+            self._rest -= elapsed_us
+            return
+        self._offset += self.SPEED * elapsed_us / 1_000_000
+        if self._offset >= self._text_width + self.GAP:
+            # The copy now stands where the text began: the same picture.
+            self._offset, self._rest = 0.0, self.PAUSE_US
+
+    def _suffix_width(self) -> int:
+        if self.suffix is None or not self.suffix.get_visible():
+            return 0
+        return self.suffix.measure(Gtk.Orientation.HORIZONTAL, -1)[1]
+
+    def do_measure(self, orientation, _for_size):
+        if orientation == Gtk.Orientation.HORIZONTAL:
+            return 0, 0, -1, -1
+        minimum, natural, *_ = self._labels[0].measure(orientation, -1)
+        if self.suffix is not None and self.suffix.get_visible():
+            suffix = self.suffix.measure(orientation, -1)
+            minimum, natural = max(minimum, suffix[0]), max(natural, suffix[1])
+        return minimum, natural, -1, -1
+
+    def do_size_allocate(self, width: int, height: int, _baseline: int) -> None:
+        self._text_width = self._labels[0].measure(Gtk.Orientation.HORIZONTAL, -1)[1]
+        suffix_width = self._suffix_width()
+        self._room = max(0, width - (suffix_width + self.SUFFIX_SPACING if suffix_width else 0))
+        text_width = max(self._room, self._text_width)
+        _place(self._labels[0], 0, 0, text_width, height)
+        _place(self._labels[1], self._text_width + self.GAP, 0, text_width, height)
+        if suffix_width:
+            x = (self._room if self._overflowing() else self._text_width) + self.SUFFIX_SPACING
+            suffix_height = self.suffix.measure(Gtk.Orientation.VERTICAL, suffix_width)[1]
+            _place(self.suffix, x, (height - suffix_height) / 2, suffix_width, suffix_height)
+        if not self._overflowing():
+            self._offset, self._rest = 0.0, self.PAUSE_US
+        self._loop.set_running(self._overflowing())
+
+    def do_snapshot(self, snapshot: Gtk.Snapshot) -> None:
+        if self.suffix is not None and self.suffix.get_visible():
+            self.snapshot_child(self.suffix, snapshot)
+        height = self.get_height()
+        snapshot.push_clip(rect(0, 0, self._room, height))
+        if not self._overflowing():
+            self.snapshot_child(self._labels[0], snapshot)
+            snapshot.pop()
+            return
+        room = self._room
+        fade = min(0.5, self.FADE / max(1, room))
+        # Nothing is hidden on the left while the text rests at its start.
+        left = 1.0 if self._offset == 0 else 0.0
+        snapshot.push_mask(Gsk.MaskMode.ALPHA)
+        snapshot.append_linear_gradient(
+            rect(0, 0, room, height),
+            point(0, 0),
+            point(room, 0),
+            [_stop(0, left), _stop(fade, 1), _stop(1 - fade, 1), _stop(1, 0)],
+        )
+        snapshot.pop()
+        snapshot.save()
+        snapshot.translate(point(-self._offset, 0))
+        for label in self._labels:
+            self.snapshot_child(label, snapshot)
+        snapshot.restore()
+        snapshot.pop()
         snapshot.pop()
 
 

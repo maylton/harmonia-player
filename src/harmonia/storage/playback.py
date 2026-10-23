@@ -35,11 +35,12 @@ class PlaybackRecords(Database):
                 )
             db.execute(
                 """INSERT INTO playback_state
-                (id,queue_index,position_ms,shuffle,repeat_mode,autoplay,updated_at)
-                VALUES (1,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+                (id,queue_index,position_ms,shuffle,repeat_mode,autoplay,updated_at,duration_ms)
+                VALUES (1,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
                 queue_index=excluded.queue_index, position_ms=excluded.position_ms,
                 shuffle=excluded.shuffle, repeat_mode=excluded.repeat_mode,
-                autoplay=excluded.autoplay, updated_at=excluded.updated_at""",
+                autoplay=excluded.autoplay, updated_at=excluded.updated_at,
+                duration_ms=excluded.duration_ms""",
                 (
                     state.index,
                     max(0, state.position_ms),
@@ -47,6 +48,7 @@ class PlaybackRecords(Database):
                     int(state.repeat),
                     int(state.autoplay),
                     int(time.time()),
+                    max(0, state.duration_ms),
                 ),
             )
 
@@ -71,6 +73,7 @@ class PlaybackRecords(Database):
             bool(state["shuffle"]),
             bool(state["repeat_mode"]),
             bool(state["autoplay"]),
+            state["duration_ms"],
         )
 
     def clear_playback_state(self) -> None:

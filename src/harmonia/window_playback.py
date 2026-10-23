@@ -47,6 +47,7 @@ class WindowPlaybackMixin:
             shuffle=self.shuffle_enabled,
             repeat=self.repeat_enabled,
             autoplay=self.autoplay_enabled,
+            duration_ms=self.current_duration_ms or self._restored_duration_ms,
         )
 
     def _save_playback_state(self, position_ms: int | None = None) -> None:
@@ -74,7 +75,8 @@ class WindowPlaybackMixin:
         )
         if self.current_item.thumbnail:
             self._load_artwork(self.current_item.thumbnail, self.now_cover, size=128)
-        self.elapsed_label.set_label(self._format_time(state.position_ms))
+        self._restored_duration_ms = state.duration_ms
+        self._show_restored_position(state.position_ms, state.duration_ms)
         self._set_footer_item_state(True)
         for control in self.shuffle_buttons:
             set_icon_selected(control, state.shuffle)
@@ -83,6 +85,22 @@ class WindowPlaybackMixin:
         set_icon_selected(self.autoplay_button, state.autoplay)
         self._render_queue()
         self._refresh_expanded_player()
+
+    def _show_restored_position(self, position_ms: int, duration_ms: int) -> None:
+        """Where the track stopped, until play opens its stream again."""
+        elapsed = self._format_time(position_ms)
+        self.elapsed_label.set_label(elapsed)
+        self.expanded_elapsed_label.set_label(elapsed)
+        if duration_ms <= 0:
+            return
+        duration = self._format_time(duration_ms)
+        self.duration_label.set_label(duration)
+        self.expanded_duration_label.set_label(duration)
+        self._updating_progress = True
+        value = min(100, position_ms * 100 / duration_ms)
+        self.progress.set_value(value)
+        self.expanded_progress.set_value(value)
+        self._updating_progress = False
 
     def set_queue(self, items: list[LibraryItem], index: int = 0) -> None:
         if not items:
@@ -280,6 +298,7 @@ class WindowPlaybackMixin:
             self._restored_position_ms if getattr(self, "current_item", None) is item else 0
         )
         self._restored_position_ms = 0
+        self._restored_duration_ms = 0
         self._pending_seek_ms = resume_position
         self._play_request += 1
         request_id = self._play_request

@@ -61,3 +61,23 @@ def test_the_playing_progress_moves_without_a_tween_on_every_frame():
     assert slider.fill.value == pytest.approx(0.005) and not eased
     adjustment.set_value(60)  # a seek eases
     assert eased == [pytest.approx(0.6)]
+
+
+def test_a_title_too_long_goes_round_without_widening_its_line():
+    from gi.repository import Gtk
+
+    from harmonia.gtk_expressive import MarqueeLabel
+
+    title = MarqueeLabel()
+    title.set_label("Um título muito longo para caber na linha do player expandido")
+    assert title.measure(Gtk.Orientation.HORIZONTAL, -1)[:2] == (0, 0)
+
+    title._text_width = 500  # wider than its line
+    title._advance(1_900_000)
+    assert title._offset == 0  # still resting at its start
+    title._advance(100_000)
+    title._advance(1_000_000)
+    assert title._offset == pytest.approx(MarqueeLabel.SPEED)
+    title._advance(round((500 + MarqueeLabel.GAP) / MarqueeLabel.SPEED * 1_000_000))
+    # Its copy has taken its place: back at the start, resting again.
+    assert title._offset == 0 and title._rest == MarqueeLabel.PAUSE_US
