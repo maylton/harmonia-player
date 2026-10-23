@@ -237,8 +237,9 @@ class WindowHomeMixin:
 
         last_width = {"value": 0}
 
-        def resize_columns(widget: Gtk.Widget):
-            viewport = widget.get_width()
+        def resize_columns(adjustment: Gtk.Adjustment, _pspec=None):
+            # The page is the viewport's width; the columns only change upper.
+            viewport = round(adjustment.get_page_size())
             if viewport <= 1 or viewport == last_width["value"]:
                 return
             last_width["value"] = viewport
@@ -246,11 +247,7 @@ class WindowHomeMixin:
             for column in columns:
                 column.set_size_request(width, -1)
 
-        def follow_allocation(widget: Gtk.Widget, _clock) -> bool:
-            resize_columns(widget)
-            return GLib.SOURCE_CONTINUE
-
-        scroll.add_tick_callback(follow_allocation)
+        scroll.get_hadjustment().connect("notify::page-size", resize_columns)
         return box
 
     @staticmethod

@@ -216,7 +216,8 @@ def test_hyprland_blurs_through_backdrop_filter(monkeypatch):
     instance._window.preferences = type("P", (), {"theme": "breeze", "compositor_blur": True})()
     instance.kind = "blur"
     assert instance._refresh()
-    assert "background: transparent; backdrop-filter: blur(" in instance.css
+    assert "background: transparent" in instance.css
+    assert ".app-root," in instance.css and ".expanded-revealed { backdrop-filter" in instance.css
 
 
 def test_kwin_keeps_its_own_protocol_over_backdrop_filter(monkeypatch):

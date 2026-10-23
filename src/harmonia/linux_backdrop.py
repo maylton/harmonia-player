@@ -124,13 +124,21 @@ def material_css(
     With the compositor blurring behind the window, Mica is the tint alone;
     "blur" (the other themes) leaves the window clear, or shows the blurred
     wallpaper untinted: their translucent surfaces carry the colour.
-    ``effect`` asks for the blur through backdrop-filter (kwin_blur.py).
+    ``effect`` asks for the blur through backdrop-filter (kwin_blur.py), on
+    the pages and on the expanded player once it is revealed, which hides
+    the pages: on the window, or on the player while it slides, GTK 4.24
+    crashes rendering the slide as it closes.
     """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
-    request = " backdrop-filter: blur(20px);" if effect else ""
+    request = (
+        f"{selector} .app-root,\n{selector} .expanded-player.expanded-revealed "
+        "{ backdrop-filter: blur(20px); }\n"
+        if effect
+        else ""
+    )
     if kind == "blur":
         if blurred:
-            return f"{selector} {{ background: transparent;{request} }}\n"
+            return f"{selector} {{ background: transparent; }}\n{request}"
         if image is None:
             return ""
         uri = Gio.File.new_for_path(str(image)).get_uri()
@@ -141,7 +149,7 @@ def material_css(
     if kind != "mica":
         return ""
     if blurred:
-        return f"{selector} {{ background-color: {tint}; background-image: none;{request} }}\n"
+        return f"{selector} {{ background-color: {tint}; background-image: none; }}\n{request}"
     if image is not None:
         uri = Gio.File.new_for_path(str(image)).get_uri()
         return (

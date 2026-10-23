@@ -15,6 +15,8 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - corrigido: o seletor Música/Vídeo do player expandido tinha sumido;
 - corrigido: o desfoque do KWin atrás da janela não funcionava, porque o GTK atual não entrega ao Python a conexão Wayland nem a superfície da janela; o Harmonia agora as pede direto à biblioteca do GTK;
 - corrigido: no Hyprland, o build nativo (GTK 4.24) não tinha desfoque atrás da janela, porque esse GTK registra a janela no protocolo de desfoque do Wayland sem dizer que área desfocar; o Harmonia agora pede o desfoque com `backdrop-filter`;
+- corrigido: depois de abrir o player expandido pela primeira vez, o Harmonia ocupava um núcleo inteiro da CPU até ser fechado, porque um callback do laço principal se repetia para sempre; e a página inicial não pede mais um quadro novo a cada atualização da tela;
+- o player expandido do tema Material Design 3 fica translúcido sobre o desfoque do compositor, como o resto da janela;
 - corrigido: as capas da página inicial ficavam deslocadas no Linux, porque o título do card media a largura em letras da fonte;
 - corrigido: o selo "E" de conteúdo explícito ficava à esquerda da capa nos downloads, no histórico e na busca; agora fica ao lado do título, e aparece também nas playlists locais.
 
