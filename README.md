@@ -2,7 +2,7 @@
 
 A native Linux client for accessing your YouTube Music library. Harmonia uses GTK 4/libadwaita on GNOME and other desktops, and can automatically select a native Qt 6/PySide6/Kirigami frontend on KDE Plasma. Both frontends share the same InnerTube, storage, GStreamer playback, downloads, lyrics, and MPRIS core. Harmonia is inspired by [Metrolist](https://github.com/MetrolistGroup/Metrolist) and ports its InnerTube integration to Python. Integrated Google sign-in is rendered by WebKitGTK on the GTK frontend and Qt WebEngine on the KDE frontend, while both hand the resulting YouTube Music session to the same Secret Service-backed core.
 
-> **Beta 0.1:** This is a testing release. InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
+> **Note:** InnerTube is not a public API and may change without notice. Use Harmonia only with your own account. The application never requests or stores your Google password.
 
 ## Screenshots
 

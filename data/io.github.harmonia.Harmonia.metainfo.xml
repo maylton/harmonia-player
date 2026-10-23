@@ -44,7 +44,13 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
-    <release version="1.0.0-rc.1" date="2026-10-23" type="development">
+    <release version="1.0.0" date="2026-10-23" type="stable">
+      <description>
+        <p>A primeira versão estável. Além da 1.0.0-rc.1, capas nítidas no player expandido e na tela cheia, que crescem com a janela, títulos longos que giram na mesma linha, a posição da música mostrada ao abrir o app, e vídeo em até 1080p decodificado pela placa de vídeo quando possível.</p>
+        <p xml:lang="en">The first stable release. On top of 1.0.0-rc.1, sharp artwork in the expanded player and in full screen that grows with the window, long titles that scroll on their line, the track's position shown when the app opens, and video up to 1080p decoded on the graphics card where possible.</p>
+      </description>
+    </release>
+    <release version="1.0.0~rc.1" date="2026-10-23" type="development">
       <description>
         <p>Candidata à versão 1.0: o player expandido ganha um modo tela cheia, o fim das músicas não se repete mais com “Pular silêncio”, o volume é guardado entre as sessões, e o Harmonia gasta muito menos CPU enquanto toca com o desfoque do compositor.</p>
         <p xml:lang="en">Release candidate for 1.0: the expanded player gains a full-screen mode, tracks no longer replay their end with “Skip silence”, the volume is kept between sessions, and Harmonia uses far less CPU while playing over the compositor's blur.</p>
