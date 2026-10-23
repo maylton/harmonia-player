@@ -375,7 +375,10 @@ class LinuxWindowBackdrops:
         if display is not self._kwin_display:
             self._kwin_display = display
             self._kwin = kwin_blur.connect(display) if display is not None else None
-            self._background_effect = display is not None and kwin_blur.background_effect(display)
+            # backdrop-filter only matters where KWin's own protocol is missing.
+            self._background_effect = (
+                self._kwin is None and display is not None and kwin_blur.background_effect(display)
+            )
         return self._kwin
 
     def _request_kwin_blur(self, window: Gtk.Window) -> None:
