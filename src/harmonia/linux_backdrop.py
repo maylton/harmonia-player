@@ -3,9 +3,9 @@
 Mica blurs what is behind the window, as on Windows, when the compositor can
 and Preferences > "Desfoque do compositor" is on: the window turns
 translucent under a tint of the theme's window colour and the compositor
-blurs behind it. KWin does it on request (kwin_blur.py); on GNOME only the
-Blur my Shell extension can, for the applications in its list
-(gnome_blur.py).
+blurs behind it. KWin does it on request (kwin_blur.py), Hyprland when CSS
+backdrop-filter asks GTK for it; on GNOME only the Blur my Shell extension
+can, for the applications in its list (gnome_blur.py).
 
 Otherwise Mica is drawn by Harmonia from the desktop wallpaper, blurred once
 into a small image that becomes the window's background (it cannot follow
@@ -116,17 +116,21 @@ def rgba(color: str, alpha: float) -> str:
     return f"rgba({red}, {green}, {blue}, {alpha})"
 
 
-def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = False) -> str:
+def material_css(
+    kind: str, tint: str, image: Path | None, *, blurred: bool = False, effect: bool = False
+) -> str:
     """The window background of ``kind``; ``image`` is Mica's blurred wallpaper.
 
     With the compositor blurring behind the window, Mica is the tint alone;
     "blur" (the other themes) leaves the window clear, or shows the blurred
     wallpaper untinted: their translucent surfaces carry the colour.
+    ``effect`` asks for the blur through backdrop-filter (kwin_blur.py).
     """
     selector = f"window.{CSS_CLASS}.{LINUX_CSS_CLASS}"
+    request = " backdrop-filter: blur(20px);" if effect else ""
     if kind == "blur":
         if blurred:
-            return f"{selector} {{ background: transparent; }}\n"
+            return f"{selector} {{ background: transparent;{request} }}\n"
         if image is None:
             return ""
         uri = Gio.File.new_for_path(str(image)).get_uri()
@@ -137,7 +141,7 @@ def material_css(kind: str, tint: str, image: Path | None, *, blurred: bool = Fa
     if kind != "mica":
         return ""
     if blurred:
-        return f"{selector} {{ background-color: {tint}; background-image: none; }}\n"
+        return f"{selector} {{ background-color: {tint}; background-image: none;{request} }}\n"
     if image is not None:
         uri = Gio.File.new_for_path(str(image)).get_uri()
         return (
@@ -166,12 +170,14 @@ class LinuxWindowBackdrops:
         self.reason = ""
         # The wallpaper Mica is made of, for Preferences.
         self.wallpaper: Path | None = None
-        # Who blurs behind the window: "kwin", "blur-my-shell" or "" (nobody).
+        # Who blurs behind the window: "kwin", "background-effect" (Hyprland),
+        # "blur-my-shell" or "" (nobody).
         self.blur = ""
         # Blur my Shell is on but does not blur Harmonia: Preferences offer it.
         self.blur_my_shell_offer = False
         self._kwin = None
         self._kwin_display = None
+        self._background_effect = False
         self._kwin_surfaces: dict[int, int] = {}
         self._waiting_realize = False
         self._window: Gtk.Window | None = None
@@ -284,7 +290,13 @@ class LinuxWindowBackdrops:
         # Only Mica is tinted; the other themes' surfaces carry their colour.
         tint = self._tint(dark) if self.kind == "mica" else ""
         css = (
-            material_css(self.kind, tint, image, blurred=bool(self.blur))
+            material_css(
+                self.kind,
+                tint,
+                image,
+                blurred=bool(self.blur),
+                effect=self.blur == "background-effect",
+            )
             if self.kind != "none"
             else ""
         )
@@ -337,7 +349,7 @@ class LinuxWindowBackdrops:
             return "blur-my-shell" if state.blurs_app else ""
         kwin = self._kwin_for(window)
         if kwin is None:
-            return ""
+            return "background-effect" if self._background_effect else ""
         self._request_kwin_blur(window)
         return "kwin"
 
@@ -355,6 +367,7 @@ class LinuxWindowBackdrops:
         if display is not self._kwin_display:
             self._kwin_display = display
             self._kwin = kwin_blur.connect(display) if display is not None else None
+            self._background_effect = display is not None and kwin_blur.background_effect(display)
         return self._kwin
 
     def _request_kwin_blur(self, window: Gtk.Window) -> None:

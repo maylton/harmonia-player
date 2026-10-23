@@ -1,4 +1,4 @@
-"""Ask KWin to blur what is behind the window, as Konsole and Kitty do.
+"""Ask the compositor to blur what is behind the window, as Konsole and Kitty do.
 
 KWin's Blur effect blurs behind any window that asks for it: on Wayland with
 the org_kde_kwin_blur protocol, on X11 with the _KDE_NET_WM_BLUR_BEHIND_REGION
@@ -8,6 +8,11 @@ GTK's dispatching is not disturbed, and Xlib for the property.
 
 The region is the window without its client-side shadow, with the rounded
 corners cut out, so the blur does not show around them.
+
+Other compositors (Hyprland 0.56) offer ext-background-effect-v1, which GTK
+4.24 speaks itself: it gives every window an effect object and fills its blur
+region from CSS backdrop-filter. Without that property the region stays
+empty, and such a compositor blurs nothing behind the window.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ from ctypes import (
 
 LOGGER = logging.getLogger(__name__)
 BLUR_MANAGER = b"org_kde_kwin_blur_manager"
+BACKGROUND_EFFECT = b"ext_background_effect_manager_v1"
 DESTROY = 1  # WL_MARSHAL_FLAG_DESTROY
 Rect = tuple[int, int, int, int]
 
@@ -108,7 +114,7 @@ class WaylandBlur:
         self._lib.wl_proxy_get_version.restype = c_uint32
         self._lib.wl_proxy_get_version.argtypes = (c_void_p,)
         self._interfaces()
-        self._globals: dict[bytes, tuple[int, int]] = {}
+        self.globals: dict[bytes, tuple[int, int]] = {}
         self.manager = self.compositor = None
         self._blurs: dict[int, int] = {}
         self._bind()
@@ -159,20 +165,20 @@ class WaylandBlur:
         lib.wl_proxy_wrapper_destroy(wrapper)
 
         def announced(_data, _registry, name, interface, version):
-            self._globals[interface] = (name, version)
+            self.globals[interface] = (name, version)
 
         self._listener = RegistryListener(GLOBAL(announced), GLOBAL_REMOVE(lambda *_: None))
         lib.wl_proxy_add_listener(c_void_p(registry), byref(self._listener), None)
         lib.wl_display_roundtrip_queue(self._display, self._queue)
         self._registry = registry
-        if BLUR_MANAGER in self._globals and b"wl_compositor" in self._globals:
+        if BLUR_MANAGER in self.globals and b"wl_compositor" in self.globals:
             self.manager = self._bind_global(
                 BLUR_MANAGER, ctypes.addressof(self.manager_interface_struct), 1
             )
             self.compositor = self._bind_global(b"wl_compositor", self.compositor_interface, 4)
 
     def _bind_global(self, name: bytes, interface: int, highest: int) -> int:
-        number, version = self._globals[name]
+        number, version = self.globals[name]
         version = min(version, highest)
         return _address(self._marshal(
             c_void_p(self._registry), c_uint32(0), c_void_p(interface), c_uint32(version),
@@ -299,6 +305,30 @@ def connect(display) -> WaylandBlur | X11Blur | None:
         LOGGER.debug("Blur do KWin indisponível", exc_info=True)
         return None
     return backend if backend.available else None
+
+
+def background_effect(display) -> bool:
+    """Whether CSS backdrop-filter makes the compositor blur behind the window."""
+    name = type(display).__name__
+    if "Wayland" not in name or not _gtk_knows_backdrop_filter():
+        return False
+    try:
+        handle = wayland_display(display)
+        return bool(handle) and BACKGROUND_EFFECT in WaylandBlur(handle).globals
+    except (OSError, ValueError, AttributeError):
+        LOGGER.debug("ext-background-effect indisponível", exc_info=True)
+        return False
+
+
+def _gtk_knows_backdrop_filter() -> bool:
+    """GTK before 4.24 rejects the property, and asks for no blur."""
+    from gi.repository import Gtk
+
+    errors = []
+    provider = Gtk.CssProvider()
+    provider.connect("parsing-error", lambda *args: errors.append(args))
+    provider.load_from_string("window { backdrop-filter: blur(1px); }")
+    return not errors
 
 
 def surface_handle(surface) -> int | None:

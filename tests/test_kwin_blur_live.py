@@ -37,7 +37,7 @@ def test_globals_are_bound_on_a_queue_of_our_own():
     display, _glib, _gtk = gtk_on_wayland()
     blur = kwin_blur.WaylandBlur(kwin_blur.wayland_display(display))
 
-    assert b"wl_compositor" in blur._globals, sorted(blur._globals)
+    assert b"wl_compositor" in blur.globals, sorted(blur.globals)
     # The same calls the blur makes: a region, rectangles in it, its destruction.
     compositor = blur._bind_global(b"wl_compositor", blur.compositor_interface, 4)
     region = blur._call(compositor, 1, blur.region_interface, ctypes.c_void_p(None))
