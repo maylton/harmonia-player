@@ -149,6 +149,7 @@ class WindowDetailHeaderMixin:
             halign=Gtk.Align.START,
         )
         actions.add_css_class("detail-actions")
+        actions.add_css_class("plain-flow")
 
         play = media_play_button(_("Reproduzir"), size="lg")
         play.set_sensitive(bool(tracks))

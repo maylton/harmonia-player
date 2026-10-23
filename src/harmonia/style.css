@@ -228,10 +228,12 @@ headerbar entry { background: @harmonia_bg; border-radius: 18px; border: 1px sol
 .detail-creator { color: @harmonia_fg; font-size: 13px; font-weight: 650; }
 .detail-meta-muted { color: @harmonia_fg_subtle; font-size: 13px; font-weight: 550; }
 .detail-actions { margin-top: 12px; }
-.detail-actions flowboxchild,
-.detail-actions flowboxchild:hover,
-.detail-actions flowboxchild:active,
-.detail-actions flowboxchild:selected {
+/* Grids whose buttons and cards show their own hover: the cell around them,
+   wider than a card, would light up out of line with it. */
+.plain-flow > flowboxchild,
+.plain-flow > flowboxchild:hover,
+.plain-flow > flowboxchild:active,
+.plain-flow > flowboxchild:selected {
   padding: 0;
   background: transparent;
   border: 0;
