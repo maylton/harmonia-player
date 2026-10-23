@@ -24,7 +24,12 @@ class WindowExpandedPlayerMixin:
         self.player_bar.set_visible(False)
         self.expanded_revealer.set_reveal_child(True)
         self.expanded_revealer.set_can_target(True)
-        GLib.idle_add(self.expanded_close_button.grab_focus)
+        GLib.idle_add(self._focus_expanded_close)
+
+    def _focus_expanded_close(self) -> bool:
+        # Not grab_focus() itself: its True would keep the idle source running.
+        self.expanded_close_button.grab_focus()
+        return GLib.SOURCE_REMOVE
 
     def _hide_expanded_player(self) -> None:
         self.expanded_revealer.set_reveal_child(False)

@@ -180,6 +180,11 @@ scale highlight { background-color: @md_primary; }
 /* Expanded player: Caelestia's dashboard media tab, on the scheme's surface
    instead of the fixed dark design. */
 .expanded-player.md-expressive { background: @md_surface; }
+/* Over the compositor's blur once revealed, as translucent as the window. */
+window.compositor-blur .expanded-player.md-expressive.expanded-revealed {
+  background: alpha(@md_surface, .85);
+  transition: background-color 250ms ease-out;
+}
 .md-expressive .expanded-header {
   border-bottom: none;
   background: alpha(@md_surface_container, .7);
