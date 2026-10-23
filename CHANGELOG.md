@@ -14,6 +14,7 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - instalador: no Arch Linux e derivados, o Harmonia é compilado com o Meson no lugar do Flatpak, com as dependências instaladas pelo pacman e o romaji incluído;
 - corrigido: o seletor Música/Vídeo do player expandido tinha sumido;
 - corrigido: o desfoque do KWin atrás da janela não funcionava, porque o GTK atual não entrega ao Python a conexão Wayland nem a superfície da janela; o Harmonia agora as pede direto à biblioteca do GTK;
+- corrigido: no Hyprland, o build nativo (GTK 4.24) não tinha desfoque atrás da janela, porque esse GTK registra a janela no protocolo de desfoque do Wayland sem dizer que área desfocar; o Harmonia agora pede o desfoque com `backdrop-filter`;
 - corrigido: as capas da página inicial ficavam deslocadas no Linux, porque o título do card media a largura em letras da fonte;
 - corrigido: o selo "E" de conteúdo explícito ficava à esquerda da capa nos downloads, no histórico e na busca; agora fica ao lado do título, e aparece também nas playlists locais.
 
