@@ -35,25 +35,32 @@ def test_a_stuck_video_pipeline_does_not_hold_the_main_loop():
 
     from harmonia import gtk_video
 
+    State = gtk_video.Gst.State
     release = threading.Event()
     applied = []
 
     class Playbin:
         def set_state(self, state):
-            applied.append(state)
-            release.wait(5)  # READY waiting on a streaming thread that never returns
+            applied.append((state, threading.current_thread() is threading.main_thread()))
+            if state == State.READY:
+                release.wait(5)  # waiting on a streaming thread that never returns
 
     class Window(gtk_video.GtkVideoMixin):
         _gtk_video_player = Playbin()
 
     window = Window()
     start = time.monotonic()
-    window._set_gtk_video_state(gtk_video.Gst.State.READY)
-    window._set_gtk_video_state(gtk_video.Gst.State.PAUSED)  # queued behind it
+    window._stop_gtk_video_state()  # down to READY: on its own thread
     assert time.monotonic() - start < 1
+    # While it runs nothing goes up, which would wait for its state lock.
+    window._set_gtk_video_state(State.PAUSED)
+    assert window._gtk_video_stopping()
     release.set()
     for _ in range(100):
-        if len(applied) == 2:
+        if not window._gtk_video_stopping():
             break
         threading.Event().wait(0.02)
-    assert applied == [gtk_video.Gst.State.READY, gtk_video.Gst.State.PAUSED]
+    assert not window._gtk_video_stopping()
+    # Up, on the main loop, where gtk4paintablesink prepares itself.
+    window._set_gtk_video_state(State.PAUSED)
+    assert applied == [(State.READY, False), (State.PAUSED, True)]
