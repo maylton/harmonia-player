@@ -135,6 +135,7 @@ class GtkMediaVariantsMixin:
                     "",
                 )
             except Exception as exc:
+                LOGGER.warning("The official video's audio could not be resolved", exc_info=True)
                 deliver_to_main(
                     self._apply_independent_video,
                     request_id,

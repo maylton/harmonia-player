@@ -245,6 +245,11 @@ window.harmonia-dwm.csd:not(.harmonia-backdrop),
 window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop {
   box-shadow: 0 0 0 12px @harmonia_headerbar_bg;
 }
+/* The expanded player covers the window: the band takes its colour. */
+window.harmonia-dwm.csd.harmonia-expanded:not(.harmonia-backdrop),
+window.harmonia-dwm.csd.harmonia-expanded:not(.harmonia-backdrop):backdrop {
+  box-shadow: 0 0 0 12px #1d1d1d;
+}
 .detail-actions { margin-top: 12px; }
 /* Grids whose buttons and cards show their own hover: the cell around them,
    wider than a card, would light up out of line with it. */

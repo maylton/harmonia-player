@@ -256,6 +256,7 @@ class GtkVideoMixin:
                 )
                 deliver_to_main(self._apply_media_mode, request_id, item_id, stream, "")
             except Exception as exc:
+                LOGGER.warning("GTK video resolve failed", exc_info=True)
                 deliver_to_main(self._apply_media_mode, request_id, item_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="media-mode-video").start()
@@ -272,6 +273,7 @@ class GtkVideoMixin:
             return GLib.SOURCE_REMOVE
 
         if error or stream is None:
+            LOGGER.warning("GTK video could not be opened: %s", error or "no stream")
             self._media_switch_loading = False
             self._media_mode = "audio"
             self._sync_media_mode_ui()
@@ -312,6 +314,7 @@ class GtkVideoMixin:
                 stream.url, stream.request_headers, stream.segment_base
             )
         except Exception as exc:
+            LOGGER.exception("GTK video source could not be prepared")
             self._gtk_video_failed(str(exc))
             return
         # A failed preroll shows in get_state() as the polls below read it.
