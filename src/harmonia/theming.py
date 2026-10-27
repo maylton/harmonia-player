@@ -18,6 +18,9 @@ from . import host, material_scheme
 
 THEMES_DIR = Path(__file__).with_name("themes")
 DEFAULT_THEME = "harmonia"
+# Themes that were merged into another one. An install over an older one can
+# keep their files (Meson does not remove them), so the catalog skips them.
+RENAMED_THEMES = {"windows11": "harmonia"}
 VARIANTS = ("theme", "system", "light", "dark")
 PLATFORMS = ("linux", "windows")
 
@@ -299,6 +302,8 @@ def theme_catalog() -> dict[str, Theme]:
     """Every bundled theme, including those meant for another platform."""
     themes = {}
     for path in sorted(THEMES_DIR.glob("*.json")):
+        if path.stem in RENAMED_THEMES:
+            continue
         theme = Theme.from_dict(json.loads(path.read_text(encoding="utf-8")))
         if theme.id != path.stem:
             raise ThemeError(f"{path.name}: id {theme.id!r} difere do nome do arquivo")
