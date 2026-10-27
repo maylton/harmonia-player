@@ -11,8 +11,11 @@ import gi
 gi.require_version("Gst", "1.0")
 from gi.repository import Gst  # noqa: E402
 
-# Polls, 40 ms apart, for the video playbin to preroll before giving up.
-PREROLL_ATTEMPTS = 100
+# Polls, 40 ms apart, for the video playbin to preroll before giving up: 15 s.
+# Through the stream relay the manifest, the index and the first segment come
+# one bounded request after another; on Windows a 720p H.264 video took over
+# the 4 s this used to allow, and one that played took 3.3 s.
+PREROLL_ATTEMPTS = 375
 # Polls, 60 ms apart, for the first seek to land near the audio clock.
 SETTLE_ATTEMPTS = 75
 # Polls at which the seek is reissued at the audio clock's current position,
