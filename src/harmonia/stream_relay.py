@@ -32,11 +32,14 @@ class StreamRelay:
 
     CHUNK_SIZE = 1024 * 1024
     INDEX_PROBE_SIZE = 4 * 1024 * 1024
+    INDEX_PROBE_READ = 64 * 1024
 
     def __init__(self):
         self.streams: dict[int, tuple[str, dict[str, str]]] = {}
         self.manifests: dict[int, bytes] = {}
         self.generation = 0
+        # The video layers register their streams from a worker thread.
+        self._lock = threading.Lock()
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), _RelayHandler)
         self.server.relay = self
         threading.Thread(
@@ -44,13 +47,14 @@ class StreamRelay:
         ).start()
 
     def _register(self, remote_url: str, headers: dict[str, str] | None = None) -> int:
-        self.generation += 1
-        generation = self.generation
-        self.streams[generation] = (remote_url, dict(headers or {}))
-        for old_generation in list(self.streams):
-            if old_generation < generation - 3:
-                self.streams.pop(old_generation, None)
-                self.manifests.pop(old_generation, None)
+        with self._lock:
+            self.generation += 1
+            generation = self.generation
+            self.streams[generation] = (remote_url, dict(headers or {}))
+            for old_generation in list(self.streams):
+                if old_generation < generation - 3:
+                    self.streams.pop(old_generation, None)
+                    self.manifests.pop(old_generation, None)
         return generation
 
     def _local_uri(self, kind: str, generation: int) -> str:
@@ -93,13 +97,23 @@ class StreamRelay:
         request_headers = dict(headers or {})
         request_headers["Range"] = f"bytes=0-{cls.INDEX_PROBE_SIZE - 1}"
         request = urllib.request.Request(remote_url, headers=request_headers, method="GET")
+        data = b""
         try:
             with urllib.request.urlopen(request, timeout=20) as response:
-                data = response.read(cls.INDEX_PROBE_SIZE)
+                # The sidx sits right after the moov, in the first kilobytes:
+                # stop there instead of downloading the whole probe.
+                while len(data) < cls.INDEX_PROBE_SIZE:
+                    size = min(cls.INDEX_PROBE_READ, cls.INDEX_PROBE_SIZE - len(data))
+                    chunk = response.read(size)
+                    if not chunk:
+                        break
+                    data += chunk
+                    ranges = cls._locate_mp4_segment_base(data)
+                    if ranges is not None:
+                        return ranges
         except Exception:
             LOGGER.debug("Could not probe MP4 SegmentBase", exc_info=True)
-            return None
-        return cls._locate_mp4_segment_base(data)
+        return None
 
     def uri_for(self, remote_url: str, headers: dict[str, str] | None = None) -> str:
         return self._local_uri("stream", self._register(remote_url, headers))
@@ -108,15 +122,21 @@ class StreamRelay:
         self,
         remote_url: str,
         headers: dict[str, str] | None = None,
+        ranges: RangeBounds | None = None,
     ) -> str | None:
-        """Expose an indexed adaptive MP4 as a local DASH SegmentBase asset."""
+        """Expose an indexed adaptive MP4 as a local DASH SegmentBase asset.
+
+        ``ranges`` are the init and index ranges YouTube gives with the format;
+        only without them is the start of the file downloaded to find them.
+        """
         values = urllib.parse.parse_qs(urllib.parse.urlsplit(remote_url).query)
         mime_type = str((values.get("mime") or [""])[0]).lower()
         gir = str((values.get("gir") or [""])[0]).lower()
         if mime_type != "video/mp4" or gir != "yes":
             return None
 
-        ranges = self._probe_mp4_segment_base(remote_url, headers)
+        if ranges is None:
+            ranges = self._probe_mp4_segment_base(remote_url, headers)
         if ranges is None:
             return None
 

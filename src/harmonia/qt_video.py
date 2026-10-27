@@ -442,9 +442,11 @@ class QtVideoController(QObject):
         self._sync_timer.start()  # stops itself when the music comes back
         try:
             self._video_player.set_state(Gst.State.READY)
+            # The ranges YouTube gave spare a probe over the network on the UI thread.
             source_uri = self.playback.player._source_uri(
                 stream.url,
                 stream.request_headers,
+                stream.segment_base,
             )
             self._video_player.set_property("uri", source_uri)
             result = self._video_player.set_state(Gst.State.PAUSED)

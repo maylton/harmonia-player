@@ -58,6 +58,13 @@ class VideoStreamInfo:
     def valid_at(self, timestamp: int, margin: int = 90) -> bool:
         return self.expires_at is None or timestamp + margin < self.expires_at
 
+    @property
+    def segment_base(self) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        """The init and index byte ranges of an indexed MP4, when YouTube gave both."""
+        if self.init_range and self.index_range:
+            return self.init_range, self.index_range
+        return None
+
 
 _VIDEO_ID_CACHE: dict[str, str] = {}
 _VIDEO_STREAM_CACHE: dict[str, VideoStreamInfo] = {}

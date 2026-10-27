@@ -383,6 +383,9 @@ window.harmonia-backdrop .sidebar ~ stack {
   transition: background-color 250ms ease-out, box-shadow 250ms ease-out;
 }
 window.harmonia-backdrop.harmonia-dwm.csd:backdrop { box-shadow: 0 0 0 12px @harmonia_opaque_sidebar_bg; }
+/* Without Mica (Windows 10) the band takes the colour the window's edges are. */
+window.harmonia-dwm.csd:not(.harmonia-backdrop),
+window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop { box-shadow: 0 0 0 12px @harmonia_sidebar_bg; }
 window.harmonia-backdrop:backdrop .app-root,
 window.harmonia-backdrop:backdrop .sidebar,
 window.harmonia-backdrop:backdrop .player-bar { background-color: @harmonia_opaque_sidebar_bg; }

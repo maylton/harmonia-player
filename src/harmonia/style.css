@@ -237,6 +237,14 @@ window.harmonia-dwm.csd:backdrop {
   border-radius: 0;
   outline: none;
 }
+/* GTK keeps a 12px resize band around every CSD window, shadow or not
+   (RESIZE_HANDLE_SIZE in gtkwindow.c). DWM frames the whole surface, band
+   included, and without a material behind it the transparent band showed as
+   a frame inside the window: opaque themes paint it the colour of the bars. */
+window.harmonia-dwm.csd:not(.harmonia-backdrop),
+window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop {
+  box-shadow: 0 0 0 12px @harmonia_headerbar_bg;
+}
 .detail-actions { margin-top: 12px; }
 /* Grids whose buttons and cards show their own hover: the cell around them,
    wider than a card, would light up out of line with it. */

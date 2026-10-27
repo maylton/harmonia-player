@@ -232,11 +232,17 @@ class NativePlayer:
         self,
         uri: str,
         request_headers: dict[str, str] | None = None,
+        segment_base: tuple[tuple[int, int], tuple[int, int]] | None = None,
     ) -> str:
+        """The local URI GStreamer opens for ``uri``.
+
+        Without ``segment_base`` an indexed MP4 video is probed over the
+        network: call it from a worker thread then, not the main loop.
+        """
         scheme = urllib.parse.urlsplit(uri).scheme
         if scheme == "file" or (scheme == "http" and "googlevideo.com" not in uri):
             return uri
-        dash_uri = self._relay.dash_uri_for(uri, request_headers)
+        dash_uri = self._relay.dash_uri_for(uri, request_headers, segment_base)
         if dash_uri is not None:
             return dash_uri
         return self._relay.uri_for(uri, request_headers)
