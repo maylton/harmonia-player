@@ -157,6 +157,20 @@ def _kind_for_id(item_id: str, default: str) -> str:
     return "songs" if item_id else default
 
 
+# Music video types that are a video themselves: an official music video, or
+# one uploaded by a user. A song (MUSIC_VIDEO_TYPE_ATV) is an audio track whose
+# video, if any, has to be looked up (video.find_video_variant).
+_VIDEO_TYPES = frozenset({"MUSIC_VIDEO_TYPE_OMV", "MUSIC_VIDEO_TYPE_UGC"})
+
+
+def _music_video_type(renderer: dict[str, Any]) -> str | None:
+    for node in _walk(renderer):
+        config = node.get("watchEndpointMusicConfig")
+        if isinstance(config, dict) and config.get("musicVideoType"):
+            return str(config["musicVideoType"])
+    return None
+
+
 def _set_video_id(renderer: dict[str, Any]) -> str | None:
     for node in _walk(renderer):
         if node.get("playlistSetVideoId"):
@@ -218,6 +232,9 @@ def parse_library_items(payload: dict[str, Any], kind: str = "item") -> list[Lib
                 continue
             seen.add(stable_id)
             actual_kind = _kind_for_id(item_id, kind) if kind == "auto" else kind
+            if actual_kind == "songs" and _music_video_type(renderer) in _VIDEO_TYPES:
+                # Otherwise "Vídeo" searched for a video matching the video.
+                actual_kind = "videos"
             items.append(
                 LibraryItem(
                     stable_id,
