@@ -397,8 +397,9 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
         def get_dark(self):
             return True
 
-    class WindowStub(WindowPreferencesMixin):
+    class WindowStub(Widget, WindowPreferencesMixin):
         def __init__(self):
+            super().__init__()
             self.preferences = Preferences(theme="harmonia")
             self.expanded_surface = Widget()
             self.expanded_revealer = Revealer()
@@ -414,14 +415,18 @@ def test_expanded_player_shows_the_material_once_revealed(monkeypatch):
     window.expanded_revealer.reveal = True
     window._update_expanded_reveal()
     assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
-    # Revealed: the pages are hidden and only the material shows.
+    assert "harmonia-expanded" not in window.classes
+    # Revealed: the pages are hidden and only the material shows; the resize
+    # band around the window takes the expanded player's colour.
     window.expanded_revealer.revealed = True
     window._update_expanded_reveal()
     assert window.root.opacity == 0 and "expanded-revealed" in window.expanded_surface.classes
+    assert "harmonia-expanded" in window.classes
     # Hiding: opaque again at once.
     window.expanded_revealer.reveal = False
     window._update_expanded_reveal()
     assert window.root.opacity == 1 and "expanded-revealed" not in window.expanded_surface.classes
+    assert "harmonia-expanded" not in window.classes
 
     # Without the material (other themes) the expanded player keeps its colour.
     window._apply_expanded_material(False)
