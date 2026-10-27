@@ -359,7 +359,7 @@ class GtkVideoMixin:
         if video_player is None:
             return GLib.SOURCE_REMOVE
 
-        result, state, _pending = video_player.get_state(0)
+        result, state, pending = video_player.get_state(0)
         if result == Gst.StateChangeReturn.FAILURE:
             self._gtk_video_failed(_("O GStreamer falhou ao preparar os frames do vídeo."))
             return GLib.SOURCE_REMOVE
@@ -372,8 +372,14 @@ class GtkVideoMixin:
                     attempt + 1,
                 )
             else:
+                LOGGER.warning(
+                    "GTK video did not preroll: state=%s pending=%s",
+                    state.value_nick,
+                    pending.value_nick,
+                )
                 self._gtk_video_failed(_("O vídeo demorou demais para iniciar."))
             return GLib.SOURCE_REMOVE
+        LOGGER.info("GTK video prerolled after about %d ms", attempt * 40)
 
         target_us = max(0, int(self._playback_position_us()))
         if target_us <= video_sync.START_WITHOUT_SEEK_US:
