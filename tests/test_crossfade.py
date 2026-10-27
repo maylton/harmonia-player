@@ -69,8 +69,10 @@ class FakeGLib:
     SOURCE_REMOVE = False
     SOURCE_CONTINUE = True
 
+    PRIORITY_DEFAULT = 0
+
     @staticmethod
-    def idle_add(callback, *args):
+    def idle_add(callback, *args, priority=None):
         callback(*args)
 
     @staticmethod
