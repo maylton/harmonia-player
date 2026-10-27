@@ -10,13 +10,14 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 
 from .i18n import _
 from .models import (
     LibraryItem,
 )
 from .track_rows import TRACK_COVER_SIZE, DetailTrackRow
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -171,8 +172,8 @@ class WindowDetailMixin:
             try:
                 items = self.youtube.radio(track.id)
             except Exception as exc:
-                GLib.idle_add(done, [], str(exc))
+                deliver_to_main(done, [], str(exc))
                 return
-            GLib.idle_add(done, items, None)
+            deliver_to_main(done, items, None)
 
         threading.Thread(target=worker, daemon=True, name="track-radio").start()

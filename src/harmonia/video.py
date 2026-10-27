@@ -292,7 +292,8 @@ def _video_compatibility(fmt: dict[str, Any]) -> int:
     """How well this system plays the format's codec; -1 when it cannot.
 
     On Windows the order stays the software one, H.264 first: D3D11 and D3D12
-    decode H.264 on the GPU as well, while 1080p VP9 there never prerolled.
+    decode it on the GPU as well, and it is the codec the video layer was
+    verified with there.
     """
     caps = _codec_caps(fmt)
     decoder = _video_decoders().get(caps or "")
@@ -439,8 +440,8 @@ def resolve_video_stream(
             score = min(score, 3)
             if host.IS_WINDOWS and not _is_mp4(pair[0]):
                 # Only an indexed MP4 gets the relay's local DASH manifest
-                # (stream_relay.py); a WebM, read as one sequential stream,
-                # did not preroll in time on Windows.
+                # (stream_relay.py), which seeks by time; a WebM is read as
+                # one sequential stream, and was not verified on Windows.
                 score = min(score, 2)
             return score
 

@@ -13,6 +13,7 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from ..accounts import YouTubeIdentity  # noqa: E402
 from ..i18n import _  # noqa: E402
+from ..ui import deliver_to_main  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ def identity_row(window) -> Adw.ComboRow:
         except Exception:
             LOGGER.debug("Não foi possível listar os canais da conta", exc_info=True)
             return
-        GLib.idle_add(loaded, identities)
+        deliver_to_main(loaded, identities)
 
     if window.storage.load_cookie():
         threading.Thread(target=worker, daemon=True, name="account-identities").start()

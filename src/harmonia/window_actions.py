@@ -18,6 +18,7 @@ from .models import (
 )
 from .playlist_position import with_item
 from .ui import (
+    deliver_to_main,
     set_icon_selected,
 )
 
@@ -36,10 +37,10 @@ class WindowActionsMixin:
             try:
                 result = self.youtube.mutate(operation)
                 self.storage.log_action(action, target, "completed")
-                GLib.idle_add(done, result, None)
+                deliver_to_main(done, result, None)
             except Exception as exc:
                 self.storage.log_action(action, target, "failed", str(exc))
-                GLib.idle_add(done, None, str(exc))
+                deliver_to_main(done, None, str(exc))
 
         def done(result, error):
             if error:

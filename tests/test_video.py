@@ -426,8 +426,8 @@ def test_windows_takes_indexed_mp4_and_h264_first(monkeypatch):
     monkeypatch.setattr(host, "IS_WINDOWS", True)
     hardware = {"video/x-h264": "hardware", "video/x-vp9": "hardware", "video/x-av1": "hardware"}
     monkeypatch.setattr(video, "_video_decoders", lambda: hardware)
-    # A 1080p WebM VP9 never prerolled there: the indexed MP4 wins, and at the
-    # same height H.264, which D3D decodes on the GPU too.
+    # The indexed MP4, which the relay serves as DASH, wins over the WebM, and
+    # at the same height H.264, which D3D decodes on the GPU too.
     formats = [
         _adaptive(1080, "vp9", 248, mime="video/webm"),
         _adaptive(1080, "avc1.640028", 137),

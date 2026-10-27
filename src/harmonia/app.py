@@ -31,7 +31,7 @@ from .preferences import Preferences
 from .services import YouTubeMusicService
 from .theming import DEFAULT_THEME
 from .track_rows import DetailTrackRow, HomeSongRow
-from .ui import PageStack
+from .ui import PageStack, deliver_to_main
 from .window_account import WindowAccountMixin
 from .window_actions import WindowActionsMixin
 from .window_artist import WindowArtistMixin
@@ -118,7 +118,7 @@ class HarmoniaWindow(
         self.downloads = DownloadManager(
             self.storage,
             self.youtube,
-            lambda record: GLib.idle_add(self._download_updated, record),
+            lambda record: deliver_to_main(self._download_updated, record),
         )
         self.sections = self.storage.load_library()
         self.home_sections = self.storage.load_home()

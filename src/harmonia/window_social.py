@@ -7,7 +7,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib
+from gi.repository import Adw, Gio
 
 from .i18n import _
 from .social import (
@@ -19,6 +19,7 @@ from .social import (
     playback_started_at,
     scrobble_ready,
 )
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class WindowSocialMixin:
                 LOGGER.debug("Falha na integração %s", name, exc_info=True)
                 result, error = None, str(exc)
             if completed:
-                GLib.idle_add(completed, result, error)
+                deliver_to_main(completed, result, error)
 
         threading.Thread(target=worker, daemon=True, name=f"social-{name}").start()
 

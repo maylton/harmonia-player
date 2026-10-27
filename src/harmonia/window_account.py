@@ -17,6 +17,7 @@ from .i18n import _, ngettext
 from .models import (
     ExploreData,
 )
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,9 +112,9 @@ class WindowAccountMixin:
         def worker():
             try:
                 sections = self.youtube.sync_library()
-                GLib.idle_add(self._sync_done, sections, None)
+                deliver_to_main(self._sync_done, sections, None)
             except Exception as exc:
-                GLib.idle_add(self._sync_done, None, str(exc))
+                deliver_to_main(self._sync_done, None, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -125,9 +126,9 @@ class WindowAccountMixin:
         def worker():
             try:
                 sections = self.youtube.sync_home()
-                GLib.idle_add(self._home_sync_done, sections, None)
+                deliver_to_main(self._home_sync_done, sections, None)
             except Exception as exc:
-                GLib.idle_add(self._home_sync_done, None, str(exc))
+                deliver_to_main(self._home_sync_done, None, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -139,9 +140,9 @@ class WindowAccountMixin:
         def worker():
             try:
                 data = self.youtube.sync_explore()
-                GLib.idle_add(self._explore_sync_done, data, None)
+                deliver_to_main(self._explore_sync_done, data, None)
             except Exception as exc:
-                GLib.idle_add(self._explore_sync_done, None, str(exc))
+                deliver_to_main(self._explore_sync_done, None, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -230,7 +231,7 @@ class WindowAccountMixin:
                 with urllib.request.urlopen(request, timeout=15) as response:
                     data = response.read(2 * 1024 * 1024)
                 target.write_bytes(data)
-                GLib.idle_add(self._show_account_avatar_file, target, request_id)
+                deliver_to_main(self._show_account_avatar_file, target, request_id)
             except Exception:
                 LOGGER.debug("Não foi possível baixar o avatar da conta", exc_info=True)
 
@@ -244,7 +245,7 @@ class WindowAccountMixin:
         def worker() -> None:
             try:
                 profile = self.youtube.account_profile()
-                GLib.idle_add(self._account_profile_loaded, profile)
+                deliver_to_main(self._account_profile_loaded, profile)
             except Exception:
                 LOGGER.debug(
                     "Não foi possível atualizar o perfil; mantendo o avatar em cache",

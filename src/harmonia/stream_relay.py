@@ -38,8 +38,6 @@ class StreamRelay:
         self.streams: dict[int, tuple[str, dict[str, str]]] = {}
         self.manifests: dict[int, bytes] = {}
         self.generation = 0
-        # The video layers register their streams from a worker thread.
-        self._lock = threading.Lock()
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), _RelayHandler)
         self.server.relay = self
         threading.Thread(
@@ -47,14 +45,13 @@ class StreamRelay:
         ).start()
 
     def _register(self, remote_url: str, headers: dict[str, str] | None = None) -> int:
-        with self._lock:
-            self.generation += 1
-            generation = self.generation
-            self.streams[generation] = (remote_url, dict(headers or {}))
-            for old_generation in list(self.streams):
-                if old_generation < generation - 3:
-                    self.streams.pop(old_generation, None)
-                    self.manifests.pop(old_generation, None)
+        self.generation += 1
+        generation = self.generation
+        self.streams[generation] = (remote_url, dict(headers or {}))
+        for old_generation in list(self.streams):
+            if old_generation < generation - 3:
+                self.streams.pop(old_generation, None)
+                self.manifests.pop(old_generation, None)
         return generation
 
     def _local_uri(self, kind: str, generation: int) -> str:

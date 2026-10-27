@@ -9,11 +9,12 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib
+from gi.repository import Adw, Gdk
 
 from .i18n import _
 from .playback_report import playback_report
 from .playback_state import stream_recovery
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ class WindowPlaybackRecoveryMixin:
                         request_id, self.youtube.resolve_stream(item.id, force=True)
                     )
                 except Exception as exc:
-                    GLib.idle_add(self._player_recovery_failed, request_id, str(exc))
+                    deliver_to_main(self._player_recovery_failed, request_id, str(exc))
 
             threading.Thread(target=recover, daemon=True, name="stream-recovery").start()
             return False

@@ -8,12 +8,12 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 
 from .i18n import _
 from .models import LibraryItem
 from .playback_state import filter_new_recommendations, radio_seed_for_autoplay
-from .ui import set_icon_selected
+from .ui import deliver_to_main, set_icon_selected
 
 
 class WindowAutoplayMixin:
@@ -54,9 +54,9 @@ class WindowAutoplayMixin:
         def worker():
             try:
                 recommendations = self.youtube.radio(seed.id)
-                GLib.idle_add(self._autoplay_loaded, request_id, recommendations, None)
+                deliver_to_main(self._autoplay_loaded, request_id, recommendations, None)
             except Exception as exc:
-                GLib.idle_add(self._autoplay_loaded, request_id, None, str(exc))
+                deliver_to_main(self._autoplay_loaded, request_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
