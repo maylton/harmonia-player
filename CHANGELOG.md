@@ -14,7 +14,9 @@ A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso 
 - o selo "E" de conteúdo explícito ficou menor e mais discreto, e no player expandido acompanha o título mesmo quando ele gira;
 - a biblioteca usa os mesmos cartões da página inicial, em quantas colunas couberem, e o hover acende só o cartão, não a célula da grade ao redor dele, que ficava desalinhada da capa e do texto;
 - Windows: com os temas que não são o Harmonia, a janela ganhava uma moldura por dentro, como uma janela dentro de outra; agora o Windows desenha a sombra e os cantos arredondados em todos os temas;
-- Windows: a primeira abertura depois de instalar demorava muito, porque o registro de plugins do GStreamer era montado do zero antes de a janela aparecer; o instalador agora prepara esse registro ao terminar.
+- Windows: a primeira abertura depois de instalar demorava muito, porque o registro de plugins do GStreamer era montado do zero antes de a janela aparecer; o instalador agora prepara esse registro ao terminar;
+- Windows: a moldura dentro da janela continuava nos temas que não são o Harmonia: era a faixa de 12px que o GTK reserva para redimensionar a janela, transparente e emoldurada pelo Windows; agora ela tem a cor das barras do tema;
+- ao trocar para o vídeo, o player congelava até o Windows fechá-lo: para os vídeos MP4 em alta resolução, até 4 MiB eram baixados na thread da interface para achar o índice do arquivo. Os intervalos que o YouTube já informa tornam esse download desnecessário, e quando falta algum ele para assim que encontra o índice.
 
 ## 1.0.0-rc.1 — 2026-10-23
 

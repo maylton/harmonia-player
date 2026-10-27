@@ -274,6 +274,18 @@ def test_every_windows_theme_drops_gtks_own_frame(monkeypatch):
     assert marked == [(gtk_backdrop.DWM_CSS_CLASS, True)]
 
 
+def test_opaque_themes_paint_gtks_resize_band_inside_dwms_frame():
+    from harmonia.theming import THEMES_DIR, render_gtk_css, theme_catalog
+
+    # GTK keeps a 12px transparent resize band even without a shadow; DWM
+    # frames it, so left transparent it showed as a frame inside the window.
+    base_css = (THEMES_DIR.parent / "style.css").read_text(encoding="utf-8")
+    for theme in theme_catalog().values():
+        css = render_gtk_css(theme, dark=True, base_css=base_css, css_variables=True)
+        rule = css.rindex("window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop")
+        assert "box-shadow: 0 0 0 12px @harmonia_" in css[rule : css.index("}", rule)]
+
+
 def test_popovers_take_the_flyout_material_without_arrow(monkeypatch):
     from harmonia import windows_backdrop
     from harmonia.gtk_backdrop import POPOVER_CSS_CLASS, GtkWindowBackdrops

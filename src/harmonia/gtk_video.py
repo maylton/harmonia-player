@@ -306,7 +306,11 @@ class GtkVideoMixin:
         self._gtk_video_last_sync_seek = 0.0
         try:
             video_player.set_state(Gst.State.READY)
-            source_uri = self.player._source_uri(stream.url, stream.request_headers)
+            # The ranges YouTube gave spare a probe over the network, which
+            # here, on the main loop, froze the window until Windows closed it.
+            source_uri = self.player._source_uri(
+                stream.url, stream.request_headers, stream.segment_base
+            )
             video_player.set_property("uri", source_uri)
             result = video_player.set_state(Gst.State.PAUSED)
             if result == Gst.StateChangeReturn.FAILURE:

@@ -121,3 +121,27 @@ def test_mp4_segment_base_is_located_from_the_sidx_box():
 def test_only_indexed_mp4_video_gets_a_dash_manifest(relay):
     assert relay.dash_uri_for("https://media.example/v?mime=audio%2Fwebm&gir=yes") is None
     assert relay.dash_uri_for("https://media.example/v?mime=video%2Fmp4&gir=no") is None
+
+
+def test_known_ranges_build_the_manifest_without_touching_the_network(relay):
+    # The video layers call this on the UI thread: a download here froze it.
+    url = "https://media.example/v?mime=video%2Fmp4&gir=yes&dur=10.0&clen=5120&itag=399"
+    uri = relay.dash_uri_for(url, ranges=((0, 739), (740, 1515)))
+    assert uri is not None and "/manifest/" in uri
+    assert relay.upstream.ranges == []
+    response, body = fetch(uri)
+    assert response.status == 200
+    assert b'indexRange="740-1515"' in body and b'range="0-739"' in body
+
+
+def test_the_probe_stops_reading_once_the_sidx_is_found(monkeypatch):
+    head = box(b"ftyp", b"isom") + box(b"moov", b"\0" * 20)
+    data = head + box(b"sidx", b"\0" * 12) + b"\0" * 1_000_000
+    response = Response(data, "")
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout=None: response)
+    monkeypatch.setattr(StreamRelay, "INDEX_PROBE_READ", 16)
+
+    ranges = StreamRelay._probe_mp4_segment_base("https://media.example/v", {})
+    assert ranges == ((0, len(head) - 1), (len(head), len(head) + 19))
+    # Most of the file is still unread.
+    assert len(response.body) > 999_000
