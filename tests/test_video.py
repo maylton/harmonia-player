@@ -405,8 +405,9 @@ FORMATS = [
 
 
 def test_video_reaches_1080p_with_a_codec_this_system_decodes(monkeypatch):
-    from harmonia import video
+    from harmonia import host, video
 
+    monkeypatch.setattr(host, "IS_WINDOWS", False)
     # Software only, without a fast AV1 decoder (libaom is left out).
     monkeypatch.setattr(
         video, "_video_decoders", lambda: {"video/x-h264": "software", "video/x-vp9": "software"}
@@ -417,6 +418,24 @@ def test_video_reaches_1080p_with_a_codec_this_system_decodes(monkeypatch):
     hardware = {"video/x-h264": "hardware", "video/x-vp9": "hardware", "video/x-av1": "hardware"}
     monkeypatch.setattr(video, "_video_decoders", lambda: hardware)
     assert _resolve_among(FORMATS).itag == 399  # the graphics card takes the newest codec
+
+
+def test_windows_takes_indexed_mp4_and_h264_first(monkeypatch):
+    from harmonia import host, video
+
+    monkeypatch.setattr(host, "IS_WINDOWS", True)
+    hardware = {"video/x-h264": "hardware", "video/x-vp9": "hardware", "video/x-av1": "hardware"}
+    monkeypatch.setattr(video, "_video_decoders", lambda: hardware)
+    # A 1080p WebM VP9 never prerolled there: the indexed MP4 wins, and at the
+    # same height H.264, which D3D decodes on the GPU too.
+    formats = [
+        _adaptive(1080, "vp9", 248, mime="video/webm"),
+        _adaptive(1080, "avc1.640028", 137),
+        _adaptive(1080, "av01.0.08M.08", 399),
+    ]
+    assert _resolve_among(formats).itag == 137
+    # Only a WebM there: it is still played.
+    assert _resolve_among(formats[:1]).itag == 248
 
 
 def test_video_beside_the_audio_skips_the_360p_muxed_format(monkeypatch):

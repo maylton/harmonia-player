@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from typing import Any
 
+from . import host
 from .i18n import _
 from .innertube import (
     ORIGIN,
@@ -288,13 +289,21 @@ def _codec_caps(fmt: dict[str, Any]) -> str | None:
 
 
 def _video_compatibility(fmt: dict[str, Any]) -> int:
-    """How well this system plays the format's codec; -1 when it cannot."""
+    """How well this system plays the format's codec; -1 when it cannot.
+
+    On Windows the order stays the software one, H.264 first: D3D11 and D3D12
+    decode H.264 on the GPU as well, while 1080p VP9 there never prerolled.
+    """
     caps = _codec_caps(fmt)
     decoder = _video_decoders().get(caps or "")
     if decoder is None:
         return -1
     on_hardware, in_software = _CODEC_PREFERENCE[caps]
-    return on_hardware if decoder == "hardware" else in_software
+    return on_hardware if decoder == "hardware" and not host.IS_WINDOWS else in_software
+
+
+def _is_mp4(fmt: dict[str, Any]) -> bool:
+    return str(fmt.get("mimeType") or "").lower().startswith("video/mp4")
 
 
 def _byte_range(fmt: dict[str, Any], key: str) -> tuple[int, int] | None:
@@ -423,9 +432,17 @@ def resolve_video_stream(
 
         def access(pair: tuple[dict[str, Any], bool]) -> int:
             score = _video_random_access_score(*pair)
+            if not allow_video_only:
+                return score
             # Played beside the audio, a muxed format seeks no better than an
             # indexed one; ranking it above them chose 360p over 1080p.
-            return min(score, 3) if allow_video_only else score
+            score = min(score, 3)
+            if host.IS_WINDOWS and not _is_mp4(pair[0]):
+                # Only an indexed MP4 gets the relay's local DASH manifest
+                # (stream_relay.py); a WebM, read as one sequential stream,
+                # did not preroll in time on Windows.
+                score = min(score, 2)
+            return score
 
         best_access = max(access(pair) for pair in candidates)
         access_pool = [pair for pair in candidates if access(pair) == best_access]

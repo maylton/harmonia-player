@@ -866,6 +866,41 @@ def test_podcast_multirow_episode_is_playable():
     ]
 
 
+def test_videos_on_the_home_page_are_videos_not_songs():
+    from harmonia.innertube import parse_library_items
+
+    def card(video_id, music_video_type):
+        endpoint = {"videoId": video_id}
+        if music_video_type:
+            endpoint["watchEndpointMusicSupportedConfigs"] = {
+                "watchEndpointMusicConfig": {"musicVideoType": music_video_type}
+            }
+        return {
+            "musicTwoRowItemRenderer": {
+                "title": {"runs": [{"text": video_id}]},
+                "navigationEndpoint": {"watchEndpoint": endpoint},
+            }
+        }
+
+    payload = {
+        "contents": [
+            card("song", "MUSIC_VIDEO_TYPE_ATV"),
+            card("clip", "MUSIC_VIDEO_TYPE_OMV"),
+            card("upload", "MUSIC_VIDEO_TYPE_UGC"),
+            card("episode", "MUSIC_VIDEO_TYPE_PODCAST_EPISODE"),
+            card("unknown", None),
+        ]
+    }
+    # A video is its own video: "Vídeo" no longer searches for a matching one.
+    assert {item.id: item.kind for item in parse_library_items(payload, "auto")} == {
+        "song": "songs",
+        "clip": "videos",
+        "upload": "videos",
+        "episode": "songs",
+        "unknown": "songs",
+    }
+
+
 def test_player_response_retries_transient_errors_and_reports_the_reason(monkeypatch):
     import json
     import urllib.error
