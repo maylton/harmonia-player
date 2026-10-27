@@ -12,12 +12,13 @@ headerbar {
 /* Windows: DWM frames the window around GTK's 12px resize band (style.css),
    so the header's top highlight drew a line across the window 12px inside
    the frame. The band takes the colour of what it borders: the action bar
-   below, the sidebar on the left, the header elsewhere. */
+   below, the sidebar on the left, the header elsewhere. GTK paints shadows
+   in list order, the last on top, unlike the web. */
 window.harmonia-dwm.csd:not(.harmonia-backdrop) headerbar { box-shadow: none; }
 window.harmonia-dwm.csd:not(.harmonia-backdrop),
 window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop {
-  box-shadow: 0 12px @harmonia_sidebar_bg, -12px 0 @harmonia_sidebar_bg,
-    0 0 0 12px @harmonia_headerbar_bg;
+  box-shadow: 0 0 0 12px @harmonia_headerbar_bg, -12px 0 @harmonia_sidebar_bg,
+    0 12px @harmonia_sidebar_bg;
 }
 headerbar entry, entry {
   border-radius: 3px;
