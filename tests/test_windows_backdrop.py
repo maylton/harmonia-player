@@ -282,8 +282,12 @@ def test_opaque_themes_paint_gtks_resize_band_inside_dwms_frame():
     base_css = (THEMES_DIR.parent / "style.css").read_text(encoding="utf-8")
     for theme in theme_catalog().values():
         css = render_gtk_css(theme, dark=True, base_css=base_css, css_variables=True)
-        rule = css.rindex("window.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop")
-        assert "box-shadow: 0 0 0 12px @harmonia_" in css[rule : css.index("}", rule)]
+        rule = css.rindex("\nwindow.harmonia-dwm.csd:not(.harmonia-backdrop):backdrop")
+        assert "0 0 0 12px @harmonia_" in css[rule : css.index("}", rule)], theme.id
+        # Under the expanded player the band takes the player's colour instead.
+        expanded = "\nwindow.harmonia-dwm.csd.harmonia-expanded:not(.harmonia-backdrop):backdrop"
+        rule = css.rindex(expanded)
+        assert "0 0 0 12px" in css[rule : css.index("}", rule)], theme.id
 
 
 def test_popovers_take_the_flyout_material_without_arrow(monkeypatch):

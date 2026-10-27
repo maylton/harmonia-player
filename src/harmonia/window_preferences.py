@@ -235,6 +235,14 @@ class WindowPreferencesMixin:
             # Back to opaque at once, before the player slides away.
             surface.remove_css_class("expanded-revealed")
         self.root.set_opacity(0 if revealed else 1)
+        # On Windows GTK's resize band, inside DWM's frame, takes the expanded
+        # player's colour while it covers the window (style.css).
+        set_css_class(
+            self,
+            "harmonia-expanded",
+            self.expanded_revealer.get_reveal_child()
+            and self.expanded_revealer.get_child_revealed(),
+        )
 
     def _reapply_appearance(self) -> bool:
         self._apply_appearance_preferences()
