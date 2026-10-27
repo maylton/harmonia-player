@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import queue
 import threading
 import time
 from contextlib import suppress
@@ -305,22 +306,48 @@ class GtkVideoMixin:
         generation = self._gtk_video_generation
         self._gtk_video_last_sync_seek = 0.0
         try:
-            video_player.set_state(Gst.State.READY)
             # The ranges YouTube gave spare a probe over the network, which
             # here, on the main loop, froze the window until Windows closed it.
             source_uri = self.player._source_uri(
                 stream.url, stream.request_headers, stream.segment_base
             )
-            video_player.set_property("uri", source_uri)
-            result = video_player.set_state(Gst.State.PAUSED)
-            if result == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError(_("A camada de vídeo não conseguiu iniciar o preroll"))
         except Exception as exc:
             self._gtk_video_failed(str(exc))
             return
+        # A failed preroll shows in get_state() as the polls below read it.
+        self._set_gtk_video_state(Gst.State.PAUSED, uri=source_uri)
 
         self._watch_gtk_video_transport()
         GLib.timeout_add(40, self._finish_gtk_video_preroll, generation, 0)
+
+    def _set_gtk_video_state(self, state: Gst.State, *, uri: str | None = None) -> None:
+        """Change the video playbin's state on its own thread, in call order.
+
+        Going down to READY waits for the streaming threads, and one stuck in
+        the pipeline (a video that never prerolled) blocked the main loop
+        until Windows closed the app; a change waiting for the state lock it
+        held blocked it as well. ``uri`` replaces the source first.
+        """
+        if getattr(self, "_gtk_video_states", None) is None:
+            self._gtk_video_states = queue.SimpleQueue()
+            threading.Thread(
+                target=self._apply_gtk_video_states, daemon=True, name="gtk-video-state"
+            ).start()
+        self._gtk_video_states.put((state, uri))
+
+    def _apply_gtk_video_states(self) -> None:
+        while True:
+            state, uri = self._gtk_video_states.get()
+            video_player = self._gtk_video_player
+            if video_player is None:
+                continue
+            try:
+                if uri is not None:
+                    video_player.set_state(Gst.State.READY)
+                    video_player.set_property("uri", uri)
+                video_player.set_state(state)
+            except Exception:
+                LOGGER.exception("GTK video state change to %s failed", state)
 
     def _finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
         if generation != self._gtk_video_generation or self._media_mode != "video":
@@ -360,10 +387,8 @@ class GtkVideoMixin:
         # demux/source seeking becomes available. The video is muted, so this is
         # invisible and inaudible to the user.
         LOGGER.info("GTK video initial seek was not accepted in PAUSED; warming hidden pipeline")
-        result = video_player.set_state(Gst.State.PLAYING)
-        if result == Gst.StateChangeReturn.FAILURE:
-            self._gtk_video_failed(_("O fluxo de vídeo não conseguiu preparar a sincronização."))
-            return GLib.SOURCE_REMOVE
+        # A failure shows in the retry's get_state().
+        self._set_gtk_video_state(Gst.State.PLAYING)
         GLib.timeout_add(100, self._retry_gtk_video_initial_seek, generation, 0)
         return GLib.SOURCE_REMOVE
 
@@ -385,7 +410,7 @@ class GtkVideoMixin:
             accurate=True,
         ):
             if not self._playback_is_playing():
-                video_player.set_state(Gst.State.PAUSED)
+                self._set_gtk_video_state(Gst.State.PAUSED)
             LOGGER.info(
                 "GTK video initial seek accepted after warm-up at %d us (attempt %d)",
                 target_us,
@@ -494,7 +519,7 @@ class GtkVideoMixin:
         if video_player is None:
             return
 
-        video_player.set_state(
+        self._set_gtk_video_state(
             Gst.State.PLAYING if self._playback_is_playing() else Gst.State.PAUSED
         )
         self._media_switch_loading = False
@@ -525,10 +550,14 @@ class GtkVideoMixin:
         if video_player is None:
             return GLib.SOURCE_CONTINUE
 
-        _result, state, _pending = video_player.get_state(0)
+        _result, state, pending = video_player.get_state(0)
         desired = Gst.State.PLAYING if self._playback_is_playing() else Gst.State.PAUSED
-        if state in (Gst.State.PLAYING, Gst.State.PAUSED) and state != desired:
-            video_player.set_state(desired)
+        if (
+            state in (Gst.State.PLAYING, Gst.State.PAUSED)
+            and state != desired
+            and pending == Gst.State.VOID_PENDING
+        ):
+            self._set_gtk_video_state(desired)
 
         ok, video_ns = video_player.query_position(Gst.Format.TIME)
         if not ok:
@@ -550,15 +579,13 @@ class GtkVideoMixin:
         self._gtk_video_generation += 1
         self._gtk_video_last_sync_seek = 0.0
         if self._gtk_video_player is not None:
-            with suppress(Exception):
-                self._gtk_video_player.set_state(Gst.State.READY)
+            self._set_gtk_video_state(Gst.State.READY)
 
     def _gtk_video_failed(self, detail: str) -> None:
         LOGGER.error("GTK video layer failed: %s", detail)
         self._gtk_video_generation += 1
         if self._gtk_video_player is not None:
-            with suppress(Exception):
-                self._gtk_video_player.set_state(Gst.State.READY)
+            self._set_gtk_video_state(Gst.State.READY)
         self._media_switch_loading = False
         self._media_mode = "audio"
         self._sync_media_mode_ui()

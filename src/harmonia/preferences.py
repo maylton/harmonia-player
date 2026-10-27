@@ -6,7 +6,7 @@ from typing import ClassVar
 from .crossfade import clamp_seconds
 from .loudness import DEFAULT_LEVEL, LEVELS
 from .playlist_position import DEFAULT_POSITION, POSITIONS
-from .theming import ACCENTS, DEFAULT_THEME, VARIANTS, builtin_themes
+from .theming import ACCENTS, DEFAULT_THEME, RENAMED_THEMES, VARIANTS, builtin_themes
 
 
 @dataclass(slots=True)
@@ -42,8 +42,7 @@ class Preferences:
     recognition_provider: str = "audd"
     recognition_endpoint: str = "https://api.audd.io/"
 
-    # Themes that were merged into another one.
-    RENAMED_THEMES: ClassVar[dict[str, str]] = {"windows11": "harmonia"}
+    RENAMED_THEMES: ClassVar[dict[str, str]] = RENAMED_THEMES
     # "gtk" follows the desktop (on Windows, the bundled Fluent icons); the
     # others are icon themes bundled with Harmonia.
     ICON_STYLES: ClassVar[dict[str, str]] = {

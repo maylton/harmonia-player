@@ -363,6 +363,20 @@ install_romaji_support() {
     fi
 }
 
+# Meson installs over the previous build without removing what it no longer
+# ships, and those files are still loaded: the windows11 theme, renamed
+# Harmonia in 0.1.0-beta.6, stayed in the theme list. Removes the files of the
+# previous install log ($1) missing from the new one ($2).
+remove_stale_files() {
+    [ -f "$1" ] && [ -s "$2" ] || return 0
+    grep -v '^#' "$2" > "$temp_dir/installed-now.txt"
+    [ -s "$temp_dir/installed-now.txt" ] || return 0
+    grep -v '^#' "$1" | grep -vxF -f "$temp_dir/installed-now.txt" | while IFS= read -r stale; do
+        [ -f "$stale" ] || continue
+        if [ -w "$(dirname "$stale")" ]; then rm -f -- "$stale"; else run_privileged rm -f -- "$stale"; fi
+    done
+}
+
 install_source() {
     if has pacman; then
         install_arch_packages
@@ -384,9 +398,11 @@ install_source() {
     else
         meson install -C "$temp_dir/build" --no-rebuild
     fi
+    install_log="$SOURCE_STATE/install-log${scope#-}.txt"
+    remove_stale_files "$install_log" "$temp_dir/build/meson-logs/install-log.txt"
     # Keep the list of installed files so --uninstall can remove them.
     mkdir -p "$SOURCE_STATE"
-    cp "$temp_dir/build/meson-logs/install-log.txt" "$SOURCE_STATE/install-log${scope#-}.txt"
+    cp "$temp_dir/build/meson-logs/install-log.txt" "$install_log"
     install_romaji_support "$prefix"
     remove_flatpak_copies
     say "Harmonia was built and installed into $prefix."

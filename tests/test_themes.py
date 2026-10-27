@@ -74,6 +74,25 @@ def test_harmonia_theme_is_offered_on_linux_and_windows(monkeypatch):
         assert Preferences.load(MemoryStorage({"theme": "windows11"})).theme == "harmonia"
 
 
+def test_a_renamed_themes_leftover_files_stay_out_of_the_list(monkeypatch, tmp_path):
+    from harmonia import theming
+
+    # Meson installs over an older build without removing windows11.json.
+    for path in THEMES_DIR.glob("*.json"):
+        (tmp_path / path.name).write_bytes(path.read_bytes())
+    leftover = json.loads((THEMES_DIR / "harmonia.json").read_text(encoding="utf-8"))
+    (tmp_path / "windows11.json").write_text(
+        json.dumps({**leftover, "id": "windows11", "name": "Windows 11"}), encoding="utf-8"
+    )
+    monkeypatch.setattr(theming, "THEMES_DIR", tmp_path)
+    theme_catalog.cache_clear()
+    try:
+        assert "windows11" not in theme_catalog()
+        assert "harmonia" in theme_catalog()
+    finally:
+        theme_catalog.cache_clear()
+
+
 def test_platform_specific_themes_are_only_offered_on_their_platform(monkeypatch):
     from harmonia import host
 
