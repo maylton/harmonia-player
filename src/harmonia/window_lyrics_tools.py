@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, Gdk, Gtk
 
 from .i18n import _
 from .lyrics_state import (
@@ -19,7 +19,7 @@ from .lyrics_state import (
     remove_translation,
     with_translations,
 )
-from .ui import style_action, style_icon_button
+from .ui import deliver_to_main, style_action, style_icon_button
 
 
 class WindowLyricsToolsMixin:
@@ -123,9 +123,9 @@ class WindowLyricsToolsMixin:
         def worker():
             try:
                 result = self.translation_client.translate(lines, "pt")
-                GLib.idle_add(self._lyrics_translated, request_id, item.id, result, None)
+                deliver_to_main(self._lyrics_translated, request_id, item.id, result, None)
             except Exception as exc:
-                GLib.idle_add(self._lyrics_translated, request_id, item.id, None, str(exc))
+                deliver_to_main(self._lyrics_translated, request_id, item.id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="lyrics-translation").start()
 

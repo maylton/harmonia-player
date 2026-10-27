@@ -301,6 +301,9 @@ class NativePlayer:
         return accepted
 
     def _on_message(self, _bus, message) -> None:
+        # Deferred at default priority, not idle: idle callbacks wait behind
+        # every frame, and while Windows' software renderer kept drawing, the
+        # end of a track went unhandled (ui.deliver_to_main does the same).
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
             source = error_source(message)
@@ -311,7 +314,7 @@ class NativePlayer:
                 debug or "sem debug",
             )
             if self.on_error:
-                GLib.idle_add(self.on_error, str(error))
+                GLib.idle_add(self.on_error, str(error), priority=GLib.PRIORITY_DEFAULT)
         elif message.type == Gst.MessageType.EOS:
             position, duration = self.position_us, self.duration_us
             self.stop()
@@ -320,10 +323,16 @@ class NativePlayer:
                     message_text = _(
                         "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
                     ).format(position=position // 1_000_000, duration=duration // 1_000_000)
-                    GLib.idle_add(self.on_error, StreamEndedEarly(message_text, position, duration))
+                    GLib.idle_add(
+                        self.on_error,
+                        StreamEndedEarly(message_text, position, duration),
+                        priority=GLib.PRIORITY_DEFAULT,
+                    )
             elif self.on_eos:
-                GLib.idle_add(self.on_eos)
+                GLib.idle_add(self.on_eos, priority=GLib.PRIORITY_DEFAULT)
         elif message.type == Gst.MessageType.STATE_CHANGED and message.src == self._playbin:
             _old, new, _pending = message.parse_state_changed()
             if self.on_state:
-                GLib.idle_add(self.on_state, new == Gst.State.PLAYING)
+                GLib.idle_add(
+                    self.on_state, new == Gst.State.PLAYING, priority=GLib.PRIORITY_DEFAULT
+                )

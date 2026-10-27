@@ -18,6 +18,7 @@ from gi.repository import GLib, Gtk
 from .models import (
     LibraryItem,
 )
+from .ui import deliver_to_main
 from .window_constants import ICONS
 
 LOGGER = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ class WindowArtworkMixin:
                     )
                     return
                 target.write_bytes(data)
-                GLib.idle_add(self._set_artwork_if_current, picture, target, request_key)
+                deliver_to_main(self._set_artwork_if_current, picture, target, request_key)
                 return
 
         threading.Thread(target=worker, daemon=True).start()

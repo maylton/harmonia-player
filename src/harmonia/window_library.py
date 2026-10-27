@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 
 from .i18n import _
 from .models import (
@@ -16,6 +16,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    deliver_to_main,
     page_shell,
 )
 from .window_constants import LABELS
@@ -315,8 +316,8 @@ class WindowLibraryMixin:
         def worker():
             try:
                 tracks = self.youtube.browse(item)
-                GLib.idle_add(self._show_detail, item, tracks, None, status)
+                deliver_to_main(self._show_detail, item, tracks, None, status)
             except Exception as exc:
-                GLib.idle_add(self._show_detail, item, None, str(exc), status)
+                deliver_to_main(self._show_detail, item, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True).start()

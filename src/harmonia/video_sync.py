@@ -13,8 +13,8 @@ from gi.repository import Gst  # noqa: E402
 
 # Polls, 40 ms apart, for the video playbin to preroll before giving up: 15 s.
 # Through the stream relay the manifest, the index and the first segment come
-# one bounded request after another; on Windows a 720p H.264 video took over
-# the 4 s this used to allow, and one that played took 3.3 s.
+# one bounded request after another: on Windows videos prerolled in 2.2 to
+# 3.3 s, too close to the 4 s this used to allow.
 PREROLL_ATTEMPTS = 375
 # Polls, 20 ms apart, for a stopping video playbin to reach READY before a new
 # source opens: 5 s.

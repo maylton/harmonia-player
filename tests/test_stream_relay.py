@@ -124,7 +124,7 @@ def test_only_indexed_mp4_video_gets_a_dash_manifest(relay):
 
 
 def test_known_ranges_build_the_manifest_without_touching_the_network(relay):
-    # The video layers call this on the UI thread: a download here froze it.
+    # The video layers call this on the UI thread: a download here blocks it.
     url = "https://media.example/v?mime=video%2Fmp4&gir=yes&dur=10.0&clen=5120&itag=399"
     uri = relay.dash_uri_for(url, ranges=((0, 739), (740, 1515)))
     assert uri is not None and "/manifest/" in uri

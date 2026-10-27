@@ -184,7 +184,8 @@ class CrossfadingPlayer:
             return
         self._awaiting_next = True
         if self.on_eos:
-            GLib.idle_add(self.on_eos)
+            # Not idle: see NativePlayer._on_message.
+            GLib.idle_add(self.on_eos, priority=GLib.PRIORITY_DEFAULT)
 
     def _start_fade(self, uri: str) -> None:
         self._cut()

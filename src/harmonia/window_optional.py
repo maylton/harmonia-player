@@ -16,6 +16,7 @@ from gi.repository import Adw, GLib
 from .cast import CastMediaHost
 from .i18n import _
 from .recognition import AuddRecognitionProvider, MusicRecognizer, RecognitionTokenStore
+from .ui import deliver_to_main
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class WindowOptionalMixin:
                 LOGGER.debug("Falha no recurso opcional %s", name, exc_info=True)
                 result, error = None, str(exc)
             if completed:
-                GLib.idle_add(completed, result, error)
+                deliver_to_main(completed, result, error)
 
         threading.Thread(target=worker, daemon=True, name=f"optional-{name}").start()
 

@@ -9,11 +9,11 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, Gdk, Gtk
 
 from .i18n import _
 from .models import LibraryItem
-from .ui import menu_action_button
+from .ui import deliver_to_main, menu_action_button
 
 LOGGER = logging.getLogger(__name__)
 TRACK_KINDS = ("songs", "videos")
@@ -156,9 +156,9 @@ class WindowItemMenuMixin:
                 tracks = self.youtube.browse(item)
             except Exception as exc:
                 LOGGER.debug("Não foi possível carregar %s", item.id, exc_info=True)
-                GLib.idle_add(self._collection_tracks_failed, item, str(exc))
+                deliver_to_main(self._collection_tracks_failed, item, str(exc))
                 return
-            GLib.idle_add(self._with_tracks_loaded, callback, tracks)
+            deliver_to_main(self._with_tracks_loaded, callback, tracks)
 
         threading.Thread(target=worker, daemon=True, name="collection-tracks").start()
 

@@ -250,9 +250,9 @@ class WindowHistoryMixin:
         def worker() -> None:
             try:
                 self.youtube.remove_history_item(entry.feedback_token or "")
-                GLib.idle_add(done, None)
+                deliver_to_main(done, None)
             except Exception as exc:
-                GLib.idle_add(done, str(exc))
+                deliver_to_main(done, str(exc))
 
         def done(error: str | None) -> bool:
             if error:

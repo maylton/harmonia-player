@@ -18,6 +18,7 @@ from .models import (
 )
 from .track_rows import HomeSongRow
 from .ui import (
+    deliver_to_main,
     page_header,
     page_shell,
 )
@@ -116,9 +117,9 @@ class WindowHomeMixin:
         def worker():
             try:
                 data = self.youtube.discovery(destination)
-                GLib.idle_add(self._destination_loaded, destination, data, None, status)
+                deliver_to_main(self._destination_loaded, destination, data, None, status)
             except Exception as exc:
-                GLib.idle_add(self._destination_loaded, destination, None, str(exc), status)
+                deliver_to_main(self._destination_loaded, destination, None, str(exc), status)
 
         threading.Thread(target=worker, daemon=True).start()
 

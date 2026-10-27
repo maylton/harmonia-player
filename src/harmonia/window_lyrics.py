@@ -25,6 +25,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    deliver_to_main,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -87,9 +88,9 @@ class WindowLyricsMixin:
                 )
                 if document:
                     self.storage.save_lyrics_document(item.id, document)
-                GLib.idle_add(self._lyrics_loaded, request_id, item.id, document, None)
+                deliver_to_main(self._lyrics_loaded, request_id, item.id, document, None)
             except Exception as exc:
-                GLib.idle_add(self._lyrics_loaded, request_id, item.id, None, str(exc))
+                deliver_to_main(self._lyrics_loaded, request_id, item.id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -167,7 +168,7 @@ class WindowLyricsMixin:
 
         def worker():
             readings = [romaji.romanize(line) if line.strip() else "" for line in lines]
-            GLib.idle_add(self._show_lyrics_romaji, document, lines, readings)
+            deliver_to_main(self._show_lyrics_romaji, document, lines, readings)
 
         threading.Thread(target=worker, daemon=True, name="lyrics-romaji").start()
 

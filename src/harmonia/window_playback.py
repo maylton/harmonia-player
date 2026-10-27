@@ -24,6 +24,7 @@ from .playback_state import (
     shuffled_queue_keep_current,
 )
 from .ui import (
+    deliver_to_main,
     set_icon_selected,
 )
 from .window_chrome.player_bar import footer_playing_changed
@@ -347,11 +348,11 @@ class WindowPlaybackMixin:
                     local_path = self.storage.local_media_path(item.id)
                     if not local_path or not local_path.is_file():
                         raise FileNotFoundError(_("O arquivo local não está mais disponível"))
-                    GLib.idle_add(self._start_stream, request_id, local_path.as_uri(), None, None)
+                    deliver_to_main(self._start_stream, request_id, local_path.as_uri(), None, None)
                     return
                 offline_path = self.downloads.offline_path(item.id)
                 if offline_path:
-                    GLib.idle_add(
+                    deliver_to_main(
                         self._start_stream,
                         request_id,
                         offline_path.as_uri(),
@@ -363,15 +364,15 @@ class WindowPlaybackMixin:
                 self._deliver_stream(request_id, self.youtube.resolve_stream(item.id))
             except AgeRestrictedError as exc:
                 # Renewing cannot lift the restriction: say so at once.
-                GLib.idle_add(self._play_request_error, request_id, str(exc), False)
+                deliver_to_main(self._play_request_error, request_id, str(exc), False)
             except Exception as exc:
-                GLib.idle_add(self._play_request_error, request_id, str(exc))
+                deliver_to_main(self._play_request_error, request_id, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
     def _deliver_stream(self, request_id: int, stream) -> None:
         """Hand a resolved stream from a worker thread to the main loop."""
-        GLib.idle_add(
+        deliver_to_main(
             self._start_stream,
             request_id,
             stream.url,

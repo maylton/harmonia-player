@@ -18,6 +18,7 @@ from .models import (
 )
 from .ui import (
     action_button,
+    deliver_to_main,
     media_row,
     page_header,
     page_shell,
@@ -56,9 +57,9 @@ class WindowSearchMixin:
             def worker() -> None:
                 try:
                     values = self.youtube.suggestions(query)
-                    GLib.idle_add(self._show_search_suggestions, request_id, query, values)
+                    deliver_to_main(self._show_search_suggestions, request_id, query, values)
                 except Exception:
-                    GLib.idle_add(self._show_search_suggestions, request_id, query, [])
+                    deliver_to_main(self._show_search_suggestions, request_id, query, [])
 
             threading.Thread(target=worker, daemon=True, name="search-suggestions").start()
             return False
@@ -124,9 +125,9 @@ class WindowSearchMixin:
         def worker():
             try:
                 results = self.youtube.universal_search(query)
-                GLib.idle_add(self._show_search, request_id, results, None)
+                deliver_to_main(self._show_search, request_id, results, None)
             except Exception as exc:
-                GLib.idle_add(self._show_search, request_id, None, str(exc))
+                deliver_to_main(self._show_search, request_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="universal-search").start()
 
@@ -140,9 +141,11 @@ class WindowSearchMixin:
 
         def worker() -> None:
             try:
-                GLib.idle_add(self._link_resolved, request_id, self.youtube.watch_item(link.id), "")
+                deliver_to_main(
+                    self._link_resolved, request_id, self.youtube.watch_item(link.id), ""
+                )
             except Exception as exc:
-                GLib.idle_add(self._link_resolved, request_id, None, str(exc))
+                deliver_to_main(self._link_resolved, request_id, None, str(exc))
 
         threading.Thread(target=worker, daemon=True, name="youtube-link").start()
 
@@ -269,11 +272,11 @@ class WindowSearchMixin:
         def worker() -> None:
             try:
                 incoming = self.youtube.search_more(results.query, group)
-                GLib.idle_add(
+                deliver_to_main(
                     self._search_more_done, request_id, results, group.key, incoming, None
                 )
             except Exception as exc:
-                GLib.idle_add(
+                deliver_to_main(
                     self._search_more_done, request_id, results, group.key, None, str(exc)
                 )
 

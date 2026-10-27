@@ -18,7 +18,7 @@ from .i18n import _, ngettext
 from .preferences import Preferences
 from .settings_page import build_settings_page
 from .theming import get_theme
-from .ui import set_css_class
+from .ui import deliver_to_main, set_css_class
 from .window_chrome.player_bar import apply_player_style
 
 LOGGER = logging.getLogger(__name__)
@@ -347,7 +347,7 @@ class WindowPreferencesMixin:
                 error = None
             except Exception as exc:
                 valid, error = False, str(exc)
-            GLib.idle_add(self._account_validation_done, row, valid, error)
+            deliver_to_main(self._account_validation_done, row, valid, error)
 
         threading.Thread(target=worker, daemon=True, name="settings-account-validation").start()
 
