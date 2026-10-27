@@ -16,6 +16,9 @@ from gi.repository import Gst  # noqa: E402
 # one bounded request after another; on Windows a 720p H.264 video took over
 # the 4 s this used to allow, and one that played took 3.3 s.
 PREROLL_ATTEMPTS = 375
+# Polls, 20 ms apart, for a stopping video playbin to reach READY before a new
+# source opens: 5 s.
+STOP_ATTEMPTS = 250
 # Polls, 60 ms apart, for the first seek to land near the audio clock.
 SETTLE_ATTEMPTS = 75
 # Polls at which the seek is reissued at the audio clock's current position,

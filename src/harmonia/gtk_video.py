@@ -317,40 +317,76 @@ class GtkVideoMixin:
             LOGGER.exception("GTK video source could not be prepared")
             self._gtk_video_failed(str(exc))
             return
-        # A failed preroll shows in get_state() as the polls below read it.
-        self._set_gtk_video_state(Gst.State.PAUSED, uri=source_uri)
+        # Back to READY off the main loop first; the new source opens once
+        # the playbin is there.
+        self._stop_gtk_video_state()
+        GLib.timeout_add(20, self._open_gtk_video_source, generation, source_uri, 0)
 
+    def _open_gtk_video_source(self, generation: int, uri: str, attempt: int) -> bool:
+        if generation != self._gtk_video_generation or self._media_mode != "video":
+            return GLib.SOURCE_REMOVE
+        if self._gtk_video_stopping():
+            if attempt < video_sync.STOP_ATTEMPTS:
+                GLib.timeout_add(20, self._open_gtk_video_source, generation, uri, attempt + 1)
+            else:
+                LOGGER.warning("GTK video playbin did not get back to READY")
+                self._gtk_video_failed(_("O vídeo demorou demais para iniciar."))
+            return GLib.SOURCE_REMOVE
+        video_player = self._gtk_video_player
+        try:
+            video_player.set_property("uri", uri)
+            # A failed preroll shows in get_state() as the polls below read it.
+            self._set_gtk_video_state(Gst.State.PAUSED)
+        except Exception as exc:
+            LOGGER.exception("GTK video source could not be opened")
+            self._gtk_video_failed(str(exc))
+            return GLib.SOURCE_REMOVE
         self._watch_gtk_video_transport()
         GLib.timeout_add(40, self._finish_gtk_video_preroll, generation, 0)
+        return GLib.SOURCE_REMOVE
 
-    def _set_gtk_video_state(self, state: Gst.State, *, uri: str | None = None) -> None:
-        """Change the video playbin's state on its own thread, in call order.
+    def _set_gtk_video_state(self, state: Gst.State) -> None:
+        """Take the video playbin up to PAUSED or PLAYING, on the main loop.
 
-        Going down to READY waits for the streaming threads, and one stuck in
-        the pipeline (a video that never prerolled) blocked the main loop
-        until Windows closed the app; a change waiting for the state lock it
-        held blocked it as well. ``uri`` replaces the source first.
+        These return at once, completing asynchronously, and gtk4paintablesink
+        prepares itself on the main thread it expects: off it, its NULL to
+        READY change sometimes never returned. Nothing changes while a stop
+        is still running, whose state lock this call would wait for.
         """
-        if getattr(self, "_gtk_video_states", None) is None:
-            self._gtk_video_states = queue.SimpleQueue()
-            threading.Thread(
-                target=self._apply_gtk_video_states, daemon=True, name="gtk-video-state"
-            ).start()
-        self._gtk_video_states.put((state, uri))
+        if not self._gtk_video_stopping():
+            self._gtk_video_player.set_state(state)
 
-    def _apply_gtk_video_states(self) -> None:
+    def _stop_gtk_video_state(self) -> None:
+        """Take the video playbin down to READY on a thread of its own.
+
+        Going down waits for the streaming threads, and gtk4paintablesink's
+        negotiates its caps by waiting for the main thread: done from the
+        main loop, that deadlock froze the window until Windows closed it.
+        """
+        if getattr(self, "_gtk_video_stops", None) is None:
+            self._gtk_video_stops = queue.SimpleQueue()
+            # Requested only from the main loop, done only on the thread.
+            self._gtk_video_stops_requested = self._gtk_video_stops_done = 0
+            threading.Thread(
+                target=self._apply_gtk_video_stops, daemon=True, name="gtk-video-stop"
+            ).start()
+        self._gtk_video_stops_requested += 1
+        self._gtk_video_stops.put(None)
+
+    def _gtk_video_stopping(self) -> bool:
+        return getattr(self, "_gtk_video_stops_requested", 0) != getattr(
+            self, "_gtk_video_stops_done", 0
+        )
+
+    def _apply_gtk_video_stops(self) -> None:
         while True:
-            state, uri = self._gtk_video_states.get()
-            video_player = self._gtk_video_player
-            if video_player is None:
-                continue
+            self._gtk_video_stops.get()
             try:
-                if uri is not None:
-                    video_player.set_state(Gst.State.READY)
-                    video_player.set_property("uri", uri)
-                video_player.set_state(state)
+                if self._gtk_video_player is not None:
+                    self._gtk_video_player.set_state(Gst.State.READY)
             except Exception:
-                LOGGER.exception("GTK video state change to %s failed", state)
+                LOGGER.exception("GTK video playbin could not stop")
+            self._gtk_video_stops_done += 1
 
     def _finish_gtk_video_preroll(self, generation: int, attempt: int) -> bool:
         if generation != self._gtk_video_generation or self._media_mode != "video":
@@ -588,13 +624,13 @@ class GtkVideoMixin:
         self._gtk_video_generation += 1
         self._gtk_video_last_sync_seek = 0.0
         if self._gtk_video_player is not None:
-            self._set_gtk_video_state(Gst.State.READY)
+            self._stop_gtk_video_state()
 
     def _gtk_video_failed(self, detail: str) -> None:
         LOGGER.error("GTK video layer failed: %s", detail)
         self._gtk_video_generation += 1
         if self._gtk_video_player is not None:
-            self._set_gtk_video_state(Gst.State.READY)
+            self._stop_gtk_video_state()
         self._media_switch_loading = False
         self._media_mode = "audio"
         self._sync_media_mode_ui()
