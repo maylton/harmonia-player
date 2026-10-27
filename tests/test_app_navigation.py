@@ -191,7 +191,7 @@ def test_a_missing_large_thumbnail_falls_back_to_the_next(monkeypatch, tmp_path)
 
     monkeypatch.setattr(window_artwork.urllib.request, "urlopen", urlopen)
     monkeypatch.setattr(window_artwork.threading, "Thread", ThreadNow)
-    monkeypatch.setattr(window_artwork.GLib, "idle_add", lambda *_args: None)
+    monkeypatch.setattr(window_artwork, "deliver_to_main", lambda *_args: None)
     window = type("W", (window_artwork.WindowArtworkMixin,), {})()
     window._artwork_requests = {}
     window.storage = type(
