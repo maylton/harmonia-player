@@ -2,7 +2,7 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
-## 1.0.0 — 2026-10-23
+## 1.0.0 — 2026-10-27
 
 A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso dela.
 
