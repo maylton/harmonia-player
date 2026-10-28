@@ -88,12 +88,14 @@ def test_arch_systems_build_with_meson_instead_of_the_flatpak(tmp_path):
 
 def test_arch_dependencies_come_from_pacman_and_romaji_from_pip(tmp_path):
     calls = tmp_path / "calls"
+    # pacman -T names what is missing: here everything.
+    pacman = (
+        'if [ "$1" = -T ]; then shift; echo "$@"; exit 127; fi\n'
+        f'echo "pacman $*" >> "{shell_path(calls)}"'
+    )
     path = fake_tools(
         tmp_path,
-        {
-            "pacman": f'echo "pacman $*" >> "{shell_path(calls)}"',
-            "python3": f'echo "python3 $*" >> "{shell_path(calls)}"',
-        },
+        {"pacman": pacman, "python3": f'echo "python3 $*" >> "{shell_path(calls)}"'},
     )
     run(
         path
@@ -105,6 +107,17 @@ def test_arch_dependencies_come_from_pacman_and_romaji_from_pip(tmp_path):
         assert f" {package}" in pacman
     assert "--needed" in pacman
     assert "--target /home/me/.local/share/harmonia/python fugashi unidic-lite" in pip
+
+
+def test_arch_with_every_dependency_asks_for_no_administrator(tmp_path):
+    calls = tmp_path / "calls"
+    path = fake_tools(
+        tmp_path,
+        {"pacman": f'[ "$1" = -T ] && exit 0\necho "pacman $*" >> "{shell_path(calls)}"'},
+    )
+    run(path + 'run_privileged() { echo "privileged $*" >> "' + shell_path(calls) + '"; }\n'
+        + "install_arch_packages\n")  # fmt: skip
+    assert not calls.exists()
 
 
 def test_other_systems_get_the_flatpak(tmp_path):

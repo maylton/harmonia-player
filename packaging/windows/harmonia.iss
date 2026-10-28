@@ -58,6 +58,8 @@ english.PreparingPlugins=Preparing the audio and video plugins...
 ; instead of on the first start, where it kept the window from showing.
 Filename: "{app}\Harmonia.exe"; Parameters: "--prepare-plugins"; StatusMsg: "{cm:PreparingPlugins}"; Flags: runhidden waituntilterminated runasoriginaluser
 Filename: "{app}\Harmonia.exe"; Description: "{cm:LaunchProgram,Harmonia}"; Flags: nowait postinstall skipifsilent
+; Harmonia's updater installs silently and expects to be started again.
+Filename: "{app}\Harmonia.exe"; Flags: nowait skipifnotsilent runasoriginaluser
 
 [UninstallDelete]
 ; The GStreamer plugin cache is rebuilt on the next start; the session,

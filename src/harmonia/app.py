@@ -65,6 +65,7 @@ from .window_search import WindowSearchMixin
 from .window_shelves import WindowShelvesMixin
 from .window_social import WindowSocialMixin
 from .window_together import WindowTogetherMixin
+from .window_updates import UpdateController
 
 LOGGER = logging.getLogger(__name__)
 APP_ID = "io.github.harmonia.Harmonia"
@@ -272,6 +273,8 @@ class HarmoniaWindow(
     def _start_up(self) -> None:
         """Apply the preferences, show the first page and resume the session."""
         self._apply_appearance_preferences()
+        self.updates = UpdateController(self)
+        self.updates.start()
         GLib.timeout_add(500, self._update_progress)
         self._render()
         self._restore_playback_state()

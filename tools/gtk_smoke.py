@@ -427,6 +427,15 @@ def _visit_pages(window, log, full: bool):
     window.show_settings()
     yield 120
     yield from _expect_page(window, "settings")
+    log("sobre o harmonia")
+    from harmonia.settings_page.about import show_about
+
+    show_about(window)
+    yield 120
+    dialog = window.get_visible_dialog()
+    assert dialog is not None, "a janela de créditos não abriu"
+    dialog.close()
+    yield 60
     if not full:
         return
     log("fila e player expandido")

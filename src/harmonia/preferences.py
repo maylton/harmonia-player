@@ -39,6 +39,8 @@ class Preferences:
     lastfm_api_key: str = ""
     discord_enabled: bool = False
     discord_client_id: str = ""
+    # Look for a new release once a day (window_updates.py).
+    check_updates: bool = True
     recognition_provider: str = "audd"
     recognition_endpoint: str = "https://api.audd.io/"
 
@@ -104,6 +106,7 @@ class Preferences:
             lastfm_enabled=boolean("lastfm_enabled", False),
             lastfm_api_key=storage.get_setting("lastfm_api_key", ""),
             discord_enabled=boolean("discord_enabled", False),
+            check_updates=boolean("check_updates", True),
             discord_client_id=storage.get_setting("discord_client_id", ""),
             recognition_provider=(
                 storage.get_setting("recognition_provider", "audd")
@@ -140,6 +143,7 @@ class Preferences:
             "lastfm_api_key": self.lastfm_api_key,
             "discord_enabled": "1" if self.discord_enabled else "0",
             "discord_client_id": self.discord_client_id,
+            "check_updates": "1" if self.check_updates else "0",
             "recognition_provider": self.recognition_provider,
             "recognition_endpoint": self.recognition_endpoint,
         }
