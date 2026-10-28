@@ -51,7 +51,7 @@ Usage:
 
 Options:
   --method METHOD  auto (default), deb, rpm, flatpak or source
-  --release X      Release to install, e.g. 0.1.0-beta.2 (default: the latest)
+  --release X      Release to install, e.g. 1.0.0 (default: the latest stable one)
   --package FILE   Install a local .deb, .rpm or .flatpak instead of downloading
   --system         Flatpak and source builds: install for every user
   --run            Open Harmonia after installation
@@ -90,6 +90,10 @@ confirm() {
 run_privileged() {
     if [ "$(id -u)" -eq 0 ]; then
         "$@"
+    elif ! [ -t 0 ] && command -v pkexec >/dev/null 2>&1; then
+        # No terminal to type a password in (Harmonia's updater runs this
+        # script): the desktop asks for it in a window.
+        pkexec "$@"
     elif command -v sudo >/dev/null 2>&1; then
         sudo "$@"
     elif command -v doas >/dev/null 2>&1; then
@@ -150,11 +154,13 @@ make_temp_dir() {
     fi
 }
 
-# Sets release to the newest one on GitHub, pre-releases included.
+# Sets release to the newest stable one on GitHub, or the newest of all while
+# there is none; --release picks a pre-release.
 find_latest_release() {
     make_temp_dir
     listing="$temp_dir/releases.json"
-    download_file "https://api.github.com/repos/$REPOSITORY/releases?per_page=1" "$listing" \
+    download_file "https://api.github.com/repos/$REPOSITORY/releases/latest" "$listing" \
+        || download_file "https://api.github.com/repos/$REPOSITORY/releases?per_page=1" "$listing" \
         || fail "Could not reach GitHub to find the latest release. Pass --release X to choose one."
     release=$(sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' "$listing" | head -n 1)
     [ -n "$release" ] || fail "No Harmonia release was found on GitHub."
@@ -344,9 +350,14 @@ gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav gst-plugin
 libsecret webkitgtk-6.0 libjxl webp-pixbuf-loader libavif"
 
 install_arch_packages() {
+    # Only what is missing, so an update with everything in place asks for no
+    # administrator access.
+    # shellcheck disable=SC2086
+    missing=$(pacman -T $ARCH_PACKAGES || true)
+    [ -n "$missing" ] || return 0
     say "Installing Harmonia's dependencies with pacman (administrator access required)..."
     # shellcheck disable=SC2086
-    run_privileged pacman -S --needed --noconfirm $ARCH_PACKAGES
+    run_privileged pacman -S --needed --noconfirm $missing
 }
 
 # Rōmaji for Japanese lyrics needs fugashi and the UniDic Lite dictionary,

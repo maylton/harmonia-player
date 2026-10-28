@@ -8,6 +8,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw  # noqa: E402
 
 from ..i18n import _  # noqa: E402
+from .about import about_group  # noqa: E402
 from .account import account_group  # noqa: E402
 from .appearance import appearance_group  # noqa: E402
 from .audio import audio_group  # noqa: E402
@@ -31,6 +32,7 @@ def build_settings_page(window) -> Adw.PreferencesPage:
         recognition_group,
         cast_group,
         audio_group,
+        about_group,
     )
     for group in groups:
         page.add(group(window))

@@ -2,6 +2,12 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## Não lançado
+
+- Preferências > Sobre o Harmonia: a versão e como ela foi instalada, os créditos e as licenças, e os links do projeto;
+- atualizações automáticas: uma vez por dia o Harmonia procura a versão estável mais recente no GitHub, baixa e confere o SHA-256, e avisa no topo da janela; ela só é instalada quando você clica. No Windows o instalador roda em silêncio e reabre o app; no Linux roda o install.sh da versão nova pelo mesmo método (compilado, .deb ou .rpm), pedindo a senha numa janela do sistema quando precisa; no Flatpak, o aviso mostra o comando. A busca automática pode ser desligada;
+- install.sh: instala a versão estável mais recente, não um pré-lançamento, e no Arch só chama o pacman quando falta alguma dependência.
+
 ## 1.0.0 — 2026-10-27
 
 A primeira versão estável: a 1.0.0-rc.1 e os acabamentos que vieram com o uso dela.

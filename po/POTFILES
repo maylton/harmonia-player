@@ -31,6 +31,7 @@ src/harmonia/qt_video.py
 src/harmonia/queue_view.py
 src/harmonia/recognition.py
 src/harmonia/settings_page/__init__.py
+src/harmonia/settings_page/about.py
 src/harmonia/settings_page/account.py
 src/harmonia/settings_page/appearance.py
 src/harmonia/settings_page/audio.py
@@ -77,3 +78,4 @@ src/harmonia/window_search.py
 src/harmonia/window_shelves.py
 src/harmonia/window_social.py
 src/harmonia/window_together.py
+src/harmonia/window_updates.py
