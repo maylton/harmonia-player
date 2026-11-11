@@ -47,9 +47,10 @@ def active_lyric_index(
     return bisect_right([line.start_ms for line in lines], adjusted) - 1
 
 
-def remove_translation(document: LyricsDocument) -> bool:
-    """Drop a Portuguese translation, so "Traduzir" toggles it; True if one was dropped."""
-    if document.translation_language != "pt" or not (
+def remove_translation(document: LyricsDocument, language: str) -> bool:
+    """Drop a translation into ``language``, so "Traduzir" toggles it; True if
+    one was dropped."""
+    if document.translation_language != language or not (
         document.translation or any(line.translation for line in document.synced)
     ):
         return False
@@ -57,6 +58,17 @@ def remove_translation(document: LyricsDocument) -> bool:
     document.translation_language = ""
     document.synced = [replace(line, translation="") for line in document.synced]
     return True
+
+
+def without_foreign_translation(document: LyricsDocument, language: str) -> LyricsDocument:
+    """A saved document without a translation Harmonia made into another language.
+
+    Translations were once always into Portuguese and are saved with the
+    lyrics, so they kept coming back for everyone else.
+    """
+    if document.translation_language and document.translation_language != language:
+        remove_translation(document, document.translation_language)
+    return document
 
 
 def with_translations(lines: list[LyricLine], translations: list[str]) -> list[LyricLine]:

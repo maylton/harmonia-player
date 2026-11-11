@@ -29,8 +29,33 @@ def test_translations_keep_the_words_of_each_line() -> None:
     document.synced = with_translations(document.synced, ["Um dia"])
     document.translation_language = "pt"
     assert document.synced[0].translation == "Um dia" and document.synced[0].words == words
-    assert remove_translation(document)
+    assert not remove_translation(document, "en")  # "Traduzir" in English translates anew
+    assert remove_translation(document, "pt")
     assert document.synced[0].translation == "" and document.synced[0].words == words
+
+
+def test_a_saved_translation_into_another_language_is_dropped() -> None:
+    from harmonia.lyrics_state import with_translations, without_foreign_translation
+
+    document = LyricsDocument("One day", "LyricsPlus", [LyricLine(1000, "One day")])
+    document.synced = with_translations(document.synced, ["Um dia"])
+    document.translation_language = "pt"
+    assert without_foreign_translation(document, "pt").synced[0].translation == "Um dia"
+    assert without_foreign_translation(document, "en").synced[0].translation == ""
+
+
+def test_lyrics_are_translated_into_the_users_language(monkeypatch) -> None:
+    from harmonia import host
+
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("LANG", "en_IN.UTF-8")
+    assert host.user_language() == "en"
+    monkeypatch.setenv("LANGUAGE", "pt_BR:en")
+    assert host.user_language() == "pt"
+    monkeypatch.setenv("LANGUAGE", "")
+    monkeypatch.setenv("LANG", "C.UTF-8")
+    assert host.user_language() == "en"
 
 
 def test_lyrics_offset_is_clamped_and_seek_uses_the_same_offset_rule() -> None:

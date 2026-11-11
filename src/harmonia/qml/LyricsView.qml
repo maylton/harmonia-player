@@ -128,7 +128,7 @@ Item {
                 enabled: backend.lyricLines.length > 0 || backend.lyricsPlain.length > 0
                 onClicked: backend.translateLyrics()
                 Controls.ToolTip.visible: hovered
-                Controls.ToolTip.text: i18n.tr("Traduzir para português")
+                Controls.ToolTip.text: i18n.tr("Traduzir a letra")
 
                 background: Rectangle {
                     radius: Math.max(5, Kirigami.Units.cornerRadius)

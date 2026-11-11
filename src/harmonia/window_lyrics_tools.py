@@ -10,6 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gtk
 
+from . import host
 from .i18n import _
 from .lyrics_state import (
     clamp_lyrics_offset,
@@ -48,7 +49,7 @@ class WindowLyricsToolsMixin:
         provider.connect("clicked", lambda *_: self._cycle_lyrics_provider())
         bar.append(provider)
         translate = Gtk.Button(
-            icon_name="accessories-dictionary-symbolic", tooltip_text=_("Traduzir para português")
+            icon_name="accessories-dictionary-symbolic", tooltip_text=_("Traduzir a letra")
         )
         style_icon_button(translate, "sm")
         translate.connect("clicked", lambda *_: self._translate_current_lyrics())
@@ -112,7 +113,8 @@ class WindowLyricsToolsMixin:
         document = self.current_lyrics_document
         if not item or not document:
             return
-        if remove_translation(document):
+        language = host.user_language()
+        if remove_translation(document, language):
             self.storage.save_lyrics_document(item.id, document)
             self._render_lyrics(item, document)
             return
@@ -122,7 +124,7 @@ class WindowLyricsToolsMixin:
 
         def worker():
             try:
-                result = self.translation_client.translate(lines, "pt")
+                result = self.translation_client.translate(lines, language)
                 deliver_to_main(self._lyrics_translated, request_id, item.id, result, None)
             except Exception as exc:
                 deliver_to_main(self._lyrics_translated, request_id, item.id, None, str(exc))
@@ -148,7 +150,7 @@ class WindowLyricsToolsMixin:
             document.synced = with_translations(document.synced, result)
         else:
             document.translation = "\n".join(result)
-        document.translation_language = "pt"
+        document.translation_language = host.user_language()
         self.storage.save_lyrics_document(item.id, document)
         self._render_lyrics(item, document)
         self.toast_overlay.add_toast(Adw.Toast(title=_("Letra traduzida"), timeout=2))

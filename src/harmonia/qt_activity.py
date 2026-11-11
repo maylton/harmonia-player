@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QGuiApplication
 
+from . import host
 from .i18n import _
 from .lyrics import GoogleTranslationClient, LyricsResolver
 from .lyrics_state import (
@@ -18,6 +19,7 @@ from .lyrics_state import (
     normalize_lyrics_provider,
     remove_translation,
     with_translations,
+    without_foreign_translation,
 )
 from .models import HistoryEntry, LibraryItem
 from .services import YouTubeMusicService
@@ -220,6 +222,7 @@ class QtLyricsController(QObject):
         if not force:
             cached = self.storage.load_lyrics_document(item.id, self.provider)
             if cached:
+                cached = without_foreign_translation(cached, host.user_language())
                 self.document = cached
                 self.loading = False
                 self.lyricsChanged.emit()
@@ -300,7 +303,8 @@ class QtLyricsController(QObject):
         document = self.document
         if not item or not document:
             return
-        if remove_translation(document):
+        language = host.user_language()
+        if remove_translation(document, language):
             self.storage.save_lyrics_document(item.id, document)
             self.lyricsChanged.emit()
             return
@@ -311,7 +315,7 @@ class QtLyricsController(QObject):
 
         def worker() -> None:
             try:
-                result = self.translation_client.translate(lines, "pt")
+                result = self.translation_client.translate(lines, language)
                 self._translationReady.emit(request_id, item.id, result, "")
             except Exception as exc:
                 LOGGER.exception("Qt lyrics translation failed")
@@ -340,7 +344,7 @@ class QtLyricsController(QObject):
             document.synced = with_translations(document.synced, result)
         else:
             document.translation = "\n".join(result)
-        document.translation_language = "pt"
+        document.translation_language = host.user_language()
         self.storage.save_lyrics_document(item.id, document)
         self.lyricsChanged.emit()
         self.set_status(_("Letra traduzida."))

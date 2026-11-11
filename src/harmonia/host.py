@@ -89,6 +89,18 @@ def user_locale() -> str | None:
     return locale.getlocale()[0]
 
 
+def user_language() -> str:
+    """The user's language code ("en", "pt", "hi"), which lyrics are translated into."""
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "").split(":")[0]
+        if value:
+            break
+    else:
+        value = user_locale() or ""
+    code = value.replace("-", "_").split("_")[0].split(".")[0].split("@")[0].lower()
+    return code if code and code not in ("c", "posix") else "en"
+
+
 def translation_languages() -> list[str] | None:
     """Languages gettext should try; None keeps its LANGUAGE/LANG lookup.
 
