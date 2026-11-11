@@ -95,6 +95,10 @@ class InnerTubeError(RuntimeError):
     pass
 
 
+class SessionExpiredError(InnerTubeError):
+    """YouTube refused the saved session's cookie (HTTP 401 or 403)."""
+
+
 def parse_cookie(raw: str) -> dict[str, str]:
     result: dict[str, str] = {}
     for part in raw.split(";"):

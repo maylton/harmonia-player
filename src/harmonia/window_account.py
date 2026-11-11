@@ -14,6 +14,7 @@ from gi.repository import Adw, GLib, Gtk
 
 from . import host
 from .i18n import _, ngettext
+from .innertube import SessionExpiredError
 from .models import (
     ExploreData,
 )
@@ -56,6 +57,56 @@ class WindowAccountMixin:
         self.sync()
         self.sync_home()
         self.sync_explore()
+
+    def _session_expired(self, done, error: str) -> bool:
+        """YouTube refused the saved cookie: on Windows, read it again from the
+        sign-in browser's profile, once a session, before telling the user."""
+        if not self._can_renew_session():
+            done(None, error)
+            return GLib.SOURCE_REMOVE
+        if getattr(self, "_session_renewing", False):
+            return GLib.SOURCE_REMOVE  # the other syncs wait for the same renewal
+        self._session_renewing = True
+        self._session_renewal_tried = True
+        login = importlib.import_module(f".{host.LOGIN_MODULE}", __package__)
+        try:
+            login.LoginWindow(
+                self,
+                self.storage.web_data_dir,
+                self._session_renewed,
+                lambda: self._session_renewal_failed(done, error),
+            ).renew_silently()
+        except (ImportError, ValueError, OSError):
+            LOGGER.info("Não foi possível renovar a sessão em segundo plano", exc_info=True)
+            self._session_renewal_failed(done, error)
+        return GLib.SOURCE_REMOVE
+
+    def _can_renew_session(self) -> bool:
+        # Edge WebView2 renews the Google session in its profile, which the
+        # cookie Harmonia saved does not follow; WebKitGTK's stays valid.
+        return (
+            host.LOGIN_MODULE == "auth_webview2"
+            and host.INTEGRATED_LOGIN
+            and not getattr(self, "_session_renewal_tried", False)
+        )
+
+    def _session_renewed(self, cookie: str) -> None:
+        """The same account, so the chosen channel stays."""
+        self._session_renewing = False
+        self.storage.save_cookie(cookie)
+        LOGGER.info("Sessão do YouTube Music renovada pelo perfil do WebView2")
+        self.sync()
+        self.sync_home()
+        self.sync_explore()
+
+    def _session_renewal_failed(self, done, error: str) -> None:
+        self._session_renewing = False
+        done(None, error)
+        toast = Adw.Toast(
+            title=_("A sessão do YouTube Music expirou"), button_label=_("Entrar"), timeout=0
+        )
+        toast.connect("button-clicked", lambda *_: self.login_dialog())
+        self.toast_overlay.add_toast(toast)
 
     def manual_login_dialog(self) -> None:
         dialog = Adw.AlertDialog(
@@ -113,6 +164,8 @@ class WindowAccountMixin:
             try:
                 sections = self.youtube.sync_library()
                 deliver_to_main(self._sync_done, sections, None)
+            except SessionExpiredError as exc:
+                deliver_to_main(self._session_expired, self._sync_done, str(exc))
             except Exception as exc:
                 deliver_to_main(self._sync_done, None, str(exc))
 
@@ -127,6 +180,8 @@ class WindowAccountMixin:
             try:
                 sections = self.youtube.sync_home()
                 deliver_to_main(self._home_sync_done, sections, None)
+            except SessionExpiredError as exc:
+                deliver_to_main(self._session_expired, self._home_sync_done, str(exc))
             except Exception as exc:
                 deliver_to_main(self._home_sync_done, None, str(exc))
 
@@ -141,6 +196,8 @@ class WindowAccountMixin:
             try:
                 data = self.youtube.sync_explore()
                 deliver_to_main(self._explore_sync_done, data, None)
+            except SessionExpiredError as exc:
+                deliver_to_main(self._session_expired, self._explore_sync_done, str(exc))
             except Exception as exc:
                 deliver_to_main(self._explore_sync_done, None, str(exc))
 

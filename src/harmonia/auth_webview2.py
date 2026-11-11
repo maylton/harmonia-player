@@ -213,8 +213,28 @@ class LoginWindow(Adw.Window):
         box.append(toolbar)
         box.append(self.host)
         self.set_content(box)
+        self.silent = False
         self.connect("map", lambda *_: GLib.idle_add(self._start))
         self.connect("close-request", self._close_request)
+
+    def renew_silently(self, timeout: int = 25) -> None:
+        """Read the session again from the browser profile, without showing anything.
+
+        WebView2 keeps the Google login of the integrated sign-in in its
+        profile and renews its cookies, while the copy Harmonia saved goes
+        stale. The window is realized for its native handle but never shown;
+        if the profile has no session, ``on_manual`` is called after
+        ``timeout`` seconds instead of showing the sign-in page.
+        """
+        self.silent = True
+        self.realize()
+        GLib.idle_add(self._start)
+        GLib.timeout_add_seconds(timeout, self._give_up)
+
+    def _give_up(self) -> bool:
+        if not self.completing:
+            self._fail(WebView2Error(0, "o perfil do navegador não tem uma sessão do Google"))
+        return GLib.SOURCE_REMOVE
 
     def _handler(self, prototype, callback) -> ctypes.c_void_p:
         """Wrap a step; any failure in it falls back to the manual login."""
@@ -294,7 +314,7 @@ class LoginWindow(Adw.Window):
     def _place(self) -> bool:
         """Cover the placeholder with the browser, in physical pixels."""
         controller = self._objects.get("controller")
-        if controller is None or self.get_surface() is None:
+        if self.silent or controller is None or self.get_surface() is None:
             return GLib.SOURCE_REMOVE
         ok, origin = self.host.compute_point(self, Graphene.Point())
         if not ok:

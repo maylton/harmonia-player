@@ -22,6 +22,7 @@ from .protocol import (
     ORIGIN,
     USER_AGENT,
     InnerTubeError,
+    SessionExpiredError,
     sapisid_hash,
 )
 
@@ -142,7 +143,7 @@ class InnerTubeSession:
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode(errors="replace")[:300]
                 if exc.code in (401, 403) and authenticated:
-                    raise InnerTubeError(
+                    raise SessionExpiredError(
                         _("A sessão expirou ou o cookie não tem acesso ao YouTube Music.")
                     ) from exc
                 if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
