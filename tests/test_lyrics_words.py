@@ -1,9 +1,11 @@
 import json
 
+import pytest
+
 from harmonia.lrc import parse_lrc
 from harmonia.lyrics_providers import LyricsPlusClient
 from harmonia.lyrics_words import word_glow, word_progress, word_spans, word_wobble
-from harmonia.models import LibraryItem
+from harmonia.models import LibraryItem, LyricWord
 
 
 class Response:
@@ -119,3 +121,34 @@ def test_lyricsplus_mirrors_down_report_the_error():
         LyricsPlusClient(opener).lyrics(item)
     # Without an artist the services cannot match anything.
     assert LyricsPlusClient(opener).lyrics(LibraryItem("v", "Faixa")) is None
+
+
+def test_letters_light_up_one_after_another_through_the_word():
+    from harmonia.lyrics_words import letter_progress
+
+    word = LyricWord(1000, 1400, "love ")
+    # Four letters and the space share 400 ms: the second fills from 80 to 160 ms.
+    assert letter_progress(word, 1080, 1, 5) == 0
+    assert letter_progress(word, 1120, 1, 5) == pytest.approx(0.5)
+    assert letter_progress(word, 1160, 1, 5) == 1
+    assert letter_progress(word, 1400, 4, 5) == pytest.approx(1)
+
+
+def test_a_letter_bumps_only_while_the_fill_crosses_it():
+    from harmonia.lyrics_words import letter_nudge
+
+    assert letter_nudge(0.5, 0.0) == 0 and letter_nudge(0.5, 1.0) == pytest.approx(0, abs=1e-6)
+    assert 0 < letter_nudge(0.5, 0.25) < 0.038
+    assert letter_nudge(1.0, 0.25) == 0  # the word is sung: back at rest
+
+
+def test_hyphenated_syllables_form_a_growing_group():
+    from harmonia.lyrics_words import crescendo, hyphen_groups
+
+    words = (LyricWord(0, 200, "lo-"), LyricWord(200, 400, "ve-"), LyricWord(400, 900, "ly "),
+             LyricWord(900, 1200, "day"))  # fmt: skip
+    groups = hyphen_groups(words)
+    assert groups == {0: (0, 3, 0, 900), 1: (1, 3, 0, 900), 2: (2, 3, 0, 900)}
+    # Later syllables are a little larger; well after the group it settles.
+    assert crescendo(groups[1], 1.0, 500) > crescendo(groups[0], 1.0, 500)
+    assert crescendo(groups[2], 1.0, 2000) == 0

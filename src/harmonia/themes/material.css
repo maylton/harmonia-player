@@ -216,6 +216,8 @@ window.compositor-blur .expanded-player.md-expressive.expanded-revealed {
 .md-expressive .expanded-lyrics-provider { color: @md_on_surface_variant; }
 
 .md-expressive .lyrics-line-active { color: @md_primary; }
+/* On the scheme's surface Metrolist draws every lyric line in the primary colour. */
+.expanded-player.md-expressive .lyrics-line { color: @md_primary; }
 /* The Música/Vídeo switch over the artwork, as the other selectors. */
 .md-expressive .expanded-media-switch button {
   color: @md_on_surface_variant;

@@ -7,6 +7,7 @@ the next tag, spaces included, so joining the words gives the line back.
 
 from __future__ import annotations
 
+import math
 import re
 
 from .models import LyricLine, LyricWord
@@ -14,8 +15,9 @@ from .models import LyricLine, LyricWord
 _WORD_TAG = re.compile(
     r"<(?:(?P<hours>\d+):)?(?P<minutes>\d{1,3}):(?P<seconds>\d{2})(?:[.:](?P<fraction>\d{1,3}))?>"
 )
-# Opacity of the words still to be sung in the active line.
-UPCOMING_ALPHA = 0.45
+# Opacity of the active line's letters still to be sung (Metrolist's focusedAlpha);
+# a word's letters brighten towards 1 as the word is sung.
+FOCUSED_ALPHA = 0.3
 
 
 def tag_ms(match: re.Match) -> int:
@@ -100,3 +102,66 @@ def word_glow(word: LyricWord, progress: float) -> float:
     impact = min(1.0, max(0.0, (per_letter - 100) / 250)) * 0.6
     impact += min(1.0, max(0.0, (duration - 300) / 1500)) * 0.4
     return min(1.0, impact) * fade
+
+
+def letter_progress(word: LyricWord, position_ms: float, index: int, length: int) -> float:
+    """How lit the ``index``-th of a word's ``length`` letters is, 0 to 1 (charLp).
+
+    The fill sweeps the word letter by letter: each letter takes its share of
+    the word's time. The space after a word counts as its last letter.
+    """
+    duration = max(word.end_ms - word.start_ms, 100)
+    sung = (position_ms - word.start_ms) / duration
+    return min(1.0, max(0.0, (sung - index / length) * length))
+
+
+def letter_nudge(progress: float, letter: float) -> float:
+    """The bump a letter takes as the fill crosses it, while its word is sung."""
+    if not 0 < progress < 1:
+        return 0.0
+    return 0.038 * math.sin(letter * math.pi) * math.exp(-3 * letter)
+
+
+def hyphen_groups(words) -> dict[int, tuple[int, int, int, int]]:
+    """Syllables joined by hyphens ("lo-", "ve"): word index -> (position,
+    size, start_ms, end_ms) of its group, for words in groups of two or more."""
+    groups: dict[int, tuple[int, int, int, int]] = {}
+    current: list[int] = []
+    for index, word in enumerate(words):
+        current.append(index)
+        if word.text.rstrip().endswith("-") and not word.text.endswith(" "):
+            continue
+        if len(current) > 1:
+            start, end = words[current[0]].start_ms, words[current[-1]].end_ms
+            for position, member in enumerate(current):
+                groups[member] = (position, len(current), start, end)
+        current = []
+    return groups
+
+
+def crescendo(group: tuple[int, int, int, int], progress: float, position_ms: float) -> float:
+    """Metrolist's swell of a hyphenated word: each syllable a little larger,
+    the last one springing up while sung and the group settling once done."""
+    position, size, _start, end = group
+    base = position * 0.012
+    peak, decay, frequency = 0.06, 3.5, 5.0
+    after = min(1.0, max(0.0, (position_ms - end) / 600))
+    if after > 0:
+        spring = (base + peak) * math.exp(-decay * after)
+        return spring * math.cos(frequency * after * math.pi) * (1 - after)
+    if position == size - 1:
+        bounce = math.exp(-decay * progress) * math.cos(frequency * progress * math.pi)
+        return base + peak * (1 - bounce * (1 - progress))
+    return base + (0.02 * (1 - progress) if progress > 0 else 0.0)
+
+
+def wave(
+    group: tuple[int, int, int, int], position_ms: float, wall_ms: float, letter: int
+) -> float:
+    """The vertical ripple through a hyphenated word while it is sung, in pixels."""
+    _position, _size, start, end = group
+    fade = min(1.0, max(0.0, (position_ms - start) / 200))
+    fade *= min(1.0, max(0.0, (end - position_ms) / 200))
+    if fade <= 0.01:
+        return 0.0
+    return math.sin(wall_ms * 0.006 + letter * 0.4) * 3.24 * fade

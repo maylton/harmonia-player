@@ -16,7 +16,7 @@ from .ui import set_css_class
 
 # Metrolist moves its lines with a 750 ms FastOutSlowIn tween.
 FAST_OUT_SLOW_IN = cubic_bezier(0.4, 0.0, 0.2, 1.0)
-LYRIC_NEAR_DISTANCES = (1, 2, 3)
+LYRIC_NEAR_DISTANCES = (1, 2, 3, 4)
 
 
 class WindowLyricsFollowMixin:
@@ -99,8 +99,9 @@ class WindowLyricsFollowMixin:
         *,
         expanded: bool,
     ) -> float:
-        """Place expanded lyrics centrally and footer lyrics slightly above center."""
-        anchor = 0.50 if expanded else 0.42
+        """Expanded lyrics at 35% of the height, as Metrolist; the footer's a
+        little above the middle."""
+        anchor = 0.35 if expanded else 0.42
         target = row_top + row_height / 2 - viewport_height * anchor
         return max(lower, min(target, max(lower, upper - viewport_height)))
 

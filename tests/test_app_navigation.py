@@ -95,7 +95,7 @@ def test_lyrics_scroll_targets_differ_between_footer_and_expanded_player():
     footer = HarmoniaWindow._lyric_scroll_destination(500, 60, 300, 0, 1000, expanded=False)
     expanded = HarmoniaWindow._lyric_scroll_destination(500, 60, 300, 0, 1000, expanded=True)
     assert footer == 404
-    assert expanded == 380
+    assert expanded == 425  # 35% of the height, as Metrolist
     assert HarmoniaWindow._lyric_scroll_destination(20, 60, 300, 0, 1000, expanded=True) == 0
     assert HarmoniaWindow._lyric_scroll_destination(980, 60, 300, 0, 1000, expanded=True) == 700
 

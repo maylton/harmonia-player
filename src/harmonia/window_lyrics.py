@@ -16,9 +16,10 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from . import romaji
+from . import host, romaji
 from .gtk_lyric_words import KaraokeLine
 from .i18n import _
+from .lyrics_state import without_foreign_translation
 from .models import (
     LibraryItem,
     LyricsDocument,
@@ -76,6 +77,7 @@ class WindowLyricsMixin:
         if not force:
             cached = self.storage.load_lyrics_document(item.id, self.lyrics_provider)
             if cached:
+                cached = without_foreign_translation(cached, host.user_language())
                 self._render_lyrics(item, cached)
                 return
 
@@ -254,16 +256,21 @@ class WindowLyricsMixin:
             row.set_tooltip_text(_("Ir para {time}").format(time=self._format_time(line.start_ms)))
             row.connect("clicked", lambda _button, value=line.start_ms: self._seek_lyric(value))
             labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            original = KaraokeLine(line)
+            # Centred in the expanded player, as Metrolist's lyrics.
+            original = KaraokeLine(line, centered=expanded)
             labels.append(original)
             texts.append(original)
             # Filled with rōmaji once read (_show_lyrics_romaji).
-            reading = Gtk.Label(xalign=0, wrap=True, visible=False)
+            align = 0.5 if expanded else 0.0
+            justify = Gtk.Justification.CENTER if expanded else Gtk.Justification.LEFT
+            reading = Gtk.Label(xalign=align, justify=justify, wrap=True, visible=False)
             reading.add_css_class("lyrics-line-romaji")
             labels.append(reading)
             readings.append(reading)
             if line.translation:
-                translated = Gtk.Label(label=line.translation, xalign=0, wrap=True)
+                translated = Gtk.Label(
+                    label=line.translation, xalign=align, justify=justify, wrap=True
+                )
                 translated.add_css_class("lyrics-line-translation")
                 labels.append(translated)
             row.set_child(labels)
