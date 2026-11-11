@@ -22,6 +22,7 @@ from .ui import deliver_to_main, set_css_class
 from .window_chrome.player_bar import apply_player_style
 
 LOGGER = logging.getLogger(__name__)
+THEME_FADE_MS = 300  # the crossfade between two appearances
 BUNDLED_ICON_THEME = "HarmoniaMaterial"
 BUNDLED_ICONS_PATH = str(Path(__file__).with_name("icons"))
 FALLBACK_ICON_THEMES = ("Adwaita",)
@@ -298,7 +299,42 @@ class WindowPreferencesMixin:
 
     def _appearance_changed(self, name: str, value) -> None:
         self._preference_changed(name, value)
-        self._apply_appearance_preferences()
+        self._crossfade(self._apply_appearance_preferences)
+
+    def _crossfade(self, change) -> None:
+        """Fade from the window as it looked to how ``change`` leaves it.
+
+        A picture of the content goes over it while the new theme is applied,
+        then fades out. libadwaita skips the fade when the system asks for
+        fewer animations.
+        """
+        overlay = getattr(self, "app_overlay", None)
+        native = self.get_native()
+        renderer = native.get_renderer() if native is not None else None
+        width, height = (overlay.get_width(), overlay.get_height()) if overlay else (0, 0)
+        if renderer is None or width <= 0 or height <= 0 or not self.get_mapped():
+            change()
+            return
+        snapshot = Gtk.Snapshot()
+        Gtk.WidgetPaintable.new(overlay).snapshot(snapshot, width, height)
+        node = snapshot.to_node()
+        if node is None:
+            change()
+            return
+        before = Gtk.Picture(
+            paintable=renderer.render_texture(node, None),
+            content_fit=Gtk.ContentFit.FILL,
+            can_shrink=True,
+            can_target=False,
+        )
+        overlay.add_overlay(before)
+        change()
+        fade = Adw.TimedAnimation.new(
+            before, 1.0, 0.0, THEME_FADE_MS, Adw.PropertyAnimationTarget.new(before, "opacity")
+        )
+        fade.set_easing(Adw.Easing.EASE_IN_OUT_CUBIC)
+        fade.connect("done", lambda *_: overlay.remove_overlay(before))
+        fade.play()
 
     def _cache_size(self) -> int:
         return sum(

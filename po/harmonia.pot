@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-10-28 17:50-0300\n"
+"POT-Creation-Date: 2026-11-11 15:27-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,7 +43,7 @@ msgid "0:00"
 msgstr ""
 
 #: src/harmonia/auth.py:21 src/harmonia/auth_webview2.py:187
-#: src/harmonia/window_account.py:62 src/harmonia/window_library.py:253
+#: src/harmonia/window_account.py:113 src/harmonia/window_library.py:253
 msgid "Conectar ao YouTube Music"
 msgstr ""
 
@@ -188,31 +188,31 @@ msgstr ""
 msgid "Playlists"
 msgstr ""
 
-#: src/harmonia/innertube/protocol.py:113
+#: src/harmonia/innertube/protocol.py:117
 msgid ""
 "O cookie não contém SAPISID. Entre novamente no music.youtube.com e exporte "
 "o cookie completo."
 msgstr ""
 
-#: src/harmonia/innertube/session.py:146
+#: src/harmonia/innertube/session.py:147
 msgid "A sessão expirou ou o cookie não tem acesso ao YouTube Music."
 msgstr ""
 
-#: src/harmonia/innertube/session.py:150
+#: src/harmonia/innertube/session.py:151
 #, python-brace-format
 msgid "YouTube Music respondeu HTTP {code}: {detail}"
 msgstr ""
 
-#: src/harmonia/innertube/session.py:157
+#: src/harmonia/innertube/session.py:158
 #, python-brace-format
 msgid "Não foi possível conectar ao YouTube Music: {error}"
 msgstr ""
 
-#: src/harmonia/innertube/session.py:160
+#: src/harmonia/innertube/session.py:161
 msgid "Não foi possível concluir a requisição ao YouTube Music."
 msgstr ""
 
-#: src/harmonia/innertube/session.py:175
+#: src/harmonia/innertube/session.py:176
 #, python-brace-format
 msgid "Não foi possível iniciar a sessão do YouTube Music: {error}"
 msgstr ""
@@ -339,40 +339,40 @@ msgid ""
 "O fluxo de áudio terminou antes do esperado ({position}s de {duration}s)"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:107 src/harmonia/window_history.py:144
+#: src/harmonia/qt_activity.py:109 src/harmonia/window_history.py:144
 #, python-brace-format
 msgid ""
 "O histórico local foi preservado; não foi possível carregar o remoto: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:147
+#: src/harmonia/qt_activity.py:149
 #, python-brace-format
 msgid "Não foi possível remover do histórico: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:259
+#: src/harmonia/qt_activity.py:262
 #, python-brace-format
 msgid "Não foi possível carregar a letra: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:296
+#: src/harmonia/qt_activity.py:299
 msgid "Letra copiada."
 msgstr ""
 
-#: src/harmonia/qt_activity.py:308 src/harmonia/window_lyrics_tools.py:119
+#: src/harmonia/qt_activity.py:312 src/harmonia/window_lyrics_tools.py:121
 msgid "Traduzindo letra…"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics_tools.py:140
+#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:142
 #, python-brace-format
 msgid "Não foi possível traduzir: {error}"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:335 src/harmonia/window_lyrics_tools.py:141
+#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:143
 msgid "resposta vazia"
 msgstr ""
 
-#: src/harmonia/qt_activity.py:346
+#: src/harmonia/qt_activity.py:350
 msgid "Letra traduzida."
 msgstr ""
 
@@ -475,7 +475,7 @@ msgstr ""
 msgid "Sincronizando biblioteca, Início e Explorar…"
 msgstr ""
 
-#: src/harmonia/qt_catalog.py:114 src/harmonia/window_account.py:182
+#: src/harmonia/qt_catalog.py:114 src/harmonia/window_account.py:239
 #, python-brace-format
 msgid "Não foi possível sincronizar: {error}"
 msgstr ""
@@ -1090,7 +1090,7 @@ msgstr ""
 msgid "Inspirado no"
 msgstr ""
 
-#: src/harmonia/settings_page/account.py:20 src/harmonia/window_account.py:221
+#: src/harmonia/settings_page/account.py:20 src/harmonia/window_account.py:278
 #: src/harmonia/window_chrome/header.py:73
 msgid "Conta"
 msgstr ""
@@ -1117,11 +1117,11 @@ msgstr ""
 
 #: src/harmonia/settings_page/account.py:39
 #: src/harmonia/settings_page/optional.py:126
-#: src/harmonia/settings_page/social.py:58 src/harmonia/window_account.py:74
+#: src/harmonia/settings_page/social.py:58 src/harmonia/window_account.py:125
 msgid "Desconectar"
 msgstr ""
 
-#: src/harmonia/settings_page/account.py:47 src/harmonia/window_account.py:76
+#: src/harmonia/settings_page/account.py:47 src/harmonia/window_account.py:127
 msgid "Conectar"
 msgstr ""
 
@@ -1497,7 +1497,7 @@ msgstr ""
 msgid "Cole o link harmonia:// enviado pelo anfitrião"
 msgstr ""
 
-#: src/harmonia/settings_page/optional.py:42
+#: src/harmonia/settings_page/optional.py:42 src/harmonia/window_account.py:106
 msgid "Entrar"
 msgstr ""
 
@@ -1875,27 +1875,31 @@ msgstr ""
 msgid "Não foi possível obter o vídeo correspondente. {details}"
 msgstr ""
 
-#: src/harmonia/window_account.py:41
+#: src/harmonia/window_account.py:42
 #, python-brace-format
 msgid "Navegador integrado indisponível: {error}"
 msgstr ""
 
-#: src/harmonia/window_account.py:55
+#: src/harmonia/window_account.py:56
 msgid "Conta conectada. Sincronizando…"
 msgstr ""
 
-#: src/harmonia/window_account.py:64
+#: src/harmonia/window_account.py:106
+msgid "A sessão do YouTube Music expirou"
+msgstr ""
+
+#: src/harmonia/window_account.py:115
 msgid ""
 "No navegador, abra music.youtube.com já conectado, copie o cabeçalho Cookie "
 "de uma requisição nas ferramentas de desenvolvedor e cole abaixo. A senha "
 "nunca é solicitada."
 msgstr ""
 
-#: src/harmonia/window_account.py:68
+#: src/harmonia/window_account.py:119
 msgid "SAPISID=…; __Secure-3PAPISID=…"
 msgstr ""
 
-#: src/harmonia/window_account.py:72 src/harmonia/window_actions.py:119
+#: src/harmonia/window_account.py:123 src/harmonia/window_actions.py:119
 #: src/harmonia/window_actions.py:145 src/harmonia/window_actions.py:311
 #: src/harmonia/window_actions.py:337 src/harmonia/window_actions.py:372
 #: src/harmonia/window_cast.py:33 src/harmonia/window_local_playlists.py:131
@@ -1904,32 +1908,32 @@ msgstr ""
 msgid "Cancelar"
 msgstr ""
 
-#: src/harmonia/window_account.py:92
+#: src/harmonia/window_account.py:143
 msgid "Cookie inválido: SAPISID não encontrado"
 msgstr ""
 
-#: src/harmonia/window_account.py:110
+#: src/harmonia/window_account.py:161
 msgid "Sincronizando biblioteca…"
 msgstr ""
 
-#: src/harmonia/window_account.py:153
+#: src/harmonia/window_account.py:210
 #, python-brace-format
 msgid "Não foi possível atualizar o início: {error}"
 msgstr ""
 
-#: src/harmonia/window_account.py:168
+#: src/harmonia/window_account.py:225
 #, python-brace-format
 msgid "Não foi possível atualizar o Explorar: {error}"
 msgstr ""
 
-#: src/harmonia/window_account.py:198
+#: src/harmonia/window_account.py:255
 #, python-brace-format
 msgid "Biblioteca atualizada · {count} item"
 msgid_plural "Biblioteca atualizada · {count} itens"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/harmonia/window_account.py:260
+#: src/harmonia/window_account.py:317
 #, python-brace-format
 msgid "Conta — {name}"
 msgstr ""
@@ -2060,7 +2064,7 @@ msgstr ""
 msgid "Mostrar tudo"
 msgstr ""
 
-#: src/harmonia/window_artist.py:209 src/harmonia/window_lyrics.py:109
+#: src/harmonia/window_artist.py:209 src/harmonia/window_lyrics.py:111
 msgid "Não foi possível carregar"
 msgstr ""
 
@@ -2116,7 +2120,7 @@ msgstr ""
 #: src/harmonia/window_chrome/expanded_player.py:280
 #: src/harmonia/window_chrome/player_bar.py:291
 #: src/harmonia/window_chrome/player_bar.py:299
-#: src/harmonia/window_lyrics.py:57
+#: src/harmonia/window_lyrics.py:58
 msgid "Letras"
 msgstr ""
 
@@ -2156,7 +2160,7 @@ msgstr ""
 
 #: src/harmonia/window_chrome/expanded_player.py:281
 #: src/harmonia/window_chrome/player_bar.py:300
-#: src/harmonia/window_lyrics.py:58
+#: src/harmonia/window_lyrics.py:59
 msgid "Comece a reproduzir uma música para ver a letra."
 msgstr ""
 
@@ -2674,83 +2678,83 @@ msgstr ""
 msgid "Renomear playlist local"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:45
+#: src/harmonia/window_lyrics.py:46
 msgid "Tentar novamente"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:82
+#: src/harmonia/window_lyrics.py:84
 msgid "Carregando letra…"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:114
+#: src/harmonia/window_lyrics.py:116
 msgid "Letra indisponível"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:115
+#: src/harmonia/window_lyrics.py:117
 msgid "Nenhum dos provedores encontrou uma letra para esta faixa."
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:209
+#: src/harmonia/window_lyrics.py:211
 msgid "sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:209
+#: src/harmonia/window_lyrics.py:211
 msgid "não sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:211
+#: src/harmonia/window_lyrics.py:213
 #, python-brace-format
 msgid "{provider} · Letra {mode}"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:254
+#: src/harmonia/window_lyrics.py:256
 #, python-brace-format
 msgid "Ir para {time}"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:36
-#: src/harmonia/window_lyrics_tools.py:43
+#: src/harmonia/window_lyrics_tools.py:37
+#: src/harmonia/window_lyrics_tools.py:44
 msgid "Automática"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:42
+#: src/harmonia/window_lyrics_tools.py:43
 #, python-brace-format
 msgid "Fonte: {provider}"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:45
+#: src/harmonia/window_lyrics_tools.py:46
 msgid "Alternar provedor de letras"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:51
-msgid "Traduzir para português"
+#: src/harmonia/window_lyrics_tools.py:52
+msgid "Traduzir a letra"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:56
+#: src/harmonia/window_lyrics_tools.py:57
 msgid "Copiar letra"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:61
+#: src/harmonia/window_lyrics_tools.py:62
 msgid "Adiantar letra em 250 ms"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:66
+#: src/harmonia/window_lyrics_tools.py:67
 msgid "Zerar ajuste de tempo"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:71
+#: src/harmonia/window_lyrics_tools.py:72
 msgid "Atrasar letra em 250 ms"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:84
+#: src/harmonia/window_lyrics_tools.py:85
 msgid "Sincronia 0 ms"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:108
+#: src/harmonia/window_lyrics_tools.py:109
 msgid "Letra copiada"
 msgstr ""
 
-#: src/harmonia/window_lyrics_tools.py:154
+#: src/harmonia/window_lyrics_tools.py:156
 msgid "Letra traduzida"
 msgstr ""
 

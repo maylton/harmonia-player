@@ -6,7 +6,12 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
 - Preferências > Sobre o Harmonia: a versão e como ela foi instalada, os créditos e as licenças, e os links do projeto;
 - atualizações automáticas: uma vez por dia o Harmonia procura a versão estável mais recente no GitHub, baixa e confere o SHA-256, e avisa no topo da janela; ela só é instalada quando você clica. No Windows o instalador roda em silêncio e reabre o app; no Linux roda o install.sh da versão nova pelo mesmo método (compilado, .deb ou .rpm), pedindo a senha numa janela do sistema quando precisa; no Flatpak, o aviso mostra o comando. A busca automática pode ser desligada;
-- install.sh: instala a versão estável mais recente, não um pré-lançamento, e no Arch só chama o pacman quando falta alguma dependência.
+- install.sh: instala a versão estável mais recente, não um pré-lançamento, e no Arch só chama o pacman quando falta alguma dependência;
+- letras no estilo novo do Metrolist: cada letra se acende da esquerda para a direita, dá um pequeno salto e empurra as seguintes, as sílabas com hífen crescem e ondulam, e o texto do player expandido fica maior (36), em negrito e centralizado, com as linhas vizinhas mais apagadas e a linha cantada a 35% do topo;
+- corrigido: numa letra que quebra em várias linhas, pedaços da linha de cima e da de baixo apareciam cortados sobre a linha cantada;
+- corrigido: a tradução das letras era sempre para o português e ficava salva, voltando em toda reprodução; agora ela é feita para o idioma do sistema, e traduções antigas noutro idioma são descartadas;
+- Windows: quando o YouTube recusa o cookie salvo, o Harmonia renova a sessão sozinho, em segundo plano, a partir do navegador do login, em vez de pedir um clique no usuário a cada abertura;
+- a troca de tema, de modo claro ou escuro e de cor de destaque esmaece suavemente da aparência antiga para a nova.
 
 ## 1.0.0 — 2026-10-27
 
