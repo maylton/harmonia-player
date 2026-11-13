@@ -42,7 +42,11 @@ class WindowLibraryMixin:
             content.append(self._local_library_actions())
         content.append(self._library_body())
         self.stack.replace("library", page)
-        self.stack.set_visible_child_name("library")
+        # Rebuilt on every sync too: only shown when it is the page in view.
+        # Showing it from another page and switching straight back crossfaded
+        # the two, a ghost of the library over the page once a sync finished.
+        if self.main_view == "library" and not self.back.get_visible():
+            self.stack.set_visible_child_name("library")
 
     def _library_header(self) -> Gtk.Widget:
         """Title and description, with the origin, sorting and category controls."""

@@ -184,7 +184,7 @@ class WindowActionsMixin:
                 else:
                     self.library_origin = "local"
                     self.library_filter = "songs"
-                    self._render()
+                    self.show_library()
             except GLib.Error:
                 return
 
