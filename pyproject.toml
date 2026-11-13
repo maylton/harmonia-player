@@ -1,6 +1,6 @@
 [project]
 name = "harmonia"
-version = "1.0.0"
+version = "1.0.1"
 description = "Cliente Linux nativo para o YouTube Music com frontends GTK e Qt/Kirigami"
 requires-python = ">=3.11"
 

@@ -2,7 +2,7 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
-## Não lançado
+## 1.0.1 — 2026-11-13
 
 - Preferências > Sobre o Harmonia: a versão e como ela foi instalada, os créditos e as licenças, e os links do projeto;
 - atualizações automáticas: uma vez por dia o Harmonia procura a versão estável mais recente no GitHub, baixa e confere o SHA-256, e avisa no topo da janela; ela só é instalada quando você clica. No Windows o instalador roda em silêncio e reabre o app; no Linux roda o install.sh da versão nova pelo mesmo método (compilado, .deb ou .rpm), pedindo a senha numa janela do sistema quando precisa; no Flatpak, o aviso mostra o comando. A busca automática pode ser desligada;
@@ -11,7 +11,10 @@ Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 - corrigido: numa letra que quebra em várias linhas, pedaços da linha de cima e da de baixo apareciam cortados sobre a linha cantada;
 - corrigido: a tradução das letras era sempre para o português e ficava salva, voltando em toda reprodução; agora ela é feita para o idioma do sistema, e traduções antigas noutro idioma são descartadas;
 - Windows: quando o YouTube recusa o cookie salvo, o Harmonia renova a sessão sozinho, em segundo plano, a partir do navegador do login, em vez de pedir um clique no usuário a cada abertura;
-- a troca de tema, de modo claro ou escuro e de cor de destaque esmaece suavemente da aparência antiga para a nova.
+- a troca de tema, de modo claro ou escuro e de cor de destaque esmaece suavemente da aparência antiga para a nova;
+- letras muito mais rápidas: o BetterLyrics (as letras da Apple Music, palavra por palavra, a primeira fonte do Metrolist) entra como fonte principal, e no modo automático todas as fontes são consultadas ao mesmo tempo, em vez de uma esperando a outra. Antes, um servidor do LyricsPlus que não responde segurava cada faixa por 8 s; agora a maioria das letras chega em menos de meio segundo. O LyricsPlus ganhou os espelhos do Metrolist e começa pelo que respondeu por último;
+- corrigido: em faixas cujo subtítulo traz só a contagem de reproduções ("Tocou 151 mi vezes"), essa contagem era enviada como nome do artista e a letra nunca era achada;
+- corrigido: ao terminar uma sincronização, a página Biblioteca aparecia por um instante sobre a página aberta, o que deixava um "recorte" de outra tela logo depois de abrir o app, e podia tirar você de um álbum aberto pela Biblioteca.
 
 ## 1.0.0 — 2026-10-27
 

@@ -44,6 +44,12 @@
   <content_rating type="oars-1.1" />
   <update_contact>harmonia@localhost.invalid</update_contact>
   <releases>
+    <release version="1.0.1" date="2026-11-13" type="stable">
+      <description>
+        <p>Atualizações automáticas a partir do GitHub, a seção Sobre o Harmonia, letras palavra por palavra no estilo novo do Metrolist e muito mais rápidas com o BetterLyrics, tradução das letras no idioma do sistema, uma transição suave ao trocar de tema e, no Windows, a sessão do YouTube Music renovada sozinha.</p>
+        <p xml:lang="en">Automatic updates from GitHub, an About Harmonia section, word-by-word lyrics in Metrolist's new style and much faster with BetterLyrics, lyrics translated into the system's language, a smooth transition when the theme changes and, on Windows, the YouTube Music session renewed on its own.</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-10-23" type="stable">
       <description>
         <p>A primeira versão estável. Além da 1.0.0-rc.1, capas nítidas no player expandido e na tela cheia, que crescem com a janela, títulos longos que giram na mesma linha, a posição da música mostrada ao abrir o app, e vídeo em até 1080p decodificado pela placa de vídeo quando possível.</p>
