@@ -81,7 +81,7 @@ class Fixed:
 
 
 def test_resolver_falls_back_to_native_and_honors_provider():
-    resolver = LyricsResolver(lambda _video_id: "Letra nativa", Missing(), Missing())
+    resolver = LyricsResolver(lambda _video_id: "Letra nativa", Missing(), Missing(), Missing())
     item = LibraryItem("v", "Faixa", "Artista")
     assert resolver.fetch(item).provider == "YouTube Music"
     assert resolver.fetch(item, provider="lrclib") is None
@@ -101,12 +101,12 @@ def test_resolver_prefers_lyrics_timed_by_word():
     def native(_video_id):
         return None
 
-    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_word)).fetch(item) is by_word
+    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_word), Missing()).fetch(item) is by_word
     # LRCLIB wins over LyricsPlus timed by line; LyricsPlus fills in when LRCLIB fails.
-    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_line)).fetch(item) is lrclib
+    assert LyricsResolver(native, Fixed(lrclib), Fixed(by_line), Missing()).fetch(item) is lrclib
     failing = Fixed(error=OSError("offline"))
-    assert LyricsResolver(native, failing, Fixed(by_line)).fetch(item) is by_line
-    assert LyricsResolver(native, Missing(), failing).fetch(item) is None
+    assert LyricsResolver(native, failing, Fixed(by_line), Missing()).fetch(item) is by_line
+    assert LyricsResolver(native, Missing(), failing, Missing()).fetch(item) is None
 
 
 def test_translation_preserves_line_mapping():
@@ -115,3 +115,67 @@ def test_translation_preserves_line_mapping():
         return Response([[["Olá\nMundo", "Hello\nWorld", None, None]]])
 
     assert GoogleTranslationClient(opener).translate(["Hello", "World"], "pt") == ["Olá", "Mundo"]
+
+
+class Slow:
+    def __init__(self, seconds, document=None):
+        self.seconds, self.document = seconds, document
+
+    def lyrics(self, _item, _duration_ms=0):
+        import time
+
+        time.sleep(self.seconds)
+        return self.document
+
+
+def test_the_services_are_asked_together_and_a_slow_one_does_not_hold_the_lyrics():
+    import time
+
+    from harmonia.models import LyricLine, LyricsDocument, LyricWord
+
+    by_word = LyricsDocument(
+        "Um", "BetterLyrics", [LyricLine(0, "Um", words=(LyricWord(0, 5, "Um"),))]
+    )
+    lrclib = LyricsDocument("Um", "LRCLIB", [LyricLine(0, "Um")])
+    item = LibraryItem("v", "Faixa", "Artista")
+    resolver = LyricsResolver(lambda _id: None, Fixed(lrclib), Slow(5), Fixed(by_word))
+    started = time.monotonic()
+    assert resolver.fetch(item, 200_000) is by_word  # LyricsPlus still answering
+    assert time.monotonic() - started < 1
+
+    resolver = LyricsResolver(lambda _id: None, Fixed(lrclib), Slow(5), Missing())
+    resolver.WORD_GRACE = 0.2
+    started = time.monotonic()
+    assert resolver.fetch(item, 200_000) is lrclib  # by line, after a short wait for words
+    assert time.monotonic() - started < 1
+
+    # By line too, BetterLyrics comes before LRCLIB.
+    better_by_line = LyricsDocument("Um", "BetterLyrics", [LyricLine(0, "Um")])
+    resolver = LyricsResolver(lambda _id: None, Fixed(lrclib), Missing(), Fixed(better_by_line))
+    resolver.WORD_GRACE = 0.2
+    assert resolver.fetch(item, 200_000) is better_by_line
+
+
+def test_betterlyrics_reads_apple_musics_ttml_word_by_word():
+    from harmonia.lyrics_providers.betterlyrics import parse_ttml, search_title
+
+    ttml = (
+        '<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata">'
+        '<body><div><p begin="0.155" end="3.9"><span begin="0.155" end="0.587">Ab</span>'
+        '<span begin="0.587" end="0.72">ra,</span> <span begin="1.4" end="1.9">hey</span>'
+        '<span ttm:role="x-bg" begin="2.0" end="3.0"><span begin="2.0" end="3.0">(oh)</span></span>'
+        '</p><p begin="1:04.5"><span begin="1:04.5" end="1:05">Fim</span></p></div></body></tt>'
+    )
+    document = parse_ttml(ttml)
+    assert [line.text for line in document.synced] == ["Abra, hey", "(oh)", "Fim"]
+    assert [word.text for word in document.synced[0].words] == ["Ab", "ra, ", "hey"]
+    assert document.synced[2].start_ms == 64_500
+    assert search_title("Poker Face (Official Video) [Remastered]") == "Poker Face"
+
+
+def test_play_and_view_counts_are_not_taken_for_the_artist():
+    from harmonia.lyrics_providers.common import lyrics_metadata
+
+    assert lyrics_metadata(LibraryItem("v", "Me Voy", "Tocou 151\xa0mi vezes · 3:36"))[0] == ""
+    assert lyrics_metadata(LibraryItem("v", "X", "Música · RBD · 2,1 mi visualizações"))[0] == "RBD"
+    assert lyrics_metadata(LibraryItem("v", "X", "Song · Kelis · 3M plays"))[0] == "Kelis"

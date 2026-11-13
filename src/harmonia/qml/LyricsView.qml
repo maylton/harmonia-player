@@ -69,7 +69,9 @@ Item {
                                               ? "LyricsPlus"
                                               : backend.selectedLyricsProvider === "youtube"
                                                 ? "YouTube"
-                                                : i18n.tr("Automática")
+                                                : backend.selectedLyricsProvider === "betterlyrics"
+                                                  ? "BetterLyrics"
+                                                  : i18n.tr("Automática")
                 hoverEnabled: true
                 leftPadding: Kirigami.Units.largeSpacing
                 rightPadding: Kirigami.Units.largeSpacing

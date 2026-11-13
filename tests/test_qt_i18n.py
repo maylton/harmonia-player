@@ -10,6 +10,7 @@ TRANSLATED = re.compile(r'i18n\.n?trf?\(\s*$|i18n\.n?trf?\("(?:[^"\\]|\\.)*",\s*
 UNTRANSLATED = {
     "YouTube Music",
     "YouTube",
+    "BetterLyrics",
     "LRCLIB",
     "LyricsPlus",
     "AudD",

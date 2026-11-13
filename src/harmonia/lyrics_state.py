@@ -7,9 +7,14 @@ from dataclasses import replace
 
 from .models import LyricLine, LyricsDocument
 
-LYRICS_PROVIDERS = ("auto", "lyricsplus", "lrclib", "youtube")
+LYRICS_PROVIDERS = ("auto", "betterlyrics", "lyricsplus", "lrclib", "youtube")
 # Names the providers give their documents, as stored in the lyrics cache.
-PROVIDER_NAMES = {"lyricsplus": "LyricsPlus", "lrclib": "LRCLIB", "youtube": "YouTube Music"}
+PROVIDER_NAMES = {
+    "betterlyrics": "BetterLyrics",
+    "lyricsplus": "LyricsPlus",
+    "lrclib": "LRCLIB",
+    "youtube": "YouTube Music",
+}
 MIN_LYRICS_OFFSET_MS = -5000
 MAX_LYRICS_OFFSET_MS = 5000
 

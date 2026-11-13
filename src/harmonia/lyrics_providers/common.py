@@ -25,8 +25,12 @@ def clean_title(title: str) -> str:
 def lyrics_metadata(item: LibraryItem) -> tuple[str, str | None]:
     """The artist and album a track's subtitle names, as lyrics services expect them."""
     parts = [part.strip() for part in re.split(r"\s*[·•]\s*", item.subtitle or "") if part.strip()]
-    noise = re.compile(r"^(?:música|music|vídeo|video|podcast|\d+(?::\d+){1,2})$", re.IGNORECASE)
-    useful = [part for part in parts if not noise.match(part) and "visualiza" not in part.lower()]
+    noise = re.compile(
+        r"^(?:música|music|song|canción|vídeo|video|podcast|\d+(?::\d+){1,2})$", re.IGNORECASE
+    )
+    # Play and view counts: "Tocou 151 mi vezes", "1,2 mi visualizações", "3M plays".
+    counts = re.compile(r"\d.*\b(?:vezes|visualiza\w*|reproduç\w*|plays?|views?|times)\b", re.I)
+    useful = [part for part in parts if not noise.match(part) and not counts.search(part)]
     artist = useful[0] if useful else ""
     album = useful[-1] if len(useful) > 1 else None
     return artist, album

@@ -35,6 +35,7 @@ class WindowLyricsToolsMixin:
         bar.add_css_class("lyrics-actions")
         provider_names = {
             "auto": _("Automática"),
+            "betterlyrics": "BetterLyrics",
             "lyricsplus": "LyricsPlus",
             "lrclib": "LRCLIB",
             "youtube": "YouTube",

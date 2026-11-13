@@ -21,11 +21,15 @@ LOGGER = logging.getLogger(__name__)
 
 class LyricsPlusClient:
     NAME = "LyricsPlus"
-    # In order: the first answers with word timing, the second by line.
+    # Metrolist's mirrors; the one that last answered is asked first.
     SERVERS = (
         "https://lyricsplus.binimum.org",
+        "https://lyricsplus.atomix.one",
         "https://lyricsplus.prjktla.my.id",
+        "https://lyricsplus-seven.vercel.app",
     )
+    TIMEOUT = 5  # seconds per mirror: a dead one held every track for 8
+    _last_working: str | None = None
 
     def __init__(self, opener: Callable[..., object] = urllib.request.urlopen) -> None:
         self.opener = opener
@@ -42,13 +46,19 @@ class LyricsPlusClient:
             params["album"] = album
         fallback = None
         failures: list[Exception] = []
-        for server in self.SERVERS:
+        last = LyricsPlusClient._last_working
+        servers = sorted(self.SERVERS, key=lambda server: server != last)
+        for server in servers:
             try:
-                document = self.document(get_json(self.opener, f"{server}/v2/lyrics/get", params))
+                payload = get_json(
+                    self.opener, f"{server}/v2/lyrics/get", params, timeout=self.TIMEOUT
+                )
             except Exception as exc:  # one mirror down must not hide the others
                 LOGGER.debug("LyricsPlus %s falhou", server, exc_info=True)
                 failures.append(exc)
                 continue
+            LyricsPlusClient._last_working = server
+            document = self.document(payload)
             if document is not None and is_word_synced(document):
                 return document
             fallback = fallback or document

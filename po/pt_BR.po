@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Harmonia 0.1.0-beta.1\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-11-11 15:27-0300\n"
+"POT-Creation-Date: 2026-11-13 11:28-0300\n"
 "PO-Revision-Date: 2026-08-13 13:30-0300\n"
 "Last-Translator: Harmonia Contributors\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -42,7 +42,7 @@ msgid "0:00"
 msgstr "0:00"
 
 #: src/harmonia/auth.py:21 src/harmonia/auth_webview2.py:187
-#: src/harmonia/window_account.py:113 src/harmonia/window_library.py:253
+#: src/harmonia/window_account.py:113 src/harmonia/window_library.py:257
 msgid "Conectar ao YouTube Music"
 msgstr "Conectar ao YouTube Music"
 
@@ -372,16 +372,16 @@ msgstr "Não foi possível carregar a letra: {error}"
 msgid "Letra copiada."
 msgstr "Letra copiada."
 
-#: src/harmonia/qt_activity.py:312 src/harmonia/window_lyrics_tools.py:121
+#: src/harmonia/qt_activity.py:312 src/harmonia/window_lyrics_tools.py:122
 msgid "Traduzindo letra…"
 msgstr "Traduzindo letra…"
 
-#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:142
+#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:143
 #, python-brace-format
 msgid "Não foi possível traduzir: {error}"
 msgstr "Não foi possível traduzir: {error}"
 
-#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:143
+#: src/harmonia/qt_activity.py:339 src/harmonia/window_lyrics_tools.py:144
 msgid "resposta vazia"
 msgstr "resposta vazia"
 
@@ -415,7 +415,7 @@ msgid "Downloads da coleção iniciados."
 msgstr "Downloads da coleção iniciados."
 
 #: src/harmonia/qt_backend.py:1208 src/harmonia/qt_preferences.py:146
-#: src/harmonia/window_preferences.py:342
+#: src/harmonia/window_preferences.py:378
 msgid "Validando sessão…"
 msgstr "Validando sessão…"
 
@@ -611,56 +611,56 @@ msgstr "Last.fm desconectado."
 
 #: src/harmonia/qt_library.py:14 src/harmonia/qt_presenters.py:77
 #: src/harmonia/qt_presenters.py:78 src/harmonia/settings_page/account.py:29
-#: src/harmonia/window_history.py:203 src/harmonia/window_library.py:77
+#: src/harmonia/window_history.py:203 src/harmonia/window_library.py:81
 msgid "YouTube Music"
 msgstr "YouTube Music"
 
-#: src/harmonia/qt_library.py:15 src/harmonia/window_library.py:78
+#: src/harmonia/qt_library.py:15 src/harmonia/window_library.py:82
 msgid "Uploads"
 msgstr "Uploads"
 
 #: src/harmonia/qt_library.py:16 src/harmonia/window_chrome/navigation.py:40
-#: src/harmonia/window_history.py:45 src/harmonia/window_library.py:79
+#: src/harmonia/window_history.py:45 src/harmonia/window_library.py:83
 msgid "Downloads"
 msgstr "Downloads"
 
-#: src/harmonia/qt_library.py:17 src/harmonia/window_library.py:80
+#: src/harmonia/qt_library.py:17 src/harmonia/window_library.py:84
 msgid "Arquivos locais"
 msgstr "Arquivos locais"
 
-#: src/harmonia/qt_library.py:18 src/harmonia/window_library.py:81
+#: src/harmonia/qt_library.py:18 src/harmonia/window_library.py:85
 msgid "Podcasts"
 msgstr "Podcasts"
 
-#: src/harmonia/qt_library.py:78 src/harmonia/window_library.py:162
+#: src/harmonia/qt_library.py:78 src/harmonia/window_library.py:166
 msgid "Músicas enviadas à sua conta do YouTube Music."
 msgstr "Músicas enviadas à sua conta do YouTube Music."
 
-#: src/harmonia/qt_library.py:79 src/harmonia/window_library.py:163
+#: src/harmonia/qt_library.py:79 src/harmonia/window_library.py:167
 msgid "Conteúdo disponível para reprodução offline."
 msgstr "Conteúdo disponível para reprodução offline."
 
-#: src/harmonia/qt_library.py:80 src/harmonia/window_library.py:164
+#: src/harmonia/qt_library.py:80 src/harmonia/window_library.py:168
 msgid "Arquivos e playlists armazenados neste computador."
 msgstr "Arquivos e playlists armazenados neste computador."
 
-#: src/harmonia/qt_library.py:81 src/harmonia/window_library.py:165
+#: src/harmonia/qt_library.py:81 src/harmonia/window_library.py:169
 msgid "Programas e episódios salvos na sua conta."
 msgstr "Programas e episódios salvos na sua conta."
 
-#: src/harmonia/qt_library.py:84 src/harmonia/window_library.py:168
+#: src/harmonia/qt_library.py:84 src/harmonia/window_library.py:172
 msgid "Álbuns e EPs salvos na sua coleção."
 msgstr "Álbuns e EPs salvos na sua coleção."
 
-#: src/harmonia/qt_library.py:85 src/harmonia/window_library.py:169
+#: src/harmonia/qt_library.py:85 src/harmonia/window_library.py:173
 msgid "Artistas que você acompanha."
 msgstr "Artistas que você acompanha."
 
-#: src/harmonia/qt_library.py:86 src/harmonia/window_library.py:170
+#: src/harmonia/qt_library.py:86 src/harmonia/window_library.py:174
 msgid "Todas as músicas marcadas como favoritas."
 msgstr "Todas as músicas marcadas como favoritas."
 
-#: src/harmonia/qt_library.py:87 src/harmonia/window_library.py:171
+#: src/harmonia/qt_library.py:87 src/harmonia/window_library.py:175
 msgid "Playlists salvas na sua conta."
 msgstr "Playlists salvas na sua conta."
 
@@ -785,7 +785,7 @@ msgstr "Proxy salvo. A próxima conexão usará esta configuração."
 msgid "Cache limpo · {size} removidos."
 msgstr "Cache limpo · {size} removidos."
 
-#: src/harmonia/qt_preferences.py:154 src/harmonia/window_preferences.py:355
+#: src/harmonia/qt_preferences.py:154 src/harmonia/window_preferences.py:391
 msgid "Sessão inválida ou expirada"
 msgstr "Sessão inválida ou expirada"
 
@@ -1458,7 +1458,7 @@ msgstr "Usando o canal {name}. Sincronizando…"
 
 #: src/harmonia/settings_page/library.py:17
 #: src/harmonia/window_chrome/navigation.py:19
-#: src/harmonia/window_library.py:59
+#: src/harmonia/window_library.py:63
 msgid "Biblioteca"
 msgstr "Biblioteca"
 
@@ -1780,7 +1780,7 @@ msgid "Exportar"
 msgstr "Exportar"
 
 #: src/harmonia/settings_page/streaming.py:85
-#: src/harmonia/window_preferences.py:423
+#: src/harmonia/window_preferences.py:459
 msgid "Restaurar"
 msgstr "Restaurar"
 
@@ -1929,7 +1929,7 @@ msgstr "SAPISID=…; __Secure-3PAPISID=…"
 #: src/harmonia/window_actions.py:337 src/harmonia/window_actions.py:372
 #: src/harmonia/window_cast.py:33 src/harmonia/window_local_playlists.py:131
 #: src/harmonia/window_local_playlists.py:148
-#: src/harmonia/window_preferences.py:422
+#: src/harmonia/window_preferences.py:458
 msgid "Cancelar"
 msgstr "Cancelar"
 
@@ -1979,7 +1979,7 @@ msgstr "Nome da playlist"
 msgid "Criar"
 msgstr "Criar"
 
-#: src/harmonia/window_actions.py:140 src/harmonia/window_library.py:133
+#: src/harmonia/window_actions.py:140 src/harmonia/window_library.py:137
 msgid "Nova playlist local"
 msgstr "Nova playlist local"
 
@@ -1995,7 +1995,7 @@ msgstr "Arquivos de áudio"
 msgid "Adicionar arquivos de áudio"
 msgstr "Adicionar arquivos de áudio"
 
-#: src/harmonia/window_actions.py:194 src/harmonia/window_library.py:131
+#: src/harmonia/window_actions.py:194 src/harmonia/window_library.py:135
 msgid "Importar playlist"
 msgstr "Importar playlist"
 
@@ -2637,39 +2637,39 @@ msgstr "Não foi possível carregar {title}: {error}"
 msgid "Link copiado"
 msgstr "Link copiado"
 
-#: src/harmonia/window_library.py:90
+#: src/harmonia/window_library.py:94
 msgid "Mais recentes"
 msgstr "Mais recentes"
 
-#: src/harmonia/window_library.py:90
+#: src/harmonia/window_library.py:94
 msgid "A-Z"
 msgstr "A-Z"
 
-#: src/harmonia/window_library.py:129 src/harmonia/window_local_playlists.py:39
+#: src/harmonia/window_library.py:133 src/harmonia/window_local_playlists.py:39
 msgid "Adicionar arquivos"
 msgstr "Adicionar arquivos"
 
-#: src/harmonia/window_library.py:146
+#: src/harmonia/window_library.py:150
 msgid "Sincronizando…"
 msgstr "Sincronizando…"
 
-#: src/harmonia/window_library.py:147
+#: src/harmonia/window_library.py:151
 msgid "Buscando sua biblioteca no YouTube Music"
 msgstr "Buscando sua biblioteca no YouTube Music"
 
-#: src/harmonia/window_library.py:152
+#: src/harmonia/window_library.py:156
 msgid "Nada nesta visualização"
 msgstr "Nada nesta visualização"
 
-#: src/harmonia/window_library.py:153
+#: src/harmonia/window_library.py:157
 msgid "Altere a origem ou adicione conteúdo à biblioteca."
 msgstr "Altere a origem ou adicione conteúdo à biblioteca."
 
-#: src/harmonia/window_library.py:247
+#: src/harmonia/window_library.py:251
 msgid "Sua música, no seu desktop"
 msgstr "Sua música, no seu desktop"
 
-#: src/harmonia/window_library.py:249
+#: src/harmonia/window_library.py:253
 msgid ""
 "Conecte sua sessão do YouTube Music para sincronizar playlists, músicas, "
 "álbuns e artistas."
@@ -2677,11 +2677,11 @@ msgstr ""
 "Conecte sua sessão do YouTube Music para sincronizar playlists, músicas, "
 "álbuns e artistas."
 
-#: src/harmonia/window_library.py:310
+#: src/harmonia/window_library.py:314
 msgid "Carregando…"
 msgstr "Carregando…"
 
-#: src/harmonia/window_library.py:311
+#: src/harmonia/window_library.py:315
 #, python-brace-format
 msgid "Buscando {title}"
 msgstr "Buscando {title}"
@@ -2743,48 +2743,48 @@ msgid "Ir para {time}"
 msgstr "Ir para {time}"
 
 #: src/harmonia/window_lyrics_tools.py:37
-#: src/harmonia/window_lyrics_tools.py:44
+#: src/harmonia/window_lyrics_tools.py:45
 msgid "Automática"
 msgstr "Automática"
 
-#: src/harmonia/window_lyrics_tools.py:43
+#: src/harmonia/window_lyrics_tools.py:44
 #, python-brace-format
 msgid "Fonte: {provider}"
 msgstr "Fonte: {provider}"
 
-#: src/harmonia/window_lyrics_tools.py:46
+#: src/harmonia/window_lyrics_tools.py:47
 msgid "Alternar provedor de letras"
 msgstr "Alternar provedor de letras"
 
-#: src/harmonia/window_lyrics_tools.py:52
+#: src/harmonia/window_lyrics_tools.py:53
 msgid "Traduzir a letra"
 msgstr "Traduzir a letra"
 
-#: src/harmonia/window_lyrics_tools.py:57
+#: src/harmonia/window_lyrics_tools.py:58
 msgid "Copiar letra"
 msgstr "Copiar letra"
 
-#: src/harmonia/window_lyrics_tools.py:62
+#: src/harmonia/window_lyrics_tools.py:63
 msgid "Adiantar letra em 250 ms"
 msgstr "Adiantar letra em 250 ms"
 
-#: src/harmonia/window_lyrics_tools.py:67
+#: src/harmonia/window_lyrics_tools.py:68
 msgid "Zerar ajuste de tempo"
 msgstr "Zerar ajuste de tempo"
 
-#: src/harmonia/window_lyrics_tools.py:72
+#: src/harmonia/window_lyrics_tools.py:73
 msgid "Atrasar letra em 250 ms"
 msgstr "Atrasar letra em 250 ms"
 
-#: src/harmonia/window_lyrics_tools.py:85
+#: src/harmonia/window_lyrics_tools.py:86
 msgid "Sincronia 0 ms"
 msgstr "Sincronia 0 ms"
 
-#: src/harmonia/window_lyrics_tools.py:109
+#: src/harmonia/window_lyrics_tools.py:110
 msgid "Letra copiada"
 msgstr "Letra copiada"
 
-#: src/harmonia/window_lyrics_tools.py:156
+#: src/harmonia/window_lyrics_tools.py:157
 msgid "Letra traduzida"
 msgstr "Letra traduzida"
 
@@ -2852,65 +2852,65 @@ msgstr "Copiar relatório"
 msgid "Relatório copiado"
 msgstr "Relatório copiado"
 
-#: src/harmonia/window_preferences.py:310
+#: src/harmonia/window_preferences.py:346
 msgid "0 B armazenados"
 msgstr "0 B armazenados"
 
-#: src/harmonia/window_preferences.py:313
+#: src/harmonia/window_preferences.py:349
 #, python-brace-format
 msgid "Cache limpo · {size} removidos"
 msgstr "Cache limpo · {size} removidos"
 
-#: src/harmonia/window_preferences.py:328
+#: src/harmonia/window_preferences.py:364
 #, python-brace-format
 msgid "Temporizador definido para {count} minuto"
 msgid_plural "Temporizador definido para {count} minutos"
 msgstr[0] "Temporizador definido para {count} minuto"
 msgstr[1] "Temporizador definido para {count} minutos"
 
-#: src/harmonia/window_preferences.py:338
+#: src/harmonia/window_preferences.py:374
 msgid "Reprodução pausada pelo temporizador"
 msgstr "Reprodução pausada pelo temporizador"
 
-#: src/harmonia/window_preferences.py:355
+#: src/harmonia/window_preferences.py:391
 msgid "Conectada e válida"
 msgstr "Conectada e válida"
 
-#: src/harmonia/window_preferences.py:358
+#: src/harmonia/window_preferences.py:394
 msgid "Conta validada"
 msgstr "Conta validada"
 
-#: src/harmonia/window_preferences.py:360
+#: src/harmonia/window_preferences.py:396
 #, python-brace-format
 msgid "Não foi possível validar a conta{detail}"
 msgstr "Não foi possível validar a conta{detail}"
 
-#: src/harmonia/window_preferences.py:371
+#: src/harmonia/window_preferences.py:407
 msgid "Conta desconectada"
 msgstr "Conta desconectada"
 
-#: src/harmonia/window_preferences.py:376
+#: src/harmonia/window_preferences.py:412
 msgid "Exportar backup"
 msgstr "Exportar backup"
 
-#: src/harmonia/window_preferences.py:386
+#: src/harmonia/window_preferences.py:422
 msgid "Backup exportado"
 msgstr "Backup exportado"
 
-#: src/harmonia/window_preferences.py:391
+#: src/harmonia/window_preferences.py:427
 #, python-brace-format
 msgid "Não foi possível exportar o backup: {error}"
 msgstr "Não foi possível exportar o backup: {error}"
 
-#: src/harmonia/window_preferences.py:401
+#: src/harmonia/window_preferences.py:437
 msgid "Restaurar backup"
 msgstr "Restaurar backup"
 
-#: src/harmonia/window_preferences.py:416
+#: src/harmonia/window_preferences.py:452
 msgid "Restaurar este backup?"
 msgstr "Restaurar este backup?"
 
-#: src/harmonia/window_preferences.py:418
+#: src/harmonia/window_preferences.py:454
 msgid ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
@@ -2918,11 +2918,11 @@ msgstr ""
 "A biblioteca, o histórico e as preferências locais atuais serão "
 "substituídos. A sessão da conta e os arquivos de áudio não serão alterados."
 
-#: src/harmonia/window_preferences.py:438
+#: src/harmonia/window_preferences.py:474
 msgid "Backup restaurado"
 msgstr "Backup restaurado"
 
-#: src/harmonia/window_preferences.py:443
+#: src/harmonia/window_preferences.py:479
 #, python-brace-format
 msgid "Não foi possível restaurar o backup: {error}"
 msgstr "Não foi possível restaurar o backup: {error}"
@@ -3409,35 +3409,35 @@ msgstr ""
 msgid "Recarregar letra"
 msgstr "Recarregar letra"
 
-#: src/harmonia/qml/LyricsView.qml:85
+#: src/harmonia/qml/LyricsView.qml:87
 msgid "Alterar fonte da letra"
 msgstr "Alterar fonte da letra"
 
-#: src/harmonia/qml/LyricsView.qml:117
+#: src/harmonia/qml/LyricsView.qml:119
 msgid "Traduzir"
 msgstr "Traduzir"
 
-#: src/harmonia/qml/LyricsView.qml:213
+#: src/harmonia/qml/LyricsView.qml:215
 msgid "−250 ms"
 msgstr "−250 ms"
 
-#: src/harmonia/qml/LyricsView.qml:227
+#: src/harmonia/qml/LyricsView.qml:229
 msgid "Zerar ajuste de sincronia"
 msgstr "Zerar ajuste de sincronia"
 
-#: src/harmonia/qml/LyricsView.qml:231
+#: src/harmonia/qml/LyricsView.qml:233
 msgid "+250 ms"
 msgstr "+250 ms"
 
-#: src/harmonia/qml/LyricsView.qml:363
+#: src/harmonia/qml/LyricsView.qml:365
 msgid "Letra não encontrada"
 msgstr "Letra não encontrada"
 
-#: src/harmonia/qml/LyricsView.qml:365
+#: src/harmonia/qml/LyricsView.qml:367
 msgid "Tente recarregar ou altere o provedor de letras."
 msgstr "Tente recarregar ou altere o provedor de letras."
 
-#: src/harmonia/qml/LyricsView.qml:366
+#: src/harmonia/qml/LyricsView.qml:368
 msgid "Escolha uma faixa para ver a letra."
 msgstr "Escolha uma faixa para ver a letra."
 

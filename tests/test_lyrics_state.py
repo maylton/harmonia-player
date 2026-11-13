@@ -13,11 +13,12 @@ def test_lyrics_provider_normalization_and_cycle() -> None:
     assert normalize_lyrics_provider("YOUTUBE") == "youtube"
     assert normalize_lyrics_provider("unknown") == "auto"
     assert normalize_lyrics_provider("LyricsPlus") == "lyricsplus"
-    assert next_lyrics_provider("auto") == "lyricsplus"
+    assert next_lyrics_provider("auto") == "betterlyrics"
+    assert next_lyrics_provider("betterlyrics") == "lyricsplus"
     assert next_lyrics_provider("lyricsplus") == "lrclib"
     assert next_lyrics_provider("lrclib") == "youtube"
     assert next_lyrics_provider("youtube") == "auto"
-    assert next_lyrics_provider("invalid") == "lyricsplus"
+    assert next_lyrics_provider("invalid") == "betterlyrics"
 
 
 def test_translations_keep_the_words_of_each_line() -> None:
