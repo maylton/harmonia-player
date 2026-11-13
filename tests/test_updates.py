@@ -69,6 +69,7 @@ def test_the_download_is_checked_against_its_sha256(monkeypatch, tmp_path):
     assert not (tmp_path / "bad" / "a.exe").exists()
 
 
+@pytest.mark.skipif(updates.host.IS_WINDOWS, reason="caminhos do Linux")
 def test_the_install_is_recognized_from_where_the_code_lives(monkeypatch):
     monkeypatch.setattr(updates.host, "IS_WINDOWS", False)
     monkeypatch.setattr(updates.Path, "exists", lambda self: False)  # not in a Flatpak

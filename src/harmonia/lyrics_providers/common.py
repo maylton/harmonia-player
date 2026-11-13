@@ -36,6 +36,15 @@ def lyrics_metadata(item: LibraryItem) -> tuple[str, str | None]:
     return artist, album
 
 
+def duration_from_subtitle(item: LibraryItem) -> int:
+    """The track's length the subtitle ends with ("· 3:36"), in milliseconds, or 0."""
+    match = re.search(r"(?:(\d+):)?(\d{1,2}):(\d{2})\s*$", item.subtitle or "")
+    if not match:
+        return 0
+    hours, minutes, seconds = (int(part or 0) for part in match.groups())
+    return ((hours * 60 + minutes) * 60 + seconds) * 1000
+
+
 def get_json(
     opener: Callable[..., object], url: str, params: dict[str, str], *, timeout: float = 8
 ):

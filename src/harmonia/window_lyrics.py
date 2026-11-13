@@ -19,6 +19,7 @@ from gi.repository import Adw, GLib, Gtk
 from . import host, romaji
 from .gtk_lyric_words import KaraokeLine
 from .i18n import _
+from .lyrics_providers import duration_from_subtitle
 from .lyrics_state import without_foreign_translation
 from .models import (
     LibraryItem,
@@ -82,12 +83,17 @@ class WindowLyricsMixin:
                 return
 
         self._set_lyrics_message("view-refresh-symbolic", _("Carregando letra…"), item.title)
+        # Asked as the track starts, before GStreamer reports its length:
+        # the saved state's or the subtitle's length serves the services then.
+        duration = (
+            self.current_duration_ms
+            or getattr(self, "_restored_duration_ms", 0)
+            or duration_from_subtitle(item)
+        )
 
         def worker():
             try:
-                document = self.lyrics_resolver.fetch(
-                    item, self.current_duration_ms, self.lyrics_provider
-                )
+                document = self.lyrics_resolver.fetch(item, duration, self.lyrics_provider)
                 if document:
                     self.storage.save_lyrics_document(item.id, document)
                 deliver_to_main(self._lyrics_loaded, request_id, item.id, document, None)

@@ -24,9 +24,9 @@ class LyricsPlusClient:
     # Metrolist's mirrors; the one that last answered is asked first.
     SERVERS = (
         "https://lyricsplus.binimum.org",
-        "https://lyricsplus.atomix.one",
         "https://lyricsplus.prjktla.my.id",
-        "https://lyricsplus-seven.vercel.app",
+        # Metrolist also lists lyricsplus.atomix.one (its certificate is for
+        # another host) and lyricsplus-seven.vercel.app (402, out of credit).
     )
     TIMEOUT = 5  # seconds per mirror: a dead one held every track for 8
     _last_working: str | None = None

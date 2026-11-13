@@ -127,6 +127,16 @@ def _child(verbose: bool, quick: bool = False) -> int:
 
     samples = _Samples(Path(os.environ["XDG_CACHE_HOME"]) / "smoke-media")
     gtk_app.YouTubeMusicService = lambda storage: _FakeService(storage, samples)
+    # The lyrics services are asked along with the chosen one: offline here,
+    # only YouTube Music's (the fake service's) lyrics answer.
+    from harmonia import lyrics_providers
+
+    for client in (
+        lyrics_providers.BetterLyricsClient,
+        lyrics_providers.LyricsPlusClient,
+        lyrics_providers.LrcLibClient,
+    ):
+        client.lyrics = lambda _self, _item, _duration_ms=0: None
     storage = Storage()
     if not storage.database_file.resolve().is_relative_to(Path(home).resolve()):
         print(f"SMOKE-FAIL o perfil não está isolado: {storage.database_file}", flush=True)
@@ -780,6 +790,7 @@ def _seed_storage(storage, samples: _Samples) -> None:
 
     storage.save_cookie("SAPISID=smoke; __Secure-3PAPISID=smoke")
     storage.set_setting("lyrics_provider", "youtube")
+    storage.set_setting("check_updates", "0")  # the smoke runs with no network
     service = _FakeService(storage, samples)
     service.sync_library()
     service.sync_home()

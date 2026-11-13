@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harmonia\n"
 "Report-Msgid-Bugs-To: https://github.com/maylton/harmonia-player/issues\n"
-"POT-Creation-Date: 2026-11-13 11:28-0300\n"
+"POT-Creation-Date: 2026-11-13 17:01-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2064,7 +2064,7 @@ msgstr ""
 msgid "Mostrar tudo"
 msgstr ""
 
-#: src/harmonia/window_artist.py:209 src/harmonia/window_lyrics.py:111
+#: src/harmonia/window_artist.py:209 src/harmonia/window_lyrics.py:117
 msgid "Não foi possível carregar"
 msgstr ""
 
@@ -2120,7 +2120,7 @@ msgstr ""
 #: src/harmonia/window_chrome/expanded_player.py:280
 #: src/harmonia/window_chrome/player_bar.py:291
 #: src/harmonia/window_chrome/player_bar.py:299
-#: src/harmonia/window_lyrics.py:58
+#: src/harmonia/window_lyrics.py:59
 msgid "Letras"
 msgstr ""
 
@@ -2160,7 +2160,7 @@ msgstr ""
 
 #: src/harmonia/window_chrome/expanded_player.py:281
 #: src/harmonia/window_chrome/player_bar.py:300
-#: src/harmonia/window_lyrics.py:59
+#: src/harmonia/window_lyrics.py:60
 msgid "Comece a reproduzir uma música para ver a letra."
 msgstr ""
 
@@ -2678,36 +2678,36 @@ msgstr ""
 msgid "Renomear playlist local"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:46
+#: src/harmonia/window_lyrics.py:47
 msgid "Tentar novamente"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:84
+#: src/harmonia/window_lyrics.py:85
 msgid "Carregando letra…"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:116
+#: src/harmonia/window_lyrics.py:122
 msgid "Letra indisponível"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:117
+#: src/harmonia/window_lyrics.py:123
 msgid "Nenhum dos provedores encontrou uma letra para esta faixa."
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:211
+#: src/harmonia/window_lyrics.py:217
 msgid "sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:211
+#: src/harmonia/window_lyrics.py:217
 msgid "não sincronizada"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:213
+#: src/harmonia/window_lyrics.py:219
 #, python-brace-format
 msgid "{provider} · Letra {mode}"
 msgstr ""
 
-#: src/harmonia/window_lyrics.py:256
+#: src/harmonia/window_lyrics.py:262
 #, python-brace-format
 msgid "Ir para {time}"
 msgstr ""

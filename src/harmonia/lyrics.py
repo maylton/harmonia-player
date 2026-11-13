@@ -74,7 +74,10 @@ class LyricsResolver:
     line wait WORD_GRACE seconds more for one timed by word, then BetterLyrics'
     come first, LRCLIB's and LyricsPlus' after. YouTube Music's own lyrics
     come last.
-    Choosing a provider asks only that one, and its errors are reported.
+    A chosen provider is asked together with the others and its lyrics win
+    when it has them; when it has nothing or fails, the others' are shown, so
+    a service that went down (all of LyricsPlus' mirrors did) does not leave
+    every track without lyrics.
     """
 
     PREFERENCE = ("betterlyrics", "lyricsplus", "lrclib")  # timed by word
@@ -97,14 +100,7 @@ class LyricsResolver:
     def fetch(
         self, item: LibraryItem, duration_ms: int = 0, provider: str = "auto"
     ) -> LyricsDocument | None:
-        provider = provider.lower()
-        if provider in self.PREFERENCE:
-            return getattr(self, provider).lyrics(item, duration_ms)
-        if provider == "auto":
-            return self._first_of_all(item, duration_ms)
-        if provider == "youtube":
-            return self._youtube(item)
-        return None
+        return self._first_of_all(item, duration_ms, provider.lower())
 
     def _youtube(self, item: LibraryItem) -> LyricsDocument | None:
         value = self.native(item.id)
@@ -112,7 +108,9 @@ class LyricsResolver:
             return LyricsDocument(value.strip(), "YouTube Music", parse_lrc(value))
         return None
 
-    def _first_of_all(self, item: LibraryItem, duration_ms: int) -> LyricsDocument | None:
+    def _first_of_all(
+        self, item: LibraryItem, duration_ms: int, chosen: str = "auto"
+    ) -> LyricsDocument | None:
         pool = ThreadPoolExecutor(len(self.PREFERENCE) + 1, thread_name_prefix="lyrics")
         pending = {
             pool.submit(self._quietly, getattr(self, name), item, duration_ms): name
@@ -132,6 +130,12 @@ class LyricsResolver:
                 for future in done:
                     name = pending.pop(future)
                     results[name] = future.result()
+                if results.get(chosen) is not None:
+                    return results[chosen]
+                if chosen == "youtube" and youtube.done() and youtube.result():
+                    return youtube.result()
+                if chosen in pending:
+                    continue  # the chosen one may still answer
                 word = self._preferred(results, word_only=True)
                 if word is not None:
                     return word

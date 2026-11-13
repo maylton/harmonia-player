@@ -84,8 +84,8 @@ def test_resolver_falls_back_to_native_and_honors_provider():
     resolver = LyricsResolver(lambda _video_id: "Letra nativa", Missing(), Missing(), Missing())
     item = LibraryItem("v", "Faixa", "Artista")
     assert resolver.fetch(item).provider == "YouTube Music"
-    assert resolver.fetch(item, provider="lrclib") is None
-    assert resolver.fetch(item, provider="lyricsplus") is None
+    # A chosen service with nothing falls back to the others, the native last.
+    assert resolver.fetch(item, provider="lrclib").provider == "YouTube Music"
 
 
 def test_resolver_prefers_lyrics_timed_by_word():
@@ -179,3 +179,23 @@ def test_play_and_view_counts_are_not_taken_for_the_artist():
     assert lyrics_metadata(LibraryItem("v", "Me Voy", "Tocou 151\xa0mi vezes · 3:36"))[0] == ""
     assert lyrics_metadata(LibraryItem("v", "X", "Música · RBD · 2,1 mi visualizações"))[0] == "RBD"
     assert lyrics_metadata(LibraryItem("v", "X", "Song · Kelis · 3M plays"))[0] == "Kelis"
+
+
+def test_the_subtitle_gives_the_length_before_the_stream_does():
+    from harmonia.lyrics_providers.common import duration_from_subtitle
+
+    assert duration_from_subtitle(LibraryItem("v", "X", "Tocou 151\xa0mi vezes · 3:36")) == 216_000
+    assert duration_from_subtitle(LibraryItem("v", "X", "Música · Kelis · 1:02:05")) == 3_725_000
+    assert duration_from_subtitle(LibraryItem("v", "X", "Música · Kelis")) == 0
+
+
+def test_a_chosen_service_with_nothing_falls_back_to_the_others():
+    from harmonia.models import LyricLine, LyricsDocument
+
+    lrclib = LyricsDocument("Um", "LRCLIB", [LyricLine(0, "Um")])
+    item = LibraryItem("v", "Faixa", "Artista")
+    down = Fixed(error=OSError("todos os espelhos fora"))
+    resolver = LyricsResolver(lambda _id: None, Fixed(lrclib), down, Missing())
+    resolver.WORD_GRACE = 0.1
+    assert resolver.fetch(item, 200_000, "lyricsplus") is lrclib
+    assert resolver.fetch(item, 200_000, "lrclib") is lrclib
