@@ -132,9 +132,9 @@ def needs_reapply(message: int, wparam: int) -> bool:
     return message in RESET_MESSAGES
 
 
-RDW_REPAINT_ALL = (
-    0x0001 | 0x0004 | 0x0080 | 0x0100 | 0x0400
-)  # invalidate, erase, children, now, frame
+# Invalidate, children, now, frame. Not RDW_ERASE: erasing filled the window
+# with the class brush before GTK painted it again, a visible flash.
+RDW_REPAINT_ALL = 0x0001 | 0x0080 | 0x0100 | 0x0400
 
 
 def refresh_frame(hwnd: int) -> None:

@@ -91,6 +91,9 @@ def test_a_burst_of_messages_restores_the_material_once(monkeypatch):
     monkeypatch.setattr("harmonia.windows_backdrop.refresh_frame", refreshed.append)
 
     class WindowStub:
+        def is_fullscreen(self):
+            return False
+
         pass
 
     backdrops = GtkWindowBackdrops.__new__(GtkWindowBackdrops)
@@ -129,6 +132,9 @@ def test_messages_route_to_restore_rebuild_or_cloak_watch(monkeypatch):
     monkeypatch.setattr(windows_backdrop, "refresh_frame", lambda hwnd: None)
 
     class WindowStub:
+        def is_fullscreen(self):
+            return False
+
         def queue_draw(self):
             pass
 
@@ -457,3 +463,32 @@ def test_hidden_window_exposes_its_hwnd_and_accepts_a_material():
         windows_backdrop.remove(hwnd)
     finally:
         window.destroy()
+
+
+def test_the_material_is_not_restored_while_in_full_screen(monkeypatch):
+    from harmonia import gtk_backdrop
+
+    queued, handlers = [], []
+    monkeypatch.setattr(
+        gtk_backdrop.GLib, "idle_add", lambda callback, window: queued.append(window)
+    )
+    backdrops = gtk_backdrop.GtkWindowBackdrops.__new__(gtk_backdrop.GtkWindowBackdrops)
+    backdrops.kind = "mica"
+
+    class Window:
+        full = True
+
+        def is_fullscreen(self):
+            return self.full
+
+        def connect(self, signal, callback):
+            handlers.append(callback)
+            return 1
+
+    window = Window()
+    backdrops._schedule_restore(window)
+    backdrops._schedule_restore(window)  # a toast moving the focus back and forth
+    assert not queued and len(handlers) == 1
+    window.full = False
+    handlers[0]()
+    assert queued == [window]  # once, after full screen

@@ -19,6 +19,7 @@ from .models import LibraryItem, LyricsDocument
 # Full screen fades the header and the controls once the pointer rests this long.
 FULLSCREEN_IDLE_SECONDS = 3
 IDLE_CSS_CLASS = "expanded-idle"
+POINTER_SLACK = 3  # pixels the pointer must move to wake the controls
 # Share of the player column's height the artwork takes, in a large window
 # as in full screen; it never shrinks below its own size (gtk_video.py).
 COVER_SHARE = 0.55
@@ -104,6 +105,23 @@ class WindowExpandedPlayerMixin:
         self._media_resize_tick = 0
         self._sync_media_mode_ui()
         return GLib.SOURCE_REMOVE
+
+    def _pointer_moved(self, x: float, y: float) -> None:
+        """Wake the controls when the pointer really moves.
+
+        Windows reports a motion where the pointer stands whenever the cursor
+        changes, so hiding it woke the controls at once: they faded in and out
+        every few seconds, as if the window kept redrawing.
+        """
+        last = getattr(self, "_fullscreen_pointer", None)
+        self._fullscreen_pointer = (x, y)
+        if (
+            last is not None
+            and abs(x - last[0]) < POINTER_SLACK
+            and abs(y - last[1]) < POINTER_SLACK
+        ):
+            return
+        self._wake_fullscreen_controls()
 
     def _wake_fullscreen_controls(self) -> None:
         if getattr(self, "_fullscreen_idle_source", 0):

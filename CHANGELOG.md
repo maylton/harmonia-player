@@ -2,6 +2,10 @@
 
 Todas as mudanças relevantes do projeto serão documentadas neste arquivo.
 
+## Não lançado
+
+- Windows, tela cheia: a tela piscava a cada poucos segundos. Esconder o cursor fazia o Windows acusar um movimento do mouse, que trazia os controles de volta, e eles sumiam de novo; e uma notificação por cima (como a do OneDrive) alternava o foco, e cada troca recriava o material e redesenhava a tela inteira. Agora só um movimento de verdade traz os controles, o material espera a tela cheia acabar, e o redesenho forçado não apaga mais o fundo antes de pintar.
+
 ## 1.0.1 — 2026-11-13
 
 - Preferências > Sobre o Harmonia: a versão e como ela foi instalada, os créditos e as licenças, e os links do projeto;

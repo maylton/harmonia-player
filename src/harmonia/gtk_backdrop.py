@@ -159,11 +159,31 @@ class GtkWindowBackdrops:
             )
 
     def _schedule_restore(self, window: Gtk.Window) -> None:
-        """Queue one restore for a burst of messages (focus, display, composition)."""
+        """Queue one restore for a burst of messages (focus, display, composition).
+
+        Not in full screen, where the window covers the desktop: a toast over
+        it (OneDrive's, for one) moves the focus back and forth, and every
+        restore rebuilt the material and repainted the whole screen, a flash
+        every second or two. The restore waits for full screen to end.
+        """
         if self.kind == "none" or getattr(window, "_harmonia_restore_queued", False):
+            return
+        if window.is_fullscreen():
+            window._harmonia_restore_after_fullscreen = True
+            if not getattr(window, "_harmonia_fullscreen_watch", 0):
+                window._harmonia_fullscreen_watch = window.connect(
+                    "notify::fullscreened", lambda *_: self._fullscreen_changed(window)
+                )
             return
         window._harmonia_restore_queued = True
         GLib.idle_add(self._restore, window)
+
+    def _fullscreen_changed(self, window: Gtk.Window) -> None:
+        if not window.is_fullscreen() and getattr(
+            window, "_harmonia_restore_after_fullscreen", False
+        ):
+            window._harmonia_restore_after_fullscreen = False
+            self._schedule_restore(window)
 
     def _restore(self, window: Gtk.Window) -> bool:
         """Set the material again and refresh the frame, as minimize and restore would."""

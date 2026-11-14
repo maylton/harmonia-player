@@ -60,7 +60,7 @@ def build_expanded_player(window) -> None:
 
     # In full screen the header and the controls fade out while the pointer rests.
     motion = Gtk.EventControllerMotion()
-    motion.connect("motion", lambda *_: window._wake_fullscreen_controls())
+    motion.connect("motion", lambda _motion, x, y: window._pointer_moved(x, y))
     surface.add_controller(motion)
     window.connect("notify::fullscreened", lambda *_: window._fullscreen_changed())
 

@@ -152,3 +152,15 @@ def test_the_artwork_grows_with_the_players_column(width, height, scale):
     window = Window()
     window.expanded_player_scroll = Scroll(width, height)
     assert window._expanded_media_scale() == pytest.approx(scale)
+
+
+def test_a_pointer_standing_still_does_not_wake_the_controls():
+    # Windows reports a motion in place when the cursor is hidden.
+    window = Window()
+    window._toggle_fullscreen()
+    window._pointer_moved(400, 300)
+    window._rest_fullscreen_controls()
+    window._pointer_moved(401, 300)
+    assert IDLE_CSS_CLASS in window.expanded_surface.css
+    window._pointer_moved(420, 310)
+    assert IDLE_CSS_CLASS not in window.expanded_surface.css
